@@ -1,0 +1,101 @@
+[gd_scene format=3 uid="uid://dtpvigdquw6gc"]
+
+[ext_resource type="Script" uid="uid://mg2mrocjo8a" path="res://scenes/main/main_screen.gd" id="1_0qv31"]
+
+[node name="MainScreen" type="Control" unique_id=1049428762]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_0qv31")
+
+[node name="Background" type="ColorRect" parent="." unique_id=610184130]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.95686275, 0.9607843, 0.96862745, 1)
+
+[node name="SafeArea" type="MarginContainer" parent="." unique_id=262957012]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 60
+theme_override_constants/margin_top = 60
+theme_override_constants/margin_right = 80
+theme_override_constants/margin_bottom = 80
+
+[node name="MainColumn" type="VBoxContainer" parent="SafeArea" unique_id=72738125]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="SafeArea/MainColumn" unique_id=755938571]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 48
+text = "Alex Morgan"
+
+[node name="AgeLabel" type="Label" parent="SafeArea/MainColumn" unique_id=657104724]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 32
+text = "Age: 0"
+
+[node name="LifeFeedPanel" type="PanelContainer" parent="SafeArea/MainColumn" unique_id=774295472]
+custom_minimum_size = Vector2(0, 700)
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="SafeArea/MainColumn/LifeFeedPanel" unique_id=1445492662]
+layout_mode = 2
+
+[node name="LifeFeed" type="RichTextLabel" parent="SafeArea/MainColumn/LifeFeedPanel/MarginContainer" unique_id=1625580800]
+layout_mode = 2
+theme_override_font_sizes/normal_font_size = 16
+text = "You Were Born in Indonesia"
+
+[node name="StatsContainer" type="VBoxContainer" parent="SafeArea/MainColumn" unique_id=1085958517]
+layout_mode = 2
+
+[node name="HealthLabel" type="Label" parent="SafeArea/MainColumn/StatsContainer" unique_id=238037613]
+layout_mode = 2
+
+[node name="HealthBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsContainer" unique_id=2047440336]
+layout_mode = 2
+value = 80.0
+
+[node name="HappinessLabel" type="Label" parent="SafeArea/MainColumn/StatsContainer" unique_id=1327787110]
+layout_mode = 2
+
+[node name="HappinessBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsContainer" unique_id=531077538]
+layout_mode = 2
+value = 80.0
+
+[node name="SmartsLabel" type="Label" parent="SafeArea/MainColumn/StatsContainer" unique_id=592772836]
+layout_mode = 2
+
+[node name="SmartsBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsContainer" unique_id=2110369338]
+layout_mode = 2
+value = 80.0
+
+[node name="LooksLabel" type="Label" parent="SafeArea/MainColumn/StatsContainer" unique_id=1794860147]
+layout_mode = 2
+
+[node name="LooksBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsContainer" unique_id=1209547043]
+layout_mode = 2
+value = 80.0
+
+[node name="AgeButton" type="Button" parent="SafeArea/MainColumn" unique_id=17575291]
+custom_minimum_size = Vector2(0, 140)
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "AGE +1"
+
+[connection signal="pressed" from="SafeArea/MainColumn/AgeButton" to="." method="_on_age_button_pressed"]
