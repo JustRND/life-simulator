@@ -5,25 +5,83 @@
     "max_age": 10,
     "repeatable": false,
     "weight": 100,
-    "text": "Your parents surprise you with a bicycle.",
     "conditions": {},
     "choices": [
       {
         "text": "Ride it immediately",
+        "type": "adventurous",
         "effects": {
           "happiness": 8,
-          "health": 2
+          "health": 2,
+          "karma": 0
         },
-        "result": "You spend the afternoon riding around the neighborhood."
+        "result": "You spend the afternoon racing around the neighborhood with a huge grin."
       },
       {
-        "text": "Ignore it",
+        "text": "Ask someone to ride with you",
+        "type": "kind",
         "effects": {
-          "happiness": -3
+          "happiness": 6,
+          "karma": 4
         },
-        "result": "The bicycle sits untouched in the garage."
+        "result": "You turn the gift into a shared adventure and have an amazing afternoon together."
+      },
+      {
+        "text": "Give your old bike away",
+        "type": "generous",
+        "effects": {
+          "happiness": 4,
+          "karma": 10
+        },
+        "result": "You give your old bike to someone who needs it and feel proud of yourself."
+      },
+      {
+        "text": "Try a dangerous jump",
+        "type": "reckless",
+        "effects": {
+          "health": -7,
+          "happiness": 5,
+          "karma": -1
+        },
+        "result": "You attempt a heroic jump, wipe out spectacularly, and limp home smiling."
+      },
+      {
+        "text": "Pretend you don't like it",
+        "type": "ungrateful",
+        "effects": {
+          "happiness": -3,
+          "karma": -4
+        },
+        "result": "You act unimpressed. Your parents look disappointed."
+      },
+      {
+        "text": "Customize it yourself",
+        "type": "creative",
+        "effects": {
+          "happiness": 5,
+          "smarts": 1
+        },
+        "result": "You spend hours decorating the bicycle until it looks completely unique."
+      },
+      {
+        "text": "Sell it for snack money",
+        "type": "selfish",
+        "effects": {
+          "happiness": 3,
+          "karma": -8,
+          "money": 25
+        },
+        "result": "You sell the bike and immediately spend part of the money on snacks."
       }
-    ]
+    ],
+    "title": "NEW BIKE",
+    "text_variants": [
+      "Your parents surprise you with a brand-new bicycle.",
+      "You come home to find a bicycle waiting for you.",
+      "Your family gives you a bicycle as a surprise gift.",
+      "A shiny bicycle appears in front of your house with your name on it."
+    ],
+    "choice_count": 4
   },
   {
     "id": "school_bully",
@@ -31,26 +89,93 @@
     "max_age": 15,
     "repeatable": true,
     "weight": 60,
-    "text": "A student at school steals your lunch.",
     "conditions": {},
     "choices": [
       {
-        "text": "Confront them",
+        "text": "Punch them in the face",
+        "type": "aggressive",
         "effects": {
-          "health": -3,
-          "happiness": 2
+          "health": -4,
+          "happiness": 4,
+          "karma": -10
         },
-        "result": "You confront the student and get into a small fight."
+        "result": "You punch the kid. The cafeteria erupts in chaos and a teacher comes running."
       },
       {
         "text": "Tell a teacher",
+        "type": "responsible",
         "effects": {
           "smarts": 2,
-          "happiness": -1
+          "happiness": -1,
+          "karma": 2
         },
-        "result": "A teacher steps in and resolves the situation."
+        "result": "A teacher steps in, returns your lunch, and gives the other student detention."
+      },
+      {
+        "text": "Steal their lunch tomorrow",
+        "type": "vengeful",
+        "effects": {
+          "happiness": 3,
+          "karma": -7
+        },
+        "result": "The next day, you quietly return the favor and steal their lunch."
+      },
+      {
+        "text": "Offer to share",
+        "type": "kind",
+        "effects": {
+          "happiness": 2,
+          "karma": 8
+        },
+        "result": "The kid is caught off guard. Somehow, the two of you end up eating together."
+      },
+      {
+        "text": "Challenge them to a race",
+        "type": "playful",
+        "effects": {
+          "health": 2,
+          "happiness": 3,
+          "karma": 1
+        },
+        "result": "The argument somehow turns into a ridiculous race across the playground."
+      },
+      {
+        "text": "Start crying dramatically",
+        "type": "funny",
+        "effects": {
+          "happiness": -2,
+          "karma": 1
+        },
+        "result": "Your theatrical meltdown attracts half the cafeteria and three confused teachers."
+      },
+      {
+        "text": "Say nothing and walk away",
+        "type": "passive",
+        "effects": {
+          "happiness": -5,
+          "karma": 0
+        },
+        "result": "You let it go, but the whole thing bothers you for the rest of the day."
+      },
+      {
+        "text": "Trip them as they leave",
+        "type": "mischievous",
+        "effects": {
+          "happiness": 4,
+          "karma": -6
+        },
+        "result": "You stick out your foot. They stumble, drop the lunch, and everyone gasps."
       }
-    ]
+    ],
+    "title": "SCHOOL TROUBLE",
+    "text_variants": [
+      "A student at school steals your lunch.",
+      "A classmate grabs your lunch tray and walks away laughing.",
+      "A kid snatches your sandwich before you can eat it.",
+      "Someone steals your lunch money and tells you to deal with it.",
+      "A bigger student takes your food and starts eating it in front of you."
+    ],
+    "choice_count": 4
   },
   {
     "id": "teen_party",
@@ -58,28 +183,87 @@
     "max_age": 18,
     "repeatable": true,
     "weight": 80,
-    "text": "A friend invites you to a party this weekend.",
     "conditions": {
       "min_happiness": 20
     },
     "choices": [
       {
-        "text": "Go to the party",
+        "text": "Go and stay until the end",
+        "type": "social",
         "effects": {
-          "happiness": 7,
-          "health": -2
+          "happiness": 8,
+          "health": -2,
+          "karma": 0
         },
-        "result": "You stay out late and have a great time."
+        "result": "You stay out late, meet new people, and stumble home exhausted but happy."
       },
       {
-        "text": "Stay home",
+        "text": "Stay home and study",
+        "type": "responsible",
         "effects": {
           "smarts": 3,
-          "happiness": -2
+          "happiness": -2,
+          "karma": 1
         },
-        "result": "You stay home and spend the evening studying."
+        "result": "You spend the evening studying while your phone fills with chaotic party videos."
+      },
+      {
+        "text": "Sneak out without telling anyone",
+        "type": "reckless",
+        "effects": {
+          "happiness": 6,
+          "karma": -5
+        },
+        "result": "You sneak out successfully and spend the entire night hoping nobody notices."
+      },
+      {
+        "text": "Go for one hour, then leave",
+        "type": "balanced",
+        "effects": {
+          "happiness": 4,
+          "smarts": 1,
+          "karma": 1
+        },
+        "result": "You show up, have some fun, and leave before things get too wild."
+      },
+      {
+        "text": "Tell your parents first",
+        "type": "honest",
+        "effects": {
+          "happiness": 2,
+          "karma": 4
+        },
+        "result": "Your parents appreciate your honesty and reluctantly let you go."
+      },
+      {
+        "text": "Spread a fake cancellation rumor",
+        "type": "mischievous",
+        "effects": {
+          "happiness": 3,
+          "karma": -9
+        },
+        "result": "Half the guest list believes you. The host is furious when they find out."
+      },
+      {
+        "text": "Bring snacks for everyone",
+        "type": "generous",
+        "effects": {
+          "happiness": 5,
+          "karma": 7,
+          "money": -10
+        },
+        "result": "You arrive carrying snacks and instantly become one of the most popular people there."
       }
-    ]
+    ],
+    "title": "PARTY INVITE",
+    "text_variants": [
+      "A friend invites you to a party this weekend.",
+      "You hear about a big party happening while someone's parents are away.",
+      "A classmate messages you an address and says, \"Be there tonight.\"",
+      "Your friends are planning a party and insist that you come.",
+      "Someone you barely know invites you to a crowded house party."
+    ],
+    "choice_count": 4
   },
   {
     "id": "gifted_student",
@@ -87,55 +271,174 @@
     "max_age": 17,
     "repeatable": false,
     "weight": 30,
-    "text": "A teacher tells your parents that you may be academically gifted.",
     "conditions": {
       "min_smarts": 70
     },
     "choices": [
       {
-        "text": "Join an advanced class",
+        "text": "Join the advanced class",
+        "type": "ambitious",
         "effects": {
           "smarts": 5,
-          "happiness": -1
+          "happiness": -1,
+          "karma": 0
         },
-        "result": "You start taking advanced classes."
+        "result": "You move into advanced classes and suddenly have much harder homework."
       },
       {
-        "text": "Decline",
+        "text": "Stay with your friends",
+        "type": "social",
         "effects": {
-          "happiness": 2
+          "happiness": 3,
+          "smarts": -1,
+          "karma": 0
         },
-        "result": "You decide to stay with your current classmates."
+        "result": "You stay with your current classmates and feel relieved."
+      },
+      {
+        "text": "Ask for even harder work",
+        "type": "ambitious",
+        "effects": {
+          "smarts": 7,
+          "happiness": -3,
+          "karma": 0
+        },
+        "result": "Your teacher seems delighted. Your free time immediately disappears."
+      },
+      {
+        "text": "Help struggling classmates",
+        "type": "kind",
+        "effects": {
+          "smarts": 3,
+          "happiness": 2,
+          "karma": 8
+        },
+        "result": "You begin tutoring classmates and discover that teaching helps you learn too."
+      },
+      {
+        "text": "Brag about it constantly",
+        "type": "arrogant",
+        "effects": {
+          "happiness": 2,
+          "karma": -6
+        },
+        "result": "You make sure everyone knows how smart you are. People quickly get tired of hearing about it."
+      },
+      {
+        "text": "Pretend the results were a mistake",
+        "type": "shy",
+        "effects": {
+          "happiness": 1,
+          "smarts": -1,
+          "karma": 0
+        },
+        "result": "You downplay the whole thing and avoid the extra attention."
+      },
+      {
+        "text": "Turn everything into a competition",
+        "type": "competitive",
+        "effects": {
+          "smarts": 4,
+          "happiness": 1,
+          "karma": -2
+        },
+        "result": "Every assignment becomes a contest, whether your classmates want one or not."
       }
-    ]
+    ],
+    "title": "GIFTED?",
+    "text_variants": [
+      "A teacher tells your parents that you may be academically gifted.",
+      "Your school recommends moving you into an advanced academic program.",
+      "A teacher pulls you aside and says your test scores are unusually high.",
+      "The principal tells your family that you qualify for accelerated classes."
+    ],
+    "choice_count": 4
   },
   {
-  "id": "academic_scholarship",
-  "min_age": 16,
-  "max_age": 18,
-  "repeatable": false,
-  "weight": 40,
-  "text": "You are offered an academic scholarship.",
-  "conditions": {
-    "required_event": "gifted_student",
-    "min_smarts": 75
-  },
-  "choices": [
-    {
-      "text": "Accept the scholarship",
-      "effects": {
-        "happiness": 5,
-        "smarts": 2
-      },
-      "result": "You accept the scholarship and prepare for university."
+    "id": "academic_scholarship",
+    "min_age": 16,
+    "max_age": 18,
+    "repeatable": false,
+    "weight": 40,
+    "conditions": {
+      "required_event": "gifted_student",
+      "min_smarts": 75
     },
-    {
-      "text": "Decline",
-      "effects": {
-        "happiness": -2
+    "choices": [
+      {
+        "text": "Accept immediately",
+        "type": "ambitious",
+        "effects": {
+          "happiness": 6,
+          "smarts": 2,
+          "karma": 0
+        },
+        "result": "You accept the scholarship and begin planning for university."
       },
-      "result": "You decide the scholarship isn't right for you."
-    }
-  ]
-}
+      {
+        "text": "Decline the offer",
+        "type": "independent",
+        "effects": {
+          "happiness": -2,
+          "karma": 0
+        },
+        "result": "You turn down the scholarship and decide to find another path."
+      },
+      {
+        "text": "Ask if it can help someone else",
+        "type": "generous",
+        "effects": {
+          "happiness": 2,
+          "karma": 10
+        },
+        "result": "You ask whether the money can go to another student if you choose a different path."
+      },
+      {
+        "text": "Negotiate for more aid",
+        "type": "strategic",
+        "effects": {
+          "smarts": 2,
+          "money": 150,
+          "karma": 0
+        },
+        "result": "You negotiate confidently and manage to secure a better financial package."
+      },
+      {
+        "text": "Brag about the offer online",
+        "type": "arrogant",
+        "effects": {
+          "happiness": 3,
+          "karma": -5
+        },
+        "result": "You post the scholarship everywhere. Congratulations pour in, along with a few eye rolls."
+      },
+      {
+        "text": "Hide the letter",
+        "type": "fearful",
+        "effects": {
+          "happiness": -4,
+          "karma": -1
+        },
+        "result": "You hide the letter in a drawer and spend days worrying about what to do."
+      },
+      {
+        "text": "Celebrate with your family",
+        "type": "generous",
+        "effects": {
+          "happiness": 7,
+          "money": -30,
+          "karma": 5
+        },
+        "result": "You celebrate with your family and turn the achievement into a memorable night."
+      }
+    ],
+    "title": "SCHOLARSHIP OFFER",
+    "text_variants": [
+      "You are offered an academic scholarship.",
+      "A university sends you a scholarship offer based on your grades.",
+      "Your school counselor tells you that you have qualified for a major scholarship.",
+      "An envelope arrives with an offer to help pay for your university education."
+    ],
+    "choice_count": 4
+  }
 ]

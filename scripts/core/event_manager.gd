@@ -31,7 +31,6 @@ func load_events() -> void:
 		return
 
 	events = parsed_data
-
 	print("Loaded %d events." % events.size())
 
 
@@ -61,23 +60,18 @@ func get_valid_events(
 
 
 func _passes_age_check(event: Dictionary, age: int) -> bool:
-	var min_age: int = int(event.get("min_age", 0))
-	var max_age: int = int(event.get("max_age", 999))
-
+	var min_age := int(event.get("min_age", 0))
+	var max_age := int(event.get("max_age", 999))
 	return age >= min_age and age <= max_age
 
 
-func _passes_repeat_check(
-	event: Dictionary,
-	event_history: Array
-) -> bool:
-	var repeatable: bool = bool(event.get("repeatable", true))
+func _passes_repeat_check(event: Dictionary, event_history: Array) -> bool:
+	var repeatable := bool(event.get("repeatable", true))
 
 	if repeatable:
 		return true
 
-	var event_id: String = str(event.get("id", ""))
-
+	var event_id := str(event.get("id", ""))
 	if event_id == "":
 		return true
 
@@ -91,47 +85,34 @@ func _passes_conditions(
 ) -> bool:
 	var conditions: Dictionary = event.get("conditions", {})
 
-	if conditions.has("min_health"):
-		if int(player_stats.get("health", 0)) < int(conditions["min_health"]):
-			return false
-
-	if conditions.has("max_health"):
-		if int(player_stats.get("health", 0)) > int(conditions["max_health"]):
-			return false
-
-	if conditions.has("min_happiness"):
-		if int(player_stats.get("happiness", 0)) < int(conditions["min_happiness"]):
-			return false
-
-	if conditions.has("max_happiness"):
-		if int(player_stats.get("happiness", 0)) > int(conditions["max_happiness"]):
-			return false
-
-	if conditions.has("min_smarts"):
-		if int(player_stats.get("smarts", 0)) < int(conditions["min_smarts"]):
-			return false
-
-	if conditions.has("max_smarts"):
-		if int(player_stats.get("smarts", 0)) > int(conditions["max_smarts"]):
-			return false
-
-	if conditions.has("min_looks"):
-		if int(player_stats.get("looks", 0)) < int(conditions["min_looks"]):
-			return false
-
-	if conditions.has("max_looks"):
-		if int(player_stats.get("looks", 0)) > int(conditions["max_looks"]):
-			return false
+	if conditions.has("min_health") and int(player_stats.get("health", 0)) < int(conditions["min_health"]):
+		return false
+	if conditions.has("max_health") and int(player_stats.get("health", 0)) > int(conditions["max_health"]):
+		return false
+	if conditions.has("min_happiness") and int(player_stats.get("happiness", 0)) < int(conditions["min_happiness"]):
+		return false
+	if conditions.has("max_happiness") and int(player_stats.get("happiness", 0)) > int(conditions["max_happiness"]):
+		return false
+	if conditions.has("min_smarts") and int(player_stats.get("smarts", 0)) < int(conditions["min_smarts"]):
+		return false
+	if conditions.has("max_smarts") and int(player_stats.get("smarts", 0)) > int(conditions["max_smarts"]):
+		return false
+	if conditions.has("min_looks") and int(player_stats.get("looks", 0)) < int(conditions["min_looks"]):
+		return false
+	if conditions.has("max_looks") and int(player_stats.get("looks", 0)) > int(conditions["max_looks"]):
+		return false
+	if conditions.has("min_karma") and int(player_stats.get("karma", 0)) < int(conditions["min_karma"]):
+		return false
+	if conditions.has("max_karma") and int(player_stats.get("karma", 0)) > int(conditions["max_karma"]):
+		return false
 
 	if conditions.has("required_event"):
-		var required_event: String = str(conditions["required_event"])
-
+		var required_event := str(conditions["required_event"])
 		if not event_history.has(required_event):
 			return false
 
 	if conditions.has("excluded_event"):
-		var excluded_event: String = str(conditions["excluded_event"])
-
+		var excluded_event := str(conditions["excluded_event"])
 		if event_history.has(excluded_event):
 			return false
 
@@ -143,11 +124,7 @@ func get_random_event(
 	event_history: Array,
 	player_stats: Dictionary
 ):
-	var valid_events := get_valid_events(
-		age,
-		event_history,
-		player_stats
-	)
+	var valid_events := get_valid_events(age, event_history, player_stats)
 
 	if valid_events.is_empty():
 		return null
@@ -156,7 +133,7 @@ func get_random_event(
 
 
 func _pick_weighted_event(valid_events: Array):
-	var total_weight: int = 0
+	var total_weight := 0
 
 	for event in valid_events:
 		total_weight += max(int(event.get("weight", 100)), 0)
@@ -169,7 +146,6 @@ func _pick_weighted_event(valid_events: Array):
 
 	for event in valid_events:
 		running_total += max(int(event.get("weight", 100)), 0)
-
 		if roll <= running_total:
 			return event
 

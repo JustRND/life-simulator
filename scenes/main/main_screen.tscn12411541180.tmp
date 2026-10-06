@@ -254,13 +254,10 @@ layout_mode = 2
 text = "LIFE HISTORY"
 
 [node name="HistoryScroll" type="ScrollContainer" parent="HistoryPanel/HistoryMargin/HistoryContent" unique_id=1422373174]
-custom_minimum_size = Vector2(0, 1000)
 layout_mode = 2
-size_flags_vertical = 3
 
 [node name="HistoryList" type="VBoxContainer" parent="HistoryPanel/HistoryMargin/HistoryContent/HistoryScroll" unique_id=27115994]
 layout_mode = 2
-size_flags_horizontal = 3
 
 [node name="CharacterPanel" type="PanelContainer" parent="." unique_id=487239564]
 visible = false
@@ -356,25 +353,21 @@ layout_mode = 2
 
 [node name="TimelineButton" type="Button" parent="BottomNavigation/NavButtons" unique_id=915524]
 layout_mode = 2
-size_flags_horizontal = 3
 text = "▣
 TIMELINE"
 
 [node name="HistoryButton" type="Button" parent="BottomNavigation/NavButtons" unique_id=206827746]
 layout_mode = 2
-size_flags_horizontal = 3
 text = "◷
 HISTORY"
 
 [node name="CharacterButton" type="Button" parent="BottomNavigation/NavButtons" unique_id=199501400]
 layout_mode = 2
-size_flags_horizontal = 3
 text = "●
 CHARACTER"
 
 [node name="SettingsNavButton" type="Button" parent="BottomNavigation/NavButtons" unique_id=393060578]
 layout_mode = 2
-size_flags_horizontal = 3
 text = "⚙
 SETTINGS"
 
@@ -518,15 +511,8 @@ ok_button_text = "RESET"
 dialog_text = "Are you sure you want to erase your current life and start over?"
 
 [connection signal="pressed" from="SafeArea/MainColumn/AgeButton" to="." method="_on_age_button_pressed"]
-[connection signal="pressed" from="SettingsPanel/SettingsContent/ResetProgressButton" to="." method="_on_reset_progress_button_pressed"]
-[connection signal="pressed" from="SettingsPanel/SettingsContent/CloseSettingsButton" to="." method="_on_close_settings_button_pressed"]
-[connection signal="pressed" from="BottomNavigation/NavButtons/TimelineButton" to="." method="_on_timeline_button_pressed"]
-[connection signal="pressed" from="BottomNavigation/NavButtons/HistoryButton" to="." method="_on_history_button_pressed"]
-[connection signal="pressed" from="BottomNavigation/NavButtons/CharacterButton" to="." method="_on_character_button_pressed"]
-[connection signal="pressed" from="BottomNavigation/NavButtons/SettingsNavButton" to="." method="_on_settings_nav_button_pressed"]
 [connection signal="pressed" from="NewGamePanel/CenterContainer/CreationCard/NewGameContent/StartGameButton" to="." method="_on_start_game_button_pressed"]
 [connection signal="pressed" from="EventOverlay/EventPanel/EventContent/EventChoices/EventChoice1" to="." method="_on_event_choice_1_pressed"]
 [connection signal="pressed" from="EventOverlay/EventPanel/EventContent/EventChoices/EventChoice2" to="." method="_on_event_choice_2_pressed"]
 [connection signal="pressed" from="EventOverlay/EventPanel/EventContent/EventChoices/EventChoice3" to="." method="_on_event_choice_3_pressed"]
 [connection signal="pressed" from="EventOverlay/EventPanel/EventContent/EventChoices/EventChoice4" to="." method="_on_event_choice_4_pressed"]
-[connection signal="confirmed" from="ResetConfirmation" to="." method="_on_reset_confirmation_confirmed"]

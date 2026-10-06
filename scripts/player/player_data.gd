@@ -11,9 +11,11 @@ var first_name: String = ""
 var birthplace: String = ""
 var has_started_game: bool = false
 
+var karma: int = 0
 var money: int = 0
 
 var event_history: Array = []
+var life_log: Array = []
 
 
 func reset_player() -> void:
@@ -28,9 +30,11 @@ func reset_player() -> void:
 	smarts = 60
 	looks = 65
 
+	karma = 0
 	money = 0
 
 	event_history.clear()
+	life_log.clear()
 
 
 func get_stats() -> Dictionary:
@@ -38,7 +42,8 @@ func get_stats() -> Dictionary:
 		"health": health,
 		"happiness": happiness,
 		"smarts": smarts,
-		"looks": looks
+		"looks": looks,
+		"karma": karma
 	}
 
 
@@ -48,11 +53,23 @@ func apply_effects(effects: Dictionary) -> void:
 	smarts += int(effects.get("smarts", 0))
 	looks += int(effects.get("looks", 0))
 	money += int(effects.get("money", 0))
+	karma += int(effects.get("karma", 0))
 
 	health = clamp(health, 0, 100)
 	happiness = clamp(happiness, 0, 100)
 	smarts = clamp(smarts, 0, 100)
 	looks = clamp(looks, 0, 100)
+	karma = clamp(karma, -100, 100)
+
+
+func add_life_log_entry(text: String) -> void:
+	if text.strip_edges() == "":
+		return
+
+	life_log.append({
+		"age": age,
+		"text": text
+	})
 
 
 func has_seen_event(event_id: String) -> bool:
