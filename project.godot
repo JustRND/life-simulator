@@ -14,6 +14,12 @@ config/name="LifeSimulatorPrototype"
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://icon.svg"
 
+[autoload]
+
+EventManager="*uid://bil5aqj1hnoec"
+PlayerData="*uid://j2djogrti2b7"
+SaveManager="*uid://bnknu013vcdc"
+
 [display]
 
 window/size/viewport_width=1080

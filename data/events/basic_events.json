@@ -1,0 +1,141 @@
+[
+  {
+    "id": "childhood_bicycle",
+    "min_age": 5,
+    "max_age": 10,
+    "repeatable": false,
+    "weight": 100,
+    "text": "Your parents surprise you with a bicycle.",
+    "conditions": {},
+    "choices": [
+      {
+        "text": "Ride it immediately",
+        "effects": {
+          "happiness": 8,
+          "health": 2
+        },
+        "result": "You spend the afternoon riding around the neighborhood."
+      },
+      {
+        "text": "Ignore it",
+        "effects": {
+          "happiness": -3
+        },
+        "result": "The bicycle sits untouched in the garage."
+      }
+    ]
+  },
+  {
+    "id": "school_bully",
+    "min_age": 7,
+    "max_age": 15,
+    "repeatable": true,
+    "weight": 60,
+    "text": "A student at school steals your lunch.",
+    "conditions": {},
+    "choices": [
+      {
+        "text": "Confront them",
+        "effects": {
+          "health": -3,
+          "happiness": 2
+        },
+        "result": "You confront the student and get into a small fight."
+      },
+      {
+        "text": "Tell a teacher",
+        "effects": {
+          "smarts": 2,
+          "happiness": -1
+        },
+        "result": "A teacher steps in and resolves the situation."
+      }
+    ]
+  },
+  {
+    "id": "teen_party",
+    "min_age": 13,
+    "max_age": 18,
+    "repeatable": true,
+    "weight": 80,
+    "text": "A friend invites you to a party this weekend.",
+    "conditions": {
+      "min_happiness": 20
+    },
+    "choices": [
+      {
+        "text": "Go to the party",
+        "effects": {
+          "happiness": 7,
+          "health": -2
+        },
+        "result": "You stay out late and have a great time."
+      },
+      {
+        "text": "Stay home",
+        "effects": {
+          "smarts": 3,
+          "happiness": -2
+        },
+        "result": "You stay home and spend the evening studying."
+      }
+    ]
+  },
+  {
+    "id": "gifted_student",
+    "min_age": 10,
+    "max_age": 17,
+    "repeatable": false,
+    "weight": 30,
+    "text": "A teacher tells your parents that you may be academically gifted.",
+    "conditions": {
+      "min_smarts": 70
+    },
+    "choices": [
+      {
+        "text": "Join an advanced class",
+        "effects": {
+          "smarts": 5,
+          "happiness": -1
+        },
+        "result": "You start taking advanced classes."
+      },
+      {
+        "text": "Decline",
+        "effects": {
+          "happiness": 2
+        },
+        "result": "You decide to stay with your current classmates."
+      }
+    ]
+  },
+  {
+  "id": "academic_scholarship",
+  "min_age": 16,
+  "max_age": 18,
+  "repeatable": false,
+  "weight": 40,
+  "text": "You are offered an academic scholarship.",
+  "conditions": {
+    "required_event": "gifted_student",
+    "min_smarts": 75
+  },
+  "choices": [
+    {
+      "text": "Accept the scholarship",
+      "effects": {
+        "happiness": 5,
+        "smarts": 2
+      },
+      "result": "You accept the scholarship and prepare for university."
+    },
+    {
+      "text": "Decline",
+      "effects": {
+        "happiness": -2
+      },
+      "result": "You decide the scholarship isn't right for you."
+    }
+  ]
+}
+]

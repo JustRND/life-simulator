@@ -1,0 +1,176 @@
+extends Node
+
+var events: Array = []
+
+
+func _ready() -> void:
+	load_events()
+
+
+func load_events() -> void:
+	var file := FileAccess.open(
+		"res://data/events/basic_events.json",
+		FileAccess.READ
+	)
+
+	if file == null:
+		push_error("Could not open event file.")
+		return
+
+	var json_text := file.get_as_text()
+	file.close()
+
+	var parsed_data = JSON.parse_string(json_text)
+
+	if parsed_data == null:
+		push_error("Failed to parse event JSON.")
+		return
+
+	if parsed_data is not Array:
+		push_error("Event JSON root must be an array.")
+		return
+
+	events = parsed_data
+
+	print("Loaded %d events." % events.size())
+
+
+func get_valid_events(
+	age: int,
+	event_history: Array,
+	player_stats: Dictionary
+) -> Array:
+	var valid_events: Array = []
+
+	for event in events:
+		if event is not Dictionary:
+			continue
+
+		if not _passes_age_check(event, age):
+			continue
+
+		if not _passes_repeat_check(event, event_history):
+			continue
+
+		if not _passes_conditions(event, player_stats, event_history):
+			continue
+
+		valid_events.append(event)
+
+	return valid_events
+
+
+func _passes_age_check(event: Dictionary, age: int) -> bool:
+	var min_age: int = int(event.get("min_age", 0))
+	var max_age: int = int(event.get("max_age", 999))
+
+	return age >= min_age and age <= max_age
+
+
+func _passes_repeat_check(
+	event: Dictionary,
+	event_history: Array
+) -> bool:
+	var repeatable: bool = bool(event.get("repeatable", true))
+
+	if repeatable:
+		return true
+
+	var event_id: String = str(event.get("id", ""))
+
+	if event_id == "":
+		return true
+
+	return not event_history.has(event_id)
+
+
+func _passes_conditions(
+	event: Dictionary,
+	player_stats: Dictionary,
+	event_history: Array
+) -> bool:
+	var conditions: Dictionary = event.get("conditions", {})
+
+	if conditions.has("min_health"):
+		if int(player_stats.get("health", 0)) < int(conditions["min_health"]):
+			return false
+
+	if conditions.has("max_health"):
+		if int(player_stats.get("health", 0)) > int(conditions["max_health"]):
+			return false
+
+	if conditions.has("min_happiness"):
+		if int(player_stats.get("happiness", 0)) < int(conditions["min_happiness"]):
+			return false
+
+	if conditions.has("max_happiness"):
+		if int(player_stats.get("happiness", 0)) > int(conditions["max_happiness"]):
+			return false
+
+	if conditions.has("min_smarts"):
+		if int(player_stats.get("smarts", 0)) < int(conditions["min_smarts"]):
+			return false
+
+	if conditions.has("max_smarts"):
+		if int(player_stats.get("smarts", 0)) > int(conditions["max_smarts"]):
+			return false
+
+	if conditions.has("min_looks"):
+		if int(player_stats.get("looks", 0)) < int(conditions["min_looks"]):
+			return false
+
+	if conditions.has("max_looks"):
+		if int(player_stats.get("looks", 0)) > int(conditions["max_looks"]):
+			return false
+
+	if conditions.has("required_event"):
+		var required_event: String = str(conditions["required_event"])
+
+		if not event_history.has(required_event):
+			return false
+
+	if conditions.has("excluded_event"):
+		var excluded_event: String = str(conditions["excluded_event"])
+
+		if event_history.has(excluded_event):
+			return false
+
+	return true
+
+
+func get_random_event(
+	age: int,
+	event_history: Array,
+	player_stats: Dictionary
+):
+	var valid_events := get_valid_events(
+		age,
+		event_history,
+		player_stats
+	)
+
+	if valid_events.is_empty():
+		return null
+
+	return _pick_weighted_event(valid_events)
+
+
+func _pick_weighted_event(valid_events: Array):
+	var total_weight: int = 0
+
+	for event in valid_events:
+		total_weight += max(int(event.get("weight", 100)), 0)
+
+	if total_weight <= 0:
+		return valid_events.pick_random()
+
+	var roll := randi_range(1, total_weight)
+	var running_total := 0
+
+	for event in valid_events:
+		running_total += max(int(event.get("weight", 100)), 0)
+
+		if roll <= running_total:
+			return event
+
+	return valid_events.back()

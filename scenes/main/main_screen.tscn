@@ -2,6 +2,205 @@
 
 [ext_resource type="Script" uid="uid://mg2mrocjo8a" path="res://scenes/main/main_screen.gd" id="1_0qv31"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0ard6"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.101960786, 0.12156863, 0.1882353, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.1882353, 0.21568628, 0.29411766, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+corner_detail = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_npero"]
+bg_color = Color(0.16470589, 0.1882353, 0.25882354, 1)
+corner_detail = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0qv31"]
+bg_color = Color(0.71702963, 0, 0.09662952, 1)
+corner_detail = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ggbdh"]
+bg_color = Color(0.16470589, 0.1882353, 0.25882354, 1)
+corner_detail = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bku2l"]
+bg_color = Color(1, 0.81960785, 0.4, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_omlv2"]
+bg_color = Color(0.16470589, 0.1882353, 0.25882354, 1)
+corner_detail = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_d7gd6"]
+bg_color = Color(0.3764706, 0.64705884, 0.98039216, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wg17m"]
+bg_color = Color(0.16470589, 0.1882353, 0.25882354, 1)
+corner_detail = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6frpe"]
+bg_color = Color(1, 0.47058824, 0.7764706, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_x3mr0"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.4862745, 0.36078432, 1, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+corner_detail = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_agw7f"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.40784314, 0.2784314, 0.9098039, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sqhsc"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.5529412, 0.44705883, 1, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8ccqv"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.13333334, 0.15686275, 0.22745098, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+corner_detail = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_02b3x"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.20784314, 0.24313726, 0.34117648, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qva2s"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.1764706, 0.20784314, 0.29411766, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jivjl"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.13333334, 0.15686275, 0.22745098, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+corner_detail = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tr21i"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.20784314, 0.24313726, 0.34117648, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rw3ls"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.1764706, 0.20784314, 0.29411766, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_p1a8b"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.13333334, 0.15686275, 0.22745098, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+corner_detail = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_b1qga"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.20784314, 0.24313726, 0.34117648, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vhfnb"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.1764706, 0.20784314, 0.29411766, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gm637"]
+bg_color = Color(0.8509804, 0.29803923, 0.36078432, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_txj5t"]
+bg_color = Color(0.7254902, 0.23921569, 0.29411766, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bsk30"]
+bg_color = Color(0.91764706, 0.3647059, 0.43137255, 1)
+
 [node name="MainScreen" type="Control" unique_id=1049428762]
 layout_mode = 3
 anchors_preset = 15
@@ -20,7 +219,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.95686275, 0.9607843, 0.96862745, 1)
+color = Color(0.0627451, 0.07450981, 0.12156863, 1)
 
 [node name="SafeArea" type="MarginContainer" parent="." unique_id=262957012]
 layout_mode = 1
@@ -39,26 +238,32 @@ layout_mode = 2
 
 [node name="NameLabel" type="Label" parent="SafeArea/MainColumn" unique_id=755938571]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 48
+theme_override_colors/font_color = Color(0.972549, 0.9764706, 0.9882353, 1)
+theme_override_font_sizes/font_size = 54
 text = "Alex Morgan"
 
 [node name="AgeLabel" type="Label" parent="SafeArea/MainColumn" unique_id=657104724]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0.6666667, 0.69411767, 0.77254903, 1)
 theme_override_font_sizes/font_size = 32
 text = "Age: 0"
+
+[node name="SettingsButton" type="Button" parent="SafeArea/MainColumn" unique_id=875798415]
+layout_mode = 2
+text = "⚙ SETTINGS"
 
 [node name="LifeFeedPanel" type="PanelContainer" parent="SafeArea/MainColumn" unique_id=774295472]
 custom_minimum_size = Vector2(0, 700)
 layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_0ard6")
 
 [node name="MarginContainer" type="MarginContainer" parent="SafeArea/MainColumn/LifeFeedPanel" unique_id=1445492662]
 layout_mode = 2
 
 [node name="LifeFeed" type="RichTextLabel" parent="SafeArea/MainColumn/LifeFeedPanel/MarginContainer" unique_id=1625580800]
 layout_mode = 2
-theme_override_font_sizes/normal_font_size = 16
+theme_override_colors/default_color = Color(0.972549, 0.9764706, 0.9882353, 1)
+theme_override_font_sizes/normal_font_size = 30
 text = "You Were Born in Indonesia"
 
 [node name="StatsContainer" type="VBoxContainer" parent="SafeArea/MainColumn" unique_id=1085958517]
@@ -69,6 +274,8 @@ layout_mode = 2
 
 [node name="HealthBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsContainer" unique_id=2047440336]
 layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_npero")
+theme_override_styles/fill = SubResource("StyleBoxFlat_0qv31")
 value = 80.0
 
 [node name="HappinessLabel" type="Label" parent="SafeArea/MainColumn/StatsContainer" unique_id=1327787110]
@@ -76,6 +283,8 @@ layout_mode = 2
 
 [node name="HappinessBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsContainer" unique_id=531077538]
 layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_ggbdh")
+theme_override_styles/fill = SubResource("StyleBoxFlat_bku2l")
 value = 80.0
 
 [node name="SmartsLabel" type="Label" parent="SafeArea/MainColumn/StatsContainer" unique_id=592772836]
@@ -83,6 +292,8 @@ layout_mode = 2
 
 [node name="SmartsBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsContainer" unique_id=2110369338]
 layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_omlv2")
+theme_override_styles/fill = SubResource("StyleBoxFlat_d7gd6")
 value = 80.0
 
 [node name="LooksLabel" type="Label" parent="SafeArea/MainColumn/StatsContainer" unique_id=1794860147]
@@ -90,12 +301,134 @@ layout_mode = 2
 
 [node name="LooksBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsContainer" unique_id=1209547043]
 layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_wg17m")
+theme_override_styles/fill = SubResource("StyleBoxFlat_6frpe")
 value = 80.0
 
 [node name="AgeButton" type="Button" parent="SafeArea/MainColumn" unique_id=17575291]
 custom_minimum_size = Vector2(0, 140)
 layout_mode = 2
-theme_override_font_sizes/font_size = 40
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 36
+theme_override_styles/normal = SubResource("StyleBoxFlat_x3mr0")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_agw7f")
+theme_override_styles/hover = SubResource("StyleBoxFlat_sqhsc")
 text = "AGE +1"
 
+[node name="ChoiceContainer" type="VBoxContainer" parent="SafeArea/MainColumn" unique_id=893784249]
+layout_mode = 2
+
+[node name="ChoiceButton1" type="Button" parent="SafeArea/MainColumn/ChoiceContainer" unique_id=993677096]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.972549, 0.9764706, 0.9882353, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_8ccqv")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_02b3x")
+theme_override_styles/hover = SubResource("StyleBoxFlat_qva2s")
+text = "Choice 1"
+
+[node name="ChoiceButton2" type="Button" parent="SafeArea/MainColumn/ChoiceContainer" unique_id=1247668339]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.972549, 0.9764706, 0.9882353, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_jivjl")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_tr21i")
+theme_override_styles/hover = SubResource("StyleBoxFlat_rw3ls")
+text = "Choice 2"
+
+[node name="ChoiceButton3" type="Button" parent="SafeArea/MainColumn/ChoiceContainer" unique_id=1448175897]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.972549, 0.9764706, 0.9882353, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_p1a8b")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_b1qga")
+theme_override_styles/hover = SubResource("StyleBoxFlat_vhfnb")
+text = "Choice 3"
+
+[node name="SettingsPanel" type="PanelContainer" parent="." unique_id=1151056383]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -358.0
+offset_top = -272.0
+offset_right = 342.0
+offset_bottom = 328.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SettingsContent" type="VBoxContainer" parent="SettingsPanel" unique_id=8490397]
+layout_mode = 2
+
+[node name="SettingsTitle" type="Label" parent="SettingsPanel/SettingsContent" unique_id=1273498039]
+layout_mode = 2
+text = "SETTINGS"
+
+[node name="ResetProgressButton" type="Button" parent="SettingsPanel/SettingsContent" unique_id=1847966786]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_gm637")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_txj5t")
+theme_override_styles/hover = SubResource("StyleBoxFlat_bsk30")
+text = "RESET PROGRESS"
+
+[node name="CloseSettingsButton" type="Button" parent="SettingsPanel/SettingsContent" unique_id=726274408]
+layout_mode = 2
+text = "CLOSE SETTINGS"
+
+[node name="ResetConfirmation" type="ConfirmationDialog" parent="." unique_id=1587109278]
+title = "Reset Progress"
+ok_button_text = "RESET"
+dialog_text = "Are you sure you want to erase your current life and start over?"
+
+[node name="NewGamePanel" type="PanelContainer" parent="." unique_id=706104652]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="NewGamePanel" unique_id=457535148]
+layout_mode = 2
+
+[node name="NewGameContent" type="VBoxContainer" parent="NewGamePanel/CenterContainer" unique_id=1265670534]
+layout_mode = 2
+
+[node name="NewGameTitle" type="Label" parent="NewGamePanel/CenterContainer/NewGameContent" unique_id=116427269]
+layout_mode = 2
+text = "CREATE YOUR LIFE"
+
+[node name="Label" type="Label" parent="NewGamePanel/CenterContainer/NewGameContent" unique_id=2003632114]
+layout_mode = 2
+text = "What is your name?"
+
+[node name="NameInput" type="LineEdit" parent="NewGamePanel/CenterContainer/NewGameContent" unique_id=1779871477]
+layout_mode = 2
+placeholder_text = "Enter your name"
+
+[node name="BirthplaceLabel" type="Label" parent="NewGamePanel/CenterContainer/NewGameContent" unique_id=1297921108]
+layout_mode = 2
+text = "Where were you born?"
+
+[node name="BirthplaceInput" type="LineEdit" parent="NewGamePanel/CenterContainer/NewGameContent" unique_id=301479523]
+layout_mode = 2
+placeholder_text = "e.g. Indonesia"
+
+[node name="StartGameButton" type="Button" parent="NewGamePanel/CenterContainer/NewGameContent" unique_id=800174356]
+layout_mode = 2
+text = "START LIFE"
+
+[node name="ValidationLabel" type="Label" parent="NewGamePanel/CenterContainer/NewGameContent" unique_id=1010438156]
+layout_mode = 2
+
 [connection signal="pressed" from="SafeArea/MainColumn/AgeButton" to="." method="_on_age_button_pressed"]
+[connection signal="pressed" from="SafeArea/MainColumn/ChoiceContainer/ChoiceButton1" to="." method="_on_choice_button_1_pressed"]
+[connection signal="pressed" from="SafeArea/MainColumn/ChoiceContainer/ChoiceButton2" to="." method="_on_choice_button_2_pressed"]
+[connection signal="pressed" from="SafeArea/MainColumn/ChoiceContainer/ChoiceButton3" to="." method="_on_choice_button_3_pressed"]
+[connection signal="pressed" from="NewGamePanel/CenterContainer/NewGameContent/StartGameButton" to="." method="_on_start_game_button_pressed"]
