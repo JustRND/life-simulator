@@ -11,6 +11,7 @@ config_version=5
 [application]
 
 config/name="LifeSimulatorPrototype"
+run/main_scene="uid://dtpvigdquw6gc"
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://icon.svg"
 
@@ -19,6 +20,7 @@ config/icon="res://icon.svg"
 EventManager="*uid://bil5aqj1hnoec"
 PlayerData="*uid://j2djogrti2b7"
 SaveManager="*uid://bnknu013vcdc"
+JobManager="*res://scripts/economy/job_manager.gd"
 
 [display]
 

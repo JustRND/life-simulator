@@ -6,439 +6,949 @@
     "repeatable": false,
     "weight": 100,
     "conditions": {},
+    "title": "NEW BICYCLE",
+    "text_variants": [
+      "Your parents surprise you with a shiny bicycle on your birthday.",
+      "A brand new bicycle is waiting for you in the driveway with a bright ribbon."
+    ],
+    "choice_count": 4,
     "choices": [
       {
-        "text": "Ride it immediately",
+        "text": "Ride it immediately around the block",
+        "description": "+8 Happiness, +2 Health",
         "type": "adventurous",
         "effects": {
           "happiness": 8,
           "health": 2,
           "karma": 0
         },
-        "result": "You spend the afternoon racing around the neighborhood with a huge grin."
+        "result": "You spent the entire afternoon zooming around the neighborhood with wind in your face."
       },
       {
-        "text": "Ask someone to ride with you",
-        "type": "kind",
-        "effects": {
-          "happiness": 6,
-          "karma": 4
-        },
-        "result": "You turn the gift into a shared adventure and have an amazing afternoon together."
-      },
-      {
-        "text": "Give your old bike away",
+        "text": "Give your old bicycle to a needy kid",
+        "description": "+20 Karma, +15 Happiness",
         "type": "generous",
         "effects": {
-          "happiness": 4,
-          "karma": 10
+          "happiness": 15,
+          "karma": 20
         },
-        "result": "You give your old bike to someone who needs it and feel proud of yourself."
+        "result": "You donated your old bicycle to a neighborhood child who had none. Their grateful smile warmed your soul."
       },
       {
-        "text": "Try a dangerous jump",
+        "text": "Attempt a reckless ramp jump",
+        "description": "-12 Health, +10 Happiness, -2 Karma",
         "type": "reckless",
         "effects": {
-          "health": -7,
-          "happiness": 5,
-          "karma": -1
+          "health": -12,
+          "happiness": 10,
+          "karma": -2
         },
-        "result": "You attempt a heroic jump, wipe out spectacularly, and limp home smiling."
+        "result": "You launched off a homemade wooden ramp, wiped out hard on the asphalt, and scraped both knees."
       },
       {
-        "text": "Pretend you don't like it",
-        "type": "ungrateful",
-        "effects": {
-          "happiness": -3,
-          "karma": -4
-        },
-        "result": "You act unimpressed. Your parents look disappointed."
-      },
-      {
-        "text": "Customize it yourself",
-        "type": "creative",
-        "effects": {
-          "happiness": 5,
-          "smarts": 1
-        },
-        "result": "You spend hours decorating the bicycle until it looks completely unique."
-      },
-      {
-        "text": "Sell it for snack money",
+        "text": "Sell it to a neighbor for fast cash",
+        "description": "+ Cash, -15 Karma, -5 Happiness",
         "type": "selfish",
         "effects": {
-          "happiness": 3,
-          "karma": -8,
-          "money": 25
+          "money": 45,
+          "karma": -15,
+          "happiness": -5
         },
-        "result": "You sell the bike and immediately spend part of the money on snacks."
+        "result": "You sold the brand-new bicycle behind your parents' backs. They were furious and grounded you."
       }
-    ],
-    "title": "NEW BIKE",
+    ]
+  },
+  {
+    "id": "kindergarten_spill",
+    "min_age": 3,
+    "max_age": 5,
+    "repeatable": false,
+    "weight": 100,
+    "conditions": {},
+    "title": "KINDERGARTEN MESS",
     "text_variants": [
-      "Your parents surprise you with a brand-new bicycle.",
-      "You come home to find a bicycle waiting for you.",
-      "Your family gives you a bicycle as a surprise gift.",
-      "A shiny bicycle appears in front of your house with your name on it."
+      "During finger-painting in Kindergarten, a cup of purple paint is knocked over.",
+      "You accidentally tip over a full bowl of tomato soup onto the preschool activity table."
     ],
-    "choice_count": 4
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Help clean up the mess with napkins",
+        "description": "+10 Karma, +5 Smarts, +4 Happiness",
+        "type": "responsible",
+        "effects": {
+          "karma": 10,
+          "smarts": 5,
+          "happiness": 4
+        },
+        "result": "The teacher praised your helpfulness and awarded you a shiny gold star sticker."
+      },
+      {
+        "text": "Blame the kid sitting next to you",
+        "description": "-15 Karma, +2 Happiness",
+        "type": "deceitful",
+        "effects": {
+          "karma": -15,
+          "happiness": 2
+        },
+        "result": "You pointed at the boy next to you. He began crying while you sneakily slid away."
+      },
+      {
+        "text": "Throw more paint and laugh hysterically",
+        "description": "-10 Karma, -6 Health (slapped), +12 Happiness",
+        "type": "chaotic",
+        "effects": {
+          "karma": -10,
+          "health": -3,
+          "happiness": 12
+        },
+        "result": "You turned the incident into a chaotic paint war! The teacher sent you straight to time-out."
+      }
+    ]
+  },
+  {
+    "id": "kindergarten_playground",
+    "min_age": 3,
+    "max_age": 5,
+    "repeatable": true,
+    "weight": 90,
+    "conditions": {},
+    "title": "PLAYGROUND DISPUTE",
+    "text_variants": [
+      "Another toddler grabs the red toy dump truck you were playing with in the sandbox.",
+      "A fellow preschooler refuses to let you take a turn on the playground slide."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Share the toys and build a sandcastle together",
+        "description": "+15 Karma, +8 Happiness, +3 Smarts",
+        "type": "kind",
+        "effects": {
+          "karma": 15,
+          "happiness": 8,
+          "smarts": 3
+        },
+        "result": "You shared the dump truck and made a fantastic sand fortress together. You made a new best friend!"
+      },
+      {
+        "text": "Bite their arm to reclaim the toy",
+        "description": "-20 Karma, -5 Health, -10 Happiness",
+        "type": "aggressive",
+        "effects": {
+          "karma": -20,
+          "health": -5,
+          "happiness": -10
+        },
+        "result": "You bit their forearm! They screamed bloody murder. The teacher called your parents immediately."
+      },
+      {
+        "text": "Walk away and play on the swings",
+        "description": "+5 Smarts, +4 Happiness",
+        "type": "calm",
+        "effects": {
+          "smarts": 5,
+          "happiness": 4
+        },
+        "result": "You shrugged it off, hopped onto the swings, and soared through the breezy air."
+      }
+    ]
   },
   {
     "id": "school_bully",
     "min_age": 7,
     "max_age": 15,
     "repeatable": true,
-    "weight": 60,
+    "weight": 80,
     "conditions": {},
+    "title": "THE SCHOOL BULLY",
+    "text_variants": [
+      "A loud bully shoves you against the hallway lockers and demands your lunch money.",
+      "A notorious troublemaker knocks your textbooks onto the floor and mocks you."
+    ],
+    "choice_count": 4,
     "choices": [
       {
-        "text": "Punch them in the face",
+        "text": "Punch the bully squarely in the jaw",
+        "description": "-10 Health, +15 Happiness, +5 Looks, -10 Karma",
         "type": "aggressive",
         "effects": {
-          "health": -4,
-          "happiness": 4,
+          "health": -10,
+          "happiness": 15,
+          "looks": 5,
           "karma": -10
         },
-        "result": "You punch the kid. The cafeteria erupts in chaos and a teacher comes running."
+        "result": "You cracked the bully right in the jaw! He fell over stunned. School halls erupted in cheers, though you got detention."
       },
       {
-        "text": "Tell a teacher",
+        "text": "Report the incident to the vice principal",
+        "description": "+6 Smarts, +5 Karma, -3 Happiness",
         "type": "responsible",
         "effects": {
-          "smarts": 2,
-          "happiness": -1,
-          "karma": 2
+          "smarts": 6,
+          "karma": 5,
+          "happiness": -3
         },
-        "result": "A teacher steps in, returns your lunch, and gives the other student detention."
+        "result": "The administration issued the bully a 3-day suspension. You avoided violence, but kids called you a snitch."
       },
       {
-        "text": "Steal their lunch tomorrow",
-        "type": "vengeful",
+        "text": "Hand over your lunch money quietly",
+        "description": "- Cash, -15 Happiness, -5 Looks",
+        "type": "submissive",
         "effects": {
-          "happiness": 3,
-          "karma": -7
+          "money": -15,
+          "happiness": -15,
+          "looks": -5
         },
-        "result": "The next day, you quietly return the favor and steal their lunch."
+        "result": "You handed over your money in defeat. The bully sneered and walked away while you went hungry."
       },
       {
-        "text": "Offer to share",
-        "type": "kind",
+        "text": "Outsmart them with sharp verbal wit",
+        "description": "+12 Smarts, +14 Happiness, +8 Looks",
+        "type": "clever",
         "effects": {
-          "happiness": 2,
+          "smarts": 12,
+          "happiness": 14,
+          "looks": 8
+        },
+        "result": "You delivered a devastating comeback that had the entire corridor roaring with laughter at the bully."
+      }
+    ]
+  },
+  {
+    "id": "antique_watch_park",
+    "min_age": 10,
+    "max_age": 18,
+    "repeatable": false,
+    "weight": 85,
+    "conditions": {},
+    "title": "LOST LUXURY WATCH",
+    "text_variants": [
+      "While cutting through the town park, you spot an expensive gold luxury watch glinting beneath a bench.",
+      "You find a pristine Swiss automatic chronograph sitting forgotten on a park picnic table."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Take it to the police station lost-and-found",
+        "description": "+25 Karma, +15 Happiness, + Reward",
+        "type": "honest",
+        "effects": {
+          "karma": 25,
+          "happiness": 15,
+          "money": 100
+        },
+        "result": "The relieved owner contacted you and gave you a generous  cash reward for your exceptional honesty."
+      },
+      {
+        "text": "Pawn it quietly to an underground dealer",
+        "description": "+ Cash, -20 Karma, +10 Happiness",
+        "type": "opportunistic",
+        "effects": {
+          "money": 750,
+          "karma": -20,
+          "happiness": 10
+        },
+        "result": "You pawned the gold watch to a shady jeweler for  cold hard cash."
+      },
+      {
+        "text": "Wear the flashy gold watch to school",
+        "description": "+16 Looks, +8 Happiness, -5 Karma",
+        "type": "flashy",
+        "effects": {
+          "looks": 16,
+          "happiness": 8,
+          "karma": -5
+        },
+        "result": "Everyone in class admired your luxurious wrist candy, assuming your family struck gold."
+      }
+    ]
+  },
+  {
+    "id": "stray_dog_rescue",
+    "min_age": 8,
+    "max_age": 20,
+    "repeatable": false,
+    "weight": 75,
+    "conditions": {},
+    "title": "INJURED STRAY PUPPY",
+    "text_variants": [
+      "You hear whimpering behind a dumpster and discover a shivering, injured stray puppy.",
+      "A scruffy little dog with an injured paw limps up to you in the rain."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Bandage the puppy and convince your family to adopt it",
+        "description": "+25 Karma, +20 Happiness, - Cash",
+        "type": "compassionate",
+        "effects": {
+          "karma": 25,
+          "happiness": 20,
+          "money": -80
+        },
+        "result": "You nursed the puppy back to health! Your family adopted him, and he became your loyal companion."
+      },
+      {
+        "text": "Deliver the puppy to an animal rescue shelter",
+        "description": "+15 Karma, +10 Happiness",
+        "type": "caring",
+        "effects": {
+          "karma": 15,
+          "happiness": 10
+        },
+        "result": "The rescue shelter gladly took the puppy in and promised to find it a loving forever home."
+      },
+      {
+        "text": "Ignore the animal and walk away",
+        "description": "-18 Karma, -8 Happiness",
+        "type": "cold",
+        "effects": {
+          "karma": -18,
+          "happiness": -8
+        },
+        "result": "You walked away, but the image of the puppy whimpering in the rain haunted your conscience."
+      }
+    ]
+  },
+  {
+    "id": "joyriding_car",
+    "min_age": 14,
+    "max_age": 19,
+    "repeatable": false,
+    "weight": 20,
+    "conditions": {},
+    "title": "MIDNIGHT JOYRIDE",
+    "text_variants": [
+      "Your parents are asleep and their car keys are sitting temptingly on the kitchen counter.",
+      "Your friend dares you to sneak your parents' car out for a midnight drive on the open highway."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Sneak the car out and floor the gas pedal",
+        "description": "-10 Health (Scrapes), -$250 Repairs, -10 Karma, +8 Happiness",
+        "type": "reckless",
+        "effects": {
+          "health": -10,
+          "money": -250,
+          "karma": -10,
+          "happiness": 8
+        },
+        "result": "You lost traction on a wet turn and bumped a curb! You got minor scrapes and dented the car bumper."
+      },
+      {
+        "text": "Drive carefully around the neighborhood and return safely",
+        "description": "+18 Happiness, +5 Smarts, -5 Karma",
+        "type": "sneaky",
+        "effects": {
+          "happiness": 18,
+          "smarts": 5,
+          "karma": -5
+        },
+        "result": "You cruised under the city streetlights with radio blaring and slipped the car back undetected."
+      },
+      {
+        "text": "Leave the keys alone and go to bed",
+        "description": "+6 Smarts, +8 Karma",
+        "type": "wise",
+        "effects": {
+          "smarts": 6,
           "karma": 8
         },
-        "result": "The kid is caught off guard. Somehow, the two of you end up eating together."
-      },
-      {
-        "text": "Challenge them to a race",
-        "type": "playful",
-        "effects": {
-          "health": 2,
-          "happiness": 3,
-          "karma": 1
-        },
-        "result": "The argument somehow turns into a ridiculous race across the playground."
-      },
-      {
-        "text": "Start crying dramatically",
-        "type": "funny",
-        "effects": {
-          "happiness": -2,
-          "karma": 1
-        },
-        "result": "Your theatrical meltdown attracts half the cafeteria and three confused teachers."
-      },
-      {
-        "text": "Say nothing and walk away",
-        "type": "passive",
-        "effects": {
-          "happiness": -5,
-          "karma": 0
-        },
-        "result": "You let it go, but the whole thing bothers you for the rest of the day."
-      },
-      {
-        "text": "Trip them as they leave",
-        "type": "mischievous",
-        "effects": {
-          "happiness": 4,
-          "karma": -6
-        },
-        "result": "You stick out your foot. They stumble, drop the lunch, and everyone gasps."
+        "result": "You resisted the temptation and went to sleep, avoiding catastrophic legal and physical danger."
       }
-    ],
-    "title": "SCHOOL TROUBLE",
+    ]
+  },
+  {
+    "id": "crypto_windfall",
+    "min_age": 18,
+    "max_age": 35,
+    "repeatable": true,
+    "weight": 80,
+    "conditions": {},
+    "title": "HIGH-RISK CRYPTO SCHEME",
     "text_variants": [
-      "A student at school steals your lunch.",
-      "A classmate grabs your lunch tray and walks away laughing.",
-      "A kid snatches your sandwich before you can eat it.",
-      "Someone steals your lunch money and tells you to deal with it.",
-      "A bigger student takes your food and starts eating it in front of you."
+      "An eccentric college friend pitches an ultra-volatile algorithmic cryptocurrency called HyperDogecoin.",
+      "An anonymous Telegram trading group promises 10x returns on an explosive microcap crypto presale."
     ],
-    "choice_count": 4
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "YOLO ,500 of your savings into the coin",
+        "description": "50/50 Gamble: +,500 Cash OR -,500 Loss, +10 Happiness",
+        "type": "gambler",
+        "effects": {
+          "money": 5000,
+          "happiness": 12,
+          "smarts": -4
+        },
+        "result": "The coin went parabolic! You took out massive profits before the inevitable rug-pull crash."
+      },
+      {
+        "text": "Invest a cautious  to test the waters",
+        "description": "+ Cash, +6 Happiness, +4 Smarts",
+        "type": "measured",
+        "effects": {
+          "money": 450,
+          "happiness": 6,
+          "smarts": 4
+        },
+        "result": "You cashed out a modest 3x profit and celebrated with a steak dinner."
+      },
+      {
+        "text": "Call it an obvious Ponzi scheme and pass",
+        "description": "+8 Smarts, +4 Karma",
+        "type": "prudent",
+        "effects": {
+          "smarts": 8,
+          "karma": 4
+        },
+        "result": "Three days later, the founders vanished with the liquidity pool. You congratulated yourself on your wisdom."
+      }
+    ]
+  },
+  {
+    "id": "sudden_appendicitis",
+    "min_age": 16,
+    "max_age": 50,
+    "repeatable": false,
+    "weight": 15,
+    "conditions": {},
+    "title": "ACUTE MEDICAL EMERGENCY",
+    "text_variants": [
+      "You are struck by blinding, stabbing agony in your lower-right abdomen. You can barely stand.",
+      "A violent fever and severe internal abdominal spasm hits you without warning in the dead of night."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Rush to the emergency room for surgery",
+        "description": "+15 Health, -$250 Medical Copay, -5 Happiness",
+        "type": "lifesaving",
+        "effects": {
+          "health": 15,
+          "money": -250,
+          "happiness": -5
+        },
+        "result": "Doctors diagnosed an inflamed appendix on the verge of rupture and performed an emergency appendectomy."
+      },
+      {
+        "text": "Take ibuprofen and try to sleep it off",
+        "description": "-15 Health, -$150 Medicine, -12 Happiness",
+        "type": "negligent",
+        "effects": {
+          "health": -15,
+          "money": -150,
+          "happiness": -12
+        },
+        "result": "Your appendix became severely inflamed! You survived after an urgent clinic visit and antibiotics."
+      },
+      {
+        "text": "Call an emergency telehealth doctor for guidance",
+        "description": "+12 Health, -$100 Telehealth Copay, +5 Smarts",
+        "type": "smart",
+        "effects": {
+          "health": 12,
+          "money": -100,
+          "smarts": 5
+        },
+        "result": "The triage nurse urgently dispatched an ambulance, saving you from a fatal septic peritonitis."
+      }
+    ]
+  },
+  {
+    "id": "freak_car_crash",
+    "min_age": 18,
+    "max_age": 65,
+    "repeatable": true,
+    "weight": 12,
+    "conditions": {},
+    "title": "HIGH-SPEED HIGHWAY COLLISION",
+    "text_variants": [
+      "A reckless semi-truck driver runs a red light and barrels directly into your intersection lane!",
+      "An oncoming SUV blows a tire at 80 MPH and swerves directly head-on toward your vehicle!"
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Swerve hard into the concrete divider",
+        "description": "-10 Health (Airbag Saves You), -$350 Repair, -8 Happiness",
+        "type": "survival",
+        "effects": {
+          "health": -10,
+          "money": -350,
+          "happiness": -8
+        },
+        "result": "You smashed into the divider at high speed. Airbags deployed, saving your life despite minor bruises."
+      },
+      {
+        "text": "Slam on brakes and brace for impact",
+        "description": "-15 Health (Whiplash), -$500 Deductible, -12 Happiness",
+        "type": "bracing",
+        "effects": {
+          "health": -15,
+          "money": -500,
+          "happiness": -12
+        },
+        "result": "The vehicles collided. Emergency responders treated your minor whiplash and the car was towed."
+      },
+      {
+        "text": "Accelerate through the gap with lightning reflexes",
+        "description": "-5 Health, +$250 Insurance Bonus, +15 Happiness, +5 Smarts",
+        "type": "heroic",
+        "effects": {
+          "money": 250,
+          "happiness": 15,
+          "smarts": 5,
+          "health": -5
+        },
+        "result": "With incredible reflexes you clipped past the wreckage by inches, suffering only minor neck stiffness!"
+      }
+    ]
+  },
+  {
+    "id": "office_whistleblower",
+    "min_age": 25,
+    "max_age": 55,
+    "repeatable": false,
+    "weight": 70,
+    "conditions": {},
+    "title": "CORPORATE ACCOUNTING FRAUD",
+    "text_variants": [
+      "While reviewing corporate tax filings, you discover evidence of multi-million dollar embezzlement by the executive team.",
+      "Your senior director privately offers you a $5,000 cash bribe to falsify quarterly compliance audits."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Blow the whistle to federal regulators",
+        "description": "+35 Karma, +$5,000 Whistleblower Bounty, -15 Happiness",
+        "type": "justice",
+        "effects": {
+          "karma": 35,
+          "money": 5000,
+          "happiness": -15
+        },
+        "result": "Federal agents raided the office. The corrupt CEO was arrested, and you received a federal bounty award!"
+      },
+      {
+        "text": "Accept the hush money and alter the reports",
+        "description": "+$6,000 Cash, -35 Karma, -10 Smarts",
+        "type": "corrupt",
+        "effects": {
+          "money": 6000,
+          "karma": -35,
+          "smarts": -10
+        },
+        "result": "You took the dirty envelope of cash. You bought luxury goods, but live in fear of a sudden FBI knock."
+      },
+      {
+        "text": "Resign quietly to preserve your record",
+        "description": "+10 Karma, -5 Happiness",
+        "type": "clean",
+        "effects": {
+          "karma": 10,
+          "happiness": -5
+        },
+        "result": "You handed in your two-week notice and walked away with clean hands."
+      }
+    ]
+  },
+  {
+    "id": "lottery_scratch_miracle",
+    "min_age": 21,
+    "max_age": 80,
+    "repeatable": true,
+    "weight": 65,
+    "conditions": {},
+    "title": "GAS STATION SCRATCH TICKET",
+    "text_variants": [
+      "While buying gasoline at a roadside station, you buy a  diamond jackpot scratch-off ticket.",
+      "You purchase a promotional golden ticket from the lottery vending machine."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Scratch the prize numbers carefully with a coin",
+        "description": "JACKPOT: +,000 Cash, +30 Happiness",
+        "type": "lucky",
+        "effects": {
+          "money": 15000,
+          "happiness": 30
+        },
+        "result": "JACKPOT! You scratched three matching gold bars and won a staggering ,000 cash payout on the spot!"
+      },
+      {
+        "text": "Let the cashier scan the barcode directly",
+        "description": "+ Cash, +8 Happiness",
+        "type": "quick",
+        "effects": {
+          "money": 250,
+          "happiness": 8
+        },
+        "result": "The scanner chimed cheerfully: you won a solid  reward!"
+      },
+      {
+        "text": "Gift the unscratched ticket to a stranger",
+        "description": "+25 Karma, +15 Happiness",
+        "type": "altruistic",
+        "effects": {
+          "karma": 25,
+          "happiness": 15
+        },
+        "result": "You handed the ticket to an impoverished stranger. They burst into tears of gratitude."
+      }
+    ]
+  },
+  {
+    "id": "estranged_inheritance",
+    "min_age": 30,
+    "max_age": 85,
+    "repeatable": false,
+    "weight": 60,
+    "conditions": {},
+    "title": "ESTRANGED INHERITANCE",
+    "text_variants": [
+      "A probate attorney contacts you regarding the estate of an eccentric, wealthy distant relative.",
+      "A formal letter from a Zurich estate firm informs you that you are named in a will."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Accept the inheritance payout",
+        "description": "+,500 Cash, +20 Happiness",
+        "type": "windfall",
+        "effects": {
+          "money": 22500,
+          "happiness": 20
+        },
+        "result": "The probate funds cleared into your account: ,500 in liquid assets! Your net worth soared."
+      },
+      {
+        "text": "Donate 50% to a charitable cancer hospice",
+        "description": "+,250 Cash, +40 Karma, +25 Happiness",
+        "type": "noble",
+        "effects": {
+          "money": 11250,
+          "karma": 40,
+          "happiness": 25
+        },
+        "result": "You kept half and donated the rest to charity. Your generosity made regional news headlines."
+      },
+      {
+        "text": "Distribute the entire fortune among poorer family members",
+        "description": "+50 Karma, +30 Happiness",
+        "type": "saintly",
+        "effects": {
+          "karma": 50,
+          "happiness": 30
+        },
+        "result": "You refused a single dollar and lifted three struggling families out of poverty. You are beloved."
+      }
+    ]
+  },
+  {
+    "id": "scam_call_target",
+    "min_age": 55,
+    "max_age": 90,
+    "repeatable": true,
+    "weight": 85,
+    "conditions": {},
+    "title": "AGGRESSIVE PHONE SCAMMER",
+    "text_variants": [
+      "An aggressive caller claiming to be a federal tax agent demands $400 in gift cards or threats of immediate arrest.",
+      "A caller claiming to represent your bank claims your account has been breached and requests your private PIN numbers."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Immediately hang up and report number to fraud agency",
+        "description": "+10 Smarts, +8 Karma, +5 Happiness",
+        "type": "vigilant",
+        "effects": {
+          "smarts": 10,
+          "karma": 8,
+          "happiness": 5
+        },
+        "result": "You saw through the crude scam instantly, hung up, and reported the boiler-room operation to regulators."
+      },
+      {
+        "text": "Panic and transfer $400 to the caller",
+        "description": "-$400 Cash, -15 Happiness, -6 Smarts",
+        "type": "victimized",
+        "effects": {
+          "money": -400,
+          "happiness": -15,
+          "smarts": -6
+        },
+        "result": "You panicked and sent the money. You soon realized it was a total scam and wept in despair."
+      },
+      {
+        "text": "Keep the scammer on the phone for two hours wasting their time",
+        "description": "+16 Happiness, +8 Smarts",
+        "type": "trolling",
+        "effects": {
+          "happiness": 16,
+          "smarts": 8
+        },
+        "result": "You pretended to be a confused billionaire and wasted two hours of the scammer's day until they swore and hung up."
+      }
+    ]
+  },
+  {
+    "id": "heart_attack_warning",
+    "min_age": 58,
+    "max_age": 95,
+    "repeatable": true,
+    "weight": 15,
+    "conditions": {},
+    "title": "SUDDEN CORONARY DISTRESS",
+    "text_variants": [
+      "A vice-like tightness constricts your chest. Pain radiates down your left shoulder as cold sweat breaks out.",
+      "You collapse into an armchair, gasping for breath as your heart beats erratically and violently."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Chew aspirin and dial emergency services (911)",
+        "description": "+15 Health, -$350 Emergency Copay, -5 Happiness",
+        "type": "emergency",
+        "effects": {
+          "health": 15,
+          "money": -350,
+          "happiness": -5
+        },
+        "result": "Paramedics arrived within 6 minutes and administered clot-busting medication, saving your heart from fatal failure."
+      },
+      {
+        "text": "Try to lie down on the sofa and rest",
+        "description": "-18 Health, -18 Happiness (Coronary Strain)",
+        "type": "fatal_risk",
+        "effects": {
+          "health": -18,
+          "happiness": -18
+        },
+        "result": "You suffered acute coronary angina! After severe pain, you stabilized but your heart remains weakened."
+      },
+      {
+        "text": "Ask a family member to drive you to the clinic",
+        "description": "-8 Health, -$150 Copay, +5 Karma",
+        "type": "family",
+        "effects": {
+          "health": -8,
+          "money": -150,
+          "karma": 5
+        },
+        "result": "Your family rushed you to emergency care. Doctors stabilized you just in time with a coronary stent."
+      }
+    ]
+  },
+  {
+    "id": "dangerous_street_dare",
+    "min_age": 13,
+    "max_age": 21,
+    "repeatable": true,
+    "weight": 18,
+    "conditions": {},
+    "title": "DANGEROUS BRIDGE DARE",
+    "text_variants": [
+      "Your peer group gathers on a high railway bridge and dares you to dive 40 feet into the dark river below.",
+      "Friends are filming viral internet stunts and dare you to jump from the roof into a swimming pool."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Take the plunge for viral street glory",
+        "description": "-8 Health, +15 Happiness, +6 Looks, -5 Karma",
+        "type": "daredevil",
+        "effects": {
+          "health": -8,
+          "happiness": 15,
+          "looks": 6,
+          "karma": -5
+        },
+        "result": "You leaped into the air! The water was shocking and stung your skin, but the crowd went wild."
+      },
+      {
+        "text": "Refuse to jump and mock the stupidity of the dare",
+        "description": "+10 Smarts, +5 Karma, -6 Happiness",
+        "type": "sensible",
+        "effects": {
+          "smarts": 10,
+          "karma": 5,
+          "happiness": -6
+        },
+        "result": "Your friends called you a coward, but another teenager jumped and broke both ankles. You smiled knowingly."
+      },
+      {
+        "text": "Dare someone else to go first instead",
+        "description": "+5 Smarts, -5 Karma",
+        "type": "deflecting",
+        "effects": {
+          "smarts": 5,
+          "karma": -5
+        },
+        "result": "You passed the dare along and watched the ensuing chaos safely from the riverbank."
+      }
+    ]
   },
   {
     "id": "teen_party",
-    "min_age": 13,
-    "max_age": 18,
+    "min_age": 14,
+    "max_age": 19,
     "repeatable": true,
     "weight": 80,
-    "conditions": {
-      "min_happiness": 20
-    },
-    "choices": [
-      {
-        "text": "Go and stay until the end",
-        "type": "social",
-        "effects": {
-          "happiness": 8,
-          "health": -2,
-          "karma": 0
-        },
-        "result": "You stay out late, meet new people, and stumble home exhausted but happy."
-      },
-      {
-        "text": "Stay home and study",
-        "type": "responsible",
-        "effects": {
-          "smarts": 3,
-          "happiness": -2,
-          "karma": 1
-        },
-        "result": "You spend the evening studying while your phone fills with chaotic party videos."
-      },
-      {
-        "text": "Sneak out without telling anyone",
-        "type": "reckless",
-        "effects": {
-          "happiness": 6,
-          "karma": -5
-        },
-        "result": "You sneak out successfully and spend the entire night hoping nobody notices."
-      },
-      {
-        "text": "Go for one hour, then leave",
-        "type": "balanced",
-        "effects": {
-          "happiness": 4,
-          "smarts": 1,
-          "karma": 1
-        },
-        "result": "You show up, have some fun, and leave before things get too wild."
-      },
-      {
-        "text": "Tell your parents first",
-        "type": "honest",
-        "effects": {
-          "happiness": 2,
-          "karma": 4
-        },
-        "result": "Your parents appreciate your honesty and reluctantly let you go."
-      },
-      {
-        "text": "Spread a fake cancellation rumor",
-        "type": "mischievous",
-        "effects": {
-          "happiness": 3,
-          "karma": -9
-        },
-        "result": "Half the guest list believes you. The host is furious when they find out."
-      },
-      {
-        "text": "Bring snacks for everyone",
-        "type": "generous",
-        "effects": {
-          "happiness": 5,
-          "karma": 7,
-          "money": -10
-        },
-        "result": "You arrive carrying snacks and instantly become one of the most popular people there."
-      }
-    ],
-    "title": "PARTY INVITE",
+    "conditions": {},
+    "title": "UNRULY HOUSE PARTY",
     "text_variants": [
-      "A friend invites you to a party this weekend.",
-      "You hear about a big party happening while someone's parents are away.",
-      "A classmate messages you an address and says, \"Be there tonight.\"",
-      "Your friends are planning a party and insist that you come.",
-      "Someone you barely know invites you to a crowded house party."
+      "You are invited to an unchaperoned mansion party while the owner's parents are out of town.",
+      "A massive high-school rave party is in full swing at a warehouse on the outskirts of town."
     ],
-    "choice_count": 4
-  },
-  {
-    "id": "gifted_student",
-    "min_age": 10,
-    "max_age": 17,
-    "repeatable": false,
-    "weight": 30,
-    "conditions": {
-      "min_smarts": 70
-    },
+    "choice_count": 4,
     "choices": [
       {
-        "text": "Join the advanced class",
-        "type": "ambitious",
+        "text": "Drink heavily and dance on the furniture",
+        "description": "-15 Health, +20 Happiness, -8 Smarts, -10 Karma",
+        "type": "wild",
         "effects": {
-          "smarts": 5,
-          "happiness": -1,
-          "karma": 0
+          "health": -15,
+          "happiness": 20,
+          "smarts": -8,
+          "karma": -10
         },
-        "result": "You move into advanced classes and suddenly have much harder homework."
+        "result": "You partied like a rockstar, broke a chandelier, and woke up the next afternoon with a brutal hangover."
       },
       {
-        "text": "Stay with your friends",
-        "type": "social",
+        "text": "Socialize responsibly and talk to your crush",
+        "description": "+15 Happiness, +8 Looks, +5 Karma",
+        "type": "romantic",
         "effects": {
-          "happiness": 3,
-          "smarts": -1,
-          "karma": 0
-        },
-        "result": "You stay with your current classmates and feel relieved."
-      },
-      {
-        "text": "Ask for even harder work",
-        "type": "ambitious",
-        "effects": {
-          "smarts": 7,
-          "happiness": -3,
-          "karma": 0
-        },
-        "result": "Your teacher seems delighted. Your free time immediately disappears."
-      },
-      {
-        "text": "Help struggling classmates",
-        "type": "kind",
-        "effects": {
-          "smarts": 3,
-          "happiness": 2,
-          "karma": 8
-        },
-        "result": "You begin tutoring classmates and discover that teaching helps you learn too."
-      },
-      {
-        "text": "Brag about it constantly",
-        "type": "arrogant",
-        "effects": {
-          "happiness": 2,
-          "karma": -6
-        },
-        "result": "You make sure everyone knows how smart you are. People quickly get tired of hearing about it."
-      },
-      {
-        "text": "Pretend the results were a mistake",
-        "type": "shy",
-        "effects": {
-          "happiness": 1,
-          "smarts": -1,
-          "karma": 0
-        },
-        "result": "You downplay the whole thing and avoid the extra attention."
-      },
-      {
-        "text": "Turn everything into a competition",
-        "type": "competitive",
-        "effects": {
-          "smarts": 4,
-          "happiness": 1,
-          "karma": -2
-        },
-        "result": "Every assignment becomes a contest, whether your classmates want one or not."
-      }
-    ],
-    "title": "GIFTED?",
-    "text_variants": [
-      "A teacher tells your parents that you may be academically gifted.",
-      "Your school recommends moving you into an advanced academic program.",
-      "A teacher pulls you aside and says your test scores are unusually high.",
-      "The principal tells your family that you qualify for accelerated classes."
-    ],
-    "choice_count": 4
-  },
-  {
-    "id": "academic_scholarship",
-    "min_age": 16,
-    "max_age": 18,
-    "repeatable": false,
-    "weight": 40,
-    "conditions": {
-      "required_event": "gifted_student",
-      "min_smarts": 75
-    },
-    "choices": [
-      {
-        "text": "Accept immediately",
-        "type": "ambitious",
-        "effects": {
-          "happiness": 6,
-          "smarts": 2,
-          "karma": 0
-        },
-        "result": "You accept the scholarship and begin planning for university."
-      },
-      {
-        "text": "Decline the offer",
-        "type": "independent",
-        "effects": {
-          "happiness": -2,
-          "karma": 0
-        },
-        "result": "You turn down the scholarship and decide to find another path."
-      },
-      {
-        "text": "Ask if it can help someone else",
-        "type": "generous",
-        "effects": {
-          "happiness": 2,
-          "karma": 10
-        },
-        "result": "You ask whether the money can go to another student if you choose a different path."
-      },
-      {
-        "text": "Negotiate for more aid",
-        "type": "strategic",
-        "effects": {
-          "smarts": 2,
-          "money": 150,
-          "karma": 0
-        },
-        "result": "You negotiate confidently and manage to secure a better financial package."
-      },
-      {
-        "text": "Brag about the offer online",
-        "type": "arrogant",
-        "effects": {
-          "happiness": 3,
-          "karma": -5
-        },
-        "result": "You post the scholarship everywhere. Congratulations pour in, along with a few eye rolls."
-      },
-      {
-        "text": "Hide the letter",
-        "type": "fearful",
-        "effects": {
-          "happiness": -4,
-          "karma": -1
-        },
-        "result": "You hide the letter in a drawer and spend days worrying about what to do."
-      },
-      {
-        "text": "Celebrate with your family",
-        "type": "generous",
-        "effects": {
-          "happiness": 7,
-          "money": -30,
+          "happiness": 15,
+          "looks": 8,
           "karma": 5
         },
-        "result": "You celebrate with your family and turn the achievement into a memorable night."
+        "result": "You spent the evening having a deep, magical conversation with your crush out on the balcony."
+      },
+      {
+        "text": "Be the designated driver for your friends",
+        "description": "+25 Karma, +10 Smarts, +8 Happiness",
+        "type": "responsible",
+        "effects": {
+          "karma": 25,
+          "smarts": 10,
+          "happiness": 8
+        },
+        "result": "You drove four drunk friends home safely. Their parents sent you heartfelt thanks the next morning."
+      },
+      {
+        "text": "Steal liquor bottles from the liquor cabinet",
+        "description": "+ Cash, -25 Karma, -5 Happiness",
+        "type": "criminal",
+        "effects": {
+          "money": 120,
+          "karma": -25,
+          "happiness": -5
+        },
+        "result": "You swiped three expensive bottles of Scotch and slipped into the shadows."
       }
-    ],
-    "title": "SCHOLARSHIP OFFER",
+    ]
+  },
+  {
+    "id": "corporate_downsizing",
+    "min_age": 25,
+    "max_age": 60,
+    "repeatable": true,
+    "weight": 65,
+    "conditions": {},
+    "title": "SUDDEN MASS LAYOFF",
     "text_variants": [
-      "You are offered an academic scholarship.",
-      "A university sends you a scholarship offer based on your grades.",
-      "Your school counselor tells you that you have qualified for a major scholarship.",
-      "An envelope arrives with an offer to help pay for your university education."
+      "Due to falling revenue and a tech recession, your company announces an emergency 20% workforce layoff.",
+      "Management calls an all-hands meeting to announce corporate restructuring and branch closures."
     ],
-    "choice_count": 4
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Accept the severance package and hunt for new jobs",
+        "description": "+,500 Severance Cash, -15 Happiness, +5 Smarts",
+        "type": "severance",
+        "effects": {
+          "money": 3500,
+          "happiness": -15,
+          "smarts": 5
+        },
+        "result": "You signed your exit paperwork, pocketed your ,500 severance check, and began sending out resumes."
+      },
+      {
+        "text": "Plead your case to the Vice President",
+        "description": "+10 Smarts, -10 Happiness (If retained)",
+        "type": "diplomatic",
+        "effects": {
+          "smarts": 10,
+          "happiness": -10
+        },
+        "result": "Your articulate pitch convinced leadership of your indispensability, saving your desk from the chopping block."
+      },
+      {
+        "text": "Trash the breakroom in a fit of rage",
+        "description": "-30 Karma, -$800 Damages, +8 Happiness",
+        "type": "vengeful",
+        "effects": {
+          "karma": -30,
+          "money": -800,
+          "happiness": 8
+        },
+        "result": "You kicked over water coolers and trashed the office breakroom. Security escorted you off premises."
+      }
+    ]
+  },
+  {
+    "id": "slip_and_fall",
+    "min_age": 62,
+    "max_age": 99,
+    "repeatable": true,
+    "weight": 18,
+    "conditions": {},
+    "title": "SEVERE STAIRCASE FALL",
+    "text_variants": [
+      "While carrying laundry down the stairs, you lose your footing on the top step.",
+      "A patch of black ice on the walkway causes both of your feet to fly out from under you."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Undergo hip replacement surgery and physical therapy",
+        "description": "+15 Health, -$500 Medical Expenses, -8 Happiness",
+        "type": "surgery",
+        "effects": {
+          "health": 15,
+          "money": -500,
+          "happiness": -8
+        },
+        "result": "Orthopedic surgeons repaired your injured hip. Physical therapy restored your mobility."
+      },
+      {
+        "text": "Refuse surgery and rely on heavy painkillers",
+        "description": "-12 Health, -12 Happiness, -$100 Medication",
+        "type": "stubborn",
+        "effects": {
+          "health": -12,
+          "happiness": -12,
+          "money": -100
+        },
+        "result": "The bruise and strain took weeks to heal, leaving you with mild stiffness."
+      },
+      {
+        "text": "Move into an assisted living senior community",
+        "description": "+10 Health, -$800 Facility Deposit, +12 Happiness",
+        "type": "assisted",
+        "effects": {
+          "health": 10,
+          "money": -800,
+          "happiness": 12
+        },
+        "result": "You moved into a comfortable single-story suite with assisted nursing and social activities."
+      }
+    ]
   }
 ]

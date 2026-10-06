@@ -1,0 +1,460 @@
+{
+  "categories": [
+    {
+      "id": "fast_food",
+      "name": "Fast Food & Restaurants",
+      "icon": "🍔",
+      "description": "Hourly food service and kitchen roles"
+    },
+    {
+      "id": "retail",
+      "name": "Retail & Customer Service",
+      "icon": "🛍️",
+      "description": "Storefront, stocking, and sales positions"
+    },
+    {
+      "id": "it_tech",
+      "name": "Information Technology",
+      "icon": "💻",
+      "description": "Software, systems, networks, and technical services"
+    },
+    {
+      "id": "underworld_crime",
+      "name": "Underworld & Criminal Enterprise",
+      "icon": "🕶️",
+      "description": "Illicit contracts, street hustles, and syndicate operations"
+    },
+    {
+      "id": "trades_craft",
+      "name": "Trades & Skilled Labor",
+      "icon": "🔧",
+      "description": "Hands-on technical and mechanical craftsmanship"
+    },
+    {
+      "id": "entry_odd_jobs",
+      "name": "Youth & Odd Jobs",
+      "icon": "🚲",
+      "description": "Neighborhood tasks for teens and young beginners"
+    },
+    {
+      "id": "medical_healthcare",
+      "name": "Medical & Healthcare",
+      "icon": "🩺",
+      "description": "Clinical practice, medical diagnosis, surgery, and patient healthcare"
+    }
+  ],
+  "jobs": [
+    {
+      "id": "newspaper_delivery",
+      "title": "Newspaper Delivery Courier",
+      "category": "entry_odd_jobs",
+      "workplace": "Daily Chronicle",
+      "salary": 3500,
+      "description": "Wake up early and toss newspapers onto neighborhood porches from your bicycle.",
+      "min_age": 12,
+      "requirements": {
+        "min_health": 40
+      }
+    },
+    {
+      "id": "lawn_mower",
+      "title": "Neighborhood Lawn Mower",
+      "category": "entry_odd_jobs",
+      "workplace": "Self-Employed",
+      "salary": 4800,
+      "description": "Mow lawns and trim hedges for neighbors on sunny weekends.",
+      "min_age": 13,
+      "requirements": {
+        "min_health": 45
+      }
+    },
+    {
+      "id": "babysitter",
+      "title": "Part-Time Babysitter",
+      "category": "entry_odd_jobs",
+      "workplace": "Local Families",
+      "salary": 5200,
+      "description": "Look after neighborhood kids, prepare snacks, and make sure bedtime rules are followed.",
+      "min_age": 13,
+      "requirements": {
+        "min_smarts": 40,
+        "min_happiness": 40
+      }
+    },
+    {
+      "id": "ff_dishwasher",
+      "title": "Dishwasher",
+      "category": "fast_food",
+      "workplace": "Greasy Spoon Diner",
+      "salary": 16500,
+      "description": "Scrub pots, pans, and trays in a steamy back room during the lunch rush.",
+      "min_age": 15,
+      "requirements": {
+        "min_health": 35
+      }
+    },
+    {
+      "id": "ff_crew_member",
+      "title": "Fast Food Crew Member",
+      "category": "fast_food",
+      "workplace": "Burger Palace",
+      "salary": 18000,
+      "description": "Take customer orders at the register, pack meal combos, and keep the counter clean.",
+      "min_age": 15,
+      "requirements": {
+        "min_happiness": 30
+      }
+    },
+    {
+      "id": "ff_fry_cook",
+      "title": "Line & Fry Cook",
+      "category": "fast_food",
+      "workplace": "Cluckin' Crispy",
+      "salary": 21000,
+      "description": "Operate the deep fryers and sizzling grill while dodging hot oil splatters.",
+      "min_age": 16,
+      "requirements": {
+        "min_health": 45
+      }
+    },
+    {
+      "id": "ff_barista",
+      "title": "Coffee Barista",
+      "category": "fast_food",
+      "workplace": "Bean Scene Roasters",
+      "salary": 22500,
+      "description": "Steam milk, pull espresso shots, and memorize ridiculously complex customized drink orders.",
+      "min_age": 16,
+      "requirements": {
+        "min_looks": 40
+      }
+    },
+    {
+      "id": "ff_shift_supervisor",
+      "title": "Fast Food Shift Supervisor",
+      "category": "fast_food",
+      "workplace": "Burger Palace",
+      "salary": 32000,
+      "description": "Manage break schedules, count the cash registers, and handle upset customers.",
+      "min_age": 18,
+      "requirements": {
+        "min_smarts": 50,
+        "min_health": 50,
+        "min_grades": 55
+      }
+    },
+    {
+      "id": "ret_stocker",
+      "title": "Night Shift Stocker",
+      "category": "retail",
+      "workplace": "MegaMart Supercenter",
+      "salary": 20000,
+      "description": "Unload pallets and stock canned goods onto store shelves while the city sleeps.",
+      "min_age": 16,
+      "requirements": {
+        "min_health": 50
+      }
+    },
+    {
+      "id": "ret_cashier",
+      "title": "Retail Cashier",
+      "category": "retail",
+      "workplace": "Super Saver Mart",
+      "salary": 21500,
+      "description": "Scan barcodes, bag groceries, and manage long queues with a polite smile.",
+      "min_age": 16,
+      "requirements": {
+        "min_happiness": 35
+      }
+    },
+    {
+      "id": "ret_sales_associate",
+      "title": "Clothing Sales Associate",
+      "category": "retail",
+      "workplace": "Urban Threads",
+      "salary": 24000,
+      "description": "Fold garments, arrange mannequin displays, and help shoppers find the right fit.",
+      "min_age": 17,
+      "requirements": {
+        "min_looks": 50,
+        "min_grades": 55
+      }
+    },
+    {
+      "id": "ret_electronics_specialist",
+      "title": "Electronics Sales Specialist",
+      "category": "retail",
+      "workplace": "Circuit World",
+      "salary": 28000,
+      "description": "Explain TV resolutions, warranty packages, and computer specs to everyday shoppers.",
+      "min_age": 18,
+      "requirements": {
+        "min_smarts": 55,
+        "min_grades": 60
+      }
+    },
+    {
+      "id": "ret_store_manager",
+      "title": "Retail Store Manager",
+      "category": "retail",
+      "workplace": "Urban Threads",
+      "salary": 52000,
+      "description": "Oversee store inventory, audit daily sales figures, and conduct staff hiring interviews.",
+      "min_age": 21,
+      "requirements": {
+        "min_smarts": 65,
+        "min_happiness": 40,
+        "min_grades": 65
+      }
+    },
+    {
+      "id": "it_qa_tester",
+      "title": "Junior QA Software Tester",
+      "category": "it_tech",
+      "workplace": "PixelCraft Studios",
+      "salary": 42000,
+      "description": "Reproduce glitches, log bug tickets, and push test builds through rigorous test plans.",
+      "min_age": 18,
+      "requirements": {
+        "min_smarts": 55,
+        "min_grades": 60,
+        "min_education": "High School Graduate"
+      }
+    },
+    {
+      "id": "it_helpdesk",
+      "title": "IT Helpdesk Specialist",
+      "category": "it_tech",
+      "workplace": "NovaCorp Global",
+      "salary": 38000,
+      "description": "Troubleshoot password resets, VPN disconnects, and mysterious printer jams all day.",
+      "min_age": 18,
+      "requirements": {
+        "min_smarts": 60,
+        "min_grades": 60,
+        "min_education": "High School Graduate"
+      }
+    },
+    {
+      "id": "it_web_developer",
+      "title": "Junior Web Developer",
+      "category": "it_tech",
+      "workplace": "Apex Digital Labs",
+      "salary": 65000,
+      "description": "Build interactive user interfaces, fix frontend responsive bugs, and consume REST APIs.",
+      "min_age": 19,
+      "requirements": {
+        "min_smarts": 65,
+        "min_grades": 72,
+        "min_education": "High School Graduate"
+      }
+    },
+    {
+      "id": "it_software_engineer",
+      "title": "Full-Stack Software Engineer",
+      "category": "it_tech",
+      "workplace": "Silicon Horizon Inc.",
+      "salary": 95000,
+      "description": "Architect distributed web services, optimize databases, and review pull requests.",
+      "min_age": 21,
+      "requirements": {
+        "min_smarts": 75,
+        "min_grades": 80,
+        "min_education": "University Graduate"
+      }
+    },
+    {
+      "id": "it_cybersecurity",
+      "title": "Cybersecurity Analyst",
+      "category": "it_tech",
+      "workplace": "Aegis Cyber Defense",
+      "salary": 110000,
+      "description": "Monitor corporate intrusion logs, patch server zero-days, and run penetration tests.",
+      "min_age": 22,
+      "requirements": {
+        "min_smarts": 80,
+        "min_grades": 82,
+        "min_education": "University Graduate"
+      }
+    },
+    {
+      "id": "it_cloud_architect",
+      "title": "Principal Cloud Architect",
+      "category": "it_tech",
+      "workplace": "Silicon Horizon Inc.",
+      "salary": 145000,
+      "description": "Design high-availability cloud infrastructure handling millions of concurrent requests.",
+      "min_age": 25,
+      "requirements": {
+        "min_smarts": 88,
+        "min_grades": 85,
+        "min_education": "University Graduate"
+      }
+    },
+    {
+      "id": "crime_lookout",
+      "title": "Corner Lookout",
+      "category": "underworld_crime",
+      "workplace": "Street Syndicate",
+      "salary": 12000,
+      "description": "Stand on the street corner and whistle if police patrol cars turn down the avenue.",
+      "min_age": 14,
+      "requirements": {
+        "max_karma": 20
+      }
+    },
+    {
+      "id": "crime_pickpocket",
+      "title": "Subway Pickpocket",
+      "category": "underworld_crime",
+      "workplace": "Downtown Transit District",
+      "salary": 24000,
+      "description": "Slip through crowded train stations lifting wallets and gold chains unnoticed.",
+      "min_age": 16,
+      "requirements": {
+        "min_smarts": 45,
+        "max_karma": 0
+      }
+    },
+    {
+      "id": "crime_smuggler",
+      "title": "Contraband Courier",
+      "category": "underworld_crime",
+      "workplace": "Harbor Import Syndicate",
+      "salary": 55000,
+      "description": "Move discreet duffel bags across checkpoints without raising suspicion.",
+      "min_age": 18,
+      "requirements": {
+        "min_health": 55,
+        "max_karma": -10
+      }
+    },
+    {
+      "id": "crime_hacker",
+      "title": "Underground Cyber Hacker",
+      "category": "underworld_crime",
+      "workplace": "DarkNet Network",
+      "salary": 85000,
+      "description": "Infiltrate private servers, skim encrypted wallets, and sell confidential databases.",
+      "min_age": 18,
+      "requirements": {
+        "min_smarts": 75,
+        "max_karma": -15
+      }
+    },
+    {
+      "id": "crime_enforcer",
+      "title": "Syndicate Enforcer",
+      "category": "underworld_crime",
+      "workplace": "Viper Cartel",
+      "salary": 90000,
+      "description": "Collect debts from delinquent borrowers and maintain discipline across territory.",
+      "min_age": 20,
+      "requirements": {
+        "min_health": 75,
+        "max_karma": -30
+      }
+    },
+    {
+      "id": "crime_underboss",
+      "title": "Underworld Syndicate Underboss",
+      "category": "underworld_crime",
+      "workplace": "The Black Diamond Outfit",
+      "salary": 180000,
+      "description": "Run money-laundering operations, command lieutenants, and evade federal investigations.",
+      "min_age": 26,
+      "requirements": {
+        "min_smarts": 80,
+        "min_health": 60,
+        "max_karma": -45
+      }
+    },
+    {
+      "id": "trade_mechanic",
+      "title": "Apprentice Auto Mechanic",
+      "category": "trades_craft",
+      "workplace": "Redline Motors Garage",
+      "salary": 38000,
+      "description": "Change motor oil, rotate worn tires, and learn how to rebuild classic car transmissions.",
+      "min_age": 17,
+      "requirements": {
+        "min_health": 55,
+        "min_grades": 50
+      }
+    },
+    {
+      "id": "trade_electrician",
+      "title": "Licensed Journeyman Electrician",
+      "category": "trades_craft",
+      "workplace": "VoltMasters Electrical",
+      "salary": 58000,
+      "description": "Run high-voltage conduit, wire residential breaker panels, and diagnose short circuits.",
+      "min_age": 19,
+      "requirements": {
+        "min_smarts": 65,
+        "min_health": 50,
+        "min_grades": 65
+      }
+    },
+    {
+      "id": "med_nurse",
+      "title": "Registered Clinical Nurse",
+      "category": "medical_healthcare",
+      "workplace": "City Central Hospital",
+      "salary": 68000,
+      "description": "Administer treatments, monitor vitals, and assist hospital doctors in emergency care.",
+      "min_age": 21,
+      "requirements": {
+        "min_smarts": 65,
+        "min_grades": 75,
+        "min_education": "University Graduate",
+        "min_health": 50
+      }
+    },
+    {
+      "id": "med_resident",
+      "title": "Resident Physician Doctor",
+      "category": "medical_healthcare",
+      "workplace": "Metropolitan Medical Center",
+      "salary": 115000,
+      "description": "Conduct patient rounds, prescribe medications, and complete clinical hospital residency.",
+      "min_age": 24,
+      "requirements": {
+        "min_smarts": 78,
+        "min_grades": 82,
+        "min_education": "University Graduate",
+        "min_health": 50
+      }
+    },
+    {
+      "id": "med_doctor",
+      "title": "Attending Medical Doctor",
+      "category": "medical_healthcare",
+      "workplace": "Apex General Hospital",
+      "salary": 220000,
+      "description": "Diagnose complex medical conditions, formulate care plans, and lead clinical teams.",
+      "min_age": 27,
+      "requirements": {
+        "min_smarts": 85,
+        "min_grades": 88,
+        "min_education": "University Graduate",
+        "min_health": 50
+      }
+    },
+    {
+      "id": "med_surgeon",
+      "title": "Chief Surgeon Doctor",
+      "category": "medical_healthcare",
+      "workplace": "National Trauma Institute",
+      "salary": 350000,
+      "description": "Perform high-stakes surgical procedures, trauma interventions, and life-saving operations.",
+      "min_age": 31,
+      "requirements": {
+        "min_smarts": 90,
+        "min_grades": 92,
+        "min_education": "University Graduate",
+        "min_health": 60
+      }
+    }
+  ]
+}

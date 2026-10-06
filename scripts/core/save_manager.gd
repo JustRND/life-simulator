@@ -7,13 +7,48 @@ func save_game() -> void:
 	var save_data := {
 		"first_name": PlayerData.first_name,
 		"birthplace": PlayerData.birthplace,
+		"gender": PlayerData.gender,
+		"portrait_variant": PlayerData.portrait_variant,
 		"has_started_game": PlayerData.has_started_game,
+		"birth_story": PlayerData.birth_story,
+		"birth_month": PlayerData.birth_month,
+		"birth_day": PlayerData.birth_day,
+		"zodiac": PlayerData.zodiac,
+		"mother_name": PlayerData.mother_name,
+		"mother_job": PlayerData.mother_job,
+		"mother_base_age": PlayerData.mother_base_age,
+		"mother_relationship": PlayerData.mother_relationship,
+		"mother_alive": PlayerData.mother_alive,
+		"mother_health": PlayerData.mother_health,
+		"father_name": PlayerData.father_name,
+		"father_job": PlayerData.father_job,
+		"father_base_age": PlayerData.father_base_age,
+		"father_relationship": PlayerData.father_relationship,
+		"father_alive": PlayerData.father_alive,
+		"father_health": PlayerData.father_health,
 		"age": PlayerData.age,
 		"health": PlayerData.health,
 		"happiness": PlayerData.happiness,
 		"smarts": PlayerData.smarts,
 		"looks": PlayerData.looks,
 		"money": PlayerData.money,
+		"bank_savings": PlayerData.bank_savings,
+		"debt": PlayerData.debt,
+		"loan_balance": PlayerData.loan_balance,
+		"loan_interest_rate": PlayerData.loan_interest_rate,
+		"education_level": PlayerData.education_level,
+		"grades": PlayerData.grades,
+		"has_scholarship": PlayerData.has_scholarship,
+		"university_years": PlayerData.university_years,
+		"job_id": PlayerData.job_id,
+		"job_title": PlayerData.job_title,
+		"job_company": PlayerData.job_company,
+		"job_salary": PlayerData.job_salary,
+		"illnesses": PlayerData.illnesses,
+		"is_dead": PlayerData.is_dead,
+		"cause_of_death": PlayerData.cause_of_death,
+		"is_in_prison": PlayerData.is_in_prison,
+		"prison_sentence_years": PlayerData.prison_sentence_years,
 		"event_history": PlayerData.event_history,
 		"life_log": PlayerData.life_log,
 		"karma": PlayerData.karma
@@ -58,7 +93,28 @@ func load_game() -> bool:
 
 	PlayerData.first_name = str(data.get("first_name", ""))
 	PlayerData.birthplace = str(data.get("birthplace", ""))
+	PlayerData.gender = str(data.get("gender", "MALE"))
+	PlayerData.portrait_variant = int(data.get("portrait_variant", absi(PlayerData.first_name.hash()) % 2))
 	PlayerData.has_started_game = bool(data.get("has_started_game", false))
+
+	PlayerData.birth_story = str(data.get("birth_story", ""))
+	PlayerData.birth_month = str(data.get("birth_month", "January"))
+	PlayerData.birth_day = int(data.get("birth_day", 1))
+	PlayerData.zodiac = str(data.get("zodiac", "Capricorn"))
+
+	PlayerData.mother_name = str(data.get("mother_name", ""))
+	PlayerData.mother_job = str(data.get("mother_job", ""))
+	PlayerData.mother_base_age = int(data.get("mother_base_age", 35))
+	PlayerData.mother_relationship = int(data.get("mother_relationship", 80))
+	PlayerData.mother_alive = bool(data.get("mother_alive", true))
+	PlayerData.mother_health = int(data.get("mother_health", 80))
+
+	PlayerData.father_name = str(data.get("father_name", ""))
+	PlayerData.father_job = str(data.get("father_job", ""))
+	PlayerData.father_base_age = int(data.get("father_base_age", 37))
+	PlayerData.father_relationship = int(data.get("father_relationship", 80))
+	PlayerData.father_alive = bool(data.get("father_alive", true))
+	PlayerData.father_health = int(data.get("father_health", 80))
 
 	PlayerData.age = int(data.get("age", 0))
 	PlayerData.health = int(data.get("health", 80))
@@ -66,7 +122,27 @@ func load_game() -> bool:
 	PlayerData.smarts = int(data.get("smarts", 60))
 	PlayerData.looks = int(data.get("looks", 65))
 	PlayerData.money = int(data.get("money", 0))
+	PlayerData.bank_savings = int(data.get("bank_savings", 0))
+	PlayerData.debt = int(data.get("debt", 0))
+	PlayerData.loan_balance = int(data.get("loan_balance", 0))
+	PlayerData.loan_interest_rate = float(data.get("loan_interest_rate", 0.08))
+	PlayerData.education_level = str(data.get("education_level", "None"))
+	PlayerData.grades = int(data.get("grades", 75))
+	PlayerData.has_scholarship = bool(data.get("has_scholarship", false))
+	PlayerData.university_years = int(data.get("university_years", 0))
 	PlayerData.karma = int(data.get("karma", 0))
+
+	PlayerData.job_id = str(data.get("job_id", ""))
+	PlayerData.job_title = str(data.get("job_title", ""))
+	PlayerData.job_company = str(data.get("job_company", ""))
+	PlayerData.job_salary = int(data.get("job_salary", 0))
+
+	PlayerData.illnesses = data.get("illnesses", [])
+	PlayerData.is_dead = bool(data.get("is_dead", false))
+	PlayerData.cause_of_death = str(data.get("cause_of_death", ""))
+
+	PlayerData.is_in_prison = bool(data.get("is_in_prison", false))
+	PlayerData.prison_sentence_years = int(data.get("prison_sentence_years", 0))
 
 	PlayerData.event_history = data.get("event_history", [])
 	PlayerData.life_log = data.get("life_log", [])

@@ -1,532 +1,1862 @@
 [gd_scene format=3 uid="uid://dtpvigdquw6gc"]
 
-[ext_resource type="Script" uid="uid://mg2mrocjo8a" path="res://scenes/main/main_screen.gd" id="1_0qv31"]
+[ext_resource type="Script" uid="uid://mg2mrocjo8a" path="res://scenes/main/main_screen.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://byvoxh4vu2ctd" path="res://assets/ui/ingame_icon.png" id="2_icon"]
+[ext_resource type="Texture2D" uid="uid://bv7l8jf2r62rn" path="res://assets/ui/ingame_background.png" id="3_bg"]
+[ext_resource type="Texture2D" uid="uid://oujxvj38q5k0" path="res://assets/ui/loading_icon.png" id="4_loading"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0ard6"]
-content_margin_left = 0.0
-content_margin_top = 0.0
-content_margin_right = 0.0
-content_margin_bottom = 0.0
-bg_color = Color(0.101960786, 0.12156863, 0.1882353, 1)
-border_width_left = 1
-border_width_top = 1
+[sub_resource type="SystemFont" id="pixel_font"]
+font_names = PackedStringArray("Consolas", "Courier New", "monospace")
+font_weight = 700
+subpixel_positioning = 0
+
+[sub_resource type="Theme" id="pixel_theme"]
+default_font = SubResource("pixel_font")
+default_font_size = 24
+
+[sub_resource type="StyleBoxFlat" id="top"]
+bg_color = Color(0.0745, 0.0588, 0.1647, 1)
+border_width_bottom = 6
+border_color = Color(0.396, 0.902, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="profile"]
+bg_color = Color(0.08, 0.11, 0.22, 0.95)
+border_width_bottom = 6
+border_color = Color(0.396, 0.902, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="feed"]
+bg_color = Color(0.06, 0.09, 0.18, 0.94)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.22, 0.65, 0.95, 0.95)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0.01, 0.03, 0.08, 0.7)
+shadow_size = 12
+
+[sub_resource type="StyleBoxFlat" id="stats_panel"]
+bg_color = Color(0.06, 0.09, 0.18, 0.85)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.18, 0.42, 0.65, 0.8)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0.02, 0.05, 0.12, 0.5)
+shadow_size = 8
+
+[sub_resource type="StyleBoxFlat" id="track"]
+bg_color = Color(0.14, 0.18, 0.3, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.24, 0.4, 0.65, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="green"]
+bg_color = Color(0.255, 0.839, 0.424, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="red"]
+bg_color = Color(1, 0.267, 0.455, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="action_bar"]
+bg_color = Color(0.06, 0.08, 0.16, 0.98)
+border_width_top = 4
+border_color = Color(0.22, 0.65, 0.95, 0.95)
+
+[sub_resource type="StyleBoxFlat" id="action_button"]
+bg_color = Color(0, 0, 0, 0)
 border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.1882353, 0.21568628, 0.29411766, 1)
-corner_radius_top_left = 24
-corner_radius_top_right = 24
-corner_radius_bottom_right = 24
-corner_radius_bottom_left = 24
-corner_detail = 5
+border_color = Color(0.18, 0.28, 0.45, 0.3)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_npero"]
-bg_color = Color(0.16470589, 0.1882353, 0.25882354, 1)
-corner_detail = 10
+[sub_resource type="StyleBoxFlat" id="age"]
+bg_color = Color(1, 0.722, 0.176, 1)
+border_width_left = 9
+border_width_top = 9
+border_width_right = 9
+border_width_bottom = 9
+border_color = Color(0.157, 0.106, 0.306, 1)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+shadow_color = Color(0.157, 0.106, 0.306, 0.7)
+shadow_size = 10
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0qv31"]
-bg_color = Color(0.71702963, 0, 0.09662952, 1)
-corner_detail = 10
+[sub_resource type="StyleBoxFlat" id="panel_paper"]
+bg_color = Color(0.055, 0.085, 0.17, 0.98)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ggbdh"]
-bg_color = Color(0.16470589, 0.1882353, 0.25882354, 1)
-corner_detail = 10
+[sub_resource type="StyleBoxFlat" id="card"]
+bg_color = Color(0.09, 0.13, 0.24, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.18, 0.38, 0.62, 0.85)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0.01, 0.02, 0.05, 0.5)
+shadow_size = 6
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bku2l"]
-bg_color = Color(1, 0.81960785, 0.4, 1)
+[sub_resource type="StyleBoxFlat" id="card_button_normal"]
+bg_color = Color(0.12, 0.18, 0.32, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.24, 0.5, 0.8, 0.85)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0.01, 0.02, 0.05, 0.4)
+shadow_size = 6
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_omlv2"]
-bg_color = Color(0.16470589, 0.1882353, 0.25882354, 1)
-corner_detail = 10
+[sub_resource type="StyleBoxFlat" id="card_button_pressed"]
+bg_color = Color(0.08, 0.14, 0.25, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.255, 0.839, 0.424, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_d7gd6"]
-bg_color = Color(0.3764706, 0.64705884, 0.98039216, 1)
+[sub_resource type="StyleBoxFlat" id="card_button_hover"]
+bg_color = Color(0.12, 0.22, 0.38, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0.94, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0, 0.6, 1, 0.35)
+shadow_size = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wg17m"]
-bg_color = Color(0.16470589, 0.1882353, 0.25882354, 1)
-corner_detail = 10
+[sub_resource type="StyleBoxFlat" id="event_card"]
+bg_color = Color(0.06, 0.09, 0.18, 0.98)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.22, 0.65, 0.95, 0.95)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+shadow_color = Color(0.01, 0.02, 0.06, 0.85)
+shadow_size = 16
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6frpe"]
-bg_color = Color(1, 0.47058824, 0.7764706, 1)
+[sub_resource type="StyleBoxFlat" id="danger"]
+bg_color = Color(0.827, 0.118, 0.145, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.157, 0.106, 0.306, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_x3mr0"]
-content_margin_left = 4.0
-content_margin_top = 4.0
-content_margin_right = 4.0
-content_margin_bottom = 4.0
-bg_color = Color(0.4862745, 0.36078432, 1, 1)
-corner_radius_top_left = 24
-corner_radius_top_right = 24
-corner_radius_bottom_right = 24
-corner_radius_bottom_left = 24
-corner_detail = 5
+[sub_resource type="StyleBoxFlat" id="event_choice_normal"]
+bg_color = Color(0.1, 0.28, 0.5, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.396, 0.902, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_agw7f"]
-content_margin_left = 4.0
-content_margin_top = 4.0
-content_margin_right = 4.0
-content_margin_bottom = 4.0
-bg_color = Color(0.40784314, 0.2784314, 0.9098039, 1)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
-corner_detail = 5
+[sub_resource type="StyleBoxFlat" id="event_choice_pressed"]
+bg_color = Color(0.07, 0.2, 0.38, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.255, 0.839, 0.424, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sqhsc"]
-content_margin_left = 4.0
-content_margin_top = 4.0
-content_margin_right = 4.0
-content_margin_bottom = 4.0
-bg_color = Color(0.5529412, 0.44705883, 1, 1)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
-corner_detail = 5
+[sub_resource type="StyleBoxFlat" id="event_choice_hover"]
+bg_color = Color(0.14, 0.38, 0.65, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.55, 0.95, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gm637"]
-bg_color = Color(0.8509804, 0.29803923, 0.36078432, 1)
+[sub_resource type="StyleBoxFlat" id="confirm_keep"]
+bg_color = Color(0.286, 0.165, 0.545, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.396, 0.902, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_txj5t"]
-bg_color = Color(0.7254902, 0.23921569, 0.29411766, 1)
+[sub_resource type="StyleBoxFlat" id="primary"]
+bg_color = Color(0.255, 0.839, 0.424, 1)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.157, 0.106, 0.306, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bsk30"]
-bg_color = Color(0.91764706, 0.3647059, 0.43137255, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_enfrb"]
-bg_color = Color(0.101960786, 0.12156863, 0.1882353, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_weyn7"]
-bg_color = Color(0.101960786, 0.12156863, 0.1882353, 1)
-corner_detail = 20
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_35msq"]
-bg_color = Color(0.13333334, 0.15686275, 0.22745098, 1)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8u5x2"]
-bg_color = Color(0.20784314, 0.24313726, 0.34117648, 1)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rnme1"]
-bg_color = Color(0.1764706, 0.20784314, 0.29411766, 1)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
-corner_detail = 18
-
-[node name="MainScreen" type="Control" unique_id=1049428762]
+[node name="MainScreen" type="Control" unique_id=1560837318]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -8.0
-offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_0qv31")
+theme = SubResource("pixel_theme")
+script = ExtResource("1")
 
-[node name="Background" type="ColorRect" parent="." unique_id=610184130]
+[node name="Background" type="TextureRect" parent="." unique_id=766209126]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.0627451, 0.07450981, 0.12156863, 1)
+mouse_filter = 2
+texture = ExtResource("3_bg")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="SafeArea" type="MarginContainer" parent="." unique_id=262957012]
+[node name="TopBar" type="PanelContainer" parent="." unique_id=982890660]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
+offset_bottom = 112.0
 grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/margin_left = 60
-theme_override_constants/margin_top = 60
-theme_override_constants/margin_right = 80
-theme_override_constants/margin_bottom = 80
+theme_override_styles/panel = SubResource("top")
 
-[node name="MainColumn" type="VBoxContainer" parent="SafeArea" unique_id=72738125]
+[node name="Row" type="HBoxContainer" parent="TopBar" unique_id=1230738431]
 layout_mode = 2
+theme_override_constants/separation = 16
 
-[node name="NameLabel" type="Label" parent="SafeArea/MainColumn" unique_id=755938571]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.972549, 0.9764706, 0.9882353, 1)
-theme_override_font_sizes/font_size = 54
-text = "Alex Morgan"
-
-[node name="AgeLabel" type="Label" parent="SafeArea/MainColumn" unique_id=657104724]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.6666667, 0.69411767, 0.77254903, 1)
-theme_override_font_sizes/font_size = 32
-text = "Age: 0"
-
-[node name="LifeFeedPanel" type="PanelContainer" parent="SafeArea/MainColumn" unique_id=774295472]
-custom_minimum_size = Vector2(0, 700)
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_0ard6")
-
-[node name="MarginContainer" type="MarginContainer" parent="SafeArea/MainColumn/LifeFeedPanel" unique_id=1445492662]
-layout_mode = 2
-
-[node name="LifeFeed" type="RichTextLabel" parent="SafeArea/MainColumn/LifeFeedPanel/MarginContainer" unique_id=1625580800]
-layout_mode = 2
-theme_override_colors/default_color = Color(0.972549, 0.9764706, 0.9882353, 1)
-theme_override_font_sizes/normal_font_size = 30
-text = "You Were Born in Indonesia"
-
-[node name="StatsContainer" type="VBoxContainer" parent="SafeArea/MainColumn" unique_id=1085958517]
-layout_mode = 2
-
-[node name="HealthLabel" type="Label" parent="SafeArea/MainColumn/StatsContainer" unique_id=238037613]
-layout_mode = 2
-
-[node name="HealthBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsContainer" unique_id=2047440336]
-layout_mode = 2
-theme_override_styles/background = SubResource("StyleBoxFlat_npero")
-theme_override_styles/fill = SubResource("StyleBoxFlat_0qv31")
-value = 80.0
-
-[node name="HappinessLabel" type="Label" parent="SafeArea/MainColumn/StatsContainer" unique_id=1327787110]
-layout_mode = 2
-
-[node name="HappinessBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsContainer" unique_id=531077538]
-layout_mode = 2
-theme_override_styles/background = SubResource("StyleBoxFlat_ggbdh")
-theme_override_styles/fill = SubResource("StyleBoxFlat_bku2l")
-value = 80.0
-
-[node name="SmartsLabel" type="Label" parent="SafeArea/MainColumn/StatsContainer" unique_id=592772836]
-layout_mode = 2
-
-[node name="SmartsBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsContainer" unique_id=2110369338]
-layout_mode = 2
-theme_override_styles/background = SubResource("StyleBoxFlat_omlv2")
-theme_override_styles/fill = SubResource("StyleBoxFlat_d7gd6")
-value = 80.0
-
-[node name="LooksLabel" type="Label" parent="SafeArea/MainColumn/StatsContainer" unique_id=1794860147]
-layout_mode = 2
-
-[node name="LooksBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsContainer" unique_id=1209547043]
-layout_mode = 2
-theme_override_styles/background = SubResource("StyleBoxFlat_wg17m")
-theme_override_styles/fill = SubResource("StyleBoxFlat_6frpe")
-value = 80.0
-
-[node name="AgeButton" type="Button" parent="SafeArea/MainColumn" unique_id=17575291]
-custom_minimum_size = Vector2(0, 140)
+[node name="MenuButton" type="Button" parent="TopBar/Row" unique_id=1210645905]
+custom_minimum_size = Vector2(90, 90)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
-theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 36
-theme_override_styles/normal = SubResource("StyleBoxFlat_x3mr0")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_agw7f")
-theme_override_styles/hover = SubResource("StyleBoxFlat_sqhsc")
-text = "AGE +1"
+theme_override_colors/font_hover_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 38
+text = "☰"
+flat = true
 
-[node name="HistoryPanel" type="PanelContainer" parent="." unique_id=1729607382]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="HistoryMargin" type="MarginContainer" parent="HistoryPanel" unique_id=1962865802]
+[node name="Logo" type="TextureRect" parent="TopBar/Row" unique_id=1842749684]
+texture_filter = 1
+custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("2_icon")
+expand_mode = 1
+stretch_mode = 5
 
-[node name="HistoryContent" type="VBoxContainer" parent="HistoryPanel/HistoryMargin" unique_id=1476371163]
-layout_mode = 2
-
-[node name="HistoryTitle" type="Label" parent="HistoryPanel/HistoryMargin/HistoryContent" unique_id=914426931]
-layout_mode = 2
-text = "LIFE HISTORY"
-
-[node name="HistoryScroll" type="ScrollContainer" parent="HistoryPanel/HistoryMargin/HistoryContent" unique_id=1422373174]
-custom_minimum_size = Vector2(0, 1000)
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="HistoryList" type="VBoxContainer" parent="HistoryPanel/HistoryMargin/HistoryContent/HistoryScroll" unique_id=27115994]
+[node name="Brand" type="Label" parent="TopBar/Row" unique_id=908806037]
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_colors/font_outline_color = Color(0.925, 0.247, 0.655, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 46
+text = "LIFE.EXE"
+vertical_alignment = 1
 
-[node name="CharacterPanel" type="PanelContainer" parent="." unique_id=487239564]
-visible = false
+[node name="ProfileStrip" type="PanelContainer" parent="." unique_id=1122009277]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 112.0
+offset_bottom = 260.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("profile")
+
+[node name="ProfileMargin" type="MarginContainer" parent="ProfileStrip" unique_id=1839808413]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 10
+
+[node name="ProfileRow" type="HBoxContainer" parent="ProfileStrip/ProfileMargin" unique_id=886611719]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="AvatarButton" type="Button" parent="ProfileStrip/ProfileMargin/ProfileRow" unique_id=390668089]
+custom_minimum_size = Vector2(130, 120)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+flat = true
+
+[node name="Avatar" type="Control" parent="ProfileStrip/ProfileMargin/ProfileRow/AvatarButton" unique_id=1784742754]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 
-[node name="CharacterMargin" type="MarginContainer" parent="CharacterPanel" unique_id=1266845546]
+[node name="NationalityFlag" type="TextureRect" parent="ProfileStrip/ProfileMargin/ProfileRow" unique_id=576796149]
+texture_filter = 1
+custom_minimum_size = Vector2(56, 38)
 layout_mode = 2
+size_flags_vertical = 4
+expand_mode = 1
+stretch_mode = 5
 
-[node name="CharacterContent" type="VBoxContainer" parent="CharacterPanel/CharacterMargin" unique_id=1610580663]
+[node name="NameAndPhase" type="VBoxContainer" parent="ProfileStrip/ProfileMargin/ProfileRow" unique_id=459072901]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_constants/separation = 4
 
-[node name="CharacterTitle" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent" unique_id=1513774792]
+[node name="NameLabel" type="Label" parent="ProfileStrip/ProfileMargin/ProfileRow/NameAndPhase" unique_id=1269020282]
 layout_mode = 2
-text = "CHARACTER"
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 38
+text = "Alex Morgan"
 
-[node name="CharacterName" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent" unique_id=895370256]
+[node name="PhaseLabel" type="Label" parent="ProfileStrip/ProfileMargin/ProfileRow/NameAndPhase" unique_id=526626842]
 layout_mode = 2
-text = "Name: Alex"
+theme_override_colors/font_color = Color(0.88, 0.94, 1, 1)
+theme_override_font_sizes/font_size = 26
+text = "🍼 Infant"
 
-[node name="CharacterAge" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent" unique_id=1447978306]
+[node name="BalanceLabel" type="Label" parent="ProfileStrip/ProfileMargin/ProfileRow" unique_id=1720170167]
+custom_minimum_size = Vector2(240, 110)
 layout_mode = 2
-text = "Age: 18"
+theme_override_colors/font_color = Color(0.255, 0.839, 0.424, 1)
+theme_override_font_sizes/font_size = 28
+text = "$0
+Bank balance"
+horizontal_alignment = 2
+vertical_alignment = 1
 
-[node name="CharacterBirthplace" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent" unique_id=2072824977]
-layout_mode = 2
-text = "Born in: Indonesia"
-
-[node name="CharacterMoney" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent" unique_id=1739196581]
-layout_mode = 2
-text = "Money: $0"
-
-[node name="CharacterKarma" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent" unique_id=284840982]
-layout_mode = 2
-text = "Karma: 0"
-
-[node name="CharacterStats" type="VBoxContainer" parent="CharacterPanel/CharacterMargin/CharacterContent" unique_id=1002140747]
-layout_mode = 2
-
-[node name="SettingsPanel" type="PanelContainer" parent="." unique_id=1151056383]
-visible = false
+[node name="SafeArea" type="Control" parent="." unique_id=1948948979]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -358.0
-offset_top = -272.0
-offset_right = 342.0
-offset_bottom = 328.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 
-[node name="SettingsContent" type="VBoxContainer" parent="SettingsPanel" unique_id=8490397]
+[node name="MainColumn" type="Control" parent="SafeArea" unique_id=1185768802]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="LifeFeedPanel" type="PanelContainer" parent="SafeArea/MainColumn" unique_id=1000823785]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 32.0
+offset_top = 268.0
+offset_right = -32.0
+offset_bottom = -545.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("feed")
+
+[node name="MarginContainer" type="MarginContainer" parent="SafeArea/MainColumn/LifeFeedPanel" unique_id=1230874808]
 layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
 
-[node name="SettingsTitle" type="Label" parent="SettingsPanel/SettingsContent" unique_id=1273498039]
+[node name="LifeFeed" type="RichTextLabel" parent="SafeArea/MainColumn/LifeFeedPanel/MarginContainer" unique_id=897098234]
 layout_mode = 2
-text = "SETTINGS"
+theme_override_colors/default_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_font_sizes/normal_font_size = 29
+bbcode_enabled = true
+text = "[color=#07568f][b]Age: 0 years[/b][/color]
+You were born in Indonesia. Your story begins here."
 
-[node name="ResetProgressButton" type="Button" parent="SettingsPanel/SettingsContent" unique_id=1847966786]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_styles/normal = SubResource("StyleBoxFlat_gm637")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_txj5t")
-theme_override_styles/hover = SubResource("StyleBoxFlat_bsk30")
-text = "RESET PROGRESS"
-
-[node name="CloseSettingsButton" type="Button" parent="SettingsPanel/SettingsContent" unique_id=726274408]
-layout_mode = 2
-text = "CLOSE SETTINGS"
-
-[node name="BottomNavigation" type="PanelContainer" parent="." unique_id=1053922965]
+[node name="StatsPanel" type="PanelContainer" parent="SafeArea/MainColumn" unique_id=960769325]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -3.0
-offset_top = -151.0
-offset_right = -3.0
-offset_bottom = -1.0
+offset_left = 60.0
+offset_top = -520.0
+offset_right = -60.0
+offset_bottom = -236.0
 grow_horizontal = 2
 grow_vertical = 0
+theme_override_styles/panel = SubResource("stats_panel")
 
-[node name="NavButtons" type="HBoxContainer" parent="BottomNavigation" unique_id=855362451]
+[node name="StatsMargin" type="MarginContainer" parent="SafeArea/MainColumn/StatsPanel" unique_id=222686823]
 layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 16
 
-[node name="TimelineButton" type="Button" parent="BottomNavigation/NavButtons" unique_id=915524]
+[node name="StatsContainer" type="VBoxContainer" parent="SafeArea/MainColumn/StatsPanel/StatsMargin" unique_id=1323886595]
 layout_mode = 2
-size_flags_horizontal = 3
-text = "▣
-TIMELINE"
+theme_override_constants/separation = 3
 
-[node name="HistoryButton" type="Button" parent="BottomNavigation/NavButtons" unique_id=206827746]
+[node name="HealthLabel" type="Label" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=1148875418]
 layout_mode = 2
-size_flags_horizontal = 3
-text = "◷
-HISTORY"
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 21
+text = "HEALTH  ♥"
 
-[node name="CharacterButton" type="Button" parent="BottomNavigation/NavButtons" unique_id=199501400]
+[node name="HealthBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=159880371]
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
-size_flags_horizontal = 3
-text = "●
-CHARACTER"
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/background = SubResource("track")
+theme_override_styles/fill = SubResource("green")
+value = 80.0
 
-[node name="SettingsNavButton" type="Button" parent="BottomNavigation/NavButtons" unique_id=393060578]
+[node name="HappinessLabel" type="Label" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=517101803]
 layout_mode = 2
-size_flags_horizontal = 3
-text = "⚙
-SETTINGS"
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 21
+text = "HAPPINESS  ☺"
 
-[node name="NewGamePanel" type="PanelContainer" parent="." unique_id=706104652]
+[node name="HappinessBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=681471829]
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/background = SubResource("track")
+theme_override_styles/fill = SubResource("green")
+value = 75.0
+
+[node name="SmartsLabel" type="Label" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=1861500308]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 21
+text = "SMARTS  ⚡"
+
+[node name="SmartsBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=2141533477]
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/background = SubResource("track")
+theme_override_styles/fill = SubResource("red")
+value = 60.0
+
+[node name="LooksLabel" type="Label" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=1120094663]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 21
+text = "LOOKS  ✦"
+
+[node name="LooksBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=2119674293]
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/background = SubResource("track")
+theme_override_styles/fill = SubResource("green")
+value = 65.0
+
+[node name="ActionBar" type="PanelContainer" parent="SafeArea/MainColumn" unique_id=736947479]
+z_index = 10
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 12
+anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = -220.0
 grow_horizontal = 2
-grow_vertical = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("action_bar")
 
-[node name="DimBackground" type="ColorRect" parent="NewGamePanel" unique_id=438864448]
+[node name="ActionRow" type="HBoxContainer" parent="SafeArea/MainColumn/ActionBar" unique_id=686543148]
 layout_mode = 2
-color = Color(0, 0, 0, 0.23529412)
+theme_override_constants/separation = 0
 
-[node name="CenterContainer" type="CenterContainer" parent="NewGamePanel" unique_id=457535148]
+[node name="InfantButton" type="Button" parent="SafeArea/MainColumn/ActionBar/ActionRow" unique_id=1899787384]
+custom_minimum_size = Vector2(0, 210)
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("action_button")
+theme_override_styles/pressed = SubResource("action_button")
+theme_override_styles/hover = SubResource("action_button")
+text = "Infant"
 
-[node name="CreationCard" type="PanelContainer" parent="NewGamePanel/CenterContainer" unique_id=356565590]
-custom_minimum_size = Vector2(850, 950)
+[node name="AssetsButton" type="Button" parent="SafeArea/MainColumn/ActionBar/ActionRow" unique_id=1908634224]
+custom_minimum_size = Vector2(0, 210)
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_enfrb")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("action_button")
+theme_override_styles/pressed = SubResource("action_button")
+theme_override_styles/hover = SubResource("action_button")
+text = "Assets"
 
-[node name="NewGameContent" type="VBoxContainer" parent="NewGamePanel/CenterContainer/CreationCard" unique_id=1265670534]
+[node name="AgeSpacer" type="Control" parent="SafeArea/MainColumn/ActionBar/ActionRow" unique_id=1297525299]
+custom_minimum_size = Vector2(230, 0)
 layout_mode = 2
+mouse_filter = 2
 
-[node name="NewGameTitle" type="Label" parent="NewGamePanel/CenterContainer/CreationCard/NewGameContent" unique_id=116427269]
+[node name="RelationshipsButton" type="Button" parent="SafeArea/MainColumn/ActionBar/ActionRow" unique_id=1545373131]
+custom_minimum_size = Vector2(0, 210)
 layout_mode = 2
-text = "CREATE YOUR LIFE"
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("action_button")
+theme_override_styles/pressed = SubResource("action_button")
+theme_override_styles/hover = SubResource("action_button")
+text = "Relationships"
 
-[node name="Label" type="Label" parent="NewGamePanel/CenterContainer/CreationCard/NewGameContent" unique_id=2003632114]
+[node name="ActivitiesButton" type="Button" parent="SafeArea/MainColumn/ActionBar/ActionRow" unique_id=468305006]
+custom_minimum_size = Vector2(0, 210)
 layout_mode = 2
-text = "What is your name?"
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("action_button")
+theme_override_styles/pressed = SubResource("action_button")
+theme_override_styles/hover = SubResource("action_button")
+text = "Activities"
 
-[node name="NameInput" type="LineEdit" parent="NewGamePanel/CenterContainer/CreationCard/NewGameContent" unique_id=1779871477]
-layout_mode = 2
-placeholder_text = "Enter your name"
+[node name="AgeButton" type="Button" parent="SafeArea/MainColumn" unique_id=1585919690]
+z_index = 20
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -115.0
+offset_top = -245.0
+offset_right = 115.0
+offset_bottom = -15.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_font_sizes/font_size = 42
+theme_override_styles/normal = SubResource("age")
+theme_override_styles/pressed = SubResource("age")
+theme_override_styles/hover = SubResource("age")
+text = "+
+AGE"
 
-[node name="BirthplaceLabel" type="Label" parent="NewGamePanel/CenterContainer/CreationCard/NewGameContent" unique_id=1297921108]
-layout_mode = 2
-text = "Where were you born?"
-
-[node name="BirthplaceInput" type="LineEdit" parent="NewGamePanel/CenterContainer/CreationCard/NewGameContent" unique_id=301479523]
-layout_mode = 2
-placeholder_text = "e.g. Indonesia"
-
-[node name="StartGameButton" type="Button" parent="NewGamePanel/CenterContainer/CreationCard/NewGameContent" unique_id=800174356]
-layout_mode = 2
-text = "START LIFE"
-
-[node name="ValidationLabel" type="Label" parent="NewGamePanel/CenterContainer/CreationCard/NewGameContent" unique_id=1010438156]
-layout_mode = 2
-
-[node name="EventOverlay" type="ColorRect" parent="." unique_id=1913937461]
+[node name="CharacterPanel" type="PanelContainer" parent="." unique_id=1982251484]
 visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 260.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 0.25490198)
+theme_override_styles/panel = SubResource("panel_paper")
 
-[node name="EventPanel" type="PanelContainer" parent="EventOverlay" unique_id=1208816629]
+[node name="CharacterMargin" type="MarginContainer" parent="CharacterPanel" unique_id=2041454421]
+layout_mode = 2
+theme_override_constants/margin_left = 42
+theme_override_constants/margin_top = 36
+theme_override_constants/margin_right = 42
+theme_override_constants/margin_bottom = 36
+
+[node name="CharacterContent" type="VBoxContainer" parent="CharacterPanel/CharacterMargin" unique_id=1434596636]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="CharacterHeaderRow" type="HBoxContainer" parent="CharacterPanel/CharacterMargin/CharacterContent" unique_id=2023567568]
+layout_mode = 2
+
+[node name="CharacterTitle" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterHeaderRow" unique_id=1468336494]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 42
+text = "CHARACTER PROFILE"
+
+[node name="CloseCharacterButton" type="Button" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterHeaderRow" unique_id=1817061845]
+custom_minimum_size = Vector2(80, 60)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_hover_color = Color(1, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 28
+text = "✕"
+
+[node name="CharacterScroll" type="ScrollContainer" parent="CharacterPanel/CharacterMargin/CharacterContent" unique_id=1757646919]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ProfileCards" type="VBoxContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll" unique_id=812663314]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 16
+
+[node name="IdentityCard" type="PanelContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards" unique_id=145754903]
+layout_mode = 2
+theme_override_styles/panel = SubResource("card")
+
+[node name="Margin" type="MarginContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/IdentityCard" unique_id=1981447352]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/IdentityCard/Margin" unique_id=936217978]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="CardTitle" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/IdentityCard/Margin/VBox" unique_id=1562139718]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 30
+text = "Personal Identity"
+
+[node name="CharacterName" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/IdentityCard/Margin/VBox" unique_id=1822725376]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_font_sizes/font_size = 26
+text = "Name: Alex Morgan"
+
+[node name="CharacterStage" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/IdentityCard/Margin/VBox" unique_id=293784330]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_font_sizes/font_size = 26
+text = "Stage: Infant (Age 0)"
+
+[node name="CharacterBirthplace" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/IdentityCard/Margin/VBox" unique_id=1145889576]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_font_sizes/font_size = 26
+text = "Born in: Indonesia"
+
+[node name="CharacterBirthday" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/IdentityCard/Margin/VBox" unique_id=679609672]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_font_sizes/font_size = 26
+text = "Birthday: January 1 • Capricorn"
+
+[node name="FamilyCard" type="PanelContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards" unique_id=1267887817]
+layout_mode = 2
+theme_override_styles/panel = SubResource("card")
+
+[node name="Margin" type="MarginContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FamilyCard" unique_id=1268387367]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FamilyCard/Margin" unique_id=812219443]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="CardTitle" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FamilyCard/Margin/VBox" unique_id=659010178]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 30
+text = "Family & Conception"
+
+[node name="CharacterMother" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FamilyCard/Margin/VBox" unique_id=325530611]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_font_sizes/font_size = 24
+text = "Mother: Ella Castro (grocer)"
+
+[node name="CharacterFather" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FamilyCard/Margin/VBox" unique_id=1140618815]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_font_sizes/font_size = 24
+text = "Father: Unknown"
+
+[node name="CharacterStory" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FamilyCard/Margin/VBox" unique_id=2071646810]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.78, 0.9, 1)
+theme_override_font_sizes/font_size = 22
+text = "Birth circumstance story details..."
+autowrap_mode = 3
+
+[node name="FinancesCard" type="PanelContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards" unique_id=966960177]
+layout_mode = 2
+theme_override_styles/panel = SubResource("card")
+
+[node name="Margin" type="MarginContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FinancesCard" unique_id=55941547]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FinancesCard/Margin" unique_id=322067993]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="CardTitle" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FinancesCard/Margin/VBox" unique_id=679658351]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 30
+text = "Finances & Karma"
+
+[node name="CharacterMoney" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FinancesCard/Margin/VBox" unique_id=2016775973]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_font_sizes/font_size = 26
+text = "Money: $0"
+
+[node name="CharacterKarma" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FinancesCard/Margin/VBox" unique_id=384370197]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_font_sizes/font_size = 26
+text = "Karma: 0"
+
+[node name="InfantPanel" type="PanelContainer" parent="." unique_id=2119090324]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 260.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("panel_paper")
+
+[node name="InfantMargin" type="MarginContainer" parent="InfantPanel" unique_id=826980340]
+layout_mode = 2
+theme_override_constants/margin_left = 42
+theme_override_constants/margin_top = 36
+theme_override_constants/margin_right = 42
+theme_override_constants/margin_bottom = 36
+
+[node name="InfantContent" type="VBoxContainer" parent="InfantPanel/InfantMargin" unique_id=380468781]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="InfantHeaderRow" type="HBoxContainer" parent="InfantPanel/InfantMargin/InfantContent" unique_id=462339344]
+layout_mode = 2
+
+[node name="InfantTitle" type="Label" parent="InfantPanel/InfantMargin/InfantContent/InfantHeaderRow" unique_id=1360160598]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 40
+text = "TODDLER & LIFE OVERVIEW"
+
+[node name="CloseInfantButton" type="Button" parent="InfantPanel/InfantMargin/InfantContent/InfantHeaderRow" unique_id=1142441444]
+custom_minimum_size = Vector2(80, 60)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_hover_color = Color(1, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 28
+text = "✕"
+
+[node name="StatusCard" type="PanelContainer" parent="InfantPanel/InfantMargin/InfantContent" unique_id=853998808]
+layout_mode = 2
+theme_override_styles/panel = SubResource("card")
+
+[node name="StatusMargin" type="MarginContainer" parent="InfantPanel/InfantMargin/InfantContent/StatusCard" unique_id=268097366]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 18
+
+[node name="StatusBox" type="VBoxContainer" parent="InfantPanel/InfantMargin/InfantContent/StatusCard/StatusMargin" unique_id=20024603]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="CurrentStageLabel" type="Label" parent="InfantPanel/InfantMargin/InfantContent/StatusCard/StatusMargin/StatusBox" unique_id=2003773398]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 30
+text = "Current Status"
+
+[node name="HistoryHeaderLabel" type="Label" parent="InfantPanel/InfantMargin/InfantContent" unique_id=1335347047]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 30
+text = "LIFE HISTORY & MILESTONES"
+
+[node name="HistoryScroll" type="ScrollContainer" parent="InfantPanel/InfantMargin/InfantContent" unique_id=858582819]
+custom_minimum_size = Vector2(0, 520)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HistoryList" type="VBoxContainer" parent="InfantPanel/InfantMargin/InfantContent/HistoryScroll" unique_id=966034552]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="AssetsPanel" type="PanelContainer" parent="." unique_id=155890180]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 260.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("panel_paper")
+
+[node name="AssetsMargin" type="MarginContainer" parent="AssetsPanel" unique_id=1023731387]
+layout_mode = 2
+theme_override_constants/margin_left = 42
+theme_override_constants/margin_top = 36
+theme_override_constants/margin_right = 42
+theme_override_constants/margin_bottom = 36
+
+[node name="AssetsContent" type="VBoxContainer" parent="AssetsPanel/AssetsMargin" unique_id=1236026963]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="AssetsHeaderRow" type="HBoxContainer" parent="AssetsPanel/AssetsMargin/AssetsContent" unique_id=1653509728]
+layout_mode = 2
+
+[node name="AssetsTitle" type="Label" parent="AssetsPanel/AssetsMargin/AssetsContent/AssetsHeaderRow" unique_id=1022520309]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 40
+text = "ASSETS & FINANCES"
+
+[node name="CloseAssetsButton" type="Button" parent="AssetsPanel/AssetsMargin/AssetsContent/AssetsHeaderRow" unique_id=1558426471]
+custom_minimum_size = Vector2(80, 60)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_hover_color = Color(1, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 28
+text = "✕"
+
+[node name="AssetsCashLabel" type="Label" parent="AssetsPanel/AssetsMargin/AssetsContent" unique_id=476374275]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 32
+text = "Net Worth: $0"
+
+[node name="BankButton" type="Button" parent="AssetsPanel/AssetsMargin/AssetsContent" unique_id=356993415]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
+theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
+theme_override_font_sizes/font_size = 28
+theme_override_styles/normal = SubResource("card_button_normal")
+theme_override_styles/pressed = SubResource("card_button_pressed")
+theme_override_styles/hover = SubResource("card_button_hover")
+text = "BANKING
+First National Pixel Bank"
+
+[node name="AssetsScroll" type="ScrollContainer" parent="AssetsPanel/AssetsMargin/AssetsContent" unique_id=1706536333]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="AssetsList" type="VBoxContainer" parent="AssetsPanel/AssetsMargin/AssetsContent/AssetsScroll" unique_id=357184857]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 16
+
+[node name="RealEstatePlaceholder" type="PanelContainer" parent="AssetsPanel/AssetsMargin/AssetsContent/AssetsScroll/AssetsList" unique_id=845527343]
+layout_mode = 2
+theme_override_styles/panel = SubResource("card")
+
+[node name="Margin" type="MarginContainer" parent="AssetsPanel/AssetsMargin/AssetsContent/AssetsScroll/AssetsList/RealEstatePlaceholder" unique_id=1277196637]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="AssetsPanel/AssetsMargin/AssetsContent/AssetsScroll/AssetsList/RealEstatePlaceholder/Margin" unique_id=718399441]
+layout_mode = 2
+
+[node name="LabelTitle" type="Label" parent="AssetsPanel/AssetsMargin/AssetsContent/AssetsScroll/AssetsList/RealEstatePlaceholder/Margin/VBox" unique_id=543813443]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 28
+text = "🏠 Real Estate"
+
+[node name="LabelDesc" type="Label" parent="AssetsPanel/AssetsMargin/AssetsContent/AssetsScroll/AssetsList/RealEstatePlaceholder/Margin/VBox" unique_id=794698141]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.78, 0.9, 1)
+theme_override_font_sizes/font_size = 24
+text = "You do not own any real estate."
+
+[node name="VehiclesPlaceholder" type="PanelContainer" parent="AssetsPanel/AssetsMargin/AssetsContent/AssetsScroll/AssetsList" unique_id=844728138]
+layout_mode = 2
+theme_override_styles/panel = SubResource("card")
+
+[node name="Margin" type="MarginContainer" parent="AssetsPanel/AssetsMargin/AssetsContent/AssetsScroll/AssetsList/VehiclesPlaceholder" unique_id=1478385890]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="AssetsPanel/AssetsMargin/AssetsContent/AssetsScroll/AssetsList/VehiclesPlaceholder/Margin" unique_id=1656260384]
+layout_mode = 2
+
+[node name="LabelTitle" type="Label" parent="AssetsPanel/AssetsMargin/AssetsContent/AssetsScroll/AssetsList/VehiclesPlaceholder/Margin/VBox" unique_id=1958119897]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 28
+text = "🚗 Vehicles"
+
+[node name="LabelDesc" type="Label" parent="AssetsPanel/AssetsMargin/AssetsContent/AssetsScroll/AssetsList/VehiclesPlaceholder/Margin/VBox" unique_id=734650126]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.78, 0.9, 1)
+theme_override_font_sizes/font_size = 24
+text = "You do not own any vehicles."
+
+[node name="BankPanel" type="PanelContainer" parent="." unique_id=28360382]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 260.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("panel_paper")
+
+[node name="BankMargin" type="MarginContainer" parent="BankPanel" unique_id=802972357]
+layout_mode = 2
+theme_override_constants/margin_left = 42
+theme_override_constants/margin_top = 36
+theme_override_constants/margin_right = 42
+theme_override_constants/margin_bottom = 36
+
+[node name="BankContent" type="VBoxContainer" parent="BankPanel/BankMargin" unique_id=657265361]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="BankHeaderRow" type="HBoxContainer" parent="BankPanel/BankMargin/BankContent" unique_id=1595857639]
+layout_mode = 2
+
+[node name="BackToAssetsButton" type="Button" parent="BankPanel/BankMargin/BankContent/BankHeaderRow" unique_id=1336675291]
+custom_minimum_size = Vector2(180, 60)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
+theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
+theme_override_styles/normal = SubResource("card_button_normal")
+theme_override_styles/pressed = SubResource("card_button_pressed")
+theme_override_styles/hover = SubResource("card_button_hover")
+text = "← ASSETS"
+
+[node name="BankTitle" type="Label" parent="BankPanel/BankMargin/BankContent/BankHeaderRow" unique_id=1052183605]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 38
+text = "FIRST NATIONAL PIXEL BANK"
+horizontal_alignment = 1
+
+[node name="CloseBankButton" type="Button" parent="BankPanel/BankMargin/BankContent/BankHeaderRow" unique_id=1625863005]
+custom_minimum_size = Vector2(80, 60)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_hover_color = Color(1, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 28
+text = "✕"
+
+[node name="BankScroll" type="ScrollContainer" parent="BankPanel/BankMargin/BankContent" unique_id=128471928]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="BankList" type="VBoxContainer" parent="BankPanel/BankMargin/BankContent/BankScroll" unique_id=892347123]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 18
+
+[node name="BankCard" type="PanelContainer" parent="BankPanel/BankMargin/BankContent/BankScroll/BankList" unique_id=961680141]
+layout_mode = 2
+theme_override_styles/panel = SubResource("card")
+
+[node name="Margin" type="MarginContainer" parent="BankPanel/BankMargin/BankContent/BankScroll/BankList/BankCard" unique_id=523760265]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 28
+
+[node name="VBox" type="VBoxContainer" parent="BankPanel/BankMargin/BankContent/BankScroll/BankList/BankCard/Margin" unique_id=999387103]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="BankIconRow" type="HBoxContainer" parent="BankPanel/BankMargin/BankContent/BankScroll/BankList/BankCard/Margin/VBox" unique_id=177357107]
+layout_mode = 2
+alignment = 1
+
+[node name="BankHeaderIcon" type="TextureRect" parent="BankPanel/BankMargin/BankContent/BankScroll/BankList/BankCard/Margin/VBox/BankIconRow" unique_id=1430609725]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CheckingBalanceLabel" type="Label" parent="BankPanel/BankMargin/BankContent/BankScroll/BankList/BankCard/Margin/VBox" unique_id=934543380]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 36
+text = "Checking Account: $0"
+horizontal_alignment = 1
+
+[node name="BankStatusLabel" type="Label" parent="BankPanel/BankMargin/BankContent/BankScroll/BankList/BankCard/Margin/VBox" unique_id=76950939]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.78, 0.9, 1)
+theme_override_font_sizes/font_size = 24
+text = "Account Status: Active & In Good Standing"
+horizontal_alignment = 1
+
+[node name="RelationshipsPanel" type="PanelContainer" parent="." unique_id=805500706]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 260.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("panel_paper")
+
+[node name="RelMargin" type="MarginContainer" parent="RelationshipsPanel" unique_id=419870991]
+layout_mode = 2
+theme_override_constants/margin_left = 42
+theme_override_constants/margin_top = 36
+theme_override_constants/margin_right = 42
+theme_override_constants/margin_bottom = 36
+
+[node name="RelContent" type="VBoxContainer" parent="RelationshipsPanel/RelMargin" unique_id=1236264837]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="RelHeaderRow" type="HBoxContainer" parent="RelationshipsPanel/RelMargin/RelContent" unique_id=626639074]
+layout_mode = 2
+
+[node name="RelTitle" type="Label" parent="RelationshipsPanel/RelMargin/RelContent/RelHeaderRow" unique_id=1620267041]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 40
+text = "RELATIONSHIPS"
+
+[node name="CloseRelButton" type="Button" parent="RelationshipsPanel/RelMargin/RelContent/RelHeaderRow" unique_id=267045736]
+custom_minimum_size = Vector2(80, 60)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_hover_color = Color(1, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 28
+text = "✕"
+
+[node name="RelScroll" type="ScrollContainer" parent="RelationshipsPanel/RelMargin/RelContent" unique_id=158802062]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="RelList" type="VBoxContainer" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll" unique_id=875942829]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 18
+
+[node name="MotherCard" type="PanelContainer" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList" unique_id=503201202]
+layout_mode = 2
+theme_override_styles/panel = SubResource("card")
+
+[node name="Margin" type="MarginContainer" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/MotherCard" unique_id=164811389]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="HBox" type="HBoxContainer" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/MotherCard/Margin" unique_id=543110986]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="MotherIcon" type="TextureRect" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/MotherCard/Margin/HBox" unique_id=732213969]
+texture_filter = 1
+custom_minimum_size = Vector2(96, 96)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MotherVBox" type="VBoxContainer" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/MotherCard/Margin/HBox" unique_id=410669047]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="MotherNameLabel" type="Label" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/MotherCard/Margin/HBox/MotherVBox" unique_id=931493689]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 28
+text = "Mother: Ella Castro"
+
+[node name="MotherJobLabel" type="Label" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/MotherCard/Margin/HBox/MotherVBox" unique_id=1660769666]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_font_sizes/font_size = 24
+text = "Occupation: Grocer"
+
+[node name="MotherStatusLabel" type="Label" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/MotherCard/Margin/HBox/MotherVBox" unique_id=691528122]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.78, 0.9, 1)
+theme_override_font_sizes/font_size = 22
+text = "Relationship: Warm & Loving"
+
+[node name="FatherCard" type="PanelContainer" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList" unique_id=1212954611]
+layout_mode = 2
+theme_override_styles/panel = SubResource("card")
+
+[node name="Margin" type="MarginContainer" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/FatherCard" unique_id=1845775668]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="HBox" type="HBoxContainer" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/FatherCard/Margin" unique_id=219630325]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="FatherIcon" type="TextureRect" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/FatherCard/Margin/HBox" unique_id=484975871]
+texture_filter = 1
+custom_minimum_size = Vector2(96, 96)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="FatherVBox" type="VBoxContainer" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/FatherCard/Margin/HBox" unique_id=1459328886]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="FatherNameLabel" type="Label" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/FatherCard/Margin/HBox/FatherVBox" unique_id=838236404]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 28
+text = "Father: Carlos Castro"
+
+[node name="FatherJobLabel" type="Label" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/FatherCard/Margin/HBox/FatherVBox" unique_id=1275561853]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_font_sizes/font_size = 24
+text = "Occupation: Carpenter"
+
+[node name="FatherStatusLabel" type="Label" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/FatherCard/Margin/HBox/FatherVBox" unique_id=1608615251]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.78, 0.9, 1)
+theme_override_font_sizes/font_size = 22
+text = "Relationship: Good"
+
+[node name="ActivitiesPanel" type="PanelContainer" parent="." unique_id=1478149788]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 260.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("panel_paper")
+
+[node name="ActMargin" type="MarginContainer" parent="ActivitiesPanel" unique_id=394409451]
+layout_mode = 2
+theme_override_constants/margin_left = 42
+theme_override_constants/margin_top = 36
+theme_override_constants/margin_right = 42
+theme_override_constants/margin_bottom = 36
+
+[node name="ActContent" type="VBoxContainer" parent="ActivitiesPanel/ActMargin" unique_id=1063840037]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="ActHeaderRow" type="HBoxContainer" parent="ActivitiesPanel/ActMargin/ActContent" unique_id=376860654]
+layout_mode = 2
+
+[node name="ActTitle" type="Label" parent="ActivitiesPanel/ActMargin/ActContent/ActHeaderRow" unique_id=1241916855]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 40
+text = "ACTIVITIES"
+
+[node name="CloseActButton" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActHeaderRow" unique_id=887305750]
+custom_minimum_size = Vector2(80, 60)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_hover_color = Color(1, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 28
+text = "✕"
+
+[node name="ActScroll" type="ScrollContainer" parent="ActivitiesPanel/ActMargin/ActContent" unique_id=181154892]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ActList" type="VBoxContainer" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll" unique_id=1644637230]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 16
+
+[node name="EducationActItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=1870605991]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
+theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("card_button_normal")
+theme_override_styles/pressed = SubResource("card_button_pressed")
+theme_override_styles/hover = SubResource("card_button_hover")
+text = "🎓  Education & School"
+alignment = 0
+
+[node name="JobsActItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=1870605990]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
+theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("card_button_normal")
+theme_override_styles/pressed = SubResource("card_button_pressed")
+theme_override_styles/hover = SubResource("card_button_hover")
+text = "💼  Careers & Jobs"
+alignment = 0
+
+[node name="DoctorItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=363342909]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
+theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("card_button_normal")
+theme_override_styles/pressed = SubResource("card_button_pressed")
+theme_override_styles/hover = SubResource("card_button_hover")
+text = "🩺  Doctor & Healthcare"
+alignment = 0
+
+[node name="GymItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=969269764]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
+theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("card_button_normal")
+theme_override_styles/pressed = SubResource("card_button_pressed")
+theme_override_styles/hover = SubResource("card_button_hover")
+text = "🏋️  Gym & Fitness"
+alignment = 0
+
+[node name="LotteryItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=872144695]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
+theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("card_button_normal")
+theme_override_styles/pressed = SubResource("card_button_pressed")
+theme_override_styles/hover = SubResource("card_button_hover")
+text = "🎲  Lottery & Scratch Tickets"
+alignment = 0
+
+[node name="StreetHustleItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=348393519]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
+theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("card_button_normal")
+theme_override_styles/pressed = SubResource("card_button_pressed")
+theme_override_styles/hover = SubResource("card_button_hover")
+text = "🕶️  Underground Street Hustle"
+alignment = 0
+
+[node name="MindItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=1870605856]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
+theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("card_button_normal")
+theme_override_styles/pressed = SubResource("card_button_pressed")
+theme_override_styles/hover = SubResource("card_button_hover")
+text = "🧘  Mind & Meditation"
+alignment = 0
+
+[node name="BankActItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=987213456]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
+theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("card_button_normal")
+theme_override_styles/pressed = SubResource("card_button_pressed")
+theme_override_styles/hover = SubResource("card_button_hover")
+text = "🏦  Bank & Loans"
+alignment = 0
+
+[node name="SettingsOverlay" type="ColorRect" parent="." unique_id=289620972]
+visible = false
+z_index = 35
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.012, 0.059, 0.094, 0.76)
+
+[node name="SettingsCard" type="PanelContainer" parent="SettingsOverlay" unique_id=1769669262]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -435.0
-offset_top = -555.0
-offset_right = 415.0
-offset_bottom = 445.0
+offset_left = -400.0
+offset_top = -380.0
+offset_right = 400.0
+offset_bottom = 380.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_weyn7")
+theme_override_styles/panel = SubResource("event_card")
 
-[node name="EventContent" type="VBoxContainer" parent="EventOverlay/EventPanel" unique_id=400265072]
+[node name="SettingsMargin" type="MarginContainer" parent="SettingsOverlay/SettingsCard" unique_id=551827548]
+layout_mode = 2
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 36
+theme_override_constants/margin_bottom = 32
+
+[node name="SettingsContent" type="VBoxContainer" parent="SettingsOverlay/SettingsCard/SettingsMargin" unique_id=778650370]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="SettingsHeader" type="HBoxContainer" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent" unique_id=438779933]
+layout_mode = 2
+
+[node name="SettingsTitle" type="Label" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/SettingsHeader" unique_id=1793013472]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 38
+text = "⚙  SETTINGS"
+
+[node name="CloseSettingsHeaderButton" type="Button" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/SettingsHeader" unique_id=321787064]
+custom_minimum_size = Vector2(70, 50)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_hover_color = Color(1, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 28
+text = "✕"
+
+[node name="GameInfoCard" type="PanelContainer" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent" unique_id=272032567]
+layout_mode = 2
+theme_override_styles/panel = SubResource("card")
+
+[node name="Margin" type="MarginContainer" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/GameInfoCard" unique_id=752840954]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/GameInfoCard/Margin" unique_id=1536170407]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/GameInfoCard/Margin/VBox" unique_id=2005627009]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 26
+text = "🎮 Life Simulator • 16-Bit Prototype"
+
+[node name="Subtitle" type="Label" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/GameInfoCard/Margin/VBox" unique_id=2132290357]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.78, 0.9, 1)
+theme_override_font_sizes/font_size = 22
+text = "Version 1.0.0 • Mobile Life Sim"
+
+[node name="AudioCard" type="PanelContainer" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent" unique_id=425029045]
+layout_mode = 2
+theme_override_styles/panel = SubResource("card")
+
+[node name="Margin" type="MarginContainer" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/AudioCard" unique_id=824606076]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/AudioCard/Margin" unique_id=1004470176]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="AudioTitle" type="Label" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/AudioCard/Margin/VBox" unique_id=1015069850]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 26
+text = "🔊 Sound & Haptics"
+
+[node name="AudioStatus" type="Label" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/AudioCard/Margin/VBox" unique_id=95847105]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.78, 0.9, 1)
+theme_override_font_sizes/font_size = 22
+text = "Sound Effects & Background Audio: Active"
+
+[node name="DangerCard" type="PanelContainer" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent" unique_id=1744479588]
+layout_mode = 2
+theme_override_styles/panel = SubResource("card")
+
+[node name="Margin" type="MarginContainer" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/DangerCard" unique_id=610493442]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/DangerCard/Margin" unique_id=842674902]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="DangerLabel" type="Label" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/DangerCard/Margin/VBox" unique_id=338151327]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.827, 0.118, 0.145, 1)
+theme_override_font_sizes/font_size = 26
+text = "⚠️ Danger Zone"
+
+[node name="ResetProgressButton" type="Button" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/DangerCard/Margin/VBox" unique_id=1494465007]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("danger")
+theme_override_styles/hover = SubResource("danger")
+text = "RESET LIFE PROGRESS"
+
+[node name="CloseSettingsButton" type="Button" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent" unique_id=749248842]
+custom_minimum_size = Vector2(0, 68)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("event_choice_normal")
+theme_override_styles/pressed = SubResource("event_choice_pressed")
+theme_override_styles/hover = SubResource("event_choice_hover")
+text = "RETURN TO GAME"
+
+[node name="ResetConfirmationOverlay" type="ColorRect" parent="." unique_id=263286308]
+visible = false
+z_index = 60
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.012, 0.059, 0.094, 0.82)
+
+[node name="ConfirmCard" type="PanelContainer" parent="ResetConfirmationOverlay" unique_id=1706803385]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -390.0
+offset_top = -240.0
+offset_right = 390.0
+offset_bottom = 240.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("event_card")
+
+[node name="ConfirmMargin" type="MarginContainer" parent="ResetConfirmationOverlay/ConfirmCard" unique_id=98932488]
+layout_mode = 2
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 36
+theme_override_constants/margin_bottom = 32
+
+[node name="ConfirmContent" type="VBoxContainer" parent="ResetConfirmationOverlay/ConfirmCard/ConfirmMargin" unique_id=1809133861]
+layout_mode = 2
+theme_override_constants/separation = 22
+
+[node name="ConfirmTitle" type="Label" parent="ResetConfirmationOverlay/ConfirmCard/ConfirmMargin/ConfirmContent" unique_id=874055106]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.827, 0.118, 0.145, 1)
+theme_override_font_sizes/font_size = 36
+text = "⚠️ RESET LIFE PROGRESS"
+horizontal_alignment = 1
+
+[node name="ConfirmDesc" type="Label" parent="ResetConfirmationOverlay/ConfirmCard/ConfirmMargin/ConfirmContent" unique_id=9250914]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_font_sizes/font_size = 25
+text = "Are you sure you want to end this life?
+
+All life choices, career milestones, relationships, bank savings, and character memories will be permanently erased."
+autowrap_mode = 3
+
+[node name="ButtonsRow" type="HBoxContainer" parent="ResetConfirmationOverlay/ConfirmCard/ConfirmMargin/ConfirmContent" unique_id=884538690]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="CancelResetButton" type="Button" parent="ResetConfirmationOverlay/ConfirmCard/ConfirmMargin/ConfirmContent/ButtonsRow" unique_id=1926340688]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("confirm_keep")
+theme_override_styles/pressed = SubResource("event_choice_pressed")
+theme_override_styles/hover = SubResource("event_choice_hover")
+text = "KEEP PLAYING"
+
+[node name="ConfirmResetButton" type="Button" parent="ResetConfirmationOverlay/ConfirmCard/ConfirmMargin/ConfirmContent/ButtonsRow" unique_id=473250409]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("danger")
+theme_override_styles/hover = SubResource("danger")
+text = "ERASE & RESTART"
+
+[node name="NewGamePanel" type="PanelContainer" parent="." unique_id=352814040]
+visible = false
+z_index = 40
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DimBackground" type="ColorRect" parent="NewGamePanel" unique_id=1900136241]
+layout_mode = 2
+color = Color(0.012, 0.059, 0.094, 0.78)
+
+[node name="CenterContainer" type="CenterContainer" parent="NewGamePanel" unique_id=2075512394]
+layout_mode = 2
+
+[node name="CreationCard" type="PanelContainer" parent="NewGamePanel/CenterContainer" unique_id=819807819]
+custom_minimum_size = Vector2(820, 850)
+layout_mode = 2
+theme_override_styles/panel = SubResource("card")
+
+[node name="NewGameContent" type="VBoxContainer" parent="NewGamePanel/CenterContainer/CreationCard" unique_id=499421247]
+layout_mode = 2
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="NewGameTitle" type="Label" parent="NewGamePanel/CenterContainer/CreationCard/NewGameContent" unique_id=1598762386]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 44
+text = "CREATE YOUR LIFE"
+horizontal_alignment = 1
+
+[node name="NameLabel" type="Label" parent="NewGamePanel/CenterContainer/CreationCard/NewGameContent" unique_id=1471489348]
+layout_mode = 2
+text = "What is your name?"
+
+[node name="NameInput" type="LineEdit" parent="NewGamePanel/CenterContainer/CreationCard/NewGameContent" unique_id=446873592]
+custom_minimum_size = Vector2(0, 84)
+layout_mode = 2
+placeholder_text = "Enter your name"
+
+[node name="BirthplaceLabel" type="Label" parent="NewGamePanel/CenterContainer/CreationCard/NewGameContent" unique_id=778461036]
+layout_mode = 2
+text = "Where were you born?"
+
+[node name="BirthplaceInput" type="OptionButton" parent="NewGamePanel/CenterContainer/CreationCard/NewGameContent" unique_id=265295407]
+custom_minimum_size = Vector2(0, 84)
+layout_mode = 2
+
+[node name="StartGameButton" type="Button" parent="NewGamePanel/CenterContainer/CreationCard/NewGameContent" unique_id=913868201]
+custom_minimum_size = Vector2(0, 104)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_styles/normal = SubResource("primary")
+text = "START LIFE"
+
+[node name="ValidationLabel" type="Label" parent="NewGamePanel/CenterContainer/CreationCard/NewGameContent" unique_id=526198767]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.827, 0.118, 0.145, 1)
+horizontal_alignment = 1
+
+[node name="EventOverlay" type="ColorRect" parent="." unique_id=1804710582]
+visible = false
+z_index = 50
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.012, 0.059, 0.094, 0.72)
+
+[node name="EventPanel" type="PanelContainer" parent="EventOverlay" unique_id=115835251]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -440.0
+offset_top = -540.0
+offset_right = 440.0
+offset_bottom = 540.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("event_card")
+
+[node name="EventMargin" type="MarginContainer" parent="EventOverlay/EventPanel" unique_id=768670823]
+layout_mode = 2
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 36
+theme_override_constants/margin_right = 36
+theme_override_constants/margin_bottom = 36
+
+[node name="EventContent" type="VBoxContainer" parent="EventOverlay/EventPanel/EventMargin" unique_id=156847665]
 layout_mode = 2
 theme_override_constants/separation = 24
 
-[node name="EventTitle" type="Label" parent="EventOverlay/EventPanel/EventContent" unique_id=333963373]
+[node name="EventTitle" type="Label" parent="EventOverlay/EventPanel/EventMargin/EventContent" unique_id=1611382857]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.972549, 0.9764706, 0.9882353, 1)
-theme_override_font_sizes/font_size = 42
-text = "School Trouble"
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 44
+text = "NEW BIKE"
 horizontal_alignment = 1
 
-[node name="EventDescription" type="RichTextLabel" parent="EventOverlay/EventPanel/EventContent" unique_id=1977734513]
+[node name="EventDescription" type="RichTextLabel" parent="EventOverlay/EventPanel/EventMargin/EventContent" unique_id=40284044]
+custom_minimum_size = Vector2(0, 260)
 layout_mode = 2
-theme_override_colors/font_selected_color = Color(0.972549, 0.9764706, 0.9882353, 1)
-theme_override_font_sizes/normal_font_size = 32
-text = "A kid grabs your lunch and walks away laughing.
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_font_sizes/normal_font_size = 30
+bbcode_enabled = true
+text = "Your family gives you a bicycle as a surprise gift.
 
 What do you do?"
 
-[node name="EventChoices" type="VBoxContainer" parent="EventOverlay/EventPanel/EventContent" unique_id=1405993920]
+[node name="EventChoices" type="VBoxContainer" parent="EventOverlay/EventPanel/EventMargin/EventContent" unique_id=382790794]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="EventChoice1" type="Button" parent="EventOverlay/EventPanel/EventContent/EventChoices" unique_id=664249670]
-custom_minimum_size = Vector2(0, 100)
+[node name="EventChoice1" type="Button" parent="EventOverlay/EventPanel/EventMargin/EventContent/EventChoices" unique_id=1862447792]
+custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.972549, 0.9764706, 0.9882353, 1)
-theme_override_styles/normal = SubResource("StyleBoxFlat_35msq")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_8u5x2")
-theme_override_styles/hover = SubResource("StyleBoxFlat_rnme1")
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.95, 0.6, 1)
+theme_override_font_sizes/font_size = 28
+theme_override_styles/normal = SubResource("event_choice_normal")
+theme_override_styles/pressed = SubResource("event_choice_pressed")
+theme_override_styles/hover = SubResource("event_choice_hover")
 text = "Choice 1"
 
-[node name="EventChoice2" type="Button" parent="EventOverlay/EventPanel/EventContent/EventChoices" unique_id=514024801]
-custom_minimum_size = Vector2(0, 100)
+[node name="EventChoice2" type="Button" parent="EventOverlay/EventPanel/EventMargin/EventContent/EventChoices" unique_id=1753297295]
+custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.972549, 0.9764706, 0.9882353, 1)
-theme_override_styles/normal = SubResource("StyleBoxFlat_35msq")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_8u5x2")
-theme_override_styles/hover = SubResource("StyleBoxFlat_rnme1")
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.95, 0.6, 1)
+theme_override_font_sizes/font_size = 28
+theme_override_styles/normal = SubResource("event_choice_normal")
+theme_override_styles/pressed = SubResource("event_choice_pressed")
+theme_override_styles/hover = SubResource("event_choice_hover")
 text = "Choice 2"
 
-[node name="EventChoice3" type="Button" parent="EventOverlay/EventPanel/EventContent/EventChoices" unique_id=890165066]
-custom_minimum_size = Vector2(0, 100)
+[node name="EventChoice3" type="Button" parent="EventOverlay/EventPanel/EventMargin/EventContent/EventChoices" unique_id=1160175461]
+custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.972549, 0.9764706, 0.9882353, 1)
-theme_override_styles/normal = SubResource("StyleBoxFlat_35msq")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_8u5x2")
-theme_override_styles/hover = SubResource("StyleBoxFlat_rnme1")
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.95, 0.6, 1)
+theme_override_font_sizes/font_size = 28
+theme_override_styles/normal = SubResource("event_choice_normal")
+theme_override_styles/pressed = SubResource("event_choice_pressed")
+theme_override_styles/hover = SubResource("event_choice_hover")
 text = "Choice 3"
 
-[node name="EventChoice4" type="Button" parent="EventOverlay/EventPanel/EventContent/EventChoices" unique_id=1635385077]
-custom_minimum_size = Vector2(0, 100)
+[node name="EventChoice4" type="Button" parent="EventOverlay/EventPanel/EventMargin/EventContent/EventChoices" unique_id=170960561]
+custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.972549, 0.9764706, 0.9882353, 1)
-theme_override_styles/normal = SubResource("StyleBoxFlat_35msq")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_8u5x2")
-theme_override_styles/hover = SubResource("StyleBoxFlat_rnme1")
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.95, 0.6, 1)
+theme_override_font_sizes/font_size = 28
+theme_override_styles/normal = SubResource("event_choice_normal")
+theme_override_styles/pressed = SubResource("event_choice_pressed")
+theme_override_styles/hover = SubResource("event_choice_hover")
 text = "Choice 4"
 
-[node name="ResetConfirmation" type="ConfirmationDialog" parent="." unique_id=1587109278]
-title = "Reset Progress"
-ok_button_text = "RESET"
-dialog_text = "Are you sure you want to erase your current life and start over?"
+[node name="LoadingScreen" type="Control" parent="." unique_id=534348454]
+z_index = 100
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
+[node name="LoadingBackground" type="TextureRect" parent="LoadingScreen" unique_id=741161961]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_bg")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="CenterContainer" type="CenterContainer" parent="LoadingScreen" unique_id=982934521]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LoadingVBox" type="VBoxContainer" parent="LoadingScreen/CenterContainer" unique_id=1923414994]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="LoadingIcon" type="TextureRect" parent="LoadingScreen/CenterContainer/LoadingVBox" unique_id=129768652]
+texture_filter = 1
+custom_minimum_size = Vector2(240, 240)
+layout_mode = 2
+texture = ExtResource("4_loading")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="LoadingTitleLabel" type="Label" parent="LoadingScreen/CenterContainer/LoadingVBox" unique_id=2093625867]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0.94, 1, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 46
+text = "Life.exe"
+horizontal_alignment = 1
+
+[node name="LoadingProgressLabel" type="Label" parent="LoadingScreen/CenterContainer/LoadingVBox" unique_id=2093625866]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_colors/font_outline_color = Color(0.02, 0.1, 0.25, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 32
+text = "0 %"
+horizontal_alignment = 1
+
+[connection signal="pressed" from="TopBar/Row/MenuButton" to="." method="_on_settings_nav_button_pressed"]
+[connection signal="pressed" from="ProfileStrip/ProfileMargin/ProfileRow/AvatarButton" to="." method="_on_avatar_button_pressed"]
+[connection signal="pressed" from="SafeArea/MainColumn/ActionBar/ActionRow/InfantButton" to="." method="_on_infant_button_pressed"]
+[connection signal="pressed" from="SafeArea/MainColumn/ActionBar/ActionRow/AssetsButton" to="." method="_on_assets_button_pressed"]
+[connection signal="pressed" from="SafeArea/MainColumn/ActionBar/ActionRow/RelationshipsButton" to="." method="_on_relationships_button_pressed"]
+[connection signal="pressed" from="SafeArea/MainColumn/ActionBar/ActionRow/ActivitiesButton" to="." method="_on_activities_button_pressed"]
 [connection signal="pressed" from="SafeArea/MainColumn/AgeButton" to="." method="_on_age_button_pressed"]
-[connection signal="pressed" from="SettingsPanel/SettingsContent/ResetProgressButton" to="." method="_on_reset_progress_button_pressed"]
-[connection signal="pressed" from="SettingsPanel/SettingsContent/CloseSettingsButton" to="." method="_on_close_settings_button_pressed"]
-[connection signal="pressed" from="BottomNavigation/NavButtons/TimelineButton" to="." method="_on_timeline_button_pressed"]
-[connection signal="pressed" from="BottomNavigation/NavButtons/HistoryButton" to="." method="_on_history_button_pressed"]
-[connection signal="pressed" from="BottomNavigation/NavButtons/CharacterButton" to="." method="_on_character_button_pressed"]
-[connection signal="pressed" from="BottomNavigation/NavButtons/SettingsNavButton" to="." method="_on_settings_nav_button_pressed"]
+[connection signal="pressed" from="CharacterPanel/CharacterMargin/CharacterContent/CharacterHeaderRow/CloseCharacterButton" to="." method="_on_close_panel_button_pressed"]
+[connection signal="pressed" from="InfantPanel/InfantMargin/InfantContent/InfantHeaderRow/CloseInfantButton" to="." method="_on_close_panel_button_pressed"]
+[connection signal="pressed" from="AssetsPanel/AssetsMargin/AssetsContent/AssetsHeaderRow/CloseAssetsButton" to="." method="_on_close_panel_button_pressed"]
+[connection signal="pressed" from="AssetsPanel/AssetsMargin/AssetsContent/BankButton" to="." method="_on_bank_button_pressed"]
+[connection signal="pressed" from="BankPanel/BankMargin/BankContent/BankHeaderRow/BackToAssetsButton" to="." method="_on_back_to_assets_button_pressed"]
+[connection signal="pressed" from="BankPanel/BankMargin/BankContent/BankHeaderRow/CloseBankButton" to="." method="_on_close_panel_button_pressed"]
+[connection signal="pressed" from="RelationshipsPanel/RelMargin/RelContent/RelHeaderRow/CloseRelButton" to="." method="_on_close_panel_button_pressed"]
+[connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActHeaderRow/CloseActButton" to="." method="_on_close_panel_button_pressed"]
+[connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/EducationActItem" to="." method="_on_education_item_pressed"]
+[connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/JobsActItem" to="." method="_on_jobs_item_pressed"]
+[connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/DoctorItem" to="." method="_on_doctor_item_pressed"]
+[connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/GymItem" to="." method="_on_gym_item_pressed"]
+[connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/LotteryItem" to="." method="_on_lottery_item_pressed"]
+[connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/StreetHustleItem" to="." method="_on_street_hustle_item_pressed"]
+[connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/MindItem" to="." method="_on_mind_item_pressed"]
+[connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/BankActItem" to="." method="_on_bank_button_pressed"]
+[connection signal="pressed" from="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/SettingsHeader/CloseSettingsHeaderButton" to="." method="_on_close_settings_button_pressed"]
+[connection signal="pressed" from="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/DangerCard/Margin/VBox/ResetProgressButton" to="." method="_on_reset_progress_button_pressed"]
+[connection signal="pressed" from="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/CloseSettingsButton" to="." method="_on_close_settings_button_pressed"]
+[connection signal="pressed" from="ResetConfirmationOverlay/ConfirmCard/ConfirmMargin/ConfirmContent/ButtonsRow/CancelResetButton" to="." method="_on_cancel_reset_pressed"]
+[connection signal="pressed" from="ResetConfirmationOverlay/ConfirmCard/ConfirmMargin/ConfirmContent/ButtonsRow/ConfirmResetButton" to="." method="_on_confirm_reset_pressed"]
 [connection signal="pressed" from="NewGamePanel/CenterContainer/CreationCard/NewGameContent/StartGameButton" to="." method="_on_start_game_button_pressed"]
-[connection signal="pressed" from="EventOverlay/EventPanel/EventContent/EventChoices/EventChoice1" to="." method="_on_event_choice_1_pressed"]
-[connection signal="pressed" from="EventOverlay/EventPanel/EventContent/EventChoices/EventChoice2" to="." method="_on_event_choice_2_pressed"]
-[connection signal="pressed" from="EventOverlay/EventPanel/EventContent/EventChoices/EventChoice3" to="." method="_on_event_choice_3_pressed"]
-[connection signal="pressed" from="EventOverlay/EventPanel/EventContent/EventChoices/EventChoice4" to="." method="_on_event_choice_4_pressed"]
-[connection signal="confirmed" from="ResetConfirmation" to="." method="_on_reset_confirmation_confirmed"]
+[connection signal="pressed" from="EventOverlay/EventPanel/EventMargin/EventContent/EventChoices/EventChoice1" to="." method="_on_event_choice_1_pressed"]
+[connection signal="pressed" from="EventOverlay/EventPanel/EventMargin/EventContent/EventChoices/EventChoice2" to="." method="_on_event_choice_2_pressed"]
+[connection signal="pressed" from="EventOverlay/EventPanel/EventMargin/EventContent/EventChoices/EventChoice3" to="." method="_on_event_choice_3_pressed"]
+[connection signal="pressed" from="EventOverlay/EventPanel/EventMargin/EventContent/EventChoices/EventChoice4" to="." method="_on_event_choice_4_pressed"]
