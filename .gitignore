@@ -1,0 +1,10 @@
+# Godot 4+ specific ignores
+.godot/
+*.translation
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code local settings
+.vscode/
