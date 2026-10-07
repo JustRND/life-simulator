@@ -1,0 +1,175 @@
+{
+  "attempts_per_year": 5,
+  "ranks": [
+    {
+      "name": "Alley Ghost",
+      "completed": 0
+    },
+    {
+      "name": "Night Runner",
+      "completed": 3
+    },
+    {
+      "name": "Shadow Hand",
+      "completed": 8
+    },
+    {
+      "name": "Neon Capo",
+      "completed": 16
+    },
+    {
+      "name": "District Phantom",
+      "completed": 28
+    },
+    {
+      "name": "Syndicate Regent",
+      "completed": 45
+    },
+    {
+      "name": "Midnight Sovereign",
+      "completed": 70
+    }
+  ],
+  "activities": [
+    {
+      "id": "pickpocket",
+      "name": "Pickpocket Commuters",
+      "rank": 0,
+      "risk": 0.2,
+      "min_reward": 60,
+      "max_reward": 180,
+      "sentence": 1,
+      "karma_loss": 2,
+      "caught_karma": 5
+    },
+    {
+      "id": "stolen_goods",
+      "name": "Stolen Goods Deal",
+      "rank": 0,
+      "risk": 0.22,
+      "min_reward": 90,
+      "max_reward": 260,
+      "sentence": 1,
+      "karma_loss": 3,
+      "caught_karma": 6
+    },
+    {
+      "id": "fake_tickets",
+      "name": "Counterfeit Ticket Hustle",
+      "rank": 0,
+      "risk": 0.25,
+      "min_reward": 100,
+      "max_reward": 350,
+      "sentence": 1,
+      "karma_loss": 3,
+      "caught_karma": 7
+    },
+    {
+      "id": "shoplift",
+      "name": "Tech Store Shoplifting",
+      "rank": 1,
+      "risk": 0.38,
+      "min_reward": 400,
+      "max_reward": 1200,
+      "sentence": 2,
+      "karma_loss": 6,
+      "caught_karma": 10
+    },
+    {
+      "id": "bootleg",
+      "name": "Bootleg Merchandise Deal",
+      "rank": 1,
+      "risk": 0.3,
+      "min_reward": 300,
+      "max_reward": 900,
+      "sentence": 2,
+      "karma_loss": 5,
+      "caught_karma": 9
+    },
+    {
+      "id": "racing",
+      "name": "Underground Street Race",
+      "rank": 1,
+      "risk": 0.32,
+      "min_reward": 250,
+      "max_reward": 1000,
+      "sentence": 2,
+      "karma_loss": 5,
+      "caught_karma": 10
+    },
+    {
+      "id": "cargo",
+      "name": "Contraband Cargo Contract",
+      "rank": 2,
+      "risk": 0.42,
+      "min_reward": 1000,
+      "max_reward": 2800,
+      "sentence": 3,
+      "karma_loss": 8,
+      "caught_karma": 14
+    },
+    {
+      "id": "auto_theft",
+      "name": "Vehicle Theft Contract",
+      "rank": 2,
+      "risk": 0.55,
+      "min_reward": 3500,
+      "max_reward": 8000,
+      "sentence": 4,
+      "karma_loss": 14,
+      "caught_karma": 20
+    },
+    {
+      "id": "warehouse",
+      "name": "Warehouse Theft",
+      "rank": 3,
+      "risk": 0.5,
+      "min_reward": 4000,
+      "max_reward": 9500,
+      "sentence": 4,
+      "karma_loss": 12,
+      "caught_karma": 22
+    },
+    {
+      "id": "wire_fraud",
+      "name": "Syndicate Wire Fraud",
+      "rank": 3,
+      "risk": 0.7,
+      "min_reward": 15000,
+      "max_reward": 35000,
+      "sentence": 7,
+      "karma_loss": 25,
+      "caught_karma": 35
+    },
+    {
+      "id": "art_heist",
+      "name": "Gallery Heist",
+      "rank": 4,
+      "risk": 0.6,
+      "min_reward": 10000,
+      "max_reward": 24000,
+      "sentence": 6,
+      "karma_loss": 18,
+      "caught_karma": 30
+    },
+    {
+      "id": "black_market",
+      "name": "Black Market Auction",
+      "rank": 5,
+      "risk": 0.65,
+      "min_reward": 18000,
+      "max_reward": 42000,
+      "sentence": 8,
+      "karma_loss": 22,
+      "caught_karma": 38
+    }
+  ],
+  "job_ranks": {
+    "crime_lookout": 0,
+    "crime_pickpocket": 1,
+    "crime_smuggler": 2,
+    "crime_hacker": 3,
+    "crime_enforcer": 3,
+    "crime_underboss": 5
+  }
+}

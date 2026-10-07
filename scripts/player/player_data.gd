@@ -36,6 +36,9 @@ var father_health: int = 80
 
 var partner: Dictionary = {}
 var ex_partners: Array = []
+var children: Array = []
+var active_debuffs: Array = []
+var active_buffs: Array = []
 var last_parent_interact_age: int = -1
 var last_partner_interact_age: int = -1
 
@@ -68,6 +71,8 @@ var job_id: String = ""
 var job_title: String = ""
 var job_company: String = ""
 var job_salary: int = 0
+var career_progress: Dictionary = {}
+var underground_progress: Dictionary = {}
 
 var illnesses: Array = []
 var is_dead: bool = false
@@ -151,6 +156,8 @@ func reset_player() -> void:
 	job_title = ""
 	job_company = ""
 	job_salary = 0
+	career_progress = {}
+	underground_progress = {}
 
 	illnesses.clear()
 	is_dead = false
@@ -162,6 +169,9 @@ func reset_player() -> void:
 	event_history.clear()
 	life_log.clear()
 	degrees.clear()
+	children.clear()
+	active_debuffs.clear()
+	active_buffs.clear()
 
 
 func is_doctor() -> bool:
@@ -318,7 +328,8 @@ func get_stats() -> Dictionary:
 		"happiness": happiness,
 		"smarts": smarts,
 		"looks": looks,
-		"karma": karma
+		"karma": karma,
+		"underground_completed": int(underground_progress.get("completed", 0))
 	}
 
 
@@ -350,6 +361,8 @@ func apply_effects(effects: Dictionary) -> void:
 	smarts = clamp(smarts, 0, 100)
 	looks = clamp(looks, 0, 100)
 	karma = clamp(karma, -100, 100)
+
+	enforce_buffs_and_debuffs()
 
 
 func add_life_log_entry(text: String, kind: String = "event") -> void:
@@ -394,3 +407,180 @@ func get_partner_relationship() -> int:
 func set_partner_relationship(val: int) -> void:
 	if has_partner():
 		partner["relationship"] = clampi(val, 0, 100)
+
+
+func enforce_buffs_and_debuffs() -> void:
+	if "health_cap_50" in active_debuffs:
+		health = clampi(health, 0, 50)
+	if "stuck_happiness" in active_debuffs:
+		happiness = clampi(happiness, 0, 15)
+	if "super_smarts" in active_buffs:
+		smarts = maxi(smarts, 100)
+	if "radiant_vitality" in active_buffs:
+		health = maxi(health, 85)
+	if "divine_looks" in active_buffs:
+		looks = maxi(looks, 90)
+	if "blessed_mind" in active_buffs:
+		happiness = maxi(happiness, 80)
+
+
+func has_living_children() -> bool:
+	for c in children:
+		if c is Dictionary and bool(c.get("is_alive", true)):
+			return true
+	return false
+
+
+func get_living_children() -> Array:
+	var living: Array = []
+	for c in children:
+		if c is Dictionary and bool(c.get("is_alive", true)):
+			living.append(c)
+	return living
+
+
+func add_player_child(c_name: String, c_gender: String, c_age: int = 0) -> Dictionary:
+	var child_data := {
+		"name": c_name,
+		"gender": c_gender,
+		"age": c_age,
+		"ethnicity": ethnicity,
+		"portrait_track": randi() % 2,
+		"portrait_variant": randi() % 5,
+		"relationship": 85,
+		"health": 90,
+		"happiness": 80,
+		"smarts": randi_range(50, 85),
+		"looks": randi_range(50, 85),
+		"is_alive": true
+	}
+	children.append(child_data)
+	return child_data
+
+
+func start_reincarnated_life(identity: Dictionary, debuffs: Array, buffs: Array) -> void:
+	reset_player()
+	active_debuffs = debuffs.duplicate()
+	active_buffs = buffs.duplicate()
+
+	first_name = str(identity.get("first_name", "Reborn Soul"))
+	gender = str(identity.get("gender", "MALE"))
+	ethnicity = str(identity.get("ethnicity", "white"))
+	birthplace = str(identity.get("birthplace", "New York"))
+	portrait_track = int(identity.get("portrait_track", 0))
+	portrait_variant = int(identity.get("portrait_variant", 0))
+	has_started_game = true
+
+	# Parents setup
+	if "no_parents" in active_debuffs:
+		mother_name = "Deceased"
+		mother_alive = false
+		mother_health = 0
+		father_name = "Deceased"
+		father_alive = false
+		father_health = 0
+	else:
+		mother_name = "Elena"
+		mother_job = "Retail Associate"
+		mother_alive = true
+		mother_health = 80
+		father_name = "Marcus"
+		father_job = "Mechanic"
+		father_alive = true
+		father_health = 80
+
+	if "golden_pedigree" in active_buffs:
+		mother_job = "Chief Surgeon"
+		father_job = "Venture Capitalist"
+		mother_relationship = 100
+		father_relationship = 100
+
+	# Base stats
+	if "bad_stats" in active_debuffs:
+		health = randi_range(15, 25)
+		happiness = randi_range(10, 20)
+		smarts = randi_range(15, 25)
+		looks = randi_range(15, 25)
+	else:
+		health = 80
+		happiness = 75
+		smarts = 60
+		looks = 65
+
+	# Illnesses
+	if "random_illness" in active_debuffs:
+		var illness_pool := [
+			{"id": "chronic_asthma", "name": "Chronic Severe Asthma"},
+			{"id": "heart_murmur", "name": "Congenital Heart Defect"},
+			{"id": "migraines", "name": "Chronic Migraine Syndrome"}
+		]
+		var chosen_ill: Dictionary = illness_pool[randi() % illness_pool.size()]
+		add_illness(str(chosen_ill["id"]), str(chosen_ill["name"]), 1)
+
+	# Finances
+	if "crazy_debt" in active_debuffs:
+		debt = randi_range(60000, 100000)
+		money = 0
+	elif "poverty" in active_debuffs:
+		money = 0
+		bank_savings = 0
+	elif "silver_spoon" in active_buffs:
+		money = randi_range(100000, 150000)
+	else:
+		money = 0
+
+	karma = 0
+	enforce_buffs_and_debuffs()
+
+	var desc_karmic := "⚖️ REINCARNATION: You were judged by the Cosmic Arbiter."
+	if active_debuffs.size() > 0:
+		desc_karmic += " Bound by karmic penalties: %s." % ", ".join(active_debuffs)
+	elif active_buffs.size() > 0:
+		desc_karmic += " Blessed with cosmic gifts: %s." % ", ".join(active_buffs)
+	add_life_log_entry(desc_karmic, "event")
+
+
+func takeover_as_child(child: Dictionary, inherited_money: int) -> void:
+	var prev_parent_name: String = first_name
+	var prev_gender: String = gender
+	reset_player()
+
+	first_name = str(child.get("name", "Child"))
+	gender = str(child.get("gender", "MALE"))
+	ethnicity = str(child.get("ethnicity", "white"))
+	portrait_track = int(child.get("portrait_track", 0))
+	portrait_variant = int(child.get("portrait_variant", 0))
+	age = int(child.get("age", 18))
+	has_started_game = true
+
+	health = int(child.get("health", 85))
+	happiness = int(child.get("happiness", 75))
+	smarts = int(child.get("smarts", 65))
+	looks = int(child.get("looks", 65))
+	money = maxi(0, inherited_money)
+	bank_savings = 0
+	debt = 0
+	karma = 0
+
+	if prev_gender == "FEMALE":
+		mother_name = prev_parent_name
+		mother_alive = false
+		mother_health = 0
+	else:
+		father_name = prev_parent_name
+		father_alive = false
+		father_health = 0
+
+	if age >= 18:
+		education_level = "High School Graduate"
+		grades = 80
+	elif age >= 12:
+		education_level = "Middle School"
+		grades = 75
+	elif age >= 6:
+		education_level = "Primary School"
+		grades = 75
+	else:
+		education_level = "None"
+
+	add_life_log_entry("📜 LEGACY: You inherited your late parent %s's estate ($%d) and continue the family bloodline at age %d." % [prev_parent_name, money, age], "event")

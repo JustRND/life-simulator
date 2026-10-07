@@ -4,11 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://byvoxh4vu2ctd" path="res://assets/ui/ingame_icon.png" id="2_icon"]
 [ext_resource type="Texture2D" uid="uid://bv7l8jf2r62rn" path="res://assets/ui/ingame_background.png" id="3_bg"]
 [ext_resource type="Texture2D" uid="uid://oujxvj38q5k0" path="res://assets/ui/loading_icon.png" id="4_loading"]
-
-[ext_resource type="Shader" path="res://assets/ui/background_pulse.gdshader" id="5_bg_pulse"]
-
-[sub_resource type="ShaderMaterial" id="BackgroundPulse"]
-shader = ExtResource("5_bg_pulse")
+[ext_resource type="Shader" uid="uid://0bwcmxsuaqxt" path="res://assets/ui/background_pulse.gdshader" id="5_bg_pulse"]
 
 [sub_resource type="SystemFont" id="pixel_font"]
 font_names = PackedStringArray("Consolas", "Courier New", "monospace")
@@ -18,6 +14,12 @@ subpixel_positioning = 0
 [sub_resource type="Theme" id="pixel_theme"]
 default_font = SubResource("pixel_font")
 default_font_size = 28
+
+[sub_resource type="ShaderMaterial" id="BackgroundPulse"]
+shader = ExtResource("5_bg_pulse")
+shader_parameter/cycle_seconds = 4.0
+shader_parameter/strength = 0.65
+shader_parameter/preview_time = -1.0
 
 [sub_resource type="StyleBoxFlat" id="top"]
 bg_color = Color(0.0745, 0.0588, 0.1647, 1)
@@ -780,7 +782,7 @@ theme_override_constants/separation = 8
 layout_mode = 2
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
 theme_override_font_sizes/font_size = 30
-text = "Finances & Karma"
+text = "Finances & Net Worth"
 
 [node name="CharacterMoney" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FinancesCard/Margin/VBox" unique_id=2016775973]
 layout_mode = 2
@@ -789,10 +791,11 @@ theme_override_font_sizes/font_size = 26
 text = "Money: $0"
 
 [node name="CharacterKarma" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FinancesCard/Margin/VBox" unique_id=384370197]
+visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_font_sizes/font_size = 26
-text = "Karma: 0"
+text = ""
 
 [node name="InfantPanel" type="PanelContainer" parent="." unique_id=2119090324]
 visible = false

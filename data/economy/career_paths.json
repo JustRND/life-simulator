@@ -1,0 +1,776 @@
+{
+  "newspaper_delivery": [
+    {
+      "years": 1,
+      "min_age": 12,
+      "title": "Senior Delivery Courier",
+      "salary": 4500
+    },
+    {
+      "years": 3,
+      "min_age": 16,
+      "title": "Route Coordinator",
+      "salary": 9000
+    },
+    {
+      "years": 6,
+      "min_age": 18,
+      "title": "Circulation Supervisor",
+      "salary": 26000
+    },
+    {
+      "years": 10,
+      "min_age": 21,
+      "title": "Distribution Manager",
+      "salary": 44000
+    }
+  ],
+  "lemonade_stand": [
+    {
+      "years": 1,
+      "min_age": 8,
+      "title": "Established Lemonade Vendor",
+      "salary": 3800
+    },
+    {
+      "years": 3,
+      "min_age": 13,
+      "title": "Community Market Vendor",
+      "salary": 7000
+    },
+    {
+      "years": 6,
+      "min_age": 18,
+      "title": "Beverage Stall Owner",
+      "salary": 22000
+    },
+    {
+      "years": 10,
+      "min_age": 21,
+      "title": "Beverage Business Operator",
+      "salary": 42000
+    }
+  ],
+  "lawn_mower": [
+    {
+      "years": 1,
+      "min_age": 14,
+      "title": "Experienced Lawn Care Worker",
+      "salary": 6500
+    },
+    {
+      "years": 3,
+      "min_age": 18,
+      "title": "Grounds Maintenance Lead",
+      "salary": 26000
+    },
+    {
+      "years": 6,
+      "min_age": 21,
+      "title": "Landscaping Crew Supervisor",
+      "salary": 41000
+    },
+    {
+      "years": 10,
+      "min_age": 25,
+      "title": "Landscape Operations Manager",
+      "salary": 58000
+    }
+  ],
+  "babysitter": [
+    {
+      "years": 2,
+      "min_age": 16,
+      "title": "Experienced Babysitter",
+      "salary": 8500
+    },
+    {
+      "years": 5,
+      "min_age": 18,
+      "title": "Full-Time Nanny",
+      "salary": 30000
+    },
+    {
+      "years": 9,
+      "min_age": 23,
+      "title": "Senior Family Caregiver",
+      "salary": 40000
+    },
+    {
+      "years": 14,
+      "min_age": 28,
+      "title": "Household Care Coordinator",
+      "salary": 51000
+    }
+  ],
+  "ff_dishwasher": [
+    {
+      "years": 1,
+      "min_age": 16,
+      "title": "Kitchen Assistant",
+      "salary": 19500
+    },
+    {
+      "years": 3,
+      "min_age": 18,
+      "title": "Prep Cook",
+      "salary": 26000
+    },
+    {
+      "years": 6,
+      "min_age": 21,
+      "title": "Kitchen Shift Lead",
+      "salary": 35000
+    },
+    {
+      "years": 10,
+      "min_age": 25,
+      "title": "Kitchen Manager",
+      "salary": 46000
+    }
+  ],
+  "ff_crew_member": [
+    {
+      "years": 1,
+      "min_age": 16,
+      "title": "Crew Trainer",
+      "salary": 22000
+    },
+    {
+      "years": 3,
+      "min_age": 18,
+      "title": "Shift Supervisor",
+      "salary": 32000
+    },
+    {
+      "years": 6,
+      "min_age": 21,
+      "title": "Assistant Restaurant Manager",
+      "salary": 41000
+    },
+    {
+      "years": 10,
+      "min_age": 25,
+      "title": "Restaurant General Manager",
+      "salary": 57000
+    }
+  ],
+  "ff_fry_cook": [
+    {
+      "years": 2,
+      "min_age": 18,
+      "title": "Senior Line Cook",
+      "salary": 28000
+    },
+    {
+      "years": 5,
+      "min_age": 21,
+      "title": "Kitchen Supervisor",
+      "salary": 37000
+    },
+    {
+      "years": 9,
+      "min_age": 25,
+      "title": "Kitchen Manager",
+      "salary": 48000
+    },
+    {
+      "years": 14,
+      "min_age": 30,
+      "title": "Regional Kitchen Operations Lead",
+      "salary": 63000
+    }
+  ],
+  "ff_barista": [
+    {
+      "years": 1,
+      "min_age": 17,
+      "title": "Senior Barista",
+      "salary": 26000
+    },
+    {
+      "years": 3,
+      "min_age": 18,
+      "title": "Cafe Shift Supervisor",
+      "salary": 33000
+    },
+    {
+      "years": 6,
+      "min_age": 21,
+      "title": "Cafe Manager",
+      "salary": 46000
+    },
+    {
+      "years": 11,
+      "min_age": 26,
+      "title": "Area Cafe Manager",
+      "salary": 62000
+    }
+  ],
+  "ff_shift_supervisor": [
+    {
+      "years": 2,
+      "min_age": 20,
+      "title": "Assistant Restaurant Manager",
+      "salary": 41000
+    },
+    {
+      "years": 5,
+      "min_age": 23,
+      "title": "Restaurant General Manager",
+      "salary": 57000
+    },
+    {
+      "years": 10,
+      "min_age": 28,
+      "title": "District Restaurant Manager",
+      "salary": 78000
+    }
+  ],
+  "ret_stocker": [
+    {
+      "years": 2,
+      "min_age": 18,
+      "title": "Stockroom Team Lead",
+      "salary": 28500
+    },
+    {
+      "years": 5,
+      "min_age": 21,
+      "title": "Inventory Supervisor",
+      "salary": 37000
+    },
+    {
+      "years": 9,
+      "min_age": 25,
+      "title": "Store Logistics Manager",
+      "salary": 49000
+    },
+    {
+      "years": 14,
+      "min_age": 30,
+      "title": "Area Inventory Manager",
+      "salary": 66000
+    }
+  ],
+  "ret_cashier": [
+    {
+      "years": 1,
+      "min_age": 17,
+      "title": "Senior Cashier",
+      "salary": 24500
+    },
+    {
+      "years": 2,
+      "min_age": 18,
+      "title": "Front-End Manager",
+      "salary": 32000
+    },
+    {
+      "years": 5,
+      "min_age": 21,
+      "title": "Assistant Store Manager",
+      "salary": 41000
+    },
+    {
+      "years": 8,
+      "min_age": 24,
+      "title": "Store Manager",
+      "salary": 54000
+    },
+    {
+      "years": 13,
+      "min_age": 29,
+      "title": "District Store Manager",
+      "salary": 74000
+    }
+  ],
+  "ret_sales_associate": [
+    {
+      "years": 2,
+      "min_age": 19,
+      "title": "Senior Sales Associate",
+      "salary": 29500
+    },
+    {
+      "years": 4,
+      "min_age": 21,
+      "title": "Department Manager",
+      "salary": 38000
+    },
+    {
+      "years": 8,
+      "min_age": 25,
+      "title": "Store Manager",
+      "salary": 53000
+    },
+    {
+      "years": 13,
+      "min_age": 30,
+      "title": "Area Sales Manager",
+      "salary": 72000
+    }
+  ],
+  "ret_electronics_specialist": [
+    {
+      "years": 2,
+      "min_age": 20,
+      "title": "Senior Electronics Specialist",
+      "salary": 34500
+    },
+    {
+      "years": 5,
+      "min_age": 23,
+      "title": "Electronics Department Manager",
+      "salary": 45000
+    },
+    {
+      "years": 9,
+      "min_age": 27,
+      "title": "Store Manager",
+      "salary": 58000
+    },
+    {
+      "years": 14,
+      "min_age": 32,
+      "title": "Regional Retail Manager",
+      "salary": 80000
+    }
+  ],
+  "ret_store_manager": [
+    {
+      "years": 3,
+      "min_age": 24,
+      "title": "Senior Store Manager",
+      "salary": 61000
+    },
+    {
+      "years": 7,
+      "min_age": 28,
+      "title": "District Manager",
+      "salary": 80000
+    },
+    {
+      "years": 12,
+      "min_age": 33,
+      "title": "Regional Retail Director",
+      "salary": 110000
+    }
+  ],
+  "corp_executive": [
+    {
+      "years": 3,
+      "min_age": 28,
+      "title": "Senior Operations Executive",
+      "salary": 135000
+    },
+    {
+      "years": 7,
+      "min_age": 32,
+      "title": "Vice President of Operations",
+      "salary": 170000
+    },
+    {
+      "years": 13,
+      "min_age": 38,
+      "title": "Chief Operating Officer",
+      "salary": 240000
+    }
+  ],
+  "it_qa_tester": [
+    {
+      "years": 2,
+      "min_age": 20,
+      "title": "QA Analyst",
+      "salary": 55000
+    },
+    {
+      "years": 5,
+      "min_age": 23,
+      "title": "Senior QA Analyst",
+      "salary": 74000
+    },
+    {
+      "years": 9,
+      "min_age": 27,
+      "title": "QA Lead",
+      "salary": 95000
+    },
+    {
+      "years": 14,
+      "min_age": 32,
+      "title": "Quality Engineering Manager",
+      "salary": 120000
+    }
+  ],
+  "it_helpdesk": [
+    {
+      "years": 2,
+      "min_age": 20,
+      "title": "Senior Support Specialist",
+      "salary": 49000
+    },
+    {
+      "years": 5,
+      "min_age": 23,
+      "title": "Service Desk Team Lead",
+      "salary": 64000
+    },
+    {
+      "years": 9,
+      "min_age": 27,
+      "title": "IT Support Manager",
+      "salary": 85000
+    },
+    {
+      "years": 14,
+      "min_age": 32,
+      "title": "IT Service Delivery Director",
+      "salary": 115000
+    }
+  ],
+  "it_web_developer": [
+    {
+      "years": 2,
+      "min_age": 21,
+      "title": "Web Developer",
+      "salary": 82000
+    },
+    {
+      "years": 5,
+      "min_age": 24,
+      "title": "Senior Web Developer",
+      "salary": 106000
+    },
+    {
+      "years": 9,
+      "min_age": 28,
+      "title": "Web Engineering Lead",
+      "salary": 132000
+    },
+    {
+      "years": 14,
+      "min_age": 33,
+      "title": "Web Engineering Manager",
+      "salary": 160000
+    }
+  ],
+  "it_software_engineer": [
+    {
+      "years": 3,
+      "min_age": 24,
+      "title": "Senior Software Engineer",
+      "salary": 125000
+    },
+    {
+      "years": 7,
+      "min_age": 28,
+      "title": "Staff Software Engineer",
+      "salary": 155000
+    },
+    {
+      "years": 12,
+      "min_age": 33,
+      "title": "Principal Software Engineer",
+      "salary": 190000
+    }
+  ],
+  "it_cybersecurity": [
+    {
+      "years": 3,
+      "min_age": 25,
+      "title": "Senior Security Analyst",
+      "salary": 134000
+    },
+    {
+      "years": 7,
+      "min_age": 29,
+      "title": "Security Operations Lead",
+      "salary": 163000
+    },
+    {
+      "years": 12,
+      "min_age": 34,
+      "title": "Security Operations Director",
+      "salary": 198000
+    }
+  ],
+  "it_cloud_architect": [
+    {
+      "years": 4,
+      "min_age": 29,
+      "title": "Enterprise Cloud Architect",
+      "salary": 172000
+    },
+    {
+      "years": 9,
+      "min_age": 34,
+      "title": "Director of Cloud Architecture",
+      "salary": 210000
+    },
+    {
+      "years": 15,
+      "min_age": 40,
+      "title": "Vice President of Cloud Engineering",
+      "salary": 255000
+    }
+  ],
+  "crime_lookout": [
+    {
+      "years": 2,
+      "min_age": 17,
+      "title": "Senior Lookout",
+      "salary": 17000
+    },
+    {
+      "years": 5,
+      "min_age": 20,
+      "title": "Lookout Crew Lead",
+      "salary": 24000
+    },
+    {
+      "years": 9,
+      "min_age": 24,
+      "title": "Street Operations Coordinator",
+      "salary": 34000
+    }
+  ],
+  "crime_pickpocket": [
+    {
+      "years": 2,
+      "min_age": 18,
+      "title": "Experienced Street Thief",
+      "salary": 31000
+    },
+    {
+      "years": 5,
+      "min_age": 21,
+      "title": "Theft Crew Lead",
+      "salary": 43000
+    },
+    {
+      "years": 9,
+      "min_age": 25,
+      "title": "District Theft Coordinator",
+      "salary": 58000
+    }
+  ],
+  "crime_smuggler": [
+    {
+      "years": 3,
+      "min_age": 21,
+      "title": "Senior Contraband Courier",
+      "salary": 69000
+    },
+    {
+      "years": 7,
+      "min_age": 25,
+      "title": "Courier Crew Lead",
+      "salary": 86000
+    },
+    {
+      "years": 12,
+      "min_age": 30,
+      "title": "Syndicate Logistics Coordinator",
+      "salary": 110000
+    }
+  ],
+  "crime_hacker": [
+    {
+      "years": 3,
+      "min_age": 21,
+      "title": "Senior Underground Hacker",
+      "salary": 108000
+    },
+    {
+      "years": 7,
+      "min_age": 25,
+      "title": "Underground Technical Lead",
+      "salary": 135000
+    },
+    {
+      "years": 12,
+      "min_age": 30,
+      "title": "Syndicate Technology Director",
+      "salary": 165000
+    }
+  ],
+  "crime_enforcer": [
+    {
+      "years": 3,
+      "min_age": 23,
+      "title": "Senior Syndicate Enforcer",
+      "salary": 110000
+    },
+    {
+      "years": 7,
+      "min_age": 27,
+      "title": "Enforcement Crew Captain",
+      "salary": 140000
+    },
+    {
+      "years": 12,
+      "min_age": 32,
+      "title": "Syndicate Security Chief",
+      "salary": 175000
+    }
+  ],
+  "crime_underboss": [
+    {
+      "years": 4,
+      "min_age": 30,
+      "title": "Senior Underboss",
+      "salary": 210000
+    },
+    {
+      "years": 9,
+      "min_age": 35,
+      "title": "Syndicate Operations Chief",
+      "salary": 255000
+    },
+    {
+      "years": 15,
+      "min_age": 41,
+      "title": "Syndicate Executive Chief",
+      "salary": 310000
+    }
+  ],
+  "trade_mechanic": [
+    {
+      "years": 3,
+      "min_age": 20,
+      "title": "Qualified Auto Mechanic",
+      "salary": 48000
+    },
+    {
+      "years": 6,
+      "min_age": 23,
+      "title": "Senior Diagnostic Technician",
+      "salary": 60000
+    },
+    {
+      "years": 10,
+      "min_age": 27,
+      "title": "Workshop Foreman",
+      "salary": 73000
+    },
+    {
+      "years": 15,
+      "min_age": 32,
+      "title": "Service Operations Manager",
+      "salary": 89000
+    }
+  ],
+  "trade_electrician": [
+    {
+      "years": 3,
+      "min_age": 22,
+      "title": "Senior Journeyman Electrician",
+      "salary": 69000
+    },
+    {
+      "years": 7,
+      "min_age": 26,
+      "title": "Electrical Crew Foreman",
+      "salary": 82000
+    },
+    {
+      "years": 12,
+      "min_age": 31,
+      "title": "Electrical Site Supervisor",
+      "salary": 96000
+    }
+  ],
+  "med_nurse": [
+    {
+      "years": 3,
+      "min_age": 24,
+      "title": "Senior Clinical Nurse",
+      "salary": 80000
+    },
+    {
+      "years": 6,
+      "min_age": 27,
+      "title": "Charge Nurse",
+      "salary": 94000
+    },
+    {
+      "years": 11,
+      "min_age": 32,
+      "title": "Nurse Unit Manager",
+      "salary": 115000
+    },
+    {
+      "years": 17,
+      "min_age": 38,
+      "title": "Director of Nursing Services",
+      "salary": 145000
+    }
+  ],
+  "med_resident": [
+    {
+      "years": 3,
+      "min_age": 27,
+      "title": "Chief Resident Physician",
+      "salary": 132000
+    },
+    {
+      "years": 5,
+      "min_age": 29,
+      "title": "Attending Physician",
+      "salary": 220000
+    },
+    {
+      "years": 10,
+      "min_age": 34,
+      "title": "Senior Attending Physician",
+      "salary": 270000
+    },
+    {
+      "years": 17,
+      "min_age": 41,
+      "title": "Clinical Department Director",
+      "salary": 330000
+    }
+  ],
+  "med_doctor": [
+    {
+      "years": 4,
+      "min_age": 31,
+      "title": "Senior Attending Physician",
+      "salary": 270000
+    },
+    {
+      "years": 9,
+      "min_age": 36,
+      "title": "Clinical Department Director",
+      "salary": 330000
+    },
+    {
+      "years": 16,
+      "min_age": 43,
+      "title": "Hospital Medical Director",
+      "salary": 400000
+    }
+  ],
+  "med_surgeon": [
+    {
+      "years": 5,
+      "min_age": 36,
+      "title": "Director of Surgical Services",
+      "salary": 410000
+    },
+    {
+      "years": 11,
+      "min_age": 42,
+      "title": "Hospital Surgical Director",
+      "salary": 480000
+    },
+    {
+      "years": 18,
+      "min_age": 49,
+      "title": "Chief Medical Officer",
+      "salary": 565000
+    }
+  ]
+}

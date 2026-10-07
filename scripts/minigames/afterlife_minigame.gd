@@ -1,0 +1,501 @@
+class_name AfterlifeMinigame
+extends Node
+
+const CreationOptionsRef = preload("res://scripts/core/creation_options.gd")
+const NameCatalogRef = preload("res://scripts/core/name_catalog.gd")
+const PortraitCatalogRef = preload("res://scripts/core/portrait_catalog.gd")
+
+const DEBUFF_DEFS := {
+	"bad_stats": {
+		"title": "Diminished Core Attributes",
+		"icon": "📉",
+		"color": "#ef4444",
+		"desc": "Born with frail health and clouded mind. Core stats (Health, Happiness, Smarts, Looks) start severely depleted (15-25%)."
+	},
+	"random_illness": {
+		"title": "Congenital Chronic Illness",
+		"icon": "🩺",
+		"color": "#f97316",
+		"desc": "Afflicted from birth with a severe chronic ailment (Asthma, Heart Defect, or Severe Migraines) requiring lifelong care."
+	},
+	"poverty": {
+		"title": "Crushing Generational Poverty",
+		"icon": "💸",
+		"color": "#eab308",
+		"desc": "Born into severe impoverishment with zero starting cash, no allowances, and struggling guardians."
+	},
+	"no_parents": {
+		"title": "Orphaned at Birth",
+		"icon": "🏚️",
+		"color": "#a855f7",
+		"desc": "Both parents are absent or deceased. Raised alone under austere state foster care."
+	},
+	"stuck_happiness": {
+		"title": "Anhedonia (Stuck Happiness)",
+		"icon": "⚡",
+		"color": "#ec4899",
+		"desc": "A spiritually cursed mind unable to experience joy. Happiness is permanently capped at 15%."
+	},
+	"health_cap_50": {
+		"title": "Frail Vessel (Health Capped at 50%)",
+		"icon": "💔",
+		"color": "#dc2626",
+		"desc": "A structurally damaged mortal form. Maximum health is permanently locked and restricted to 50%."
+	},
+	"crazy_debt": {
+		"title": "Ancestral Debt Burden",
+		"icon": "⛓️",
+		"color": "#991b1b",
+		"desc": "Burdened from youth with $60,000 - $100,000 of inherited ancestral and underworld debt."
+	}
+}
+
+const BUFF_DEFS := {
+	"super_smarts": {
+		"title": "Transcendent Genius",
+		"icon": "🧠",
+		"color": "#38bdf8",
+		"desc": "Cosmic enlightenment unlocks your mind. Smarts meter is enlightened and can never drop below 100%!"
+	},
+	"silver_spoon": {
+		"title": "Silver Spoon Legacy",
+		"icon": "💎",
+		"color": "#22c55e",
+		"desc": "Born into profound luxury with an inherited personal trust fund of $100,000 - $150,000!"
+	},
+	"radiant_vitality": {
+		"title": "Radiant Vitality",
+		"icon": "❤️",
+		"color": "#10b981",
+		"desc": "Blessed with an immaculate constitution. Health meter can never fall below 85%!"
+	},
+	"divine_looks": {
+		"title": "Divine Radiance",
+		"icon": "✨",
+		"color": "#f59e0b",
+		"desc": "Radiates unearthly grace and allure. Looks meter can never fall below 90%!"
+	},
+	"blessed_mind": {
+		"title": "Serene Mind",
+		"icon": "🧘",
+		"color": "#a855f7",
+		"desc": "Possesses impenetrable inner peace and emotional fortitude. Happiness can never fall below 80%!"
+	},
+	"golden_pedigree": {
+		"title": "Golden Pedigree",
+		"icon": "👑",
+		"color": "#eab308",
+		"desc": "Born into a high-prestige, loving family of renowned professionals who provide unconditional support."
+	}
+}
+
+var overlay: ColorRect
+var is_condemned: bool = false
+var karmic_value: int = 0
+var rolled_debuffs: Array = []
+var rolled_buffs: Array = []
+var reborn_identity: Dictionary = {}
+var on_rebirth_callback: Callable
+
+# Nodes for animation and stages
+var scale_needle: Label
+var scale_status_lbl: Label
+var deeds_scroll: VBoxContainer
+var verdict_panel: PanelContainer
+var weigh_button: Button
+var accept_button: Button
+
+
+static func show_minigame(parent: Node, karma: int, callback: Callable) -> AfterlifeMinigame:
+	var mg := AfterlifeMinigame.new()
+	mg.name = "AfterlifeMinigame"
+	parent.add_child(mg)
+	mg.setup(karma, callback)
+	return mg
+
+
+func setup(karma: int, callback: Callable) -> void:
+	karmic_value = karma
+	is_condemned = (karma < 0)
+	on_rebirth_callback = callback
+
+	_roll_modifiers_and_identity()
+	_build_ui()
+
+
+func _roll_modifiers_and_identity() -> void:
+	if is_condemned:
+		var debuff_keys := DEBUFF_DEFS.keys()
+		debuff_keys.shuffle()
+		var count := randi_range(1, 3)
+		rolled_debuffs = debuff_keys.slice(0, count)
+		rolled_buffs = []
+	else:
+		var buff_keys := BUFF_DEFS.keys()
+		buff_keys.shuffle()
+		var count := randi_range(1, 3)
+		rolled_buffs = buff_keys.slice(0, count)
+		rolled_debuffs = []
+
+	# Generate completely randomized character
+	var country_entry: Array = CreationOptionsRef.COUNTRIES.pick_random()
+	var country_name: String = str(country_entry[0])
+	var is_female: bool = (randf() < 0.5)
+	var full_name: String = NameCatalogRef.random_name(country_name, is_female)
+	var eth: String = PortraitCatalogRef.random_ethnicity_for_country(country_name)
+	var p_track: int = randi() % 2
+	var p_variant: int = randi() % 5
+
+	reborn_identity = {
+		"first_name": full_name,
+		"gender": "FEMALE" if is_female else "MALE",
+		"birthplace": country_name,
+		"ethnicity": eth,
+		"portrait_track": p_track,
+		"portrait_variant": p_variant
+	}
+
+
+func _build_ui() -> void:
+	overlay = ColorRect.new()
+	overlay.anchors_preset = Control.PRESET_FULL_RECT
+	overlay.anchor_right = 1.0
+	overlay.anchor_bottom = 1.0
+	overlay.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	overlay.grow_vertical = Control.GROW_DIRECTION_BOTH
+	overlay.z_index = 95
+	overlay.color = Color(0.02, 0.01, 0.04, 0.98) if is_condemned else Color(0.01, 0.03, 0.06, 0.98)
+	add_child(overlay)
+
+	var center := CenterContainer.new()
+	center.anchors_preset = Control.PRESET_FULL_RECT
+	center.anchor_right = 1.0
+	center.anchor_bottom = 1.0
+	overlay.add_child(center)
+
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(1020, 1680)
+	var card_style := StyleBoxFlat.new()
+	card_style.bg_color = Color("#07050d") if is_condemned else Color("#050c18")
+	card_style.border_color = Color("#f43f5e") if is_condemned else Color("#38bdf8")
+	card_style.set_border_width_all(3)
+	card_style.set_corner_radius_all(16)
+	card_style.shadow_color = Color(0, 0, 0, 0.95)
+	card_style.shadow_size = 30
+	card.add_theme_stylebox_override("panel", card_style)
+	center.add_child(card)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 36)
+	margin.add_theme_constant_override("margin_right", 36)
+	margin.add_theme_constant_override("margin_top", 36)
+	margin.add_theme_constant_override("margin_bottom", 36)
+	card.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 18)
+	margin.add_child(vbox)
+
+	# 1. Header
+	var title_lbl := Label.new()
+	title_lbl.text = "⚖️ ASTRAL TRIBUNAL • SCALES OF SAMSARA" if is_condemned else "✨ CELESTIAL HALL • ASCENSION OF SOULS"
+	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_lbl.add_theme_font_size_override("font_size", 34)
+	title_lbl.add_theme_color_override("font_color", Color("#f43f5e") if is_condemned else Color("#38bdf8"))
+	vbox.add_child(title_lbl)
+
+	var sub_lbl := Label.new()
+	sub_lbl.text = "YOUR MORTAL LIFE HAS ENDED. THE COSMIC ARBITER WEIGHS YOUR EXISTENCE."
+	sub_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sub_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	sub_lbl.add_theme_font_size_override("font_size", 20)
+	sub_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
+	vbox.add_child(sub_lbl)
+
+	# 2. The Interactive Scales of Judgment Card
+	var scale_card := PanelContainer.new()
+	var sc_style := StyleBoxFlat.new()
+	sc_style.bg_color = Color("#0b0816") if is_condemned else Color("#081528")
+	sc_style.border_color = Color("#64748b")
+	sc_style.set_border_width_all(2)
+	sc_style.set_corner_radius_all(12)
+	scale_card.add_theme_stylebox_override("panel", sc_style)
+	vbox.add_child(scale_card)
+
+	var sc_margin := MarginContainer.new()
+	sc_margin.add_theme_constant_override("margin_left", 24)
+	sc_margin.add_theme_constant_override("margin_right", 24)
+	sc_margin.add_theme_constant_override("margin_top", 20)
+	sc_margin.add_theme_constant_override("margin_bottom", 20)
+	scale_card.add_child(sc_margin)
+
+	var sc_v := VBoxContainer.new()
+	sc_v.add_theme_constant_override("separation", 12)
+	sc_margin.add_child(sc_v)
+
+	var sc_header := Label.new()
+	sc_header.text = "THE SACRED BALANCE OF DEEDS"
+	sc_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sc_header.add_theme_font_size_override("font_size", 22)
+	sc_header.add_theme_color_override("font_color", Color("#f59e0b"))
+	sc_v.add_child(sc_header)
+
+	# Visual representation of the scale
+	var scale_row := HBoxContainer.new()
+	scale_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	scale_row.add_theme_constant_override("separation", 24)
+	sc_v.add_child(scale_row)
+
+	var left_pan := Label.new()
+	left_pan.text = "⚖️ [ Sins & Transgressions ]"
+	left_pan.add_theme_font_size_override("font_size", 22)
+	left_pan.add_theme_color_override("font_color", Color("#f87171"))
+	scale_row.add_child(left_pan)
+
+	scale_needle = Label.new()
+	scale_needle.text = "• • [ BALANCING ] • •"
+	scale_needle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	scale_needle.add_theme_font_size_override("font_size", 24)
+	scale_needle.add_theme_color_override("font_color", Color("#e2e8f0"))
+	scale_row.add_child(scale_needle)
+
+	var right_pan := Label.new()
+	right_pan.text = "[ Virtues & Merits ] ⚖️"
+	right_pan.add_theme_font_size_override("font_size", 22)
+	right_pan.add_theme_color_override("font_color", Color("#4ade80"))
+	scale_row.add_child(right_pan)
+
+	scale_status_lbl = Label.new()
+	scale_status_lbl.text = "Press below to place your mortal soul upon the Scales of Judgment."
+	scale_status_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	scale_status_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	scale_status_lbl.add_theme_font_size_override("font_size", 20)
+	scale_status_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+	sc_v.add_child(scale_status_lbl)
+
+	# Weigh Button
+	weigh_button = Button.new()
+	weigh_button.text = "⚖️ WEIGH MORTAL RECORD"
+	weigh_button.custom_minimum_size.y = 70
+	weigh_button.add_theme_font_size_override("font_size", 26)
+	var wb_style := StyleBoxFlat.new()
+	wb_style.bg_color = Color("#b91c1c") if is_condemned else Color("#0284c7")
+	wb_style.border_color = Color("#f87171") if is_condemned else Color("#38bdf8")
+	wb_style.set_border_width_all(2)
+	wb_style.set_corner_radius_all(10)
+	weigh_button.add_theme_stylebox_override("normal", wb_style)
+	var wb_hover := wb_style.duplicate() as StyleBoxFlat
+	wb_hover.bg_color = wb_style.bg_color.lightened(0.2)
+	weigh_button.add_theme_stylebox_override("hover", wb_hover)
+	weigh_button.pressed.connect(_on_weigh_pressed)
+	sc_v.add_child(weigh_button)
+
+	# 3. Verdict & Rebirth Panel (Initially hidden until scales weighed)
+	verdict_panel = PanelContainer.new()
+	verdict_panel.visible = false
+	var vp_style := StyleBoxFlat.new()
+	vp_style.bg_color = Color("#07050e")
+	vp_style.border_color = Color("#f43f5e") if is_condemned else Color("#22c55e")
+	vp_style.set_border_width_all(2)
+	vp_style.set_corner_radius_all(12)
+	verdict_panel.add_theme_stylebox_override("panel", vp_style)
+	vbox.add_child(verdict_panel)
+
+	var vp_margin := MarginContainer.new()
+	vp_margin.add_theme_constant_override("margin_left", 24)
+	vp_margin.add_theme_constant_override("margin_right", 24)
+	vp_margin.add_theme_constant_override("margin_top", 20)
+	vp_margin.add_theme_constant_override("margin_bottom", 20)
+	verdict_panel.add_child(vp_margin)
+
+	var vp_v := VBoxContainer.new()
+	vp_v.add_theme_constant_override("separation", 14)
+	vp_margin.add_child(vp_v)
+
+	var verdict_title := Label.new()
+	verdict_title.text = "💀 ARBITER'S VERDICT: CONDEMNED BY KARMIC DEBT" if is_condemned else "🌟 ARBITER'S VERDICT: BLESSED WITH CELESTIAL MERIT"
+	verdict_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	verdict_title.add_theme_font_size_override("font_size", 26)
+	verdict_title.add_theme_color_override("font_color", Color("#f43f5e") if is_condemned else Color("#22c55e"))
+	vp_v.add_child(verdict_title)
+
+	var verdict_decree := Label.new()
+	if is_condemned:
+		verdict_decree.text = "\"Mortal soul, your worldly journey was burdened with dishonor, cruelty, or transgressions. The cosmic balance demands restitution. You are condemned to immediate forced reincarnation burdened with karmic penalties. No appeals are permitted.\""
+	else:
+		verdict_decree.text = "\"Noble soul, your life resonated with virtue, kindness, and honorable choices. The cosmos rewards spiritual merit. You are granted an auspicious rebirth endowed with celestial blessings.\""
+	verdict_decree.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	verdict_decree.add_theme_font_size_override("font_size", 20)
+	verdict_decree.add_theme_color_override("font_color", Color("#cbd5e1"))
+	vp_v.add_child(verdict_decree)
+
+	# 4. Modifiers (Debuffs or Buffs)
+	var mod_header := Label.new()
+	mod_header.text = "⚡ IMPOSED KARMIC PENALTIES:" if is_condemned else "✨ BESTOWED COSMIC BLESSINGS:"
+	mod_header.add_theme_font_size_override("font_size", 22)
+	mod_header.add_theme_color_override("font_color", Color("#f87171") if is_condemned else Color("#38bdf8"))
+	vp_v.add_child(mod_header)
+
+	var active_list: Array = rolled_debuffs if is_condemned else rolled_buffs
+	var def_dict: Dictionary = DEBUFF_DEFS if is_condemned else BUFF_DEFS
+
+	for key in active_list:
+		var d_info: Dictionary = def_dict.get(key, {})
+		var item_card := PanelContainer.new()
+		var item_style := StyleBoxFlat.new()
+		item_style.bg_color = Color("#110a18") if is_condemned else Color("#091728")
+		item_style.border_color = Color(d_info.get("color", "#64748b"))
+		item_style.set_border_width_all(2)
+		item_style.set_corner_radius_all(8)
+		item_card.add_theme_stylebox_override("panel", item_style)
+
+		var im := MarginContainer.new()
+		im.add_theme_constant_override("margin_left", 16)
+		im.add_theme_constant_override("margin_right", 16)
+		im.add_theme_constant_override("margin_top", 12)
+		im.add_theme_constant_override("margin_bottom", 12)
+		item_card.add_child(im)
+
+		var iv := VBoxContainer.new()
+		iv.add_theme_constant_override("separation", 6)
+		im.add_child(iv)
+
+		var item_title := Label.new()
+		item_title.text = "%s %s" % [d_info.get("icon", "•"), d_info.get("title", "Effect")]
+		item_title.add_theme_font_size_override("font_size", 22)
+		item_title.add_theme_color_override("font_color", Color(d_info.get("color", "#f87171")))
+		iv.add_child(item_title)
+
+		var item_desc := Label.new()
+		item_desc.text = str(d_info.get("desc", ""))
+		item_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		item_desc.add_theme_font_size_override("font_size", 18)
+		item_desc.add_theme_color_override("font_color", Color("#cbd5e1"))
+		iv.add_child(item_desc)
+
+		vp_v.add_child(item_card)
+
+	# 5. Randomized New Identity Card
+	var id_card := PanelContainer.new()
+	var id_style := StyleBoxFlat.new()
+	id_style.bg_color = Color("#0f172a")
+	id_style.border_color = Color("#38bdf8") if not is_condemned else Color("#f43f5e")
+	id_style.set_border_width_all(2)
+	id_style.set_corner_radius_all(10)
+	id_card.add_theme_stylebox_override("panel", id_style)
+	vp_v.add_child(id_card)
+
+	var idm := MarginContainer.new()
+	idm.add_theme_constant_override("margin_left", 18)
+	idm.add_theme_constant_override("margin_right", 18)
+	idm.add_theme_constant_override("margin_top", 14)
+	idm.add_theme_constant_override("margin_bottom", 14)
+	id_card.add_child(idm)
+
+	var id_row := HBoxContainer.new()
+	id_row.add_theme_constant_override("separation", 20)
+	idm.add_child(id_row)
+
+	# Avatar Portrait Preview
+	var av_rect := TextureRect.new()
+	av_rect.custom_minimum_size = Vector2(96, 96)
+	av_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	av_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	var av_tex: Texture2D = PortraitCatalogRef.get_portrait(
+		0, # Infant stage
+		str(reborn_identity["gender"]),
+		int(reborn_identity["portrait_variant"]),
+		str(reborn_identity["ethnicity"])
+	)
+	av_rect.texture = av_tex
+	id_row.add_child(av_rect)
+
+	var id_info_v := VBoxContainer.new()
+	id_info_v.add_theme_constant_override("separation", 4)
+	id_row.add_child(id_info_v)
+
+	var id_title := Label.new()
+	id_title.text = "NEW MORTAL VESSEL (%s)" % ("FORCED REBIRTH" if is_condemned else "BLESSED REBIRTH")
+	id_title.add_theme_font_size_override("font_size", 18)
+	id_title.add_theme_color_override("font_color", Color("#fbbf24"))
+	id_info_v.add_child(id_title)
+
+	var id_details := Label.new()
+	id_details.text = "Name: %s\nGender: %s  •  Birthplace: %s  •  Ethnicity: %s" % [
+		reborn_identity["first_name"],
+		reborn_identity["gender"],
+		reborn_identity["birthplace"],
+		reborn_identity["ethnicity"].capitalize()
+	]
+	id_details.add_theme_font_size_override("font_size", 20)
+	id_details.add_theme_color_override("font_color", Color("#f8fafc"))
+	id_info_v.add_child(id_details)
+
+	var unnegotiable_note := Label.new()
+	unnegotiable_note.text = "⛔ UNMODIFIABLE & UNNEGOTIABLE: Destiny is sealed by cosmic verdict." if is_condemned else "✨ BLESSED DESTINY: Reborn with auspicious cosmic grace."
+	unnegotiable_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	unnegotiable_note.add_theme_font_size_override("font_size", 18)
+	unnegotiable_note.add_theme_color_override("font_color", Color("#f87171") if is_condemned else Color("#4ade80"))
+	vp_v.add_child(unnegotiable_note)
+
+	# Spacer
+	var sp := Control.new()
+	sp.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_child(sp)
+
+	# 6. Final Rebirth Action Button
+	accept_button = Button.new()
+	accept_button.text = "⚡ ACCEPT FORCED REBIRTH" if is_condemned else "🌟 EMBARK ON BLESSED REBIRTH"
+	accept_button.custom_minimum_size.y = 80
+	accept_button.add_theme_font_size_override("font_size", 28)
+	var ab_style := StyleBoxFlat.new()
+	ab_style.bg_color = Color("#991b1b") if is_condemned else Color("#15803d")
+	ab_style.border_color = Color("#ef4444") if is_condemned else Color("#22c55e")
+	ab_style.set_border_width_all(3)
+	ab_style.set_corner_radius_all(12)
+	accept_button.add_theme_stylebox_override("normal", ab_style)
+	var ab_hover := ab_style.duplicate() as StyleBoxFlat
+	ab_hover.bg_color = ab_style.bg_color.lightened(0.2)
+	accept_button.add_theme_stylebox_override("hover", ab_hover)
+	accept_button.visible = false
+	accept_button.pressed.connect(_on_accept_rebirth_pressed)
+	vbox.add_child(accept_button)
+
+
+func _on_weigh_pressed() -> void:
+	weigh_button.disabled = true
+	weigh_button.text = "⏳ WEIGHING DEEDS..."
+
+	# Animate the scales tipping
+	var tween := create_tween()
+	scale_needle.text = "⚖️ • • EVALUATING SINS & VIRTUES • • ⚖️"
+
+	tween.tween_property(scale_needle, "modulate:a", 0.4, 0.4)
+	tween.tween_property(scale_needle, "modulate:a", 1.0, 0.4)
+	tween.tween_callback(Callable(self, "_finish_weighing"))
+
+
+func _finish_weighing() -> void:
+	if is_condemned:
+		scale_needle.text = "⬅️ 💀 TIPPED: RETRIBUTION & CONDEMNATION"
+		scale_needle.add_theme_color_override("font_color", Color("#ef4444"))
+		scale_status_lbl.text = "The scales crash under the heavy burden of worldly misdeeds."
+	else:
+		scale_needle.text = "🌟 TIPPED: HARMONIC ASCENSION ➡️"
+		scale_needle.add_theme_color_override("font_color", Color("#22c55e"))
+		scale_status_lbl.text = "The scales elevate gracefully with the light of earthly merit and virtues."
+
+	weigh_button.visible = false
+	verdict_panel.visible = true
+	accept_button.visible = true
+
+
+func _on_accept_rebirth_pressed() -> void:
+	# Start reincarnated life
+	PlayerData.start_reincarnated_life(reborn_identity, rolled_debuffs, rolled_buffs)
+
+	if on_rebirth_callback.is_valid():
+		on_rebirth_callback.call()
+
+	overlay.queue_free()
+	queue_free()

@@ -59,8 +59,17 @@ func get_jobs_in_category(category_id: String) -> Array:
 	return result
 
 
+func minimum_age(job: Dictionary) -> int:
+	return maxi(17, int(job.get("min_age", 16))) if job.get("category", "") == "underworld_crime" else int(job.get("min_age", 16))
+
+
 func can_apply(job: Dictionary, age: int, stats: Dictionary, education_data: Dictionary = {}) -> Dictionary:
-	var min_age: int = int(job.get("min_age", 16))
+	var min_age: int = minimum_age(job)
+	if job.get("category", "") == "underworld_crime":
+		var underground = preload("res://scripts/economy/underground_progression.gd")
+		var required_rank := int(underground.catalog().job_ranks.get(str(job.get("id", "")), 0))
+		if underground.rank_for(int(stats.get("underground_completed", 0))) < required_rank:
+			return {"allowed": false, "reason": "Requires underground rank: %s. Complete activities in the Underground panel." % str(underground.catalog().ranks[required_rank].name)}
 	if age < min_age:
 		return {
 			"allowed": false,
@@ -128,9 +137,9 @@ func can_apply(job: Dictionary, age: int, stats: Dictionary, education_data: Dic
 	if reqs.has("min_happiness") and int(stats.get("happiness", 0)) < int(reqs["min_happiness"]):
 		return {"allowed": false, "reason": "Requires at least %d Happiness." % int(reqs["min_happiness"])}
 	if reqs.has("min_karma") and int(stats.get("karma", 0)) < int(reqs["min_karma"]):
-		return {"allowed": false, "reason": "Requires higher Karma (%d)." % int(reqs["min_karma"])}
+		return {"allowed": false, "reason": "Requires a spotless moral and ethical reputation."}
 	if reqs.has("max_karma") and int(stats.get("karma", 0)) > int(reqs["max_karma"]):
-		return {"allowed": false, "reason": "Requires underworld reputation (Karma <= %d)." % int(reqs["max_karma"])}
+		return {"allowed": false, "reason": "Requires seasoned underworld credentials and notoriety."}
 
 	return {"allowed": true, "reason": "Qualified"}
 

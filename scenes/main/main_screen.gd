@@ -5,6 +5,8 @@ const PortraitCatalog = preload("res://scripts/core/portrait_catalog.gd")
 const BirthStoryGenerator = preload("res://scripts/core/birth_story_generator.gd")
 const EducationCatalog = preload("res://scripts/education/education_catalog.gd")
 const RomanceRules = preload("res://scripts/core/romance_rules.gd")
+const CareerProgression = preload("res://scripts/economy/career_progression.gd")
+const UndergroundProgression = preload("res://scripts/economy/underground_progression.gd")
 
 var portrait: TextureRect
 var portrait_key: String = ""
@@ -391,6 +393,7 @@ func age_up() -> void:
 	if current_event != null:
 		return
 
+	var spent_year_in_prison: bool = PlayerData.is_in_prison
 	PlayerData.age += 1
 
 	var year_word: String = "year" if PlayerData.age == 1 else "years"
@@ -495,6 +498,11 @@ func age_up() -> void:
 			quit_job()
 			PlayerData.happiness = maxi(5, PlayerData.happiness - 18)
 			add_life_event("📉 DOWNSIZED: Economic contraction forced your employer to terminate your role as %s! You are now unemployed." % old_job, "career")
+
+	# Completed service promotes the current job; higher pay begins next year.
+	var promotion := CareerProgression.advance_year(PlayerData, spent_year_in_prison)
+	if not promotion.is_empty():
+		add_life_event(promotion, "career")
 
 	# 5. Bank Loan Interest (8% annual APR)
 	if PlayerData.loan_balance > 0:
@@ -776,6 +784,7 @@ func _scroll_after_layout() -> void:
 
 
 func update_ui() -> void:
+	PlayerData.enforce_buffs_and_debuffs()
 	_update_portrait()
 	name_label.text = PlayerData.first_name
 	phase_label.text = "%s %s" % [PlayerData.get_stage_icon(), PlayerData.get_stage_name()]
@@ -866,15 +875,24 @@ func generate_event_choices(event: Dictionary) -> Array:
 	return all_choices.slice(0, choice_count)
 
 
+func _sanitize_karma_text(text: String) -> String:
+	var regex := RegEx.new()
+	regex.compile("(?i)(,\\s*)?[+-]?\\d+\\s*Karma(\\s*,)?|(?i)\\bKarma\\s*[+-]?\\d+\\b")
+	var cleaned := regex.sub(text, "", true).strip_edges()
+	regex.compile(",\\s*,")
+	cleaned = regex.sub(cleaned, ", ", true)
+	cleaned = cleaned.trim_prefix(",").trim_suffix(",").strip_edges()
+	if cleaned == "":
+		return "No major stat changes"
+	return cleaned
+
+
 func _format_effects_summary(choice: Dictionary) -> String:
 	if choice.has("description") and str(choice["description"]).strip_edges() != "":
-		return str(choice["description"]).strip_edges()
+		return _sanitize_karma_text(str(choice["description"]).strip_edges())
 
 	var effects: Dictionary = choice.get("effects", {})
 	var parts: Array[String] = []
-	if effects.has("karma") and effects["karma"] != 0:
-		var v: int = int(effects["karma"])
-		parts.append(("%+d Karma" if v > 0 else "%d Karma") % v)
 	if effects.has("happiness") and effects["happiness"] != 0:
 		var v: int = int(effects["happiness"])
 		parts.append(("%+d Happiness" if v > 0 else "%d Happiness") % v)
@@ -1470,8 +1488,7 @@ func update_character_panel() -> void:
 		character_money.text = "Cash: $%s • Savings: $%s" % [_format_number(PlayerData.money), _format_number(PlayerData.bank_savings)]
 
 	if character_karma != null:
-		var karma_prefix: String = "+" if PlayerData.karma > 0 else ""
-		character_karma.text = "Karma: %s%d" % [karma_prefix, PlayerData.karma]
+		character_karma.visible = false
 
 
 func update_infant_panel() -> void:
@@ -1534,6 +1551,8 @@ func update_infant_panel() -> void:
 
 
 func apply_for_job(job_id: String) -> void:
+	if PlayerData.is_dead or PlayerData.is_in_prison or PlayerData.job_id == job_id:
+		return
 	var job: Dictionary = JobManager.get_job_by_id(job_id)
 	if job.is_empty():
 		return
@@ -1552,6 +1571,9 @@ func apply_for_job(job_id: String) -> void:
 	PlayerData.job_title = str(job.get("title", ""))
 	PlayerData.job_company = str(job.get("workplace", ""))
 	PlayerData.job_salary = int(job.get("salary", 0))
+	CareerProgression.begin(PlayerData)
+	if job.get("category", "") == "underworld_crime":
+		UndergroundProgression.join(PlayerData)
 
 	add_life_event("You started working as a %s at %s ($%s/yr)." % [
 		PlayerData.job_title,
@@ -1571,6 +1593,7 @@ func quit_job() -> void:
 	PlayerData.job_title = ""
 	PlayerData.job_company = ""
 	PlayerData.job_salary = 0
+	PlayerData.career_progress = {}
 
 	add_life_event("You resigned from your position as %s. You are now unemployed." % old_title, "job")
 	update_ui()
@@ -2114,6 +2137,7 @@ func update_relationships_panel() -> void:
 
 	# Partner / Romantic Relationship Card
 	_setup_partner_card_ui()
+	_setup_children_cards_ui()
 
 
 func _setup_relationship_bar(vbox: VBoxContainer, bar_name: String, rel_val: int) -> ProgressBar:
@@ -2270,6 +2294,8 @@ func _setup_partner_card_ui() -> void:
 
 		var break_word := "Divorce" if p_status in ["Wife", "Husband"] else "Break Up"
 		actions.append(["💔 " + break_word, "breakup", "#ef4444"])
+		if p_status in ["Wife", "Husband"] or p_rel >= 60:
+			actions.append(["🍼 Have Baby", "have_baby", "#ec4899"])
 
 		for act in actions:
 			var btn := Button.new()
@@ -2339,6 +2365,118 @@ func _setup_partner_card_ui() -> void:
 		rel_list.add_child(single_card)
 
 
+func _setup_children_cards_ui() -> void:
+	var rel_list := get_node_or_null("RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList") as VBoxContainer
+	if rel_list == null:
+		return
+
+	for child in rel_list.get_children():
+		if child.name.begins_with("ChildCard_") or child.name == "ChildrenHeaderCard":
+			rel_list.remove_child(child)
+			child.queue_free()
+
+	if PlayerData.children.is_empty():
+		return
+
+	var header := PanelContainer.new()
+	header.name = "ChildrenHeaderCard"
+	header.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#ec4899")))
+	var hm := MarginContainer.new()
+	hm.add_theme_constant_override("margin_left", 20)
+	hm.add_theme_constant_override("margin_top", 12)
+	hm.add_theme_constant_override("margin_right", 20)
+	hm.add_theme_constant_override("margin_bottom", 12)
+	header.add_child(hm)
+	var hlbl := Label.new()
+	hlbl.text = "👶 CHILDREN & LINEAGE (%d)" % PlayerData.children.size()
+	hlbl.add_theme_font_size_override("font_size", 24)
+	hlbl.add_theme_color_override("font_color", Color("#f472b6"))
+	hm.add_child(hlbl)
+	rel_list.add_child(header)
+
+	for i in range(PlayerData.children.size()):
+		var c: Dictionary = PlayerData.children[i]
+		var c_name: String = str(c.get("name", "Child"))
+		var c_age: int = int(c.get("age", 0))
+		var c_gender: String = str(c.get("gender", "MALE"))
+		var c_rel: int = int(c.get("relationship", 80))
+		var c_variant: int = int(c.get("portrait_variant", 0))
+		var c_eth: String = str(c.get("ethnicity", PlayerData.ethnicity))
+
+		var card := PanelContainer.new()
+		card.name = "ChildCard_%d" % i
+		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f472b6")))
+
+		var cm := MarginContainer.new()
+		cm.add_theme_constant_override("margin_left", 20)
+		cm.add_theme_constant_override("margin_top", 18)
+		cm.add_theme_constant_override("margin_right", 20)
+		cm.add_theme_constant_override("margin_bottom", 18)
+		card.add_child(cm)
+
+		var ch := HBoxContainer.new()
+		ch.add_theme_constant_override("separation", 20)
+		cm.add_child(ch)
+
+		var icon := TextureRect.new()
+		icon.custom_minimum_size = Vector2(96, 96)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture = PortraitCatalog.texture(c_age, c_gender, c_variant, c_eth)
+		icon.material = PortraitCatalog.cutout_material()
+		ch.add_child(icon)
+
+		var cv := VBoxContainer.new()
+		cv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cv.add_theme_constant_override("separation", 8)
+		ch.add_child(cv)
+
+		var title := Label.new()
+		title.text = "%s (%s, Age %d)" % [c_name, "Daughter" if c_gender == "FEMALE" else "Son", c_age]
+		title.add_theme_font_size_override("font_size", 24)
+		title.add_theme_color_override("font_color", Color("#f472b6"))
+		cv.add_child(title)
+
+		_setup_relationship_bar(cv, "ChildRel_%d" % i, c_rel)
+
+		var act_row := HBoxContainer.new()
+		act_row.add_theme_constant_override("separation", 12)
+
+		var btn_spend := _create_cyber_button("Spend Time", Color("#0284c7"), func():
+			var idx = i
+			var cur_c: Dictionary = PlayerData.children[idx]
+			cur_c["relationship"] = mini(100, int(cur_c.get("relationship", 80)) + randi_range(8, 14))
+			PlayerData.happiness = mini(100, PlayerData.happiness + randi_range(5, 8))
+			add_life_event("You spent heartwarming quality time with your child %s! Relationship +%d%%." % [cur_c.name, 10], "family")
+			update_relationships_panel()
+			update_ui()
+		)
+		btn_spend.custom_minimum_size.y = 54
+		btn_spend.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		act_row.add_child(btn_spend)
+
+		var btn_gift := _create_cyber_button("Gift ($50)", Color("#10b981"), func():
+			var idx = i
+			var cur_c: Dictionary = PlayerData.children[idx]
+			if PlayerData.money < 50:
+				add_life_event("You cannot afford the $50 gift for your child %s." % cur_c.name, "finance")
+				show_tab("timeline")
+				return
+			PlayerData.money -= 50
+			cur_c["relationship"] = mini(100, int(cur_c.get("relationship", 80)) + randi_range(12, 18))
+			PlayerData.happiness = mini(100, PlayerData.happiness + 6)
+			add_life_event("You bought a delightful gift for your child %s ($50)! Their eyes lit up with joy." % cur_c.name, "family")
+			update_relationships_panel()
+			update_ui()
+		)
+		btn_gift.custom_minimum_size.y = 54
+		btn_gift.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		act_row.add_child(btn_gift)
+
+		cv.add_child(act_row)
+		rel_list.add_child(card)
+
+
 func _interact_partner(action: String) -> void:
 	if not PlayerData.has_partner():
 		return
@@ -2402,6 +2540,31 @@ func _interact_partner(action: String) -> void:
 
 		"breakup":
 			_break_up_with_partner()
+			return
+
+		"have_baby":
+			if PlayerData.age < 18:
+				add_life_event("You are too young to start a family.", "relationship")
+				return
+			if p_rel < 50:
+				add_life_event("%s gently tells you they aren't ready to have a baby together yet. (Requires 50%+ Relationship)" % p_name, "relationship")
+				return
+			var baby_female: bool = (randf() < 0.5)
+			var country_for_names: String = PlayerData.birthplace if PlayerData.birthplace != "" else "United States"
+			var raw_name: String = NameCatalog.random_name(country_for_names, baby_female)
+			var baby_name: String = raw_name.split(" ")[0]
+			var _child_dict: Dictionary = PlayerData.add_player_child(baby_name, "FEMALE" if baby_female else "MALE", 0)
+			PlayerData.happiness = mini(100, PlayerData.happiness + 25)
+			PlayerData.set_partner_relationship(p_rel + 20)
+			PlayerData.last_partner_interact_age = PlayerData.age
+			add_life_event("🍼 BABY BORN! You and %s welcomed a beautiful baby %s, %s, into the world! Happiness +25, Relationship +20%%." % [
+				p_name,
+				"daughter" if baby_female else "son",
+				baby_name
+			], "family")
+			update_relationships_panel()
+			update_ui()
+			SaveManager.save_game()
 			return
 
 	update_ui()
@@ -2892,6 +3055,19 @@ func _process_relationships_aging() -> void:
 				"year" if yrs == 1 else "years"
 			], "relationship")
 
+	# Children aging & relationship decay
+	for child in PlayerData.children:
+		if child is Dictionary and bool(child.get("is_alive", true)):
+			child["age"] = int(child.get("age", 0)) + 1
+			var c_age: int = int(child["age"])
+			var c_name: String = str(child.get("name", "Child"))
+			if c_age == 18:
+				add_life_event("🎓 Your child %s celebrated their 18th birthday and graduated into adulthood!" % c_name, "family")
+			child["relationship"] = clampi(int(child.get("relationship", 80)) - randi_range(1, 3), 0, 100)
+
+	# Enforce buffs & debuffs constraints on active stats
+	PlayerData.enforce_buffs_and_debuffs()
+
 
 # Activity Item Handlers
 func _on_jobs_item_pressed() -> void:
@@ -2956,6 +3132,24 @@ func _on_dating_app_item_pressed() -> void:
 	_show_dating_app_modal()
 
 
+func _show_career_ladder() -> void:
+	if PlayerData.job_id.is_empty():
+		return
+	var job: Dictionary = JobManager.get_job_by_id(PlayerData.job_id)
+	var modal := _create_cyber_modal("CAREER LADDER", "Promotions reward completed years in this job. Age requirements also apply. Resigning, being fired, or changing jobs restarts tenure. Prison years do not count.", Color("#38bdf8"))
+	var list: VBoxContainer = modal.list
+	var stages: Array = [{"title": job.get("title", PlayerData.job_title), "salary": job.get("salary", PlayerData.job_salary), "years": 0, "min_age": JobManager.minimum_age(job)}]
+	stages.append_array(CareerProgression.paths().get(PlayerData.job_id, []))
+	for index in range(stages.size()):
+		var stage: Dictionary = stages[index]
+		var label := Label.new()
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.add_theme_font_size_override("font_size", 27)
+		label.add_theme_color_override("font_color", Color("#34d399") if index == int(PlayerData.career_progress.get("rank", 0)) else Color("#b8dcf5"))
+		label.text = "%s%s\n%d years of service • Age %d+ • $%s/year\n" % ["CURRENT: " if index == int(PlayerData.career_progress.get("rank", 0)) else "", stage.title, int(stage.years), int(stage.min_age), _format_number(int(stage.salary))]
+		list.add_child(label)
+
+
 func _show_jobs_modal() -> void:
 	if jobs_modal_overlay != null and is_instance_valid(jobs_modal_overlay):
 		jobs_modal_overlay.queue_free()
@@ -2990,9 +3184,11 @@ func _show_jobs_modal() -> void:
 	if PlayerData.job_title != "":
 		cur_title.text = "CURRENT OCCUPATION"
 		cur_desc.text = "%s  •  %s\n💰 Annual Salary: $%s / yr" % [PlayerData.job_title, PlayerData.job_company, _format_number(PlayerData.job_salary)]
+		cur_desc.text += "\n" + CareerProgression.summary(PlayerData)
 		cur_desc.add_theme_color_override("font_color", Color("#34d399"))
 		cur_v.add_child(cur_title)
 		cur_v.add_child(cur_desc)
+		cur_v.add_child(_create_cyber_button("View career ladder", Color("#38bdf8"), func(): _show_career_ladder()))
 
 		var btn_ot := _create_cyber_button("⏱️ Work Overtime\nPut in extra hours at %s. +$%s Bonus, -5 Happiness" % [PlayerData.job_company, _format_number(maxi(150, int(PlayerData.job_salary * 0.05)))], Color("#38bdf8"), func():
 			var bonus := maxi(150, int(PlayerData.job_salary * 0.05))
@@ -3064,7 +3260,7 @@ func _show_jobs_modal() -> void:
 			)
 			cur_v.add_child(btn_lemonade)
 
-			var btn_mow := _create_cyber_button("🌱 Mow Lawns & Rake Leaves for Neighbors ($45 Cash)\nOffer yard work services to neighbors on weekends. +$45 Cash, +4 Health, +3 Karma", Color("#10b981"), func():
+			var btn_mow := _create_cyber_button("🌱 Mow Lawns & Rake Leaves for Neighbors ($45 Cash)\nOffer yard work services to neighbors on weekends. +$45 Cash, +4 Health", Color("#10b981"), func():
 				PlayerData.money += 45
 				PlayerData.health = mini(100, PlayerData.health + 4)
 				PlayerData.karma += 3
@@ -3112,7 +3308,7 @@ func _show_jobs_modal() -> void:
 
 		var salary_val: int = int(job.get("salary", 0))
 		var salary_lbl := Label.new()
-		salary_lbl.text = "💰 Salary: $%s / yr   •   Min Age: %d" % [_format_number(salary_val), int(job.get("min_age", 16))]
+		salary_lbl.text = "💰 Salary: $%s / yr   •   Min Age: %d" % [_format_number(salary_val), JobManager.minimum_age(job)]
 		salary_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		salary_lbl.add_theme_font_size_override("font_size", 26)
 		salary_lbl.add_theme_color_override("font_color", Color("#34d399"))
@@ -3184,8 +3380,8 @@ func _show_jobs_modal() -> void:
 				_show_jobs_modal()
 			)
 		else:
-			if PlayerData.age < int(job.get("min_age", 16)):
-				btn.text = "🔒 LOCKED: Requires Age %d+ (Current: %d)" % [int(job.get("min_age", 16)), PlayerData.age]
+			if PlayerData.age < JobManager.minimum_age(job):
+				btn.text = "🔒 LOCKED: Requires Age %d+ (Current: %d)" % [JobManager.minimum_age(job), PlayerData.age]
 			else:
 				btn.text = "🔒 LOCKED: " + str(eval.get("reason", "Not qualified"))
 			btn.disabled = true
@@ -3402,9 +3598,9 @@ func _show_education_modal() -> void:
 
 		# 3. Bully Someone
 		if has_done_school_activity_this_year:
-			list.add_child(_create_disabled_cyber_button("😈 Bully a Classmate\n-20 Karma, Risk of Getting Beaten Up or Suspended", "Already engaged in school conduct for Age %d (Age up to next year)" % PlayerData.age))
+			list.add_child(_create_disabled_cyber_button("😈 Bully a Classmate\nRisk of Getting Beaten Up or Suspended", "Already engaged in school conduct for Age %d (Age up to next year)" % PlayerData.age))
 		else:
-			var btn_bully := _create_cyber_button("😈 Bully a Classmate\n-20 Karma, Risk of Getting Beaten Up or Suspended", Color("#ef4444"), func():
+			var btn_bully := _create_cyber_button("😈 Bully a Classmate\nRisk of Getting Beaten Up or Suspended", Color("#ef4444"), func():
 				if PlayerData.last_school_activity_age == PlayerData.age:
 					_close_education_modal_and_return_to_main()
 					return
@@ -3413,12 +3609,12 @@ func _show_education_modal() -> void:
 				if roll < 0.40:
 					PlayerData.karma -= 20
 					PlayerData.happiness = mini(100, PlayerData.happiness + 4)
-					add_life_event("😈 Cruel Victory: You bullied a classmate and mocked their clothes. They ran away crying. Karma -20.", "education")
+					add_life_event("😈 Cruel Victory: You bullied a classmate and mocked their clothes. They ran away crying.", "education")
 				elif roll < 0.75:
 					PlayerData.karma -= 20
 					PlayerData.health = maxi(5, PlayerData.health - randi_range(8, 15))
 					PlayerData.happiness = maxi(5, PlayerData.happiness - 10)
-					add_life_event("💥 RETALIATION: You tried to bully someone, but they punched you right in the nose! Health -12%, Karma -20.", "education")
+					add_life_event("💥 RETALIATION: You tried to bully someone, but they punched you right in the nose! Health -12%.", "education")
 				else:
 					PlayerData.karma -= 25
 					PlayerData.happiness = maxi(5, PlayerData.happiness - 15)
@@ -3433,9 +3629,9 @@ func _show_education_modal() -> void:
 
 		# 4. Lead Group Study
 		if has_done_school_activity_this_year:
-			list.add_child(_create_disabled_cyber_button("👥 Lead Group Study\n+6% Grades, +3 Smarts, +12 Karma, +5 Happiness (Req: 55%+ Grades)", "Already participated in school activities for Age %d (Age up to next year)" % PlayerData.age))
+			list.add_child(_create_disabled_cyber_button("👥 Lead Group Study\n+6% Grades, +3 Smarts, +5 Happiness (Req: 55%+ Grades)", "Already participated in school activities for Age %d (Age up to next year)" % PlayerData.age))
 		else:
-			var btn_group := _create_cyber_button("👥 Lead Group Study\n+6% Grades, +3 Smarts, +12 Karma, +5 Happiness (Req: 55%+ Grades)", Color("#22c55e"), func():
+			var btn_group := _create_cyber_button("👥 Lead Group Study\n+6% Grades, +3 Smarts, +5 Happiness (Req: 55%+ Grades)", Color("#22c55e"), func():
 				if PlayerData.last_school_activity_age == PlayerData.age:
 					_close_education_modal_and_return_to_main()
 					return
@@ -3451,7 +3647,7 @@ func _show_education_modal() -> void:
 				PlayerData.smarts = mini(100, PlayerData.smarts + s_gain)
 				PlayerData.karma += k_gain
 				PlayerData.happiness = mini(100, PlayerData.happiness + 6)
-				add_life_event("👥 Group Leadership: You organized an effective peer study group. Everyone's marks improved! Karma +%d, Grades +%d%%." % [k_gain, g_gain], "education")
+				add_life_event("👥 Group Leadership: You organized an effective peer study group. Everyone's marks improved! Grades +%d%%." % g_gain, "education")
 				update_ui()
 				SaveManager.save_game()
 				_close_education_modal_and_return_to_main()
@@ -4294,9 +4490,9 @@ func _execute_meditation(p: Dictionary) -> bool:
 	PlayerData.karma += k_gain
 	var p_title: String = str(p.get("name", p.get("title", "Meditation")))
 	if fee_val == 0:
-		add_life_event("🧘 You engaged in %s. Serenity and peace wash over your mind. Happiness +%d, Karma +%d." % [p_title, hap_gain, k_gain], "activity")
+		add_life_event("🧘 You engaged in %s. Serenity and peace wash over your mind. Happiness +%d." % [p_title, hap_gain], "activity")
 	else:
-		add_life_event("🧘 You attended %s ($%d). Deep tranquility and spiritual rejuvenation achieved! Happiness +%d, Karma +%d." % [p_title, fee_val, hap_gain, k_gain], "activity")
+		add_life_event("🧘 You attended %s ($%d). Deep tranquility and spiritual rejuvenation achieved! Happiness +%d." % [p_title, fee_val, hap_gain], "activity")
 	update_ui()
 	SaveManager.save_game()
 	_close_meditation_modal_and_return_to_main()
@@ -4537,11 +4733,10 @@ func _show_meditation_modal() -> void:
 
 	var mood_desc := "Serene & Blissful" if PlayerData.happiness >= 80 else ("Content" if PlayerData.happiness >= 60 else ("Stressed" if PlayerData.happiness >= 40 else "Depressed & Exhausted"))
 	var vitals_lbl := Label.new()
-	vitals_lbl.text = "😊 Happiness: %d%% (%s)   •   🧠 Smarts: %d%%   •   ☯ Karma: %d" % [
+	vitals_lbl.text = "😊 Happiness: %d%% (%s)   •   🧠 Smarts: %d%%" % [
 		PlayerData.happiness,
 		mood_desc,
-		PlayerData.smarts,
-		PlayerData.karma
+		PlayerData.smarts
 	]
 	vitals_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vitals_lbl.add_theme_font_size_override("font_size", 25)
@@ -4549,7 +4744,7 @@ func _show_meditation_modal() -> void:
 	sv.add_child(vitals_lbl)
 
 	var benefit_lbl := Label.new()
-	benefit_lbl.text = "Mindfulness Impact: Regular meditation cleanses mental fatigue, sharpens focus, reduces existential anxiety, and harmonizes positive karma. Advanced spiritual retreats grant major karmic redemption."
+	benefit_lbl.text = "Mindfulness Impact: Regular meditation cleanses mental fatigue, sharpens focus, reduces existential anxiety, and brings deep spiritual clarity."
 	benefit_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	benefit_lbl.add_theme_font_size_override("font_size", 23)
 	benefit_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
@@ -4869,61 +5064,52 @@ func _show_crime_modal() -> void:
 		crime_modal_overlay.visible = true
 		return
 
-	# Free Citizen Underground Menu
-	var modal := _create_cyber_modal("🕶️ UNDERGROUND SYNDICATE", "Cash: $%s   •   Karma: %d   •   High Risk Activities" % [_format_number(PlayerData.money), PlayerData.karma], Color("#a855f7"))
+	# Fictional activity outcomes use shared progression rules; prison UI stays above.
+	UndergroundProgression.normalize(PlayerData)
+	var modal := _create_cyber_modal("UNDERGROUND SYNDICATE", "Cash: $%s • Karma: %d • High-risk activities" % [_format_number(PlayerData.money), PlayerData.karma], Color("#a855f7"))
 	crime_modal_overlay = modal.overlay
 	var list: VBoxContainer = modal.list
-
-	var warning_lbl := Label.new()
-	warning_lbl.text = "⚠️ WARNING: Getting apprehended by law enforcement will strip all your jobs and sentence you to prison."
-	warning_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	warning_lbl.add_theme_font_size_override("font_size", 21)
-	warning_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
-	list.add_child(warning_lbl)
-
-	var crimes := [
-		["👝 Pickpocket Commuters (Risk: 20% • Gain: $60-$180)", 0.20, 60, 180, 1, 2, 5],
-		["🏬 Shoplift Cyber Tech Store (Risk: 38% • Gain: $400-$1,200)", 0.38, 400, 1200, 2, 6, 10],
-		["🚗 Grand Theft Auto (Risk: 55% • Gain: $3,500-$8,000)", 0.55, 3500, 8000, 4, 14, 20],
-		["💻 Syndicate Wire Fraud (Risk: 70% • Gain: $15,000-$35,000)", 0.70, 15000, 35000, 7, 25, 35]
-	]
-
-	for c in crimes:
-		var crime_name: String = c[0]
-		var risk: float = c[1]
-		var min_g: int = c[2]
-		var max_g: int = c[3]
-		var sentence: int = c[4]
-		var karma_loss: int = c[5]
-		var caught_karma: int = c[6]
-
-		var btn := _create_cyber_button(crime_name, Color("#a855f7"), func():
-			if randf() < risk:
-				# Arrested!
-				PlayerData.is_in_prison = true
-				PlayerData.prison_sentence_years = sentence
-				PlayerData.job_id = ""
-				PlayerData.job_title = ""
-				PlayerData.job_company = ""
-				PlayerData.job_salary = 0
-				PlayerData.karma -= caught_karma
-				PlayerData.happiness = maxi(5, PlayerData.happiness - 30)
-				add_life_event("🚨 ARRESTED! Caught red-handed by the police and sentenced to %d years in State Penitentiary. You lost your career!" % sentence, "crime")
-				update_ui()
-				SaveManager.save_game()
-				_show_crime_modal()
-			else:
-				var earn: int = randi_range(min_g, max_g)
-				PlayerData.money += earn
-				PlayerData.karma -= karma_loss
-				add_life_event("You pulled off an underground heist and pocketed $%s!" % _format_number(earn), "crime")
+	var status := Label.new()
+	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	status.add_theme_font_size_override("font_size", 26)
+	status.add_theme_color_override("font_color", Color("#c4b5fd"))
+	var joined := bool(PlayerData.underground_progress.get("joined", false))
+	status.text = UndergroundProgression.summary(PlayerData) if joined else "UNAFFILIATED\nJoin the underground as an Alley Ghost. Successful activities build your rank and unlock new opportunities."
+	list.add_child(status)
+	if not joined:
+		var join_button := _create_cyber_button("Join the Underground • Alley Ghost", Color("#a855f7"), func():
+			if UndergroundProgression.join(PlayerData):
+				add_life_event("You entered the underground as an Alley Ghost. Your reputation starts here.", "crime")
 				update_ui()
 				SaveManager.save_game()
 				_show_crime_modal()
 		)
-		list.add_child(btn)
-
-	crime_modal_overlay.visible = true
+		join_button.disabled = PlayerData.age < 17 or PlayerData.is_dead
+		list.add_child(join_button)
+	var warning := Label.new()
+	warning.text = "Only successful activities count toward rank. Each attempt uses one of your %d yearly opportunities. Arrest ends your job and resets its tenure; underground reputation remains. Job seniority and syndicate rank are separate." % int(UndergroundProgression.catalog().attempts_per_year)
+	warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	warning.add_theme_font_size_override("font_size", 22)
+	warning.add_theme_color_override("font_color", Color("#fbbf24"))
+	list.add_child(warning)
+	var ranks: Array = UndergroundProgression.catalog().ranks
+	for activity in UndergroundProgression.catalog().activities:
+		var requirement := UndergroundProgression.requirement(PlayerData, activity)
+		var caption := "%s\nRisk: %d%% • $%s–$%s • Prison: %d years\nRank: %s" % [activity.name, int(round(float(activity.risk) * 100)), _format_number(int(activity.min_reward)), _format_number(int(activity.max_reward)), int(activity.sentence), ranks[int(activity.rank)].name]
+		if not requirement.is_empty():
+			caption += "\n" + requirement
+		var activity_id := str(activity.id)
+		var button := _create_cyber_button(caption, Color("#a855f7"), func():
+			var result := UndergroundProgression.attempt(PlayerData, activity_id, randf(), randf())
+			if result.is_empty():
+				return
+			add_life_event(result, "crime")
+			update_ui()
+			SaveManager.save_game()
+			_show_crime_modal()
+		)
+		button.disabled = not requirement.is_empty()
+		list.add_child(button)
 
 
 # --- 3. CASINO & GAMBLING MODAL ---
@@ -5380,23 +5566,161 @@ func _show_death_screen(cause: String) -> void:
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	vbox.add_child(spacer)
 
-	# Start New Life Button
-	var btn_new_life := Button.new()
-	btn_new_life.text = "✨ START A NEW LIFE"
-	btn_new_life.custom_minimum_size.y = 84
-	btn_new_life.add_theme_font_size_override("font_size", 28)
-	var new_life_style := StyleBoxFlat.new()
-	new_life_style.bg_color = Color("#15803d")
-	new_life_style.border_color = Color("#22c55e")
-	new_life_style.set_border_width_all(3)
-	new_life_style.set_corner_radius_all(10)
-	btn_new_life.add_theme_stylebox_override("normal", new_life_style)
-	var new_life_hover := new_life_style.duplicate() as StyleBoxFlat
-	new_life_hover.bg_color = Color("#16a34a")
-	btn_new_life.add_theme_stylebox_override("hover", new_life_hover)
-	btn_new_life.add_theme_color_override("font_color", Color("#ffffff"))
-	btn_new_life.pressed.connect(_on_start_new_life_pressed)
-	vbox.add_child(btn_new_life)
+	# BAD KARMA: Forced into Afterlife Minigame (UNNEGOTIABLE)
+	if PlayerData.karma < 0:
+		var bad_karma_card := PanelContainer.new()
+		var bkc_style := StyleBoxFlat.new()
+		bkc_style.bg_color = Color("#18060c")
+		bkc_style.border_color = Color("#f43f5e")
+		bkc_style.set_border_width_all(2)
+		bkc_style.set_corner_radius_all(10)
+		bad_karma_card.add_theme_stylebox_override("panel", bkc_style)
+
+		var bm := MarginContainer.new()
+		bm.add_theme_constant_override("margin_left", 20)
+		bm.add_theme_constant_override("margin_right", 20)
+		bm.add_theme_constant_override("margin_top", 14)
+		bm.add_theme_constant_override("margin_bottom", 14)
+		bad_karma_card.add_child(bm)
+
+		var bv := VBoxContainer.new()
+		bv.add_theme_constant_override("separation", 8)
+		bm.add_child(bv)
+
+		var bad_header := Label.new()
+		bad_header.text = "⚖️ COSMIC TRIBUNAL SUMMONS • UNNEGOTIABLE"
+		bad_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		bad_header.add_theme_font_size_override("font_size", 22)
+		bad_header.add_theme_color_override("font_color", Color("#f43f5e"))
+		bv.add_child(bad_header)
+
+		var bad_desc := Label.new()
+		bad_desc.text = "Your mortal life choices accumulated severe karmic debt. The Astral Arbiter demands your immediate presence for cosmic judgment. No worldly succession or peaceful rebirth is permitted."
+		bad_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		bad_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		bad_desc.add_theme_font_size_override("font_size", 19)
+		bad_desc.add_theme_color_override("font_color", Color("#cbd5e1"))
+		bv.add_child(bad_desc)
+
+		vbox.add_child(bad_karma_card)
+
+		var btn_afterlife := Button.new()
+		btn_afterlife.text = "⚖️ ENTER THE AFTERLIFE JUDGMENT (UNNEGOTIABLE)"
+		btn_afterlife.custom_minimum_size.y = 86
+		btn_afterlife.add_theme_font_size_override("font_size", 26)
+		var afterlife_style := StyleBoxFlat.new()
+		afterlife_style.bg_color = Color("#881337")
+		afterlife_style.border_color = Color("#f43f5e")
+		afterlife_style.set_border_width_all(3)
+		afterlife_style.set_corner_radius_all(10)
+		btn_afterlife.add_theme_stylebox_override("normal", afterlife_style)
+		var afterlife_hover := afterlife_style.duplicate() as StyleBoxFlat
+		afterlife_hover.bg_color = Color("#9f1239")
+		btn_afterlife.add_theme_stylebox_override("hover", afterlife_hover)
+		btn_afterlife.add_theme_color_override("font_color", Color("#ffffff"))
+		btn_afterlife.pressed.connect(_open_afterlife_minigame)
+		vbox.add_child(btn_afterlife)
+	else:
+		# GOOD KARMA: Panel with 3 Options
+		var good_karma_card := PanelContainer.new()
+		var gkc_style := StyleBoxFlat.new()
+		gkc_style.bg_color = Color("#071324")
+		gkc_style.border_color = Color("#38bdf8")
+		gkc_style.set_border_width_all(2)
+		gkc_style.set_corner_radius_all(10)
+		good_karma_card.add_theme_stylebox_override("panel", gkc_style)
+
+		var gm := MarginContainer.new()
+		gm.add_theme_constant_override("margin_left", 20)
+		gm.add_theme_constant_override("margin_right", 20)
+		gm.add_theme_constant_override("margin_top", 14)
+		gm.add_theme_constant_override("margin_bottom", 14)
+		good_karma_card.add_child(gm)
+
+		var gv := VBoxContainer.new()
+		gv.add_theme_constant_override("separation", 8)
+		gm.add_child(gv)
+
+		var g_header := Label.new()
+		g_header.text = "✨ A LIFE OF HONOR • CHOOSE YOUR DESTINY"
+		g_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		g_header.add_theme_font_size_override("font_size", 22)
+		g_header.add_theme_color_override("font_color", Color("#38bdf8"))
+		gv.add_child(g_header)
+
+		var g_desc := Label.new()
+		g_desc.text = "You walked with virtue and honor. You may bequeath your life earnings to your living children, ascend to the Afterlife for blessed reincarnation, or embark on a fresh new life."
+		g_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		g_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		g_desc.add_theme_font_size_override("font_size", 19)
+		g_desc.add_theme_color_override("font_color", Color("#cbd5e1"))
+		gv.add_child(g_desc)
+
+		vbox.add_child(good_karma_card)
+
+		var opts_v := VBoxContainer.new()
+		opts_v.add_theme_constant_override("separation", 12)
+		vbox.add_child(opts_v)
+
+		# Option 1: Pass Inheritance (only enabled if player has living children)
+		var has_kids := PlayerData.has_living_children()
+		var btn_inherit := Button.new()
+		btn_inherit.custom_minimum_size.y = 74
+		btn_inherit.add_theme_font_size_override("font_size", 24)
+		var inh_style := StyleBoxFlat.new()
+		inh_style.bg_color = Color("#854d0e") if has_kids else Color("#334155")
+		inh_style.border_color = Color("#facc15") if has_kids else Color("#64748b")
+		inh_style.set_border_width_all(2)
+		inh_style.set_corner_radius_all(10)
+		btn_inherit.add_theme_stylebox_override("normal", inh_style)
+		var inh_hover := inh_style.duplicate() as StyleBoxFlat
+		inh_hover.bg_color = inh_style.bg_color.lightened(0.2)
+		btn_inherit.add_theme_stylebox_override("hover", inh_hover)
+		btn_inherit.add_theme_color_override("font_color", Color("#ffffff"))
+
+		if has_kids:
+			btn_inherit.text = "📜 PASS INHERITANCE TO CHILD & CONTINUE LINEAGE"
+			btn_inherit.pressed.connect(_show_inheritance_selection_modal)
+		else:
+			btn_inherit.text = "📜 PASS INHERITANCE (No Living Children)"
+			btn_inherit.disabled = true
+		opts_v.add_child(btn_inherit)
+
+		# Option 2: Continue to Afterlife with Buffs
+		var btn_afterlife := Button.new()
+		btn_afterlife.text = "🌟 CONTINUE TO AFTERLIFE (REINCARNATE WITH BUFFS)"
+		btn_afterlife.custom_minimum_size.y = 74
+		btn_afterlife.add_theme_font_size_override("font_size", 24)
+		var alt_style := StyleBoxFlat.new()
+		alt_style.bg_color = Color("#0369a1")
+		alt_style.border_color = Color("#38bdf8")
+		alt_style.set_border_width_all(2)
+		alt_style.set_corner_radius_all(10)
+		btn_afterlife.add_theme_stylebox_override("normal", alt_style)
+		var alt_hover := alt_style.duplicate() as StyleBoxFlat
+		alt_hover.bg_color = Color("#0284c7")
+		btn_afterlife.add_theme_stylebox_override("hover", alt_hover)
+		btn_afterlife.add_theme_color_override("font_color", Color("#ffffff"))
+		btn_afterlife.pressed.connect(_open_afterlife_minigame)
+		opts_v.add_child(btn_afterlife)
+
+		# Option 3: Start Fresh Playthrough
+		var btn_new_life := Button.new()
+		btn_new_life.text = "🌱 START A FRESH PLAYTHROUGH"
+		btn_new_life.custom_minimum_size.y = 74
+		btn_new_life.add_theme_font_size_override("font_size", 24)
+		var new_life_style := StyleBoxFlat.new()
+		new_life_style.bg_color = Color("#15803d")
+		new_life_style.border_color = Color("#22c55e")
+		new_life_style.set_border_width_all(2)
+		new_life_style.set_corner_radius_all(10)
+		btn_new_life.add_theme_stylebox_override("normal", new_life_style)
+		var new_life_hover := new_life_style.duplicate() as StyleBoxFlat
+		new_life_hover.bg_color = Color("#16a34a")
+		btn_new_life.add_theme_stylebox_override("hover", new_life_hover)
+		btn_new_life.add_theme_color_override("font_color", Color("#ffffff"))
+		btn_new_life.pressed.connect(_on_start_new_life_pressed)
+		opts_v.add_child(btn_new_life)
 
 
 func _on_start_new_life_pressed() -> void:
@@ -5416,6 +5740,146 @@ func _on_start_new_life_pressed() -> void:
 	update_character_panel()
 	show_tab("timeline")
 	show_new_game_screen()
+
+
+func _open_afterlife_minigame() -> void:
+	if death_screen_overlay != null and is_instance_valid(death_screen_overlay):
+		death_screen_overlay.queue_free()
+		death_screen_overlay = null
+
+	var afterlife_script = preload("res://scripts/minigames/afterlife_minigame.gd")
+	var mg = afterlife_script.new()
+	mg.name = "AfterlifeMinigame"
+	add_child(mg)
+	mg.setup(PlayerData.karma, Callable(self, "_on_afterlife_rebirth_complete"))
+
+
+func _on_afterlife_rebirth_complete() -> void:
+	current_event = null
+	current_event_choices.clear()
+	hide_event_popup()
+
+	life_feed.clear()
+	rebuild_life_feed()
+	update_history_panel()
+	update_character_panel()
+	update_relationships_panel()
+	update_ui()
+	show_tab("timeline")
+	SaveManager.save_game()
+
+
+func _show_inheritance_selection_modal() -> void:
+	if death_screen_overlay != null and is_instance_valid(death_screen_overlay):
+		death_screen_overlay.queue_free()
+		death_screen_overlay = null
+
+	var modal := _create_cyber_modal("📜 ESTATE INHERITANCE & SUCCESSION", "Net Worth: $%s  •  Select an heir to continue lineage" % _format_number(PlayerData.get_net_worth()), Color("#eab308"))
+	var list: VBoxContainer = modal.list
+
+	var living_children := PlayerData.get_living_children()
+	for child in living_children:
+		var c_name: String = str(child.get("name", "Child"))
+		var c_age: int = int(child.get("age", 0))
+		var c_gender: String = str(child.get("gender", "MALE"))
+		var c_rel: int = int(child.get("relationship", 80))
+
+		var p_card := PanelContainer.new()
+		p_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#eab308")))
+		var cm := MarginContainer.new()
+		cm.add_theme_constant_override("margin_left", 20)
+		cm.add_theme_constant_override("margin_right", 20)
+		cm.add_theme_constant_override("margin_top", 16)
+		cm.add_theme_constant_override("margin_bottom", 16)
+		p_card.add_child(cm)
+
+		var ch := HBoxContainer.new()
+		ch.add_theme_constant_override("separation", 18)
+		cm.add_child(ch)
+
+		# Avatar
+		var icon := TextureRect.new()
+		icon.custom_minimum_size = Vector2(80, 80)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture = PortraitCatalog.texture(c_age, c_gender, int(child.get("portrait_variant", 0)), str(child.get("ethnicity", PlayerData.ethnicity)))
+		icon.material = PortraitCatalog.cutout_material()
+		ch.add_child(icon)
+
+		var info_v := VBoxContainer.new()
+		info_v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		info_v.add_theme_constant_override("separation", 6)
+		ch.add_child(info_v)
+
+		var name_lbl := Label.new()
+		name_lbl.text = "%s (%s, Age %d)" % [c_name, "Daughter" if c_gender == "FEMALE" else "Son", c_age]
+		name_lbl.add_theme_font_size_override("font_size", 24)
+		name_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
+		info_v.add_child(name_lbl)
+
+		var rel_lbl := Label.new()
+		rel_lbl.text = "Relationship with late parent: %d%%" % c_rel
+		rel_lbl.add_theme_font_size_override("font_size", 20)
+		rel_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+		info_v.add_child(rel_lbl)
+
+		var pick_btn := Button.new()
+		pick_btn.text = "👑 Bequeath Estate & Continue as %s" % c_name
+		pick_btn.custom_minimum_size.y = 60
+		pick_btn.add_theme_font_size_override("font_size", 22)
+		var bs := StyleBoxFlat.new()
+		bs.bg_color = Color("#854d0e")
+		bs.border_color = Color("#facc15")
+		bs.set_border_width_all(2)
+		bs.set_corner_radius_all(8)
+		pick_btn.add_theme_stylebox_override("normal", bs)
+		var bsh := bs.duplicate() as StyleBoxFlat
+		bsh.bg_color = bs.bg_color.lightened(0.2)
+		pick_btn.add_theme_stylebox_override("hover", bsh)
+
+		var target_child = child
+		pick_btn.pressed.connect(func():
+			_execute_inheritance_takeover(target_child, modal.overlay)
+		)
+		info_v.add_child(pick_btn)
+
+		list.add_child(p_card)
+
+
+func _execute_inheritance_takeover(child: Dictionary, overlay_to_free: Control) -> void:
+	if overlay_to_free != null and is_instance_valid(overlay_to_free):
+		overlay_to_free.queue_free()
+
+	var net_worth: int = maxi(500, PlayerData.get_net_worth())
+	var roll := randf()
+	var final_amount := net_worth
+	var inheritance_msg := ""
+
+	if roll < 0.50:
+		final_amount = net_worth
+		inheritance_msg = "✨ Seamless Succession: 100% of the estate ($%s) was transferred without dispute." % _format_number(final_amount)
+	elif roll < 0.75:
+		final_amount = int(net_worth * 0.85)
+		inheritance_msg = "🏛️ Estate Tax Levy: State tax authorities collected 15% inheritance tax. $%s was deposited." % _format_number(final_amount)
+	else:
+		final_amount = maxi(250, net_worth - 5000)
+		inheritance_msg = "⚖️ Probate Legal Settlement: Estate filing and attorney fees cost $5,000. $%s was secured." % _format_number(final_amount)
+
+	PlayerData.takeover_as_child(child, final_amount)
+	PlayerData.add_life_log_entry(inheritance_msg, "finance")
+
+	current_event = null
+	current_event_choices.clear()
+	hide_event_popup()
+
+	life_feed.clear()
+	rebuild_life_feed()
+	update_history_panel()
+	update_character_panel()
+	update_relationships_panel()
+	update_ui()
+	show_tab("timeline")
+	SaveManager.save_game()
 
 
 func _generate_death_narrative(cause: String) -> String:
@@ -5640,6 +6104,32 @@ func _configure_creation() -> void:
 	popup.add_theme_color_override("font_color", Color("#f8fafc"))
 	popup.add_theme_color_override("font_hover_color", Color("#38bdf8"))
 	popup.add_theme_constant_override("h_separation", 16)
+
+	# Gender selector: keep the expanded menu in the same navy/cyan theme.
+	gender_input.add_theme_stylebox_override("pressed", field_hover)
+	gender_input.add_theme_stylebox_override("hover_pressed", field_hover)
+	gender_input.add_theme_color_override("font_pressed_color", Color("#64e6ff"))
+	gender_input.add_theme_color_override("arrow_normal_color", Color("#64e6ff"))
+	gender_input.add_theme_color_override("arrow_hover_color", Color("#ffffff"))
+	var gender_popup := gender_input.get_popup()
+	var gender_panel := popup_style.duplicate() as StyleBoxFlat
+	gender_panel.set_content_margin_all(12)
+	gender_popup.add_theme_stylebox_override("panel", gender_panel)
+	var gender_highlight := StyleBoxFlat.new()
+	gender_highlight.bg_color = Color("#1d3353")
+	gender_highlight.border_color = Color("#64e6ff")
+	gender_highlight.set_border_width_all(2)
+	gender_highlight.set_corner_radius_all(4)
+	gender_popup.add_theme_stylebox_override("hover", gender_highlight)
+	gender_popup.add_theme_font_override("font", gender_input.get_theme_font("font"))
+	gender_popup.add_theme_font_size_override("font_size", 26)
+	gender_popup.add_theme_color_override("font_color", Color("#d9efff"))
+	gender_popup.add_theme_color_override("font_hover_color", Color("#64e6ff"))
+	gender_popup.add_theme_color_override("font_focus_color", Color("#64e6ff"))
+	gender_popup.add_theme_constant_override("v_separation", 24)
+	gender_popup.add_theme_constant_override("h_separation", 16)
+	gender_popup.add_theme_constant_override("item_start_padding", 12)
+	gender_popup.add_theme_constant_override("item_end_padding", 12)
 
 	# Start Life Button: High-visibility green
 	var start_btn := content.get_node_or_null("StartGameButton") as Button

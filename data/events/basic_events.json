@@ -26,7 +26,7 @@
       },
       {
         "text": "Give your old bicycle to a needy kid",
-        "description": "+20 Karma, +15 Happiness",
+        "description": "+15 Happiness",
         "type": "generous",
         "effects": {
           "happiness": 15,
@@ -36,7 +36,7 @@
       },
       {
         "text": "Attempt a reckless ramp jump",
-        "description": "-12 Health, +10 Happiness, -2 Karma",
+        "description": "-12 Health, +10 Happiness",
         "type": "reckless",
         "effects": {
           "health": -12,
@@ -47,7 +47,7 @@
       },
       {
         "text": "Sell it to a neighbor for fast cash",
-        "description": "+ Cash, -15 Karma, -5 Happiness",
+        "description": "+ Cash, -5 Happiness",
         "type": "selfish",
         "effects": {
           "money": 45,
@@ -74,7 +74,7 @@
     "choices": [
       {
         "text": "Help clean up the mess with napkins",
-        "description": "+10 Karma, +5 Smarts, +4 Happiness",
+        "description": "+5 Smarts, +4 Happiness",
         "type": "responsible",
         "effects": {
           "karma": 10,
@@ -85,7 +85,7 @@
       },
       {
         "text": "Blame the kid sitting next to you",
-        "description": "-15 Karma, +2 Happiness",
+        "description": "+2 Happiness",
         "type": "deceitful",
         "effects": {
           "karma": -15,
@@ -95,7 +95,7 @@
       },
       {
         "text": "Throw more paint and laugh hysterically",
-        "description": "-10 Karma, -6 Health (slapped), +12 Happiness",
+        "description": "-6 Health (slapped), +12 Happiness",
         "type": "chaotic",
         "effects": {
           "karma": -10,
@@ -122,7 +122,7 @@
     "choices": [
       {
         "text": "Share the toys and build a sandcastle together",
-        "description": "+15 Karma, +8 Happiness, +3 Smarts",
+        "description": "+8 Happiness, +3 Smarts",
         "type": "kind",
         "effects": {
           "karma": 15,
@@ -133,7 +133,7 @@
       },
       {
         "text": "Bite their arm to reclaim the toy",
-        "description": "-20 Karma, -5 Health, -10 Happiness",
+        "description": "-5 Health, -10 Happiness",
         "type": "aggressive",
         "effects": {
           "karma": -20,
@@ -170,7 +170,7 @@
     "choices": [
       {
         "text": "Punch the bully squarely in the jaw",
-        "description": "-10 Health, +15 Happiness, +5 Looks, -10 Karma",
+        "description": "-10 Health, +15 Happiness, +5 Looks",
         "type": "aggressive",
         "effects": {
           "health": -10,
@@ -182,7 +182,7 @@
       },
       {
         "text": "Report the incident to the vice principal",
-        "description": "+6 Smarts, +5 Karma, -3 Happiness",
+        "description": "+6 Smarts, -3 Happiness",
         "type": "responsible",
         "effects": {
           "smarts": 6,
@@ -231,7 +231,7 @@
     "choices": [
       {
         "text": "Take it to the police station lost-and-found",
-        "description": "+25 Karma, +15 Happiness, + Reward",
+        "description": "+15 Happiness, + Reward",
         "type": "honest",
         "effects": {
           "karma": 25,
@@ -242,7 +242,7 @@
       },
       {
         "text": "Pawn it quietly to an underground dealer",
-        "description": "+ Cash, -20 Karma, +10 Happiness",
+        "description": "+ Cash, +10 Happiness",
         "type": "opportunistic",
         "effects": {
           "money": 750,
@@ -253,7 +253,7 @@
       },
       {
         "text": "Wear the flashy gold watch to school",
-        "description": "+16 Looks, +8 Happiness, -5 Karma",
+        "description": "+16 Looks, +8 Happiness",
         "type": "flashy",
         "effects": {
           "looks": 16,
@@ -280,7 +280,7 @@
     "choices": [
       {
         "text": "Bandage the puppy and convince your family to adopt it",
-        "description": "+25 Karma, +20 Happiness, - Cash",
+        "description": "+20 Happiness, - Cash",
         "type": "compassionate",
         "effects": {
           "karma": 25,
@@ -291,7 +291,7 @@
       },
       {
         "text": "Deliver the puppy to an animal rescue shelter",
-        "description": "+15 Karma, +10 Happiness",
+        "description": "+10 Happiness",
         "type": "caring",
         "effects": {
           "karma": 15,
@@ -301,7 +301,7 @@
       },
       {
         "text": "Ignore the animal and walk away",
-        "description": "-18 Karma, -8 Happiness",
+        "description": "-8 Happiness",
         "type": "cold",
         "effects": {
           "karma": -18,
@@ -327,7 +327,7 @@
     "choices": [
       {
         "text": "Sneak the car out and floor the gas pedal",
-        "description": "-10 Health (Scrapes), -$250 Repairs, -10 Karma, +8 Happiness",
+        "description": "-10 Health (Scrapes), -$250 Repairs, +8 Happiness",
         "type": "reckless",
         "effects": {
           "health": -10,
@@ -339,7 +339,7 @@
       },
       {
         "text": "Drive carefully around the neighborhood and return safely",
-        "description": "+18 Happiness, +5 Smarts, -5 Karma",
+        "description": "+18 Happiness, +5 Smarts",
         "type": "sneaky",
         "effects": {
           "happiness": 18,
@@ -350,7 +350,7 @@
       },
       {
         "text": "Leave the keys alone and go to bed",
-        "description": "+6 Smarts, +8 Karma",
+        "description": "+6 Smarts",
         "type": "wise",
         "effects": {
           "smarts": 6,
@@ -376,7 +376,7 @@
     "choices": [
       {
         "text": "YOLO ,500 of your savings into the coin",
-        "description": "50/50 Gamble: +,500 Cash OR -,500 Loss, +10 Happiness",
+        "description": "50/50 Gamble: +, 500 Cash OR, -, 500 Loss, +10 Happiness",
         "type": "gambler",
         "effects": {
           "money": 5000,
@@ -398,7 +398,7 @@
       },
       {
         "text": "Call it an obvious Ponzi scheme and pass",
-        "description": "+8 Smarts, +4 Karma",
+        "description": "+8 Smarts",
         "type": "prudent",
         "effects": {
           "smarts": 8,
@@ -523,7 +523,7 @@
     "choices": [
       {
         "text": "Blow the whistle to federal regulators",
-        "description": "+35 Karma, +$5,000 Whistleblower Bounty, -15 Happiness",
+        "description": "+$5, 000 Whistleblower Bounty, -15 Happiness",
         "type": "justice",
         "effects": {
           "karma": 35,
@@ -534,7 +534,7 @@
       },
       {
         "text": "Accept the hush money and alter the reports",
-        "description": "+$6,000 Cash, -35 Karma, -10 Smarts",
+        "description": "+$6, 000 Cash, -10 Smarts",
         "type": "corrupt",
         "effects": {
           "money": 6000,
@@ -545,7 +545,7 @@
       },
       {
         "text": "Resign quietly to preserve your record",
-        "description": "+10 Karma, -5 Happiness",
+        "description": "-5 Happiness",
         "type": "clean",
         "effects": {
           "karma": 10,
@@ -571,7 +571,7 @@
     "choices": [
       {
         "text": "Scratch the prize numbers carefully with a coin",
-        "description": "JACKPOT: +,000 Cash, +30 Happiness",
+        "description": "JACKPOT: +, 000 Cash, +30 Happiness",
         "type": "lucky",
         "effects": {
           "money": 15000,
@@ -591,7 +591,7 @@
       },
       {
         "text": "Gift the unscratched ticket to a stranger",
-        "description": "+25 Karma, +15 Happiness",
+        "description": "+15 Happiness",
         "type": "altruistic",
         "effects": {
           "karma": 25,
@@ -617,7 +617,7 @@
     "choices": [
       {
         "text": "Accept the inheritance payout",
-        "description": "+,500 Cash, +20 Happiness",
+        "description": "+, 500 Cash, +20 Happiness",
         "type": "windfall",
         "effects": {
           "money": 22500,
@@ -627,7 +627,7 @@
       },
       {
         "text": "Donate 50% to a charitable cancer hospice",
-        "description": "+,250 Cash, +40 Karma, +25 Happiness",
+        "description": "+, 250 Cash, +25 Happiness",
         "type": "noble",
         "effects": {
           "money": 11250,
@@ -638,7 +638,7 @@
       },
       {
         "text": "Distribute the entire fortune among poorer family members",
-        "description": "+50 Karma, +30 Happiness",
+        "description": "+30 Happiness",
         "type": "saintly",
         "effects": {
           "karma": 50,
@@ -664,7 +664,7 @@
     "choices": [
       {
         "text": "Immediately hang up and report number to fraud agency",
-        "description": "+10 Smarts, +8 Karma, +5 Happiness",
+        "description": "+10 Smarts, +5 Happiness",
         "type": "vigilant",
         "effects": {
           "smarts": 10,
@@ -733,7 +733,7 @@
       },
       {
         "text": "Ask a family member to drive you to the clinic",
-        "description": "-8 Health, -$150 Copay, +5 Karma",
+        "description": "-8 Health, -$150 Copay",
         "type": "family",
         "effects": {
           "health": -8,
@@ -760,7 +760,7 @@
     "choices": [
       {
         "text": "Take the plunge for viral street glory",
-        "description": "-8 Health, +15 Happiness, +6 Looks, -5 Karma",
+        "description": "-8 Health, +15 Happiness, +6 Looks",
         "type": "daredevil",
         "effects": {
           "health": -8,
@@ -772,7 +772,7 @@
       },
       {
         "text": "Refuse to jump and mock the stupidity of the dare",
-        "description": "+10 Smarts, +5 Karma, -6 Happiness",
+        "description": "+10 Smarts, -6 Happiness",
         "type": "sensible",
         "effects": {
           "smarts": 10,
@@ -783,7 +783,7 @@
       },
       {
         "text": "Dare someone else to go first instead",
-        "description": "+5 Smarts, -5 Karma",
+        "description": "+5 Smarts",
         "type": "deflecting",
         "effects": {
           "smarts": 5,
@@ -809,7 +809,7 @@
     "choices": [
       {
         "text": "Drink heavily and dance on the furniture",
-        "description": "-15 Health, +20 Happiness, -8 Smarts, -10 Karma",
+        "description": "-15 Health, +20 Happiness, -8 Smarts",
         "type": "wild",
         "effects": {
           "health": -15,
@@ -821,7 +821,7 @@
       },
       {
         "text": "Socialize responsibly and talk to your crush",
-        "description": "+15 Happiness, +8 Looks, +5 Karma",
+        "description": "+15 Happiness, +8 Looks",
         "type": "romantic",
         "effects": {
           "happiness": 15,
@@ -832,7 +832,7 @@
       },
       {
         "text": "Be the designated driver for your friends",
-        "description": "+25 Karma, +10 Smarts, +8 Happiness",
+        "description": "+10 Smarts, +8 Happiness",
         "type": "responsible",
         "effects": {
           "karma": 25,
@@ -843,7 +843,7 @@
       },
       {
         "text": "Steal liquor bottles from the liquor cabinet",
-        "description": "+ Cash, -25 Karma, -5 Happiness",
+        "description": "+ Cash, -5 Happiness",
         "type": "criminal",
         "effects": {
           "money": 120,
@@ -870,7 +870,7 @@
     "choices": [
       {
         "text": "Accept the severance package and hunt for new jobs",
-        "description": "+,500 Severance Cash, -15 Happiness, +5 Smarts",
+        "description": "+, 500 Severance Cash, -15 Happiness, +5 Smarts",
         "type": "severance",
         "effects": {
           "money": 3500,
@@ -891,7 +891,7 @@
       },
       {
         "text": "Trash the breakroom in a fit of rage",
-        "description": "-30 Karma, -$800 Damages, +8 Happiness",
+        "description": "-$800 Damages, +8 Happiness",
         "type": "vengeful",
         "effects": {
           "karma": -30,

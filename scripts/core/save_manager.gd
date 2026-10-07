@@ -59,6 +59,8 @@ func save_game() -> void:
 		"job_title": PlayerData.job_title,
 		"job_company": PlayerData.job_company,
 		"job_salary": PlayerData.job_salary,
+		"career_progress": PlayerData.career_progress,
+		"underground_progress": PlayerData.underground_progress,
 		"illnesses": PlayerData.illnesses,
 		"is_dead": PlayerData.is_dead,
 		"cause_of_death": PlayerData.cause_of_death,
@@ -67,6 +69,9 @@ func save_game() -> void:
 		"event_history": PlayerData.event_history,
 		"life_log": PlayerData.life_log,
 		"karma": PlayerData.karma,
+		"children": PlayerData.children,
+		"active_debuffs": PlayerData.active_debuffs,
+		"active_buffs": PlayerData.active_buffs,
 		"partner": PlayerData.partner,
 		"ex_partners": PlayerData.ex_partners,
 		"last_parent_interact_age": PlayerData.last_parent_interact_age,
@@ -165,6 +170,10 @@ func load_game() -> bool:
 	PlayerData.last_gym_activity_age = int(data.get("last_gym_activity_age", -1))
 	PlayerData.last_meditation_activity_age = int(data.get("last_meditation_activity_age", -1))
 	PlayerData.karma = int(data.get("karma", 0))
+	PlayerData.children = Array(data.get("children", []))
+	PlayerData.active_debuffs = Array(data.get("active_debuffs", []))
+	PlayerData.active_buffs = Array(data.get("active_buffs", []))
+	PlayerData.enforce_buffs_and_debuffs()
 
 	PlayerData.partner = Dictionary(data.get("partner", {}))
 	preload("res://scripts/core/romance_rules.gd").normalize(PlayerData)
@@ -176,6 +185,10 @@ func load_game() -> bool:
 	PlayerData.job_title = str(data.get("job_title", ""))
 	PlayerData.job_company = str(data.get("job_company", ""))
 	PlayerData.job_salary = int(data.get("job_salary", 0))
+	PlayerData.career_progress = Dictionary(data.get("career_progress", {}))
+	PlayerData.underground_progress = Dictionary(data.get("underground_progress", {}))
+	preload("res://scripts/economy/career_progression.gd").normalize(PlayerData)
+	preload("res://scripts/economy/underground_progression.gd").normalize(PlayerData)
 
 	PlayerData.illnesses = data.get("illnesses", [])
 	PlayerData.is_dead = bool(data.get("is_dead", false))
