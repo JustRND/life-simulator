@@ -394,6 +394,7 @@ func age_up() -> void:
 		return
 
 	var spent_year_in_prison: bool = PlayerData.is_in_prison
+	var prev_age: int = PlayerData.age
 	PlayerData.age += 1
 
 	var year_word: String = "year" if PlayerData.age == 1 else "years"
@@ -595,6 +596,9 @@ func age_up() -> void:
 		var grade_delta: int = smarts_bonus + randi_range(-3, 3)
 		PlayerData.grades = clamp(PlayerData.grades + grade_delta, 35, 100)
 
+	# Smarts Degradation & Maintenance System (Forces players to actively use education system)
+	_process_yearly_smarts_decay(prev_age)
+
 	# 8. Aging Health Curve & General Sickness
 	randomize_stats()
 
@@ -671,6 +675,66 @@ func age_up() -> void:
 	SaveManager.save_game()
 
 
+func _is_intellectual_career(j_id: String, j_title: String) -> bool:
+	if j_id == "" and j_title == "":
+		return false
+	var j_low := (j_id + " " + j_title).to_lower()
+	var intellectual_keywords := [
+		"doctor", "surgeon", "physician", "engineer", "scientist", "programmer",
+		"developer", "analyst", "lawyer", "attorney", "judge", "teacher",
+		"professor", "accountant", "architect", "pharmacist", "pilot", "executive"
+	]
+	for kw in intellectual_keywords:
+		if kw in j_low:
+			return true
+	return false
+
+
+func _process_yearly_smarts_decay(prev_age: int) -> void:
+	if PlayerData.is_dead:
+		return
+
+	# Cosmic buff immunity: Super Smarts locked at 100+
+	if PlayerData.has_buff("super_smarts"):
+		return
+
+	# Early infancy and toddler development (Ages 0-2): no degradation
+	if prev_age < 3:
+		return
+
+	var studied_last_year: bool = (PlayerData.last_school_activity_age == prev_age)
+	var is_student: bool = PlayerData.education_level in ["Kindergarten", "Primary School", "Middle School", "High School", "University Student"]
+	var is_intellectual: bool = _is_intellectual_career(PlayerData.job_id, PlayerData.job_title)
+
+	if is_student:
+		if studied_last_year:
+			# Maintained via active study in the education system! No decay.
+			return
+		elif PlayerData.grades >= 80:
+			# High academic marks shield student from atrophy
+			return
+		elif PlayerData.grades >= 60:
+			# Mediocre performance with zero study outside class: mild cognitive atrophy
+			var decay := randi_range(1, 2)
+			PlayerData.smarts = maxi(10, PlayerData.smarts - decay)
+			add_life_event("📉 Mental Slump: You did not study outside class at age %d. Your academic sharpness slipped (Smarts -%d)." % [prev_age, decay], "education")
+		else:
+			# Low grades (< 60) and zero study: significant academic deterioration
+			var decay := randi_range(2, 4)
+			PlayerData.smarts = maxi(5, PlayerData.smarts - decay)
+			add_life_event("📉 Academic Neglect: Neglecting your studies and falling behind in school at age %d caused your cognitive sharpness to deteriorate (Smarts -%d)." % [prev_age, decay], "education")
+	else:
+		# Adult / Non-student
+		if studied_last_year or is_intellectual:
+			# Maintained via library reading, online skill seminar, or intellectually demanding career!
+			return
+		else:
+			# Cognitive atrophy from lack of mental stimulation
+			var decay := randi_range(1, 3)
+			PlayerData.smarts = maxi(5, PlayerData.smarts - decay)
+			add_life_event("📉 Cognitive Decline: Without regular reading, study, or mental challenges at age %d, your cognitive sharpness dulled (Smarts -%d)." % [prev_age, decay], "education")
+
+
 func randomize_stats() -> void:
 	# Aging health curve: Young = stable/positive, Older = progressive deterioration
 	var health_flux: int = 0
@@ -685,10 +749,10 @@ func randomize_stats() -> void:
 	else:
 		health_flux = randi_range(-7, -2)
 
+	# Smarts is excluded from random passive increases: must be earned and maintained via active gameplay
 	var random_effects := {
 		"health": health_flux,
 		"happiness": randi_range(-3, 3),
-		"smarts": randi_range(-1, 2) if PlayerData.age < 65 else randi_range(-2, 0),
 		"looks": randi_range(-1, 1) if PlayerData.age < 50 else randi_range(-3, -1)
 	}
 
@@ -1938,7 +2002,27 @@ func _setup_parent_action_row(vbox: VBoxContainer, parent_type: String) -> void:
 
 	for act in actions:
 		var btn := Button.new()
-		btn.text = act[0]
+		var act_key: String = act[1]
+		var is_used_this_year := false
+		if act_key == "spend_time":
+			if is_mother and PlayerData.last_mother_spend_time_age == PlayerData.age:
+				is_used_this_year = true
+			elif not is_mother and PlayerData.last_father_spend_time_age == PlayerData.age:
+				is_used_this_year = true
+		elif act_key == "compliment":
+			if is_mother and PlayerData.last_mother_compliment_age == PlayerData.age:
+				is_used_this_year = true
+			elif not is_mother and PlayerData.last_father_compliment_age == PlayerData.age:
+				is_used_this_year = true
+
+		if is_used_this_year:
+			btn.text = act[0] + " (Used)"
+			btn.disabled = true
+			btn.tooltip_text = "Already used with your %s this year. Available again next year." % ("mother" if is_mother else "father")
+			btn.modulate = Color(0.6, 0.6, 0.6, 0.65)
+		else:
+			btn.text = act[0]
+
 		btn.custom_minimum_size.y = 64
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.add_theme_font_size_override("font_size", 24)
@@ -1956,8 +2040,8 @@ func _setup_parent_action_row(vbox: VBoxContainer, parent_type: String) -> void:
 		btn.add_theme_stylebox_override("hover", hover)
 
 		btn.add_theme_color_override("font_color", Color("#f1f5f9"))
-		var act_key: String = act[1]
-		btn.pressed.connect(func(): _interact_parent(parent_type, act_key))
+		if not is_used_this_year:
+			btn.pressed.connect(func(): _interact_parent(parent_type, act_key))
 		row.add_child(btn)
 
 	vbox.add_child(row)
@@ -1970,6 +2054,16 @@ func _interact_parent(parent_type: String, action: String) -> void:
 
 	match action:
 		"spend_time":
+			var already_used: bool = (is_mother and PlayerData.last_mother_spend_time_age == PlayerData.age) or (not is_mother and PlayerData.last_father_spend_time_age == PlayerData.age)
+			if already_used:
+				add_life_event("⏳ You have already spent quality time with your %s this year. Available again next year!" % role, "relationship")
+				update_ui()
+				return
+			if is_mother:
+				PlayerData.last_mother_spend_time_age = PlayerData.age
+			else:
+				PlayerData.last_father_spend_time_age = PlayerData.age
+
 			var rel_gain := randi_range(6, 12)
 			var happy_gain := randi_range(4, 9)
 			if is_mother:
@@ -1988,6 +2082,16 @@ func _interact_parent(parent_type: String, action: String) -> void:
 			if PlayerData.age < 5:
 				add_life_event("🍼 Restricted: Infants and toddlers can only express affection by spending time.", "relationship")
 				return
+			var already_used: bool = (is_mother and PlayerData.last_mother_compliment_age == PlayerData.age) or (not is_mother and PlayerData.last_father_compliment_age == PlayerData.age)
+			if already_used:
+				add_life_event("⏳ You have already given your %s a heartfelt compliment this year. Available again next year!" % role, "relationship")
+				update_ui()
+				return
+			if is_mother:
+				PlayerData.last_mother_compliment_age = PlayerData.age
+			else:
+				PlayerData.last_father_compliment_age = PlayerData.age
+
 			var rel_gain := randi_range(4, 8)
 			if is_mother:
 				PlayerData.mother_relationship = mini(100, PlayerData.mother_relationship + rel_gain)
@@ -4074,6 +4178,76 @@ func _show_education_modal() -> void:
 		gv.add_child(path_note)
 
 		list.add_child(grad_card)
+
+	# 8. Public Library & Lifelong Self-Study (Age 5+)
+	if PlayerData.age >= 5:
+		var lib_card := PanelContainer.new()
+		lib_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#38bdf8")))
+		var lm_lib := MarginContainer.new()
+		lm_lib.add_theme_constant_override("margin_left", 24)
+		lm_lib.add_theme_constant_override("margin_right", 24)
+		lm_lib.add_theme_constant_override("margin_top", 18)
+		lm_lib.add_theme_constant_override("margin_bottom", 18)
+		lib_card.add_child(lm_lib)
+
+		var lv_lib := VBoxContainer.new()
+		lv_lib.add_theme_constant_override("separation", 12)
+		lm_lib.add_child(lv_lib)
+
+		var lib_title := Label.new()
+		lib_title.text = "📚 PUBLIC LIBRARY & LIFELONG SELF-STUDY"
+		lib_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lib_title.add_theme_font_size_override("font_size", 28)
+		lib_title.add_theme_color_override("font_color", Color("#38bdf8"))
+		lv_lib.add_child(lib_title)
+
+		var lib_desc := Label.new()
+		lib_desc.text = "Cognitive Maintenance: Without regular education, reading, or mental challenge, your Smarts level naturally degrades each year. Reading literature or taking professional workshops maintains and expands your intellect."
+		lib_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lib_desc.add_theme_font_size_override("font_size", 22)
+		lib_desc.add_theme_color_override("font_color", Color("#cbd5e1"))
+		lv_lib.add_child(lib_desc)
+
+		if has_done_school_activity_this_year:
+			lv_lib.add_child(_create_disabled_cyber_button("📖 Read Non-Fiction & Books at Public Library (Free)\n+2 to +4 Smarts • Prevents annual cognitive degradation", "Annual academic study completed for Age %d (Age up to read again next year)" % PlayerData.age))
+			lv_lib.add_child(_create_disabled_cyber_button("💻 Professional Skill & Certification Seminar ($150)\n+3 to +5 Smarts • Prevents annual cognitive degradation", "Annual academic study completed for Age %d (Age up to attend next year)" % PlayerData.age))
+		else:
+			var btn_read := _create_cyber_button("📖 Read Non-Fiction & Books at Public Library (Free)\n+2 to +4 Smarts • Prevents annual cognitive degradation", Color("#38bdf8"), func():
+				if PlayerData.last_school_activity_age == PlayerData.age:
+					_close_education_modal_and_return_to_main()
+					return
+				PlayerData.last_school_activity_age = PlayerData.age
+				var s_gain := randi_range(2, 4)
+				PlayerData.smarts = mini(100, PlayerData.smarts + s_gain)
+				PlayerData.happiness = mini(100, PlayerData.happiness + randi_range(2, 4))
+				add_life_event("📖 You spent the afternoon reading science, history, and philosophy books at the public library. Knowledge broadened! (Smarts +%d)" % s_gain, "education")
+				update_ui()
+				SaveManager.save_game()
+				_close_education_modal_and_return_to_main()
+			)
+			lv_lib.add_child(btn_read)
+
+			var btn_seminar := _create_cyber_button("💻 Professional Skill & Certification Seminar ($150)\n+3 to +5 Smarts • Prevents annual cognitive degradation", Color("#818cf8"), func():
+				if PlayerData.last_school_activity_age == PlayerData.age:
+					_close_education_modal_and_return_to_main()
+					return
+				if PlayerData.money < 150:
+					add_life_event("You cannot afford the $150 registration fee for the professional certification seminar.", "education")
+					_close_education_modal_and_return_to_main()
+					return
+				PlayerData.last_school_activity_age = PlayerData.age
+				PlayerData.money -= 150
+				var s_gain := randi_range(3, 5)
+				PlayerData.smarts = mini(100, PlayerData.smarts + s_gain)
+				PlayerData.happiness = mini(100, PlayerData.happiness + 2)
+				add_life_event("💻 You completed an intensive accredited professional skill seminar ($150). Analytical prowess sharpened! (Smarts +%d)" % s_gain, "education")
+				update_ui()
+				SaveManager.save_game()
+				_close_education_modal_and_return_to_main()
+			)
+			lv_lib.add_child(btn_seminar)
+
+		list.add_child(lib_card)
 
 	education_modal_overlay.visible = true
 

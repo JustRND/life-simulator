@@ -40,6 +40,10 @@ var children: Array = []
 var active_debuffs: Array = []
 var active_buffs: Array = []
 var last_parent_interact_age: int = -1
+var last_mother_spend_time_age: int = -1
+var last_mother_compliment_age: int = -1
+var last_father_spend_time_age: int = -1
+var last_father_compliment_age: int = -1
 var last_partner_interact_age: int = -1
 
 var karma: int = 0
@@ -120,6 +124,10 @@ func reset_player() -> void:
 	partner = {}
 	ex_partners = []
 	last_parent_interact_age = -1
+	last_mother_spend_time_age = -1
+	last_mother_compliment_age = -1
+	last_father_spend_time_age = -1
+	last_father_compliment_age = -1
 	last_partner_interact_age = -1
 
 	age = 0
@@ -422,6 +430,14 @@ func enforce_buffs_and_debuffs() -> void:
 		looks = maxi(looks, 90)
 	if "blessed_mind" in active_buffs:
 		happiness = maxi(happiness, 80)
+
+
+func has_buff(buff_id: String) -> bool:
+	return buff_id in active_buffs
+
+
+func has_debuff(debuff_id: String) -> bool:
+	return debuff_id in active_debuffs
 
 
 func has_living_children() -> bool:

@@ -15,10 +15,10 @@
     "choices": [
       {
         "text": "Ride it immediately around the block",
-        "description": "+8 Happiness, +2 Health",
+        "description": "+4 Happiness, +2 Health",
         "type": "adventurous",
         "effects": {
-          "happiness": 8,
+          "happiness": 4,
           "health": 2,
           "karma": 0
         },
@@ -26,33 +26,33 @@
       },
       {
         "text": "Give your old bicycle to a needy kid",
-        "description": "+15 Happiness",
+        "description": "+6 Happiness",
         "type": "generous",
         "effects": {
-          "happiness": 15,
-          "karma": 20
+          "happiness": 6,
+          "karma": 5
         },
         "result": "You donated your old bicycle to a neighborhood child who had none. Their grateful smile warmed your soul."
       },
       {
         "text": "Attempt a reckless ramp jump",
-        "description": "-12 Health, +10 Happiness",
+        "description": "-5 Health, +4 Happiness",
         "type": "reckless",
         "effects": {
-          "health": -12,
-          "happiness": 10,
-          "karma": -2
+          "health": -5,
+          "happiness": 4,
+          "karma": -1
         },
         "result": "You launched off a homemade wooden ramp, wiped out hard on the asphalt, and scraped both knees."
       },
       {
         "text": "Sell it to a neighbor for fast cash",
-        "description": "+ Cash, -5 Happiness",
+        "description": "+$45 Cash, -3 Happiness",
         "type": "selfish",
         "effects": {
           "money": 45,
-          "karma": -15,
-          "happiness": -5
+          "karma": -4,
+          "happiness": -3
         },
         "result": "You sold the brand-new bicycle behind your parents' backs. They were furious and grounded you."
       }
@@ -74,33 +74,33 @@
     "choices": [
       {
         "text": "Help clean up the mess with napkins",
-        "description": "+5 Smarts, +4 Happiness",
+        "description": "+2 Smarts, +2 Happiness",
         "type": "responsible",
         "effects": {
-          "karma": 10,
-          "smarts": 5,
-          "happiness": 4
+          "karma": 3,
+          "smarts": 2,
+          "happiness": 2
         },
         "result": "The teacher praised your helpfulness and awarded you a shiny gold star sticker."
       },
       {
         "text": "Blame the kid sitting next to you",
-        "description": "+2 Happiness",
+        "description": "+1 Happiness",
         "type": "deceitful",
         "effects": {
-          "karma": -15,
-          "happiness": 2
+          "karma": -4,
+          "happiness": 1
         },
         "result": "You pointed at the boy next to you. He began crying while you sneakily slid away."
       },
       {
         "text": "Throw more paint and laugh hysterically",
-        "description": "-6 Health (slapped), +12 Happiness",
+        "description": "-2 Health (Slapped), +4 Happiness",
         "type": "chaotic",
         "effects": {
-          "karma": -10,
-          "health": -3,
-          "happiness": 12
+          "karma": -3,
+          "health": -2,
+          "happiness": 4
         },
         "result": "You turned the incident into a chaotic paint war! The teacher sent you straight to time-out."
       }
@@ -122,33 +122,33 @@
     "choices": [
       {
         "text": "Share the toys and build a sandcastle together",
-        "description": "+8 Happiness, +3 Smarts",
+        "description": "+4 Happiness, +1 Smarts",
         "type": "kind",
         "effects": {
-          "karma": 15,
-          "happiness": 8,
-          "smarts": 3
+          "karma": 4,
+          "happiness": 4,
+          "smarts": 1
         },
         "result": "You shared the dump truck and made a fantastic sand fortress together. You made a new best friend!"
       },
       {
         "text": "Bite their arm to reclaim the toy",
-        "description": "-5 Health, -10 Happiness",
+        "description": "-2 Health, -4 Happiness",
         "type": "aggressive",
         "effects": {
-          "karma": -20,
-          "health": -5,
-          "happiness": -10
+          "karma": -5,
+          "health": -2,
+          "happiness": -4
         },
         "result": "You bit their forearm! They screamed bloody murder. The teacher called your parents immediately."
       },
       {
         "text": "Walk away and play on the swings",
-        "description": "+5 Smarts, +4 Happiness",
+        "description": "+2 Smarts, +2 Happiness",
         "type": "calm",
         "effects": {
-          "smarts": 5,
-          "happiness": 4
+          "smarts": 2,
+          "happiness": 2
         },
         "result": "You shrugged it off, hopped onto the swings, and soared through the breezy air."
       }
@@ -170,46 +170,46 @@
     "choices": [
       {
         "text": "Punch the bully squarely in the jaw",
-        "description": "-10 Health, +15 Happiness, +5 Looks",
+        "description": "-5 Health, +5 Happiness, +2 Looks",
         "type": "aggressive",
         "effects": {
-          "health": -10,
-          "happiness": 15,
-          "looks": 5,
-          "karma": -10
+          "health": -5,
+          "happiness": 5,
+          "looks": 2,
+          "karma": -2
         },
         "result": "You cracked the bully right in the jaw! He fell over stunned. School halls erupted in cheers, though you got detention."
       },
       {
         "text": "Report the incident to the vice principal",
-        "description": "+6 Smarts, -3 Happiness",
+        "description": "+2 Smarts, -2 Happiness",
         "type": "responsible",
         "effects": {
-          "smarts": 6,
-          "karma": 5,
-          "happiness": -3
+          "smarts": 2,
+          "karma": 2,
+          "happiness": -2
         },
         "result": "The administration issued the bully a 3-day suspension. You avoided violence, but kids called you a snitch."
       },
       {
         "text": "Hand over your lunch money quietly",
-        "description": "- Cash, -15 Happiness, -5 Looks",
+        "description": "-$15 Cash, -5 Happiness, -2 Looks",
         "type": "submissive",
         "effects": {
           "money": -15,
-          "happiness": -15,
-          "looks": -5
+          "happiness": -5,
+          "looks": -2
         },
         "result": "You handed over your money in defeat. The bully sneered and walked away while you went hungry."
       },
       {
         "text": "Outsmart them with sharp verbal wit",
-        "description": "+12 Smarts, +14 Happiness, +8 Looks",
+        "description": "+3 Smarts, +5 Happiness, +3 Looks",
         "type": "clever",
         "effects": {
-          "smarts": 12,
-          "happiness": 14,
-          "looks": 8
+          "smarts": 3,
+          "happiness": 5,
+          "looks": 3
         },
         "result": "You delivered a devastating comeback that had the entire corridor roaring with laughter at the bully."
       }
@@ -231,34 +231,34 @@
     "choices": [
       {
         "text": "Take it to the police station lost-and-found",
-        "description": "+15 Happiness, + Reward",
+        "description": "+5 Happiness, +$100 Reward",
         "type": "honest",
         "effects": {
-          "karma": 25,
-          "happiness": 15,
+          "karma": 6,
+          "happiness": 5,
           "money": 100
         },
         "result": "The relieved owner contacted you and gave you a generous  cash reward for your exceptional honesty."
       },
       {
         "text": "Pawn it quietly to an underground dealer",
-        "description": "+ Cash, +10 Happiness",
+        "description": "+$500 Cash, +4 Happiness",
         "type": "opportunistic",
         "effects": {
-          "money": 750,
-          "karma": -20,
-          "happiness": 10
+          "money": 500,
+          "karma": -5,
+          "happiness": 4
         },
         "result": "You pawned the gold watch to a shady jeweler for  cold hard cash."
       },
       {
         "text": "Wear the flashy gold watch to school",
-        "description": "+16 Looks, +8 Happiness",
+        "description": "+4 Looks, +3 Happiness",
         "type": "flashy",
         "effects": {
-          "looks": 16,
-          "happiness": 8,
-          "karma": -5
+          "looks": 4,
+          "happiness": 3,
+          "karma": -2
         },
         "result": "Everyone in class admired your luxurious wrist candy, assuming your family struck gold."
       }
@@ -280,32 +280,32 @@
     "choices": [
       {
         "text": "Bandage the puppy and convince your family to adopt it",
-        "description": "+20 Happiness, - Cash",
+        "description": "+6 Happiness, -$80 Cash",
         "type": "compassionate",
         "effects": {
-          "karma": 25,
-          "happiness": 20,
+          "karma": 6,
+          "happiness": 6,
           "money": -80
         },
         "result": "You nursed the puppy back to health! Your family adopted him, and he became your loyal companion."
       },
       {
         "text": "Deliver the puppy to an animal rescue shelter",
-        "description": "+10 Happiness",
+        "description": "+3 Happiness",
         "type": "caring",
         "effects": {
-          "karma": 15,
-          "happiness": 10
+          "karma": 4,
+          "happiness": 3
         },
         "result": "The rescue shelter gladly took the puppy in and promised to find it a loving forever home."
       },
       {
         "text": "Ignore the animal and walk away",
-        "description": "-8 Happiness",
+        "description": "-3 Happiness",
         "type": "cold",
         "effects": {
-          "karma": -18,
-          "happiness": -8
+          "karma": -5,
+          "happiness": -3
         },
         "result": "You walked away, but the image of the puppy whimpering in the rain haunted your conscience."
       }
@@ -327,34 +327,34 @@
     "choices": [
       {
         "text": "Sneak the car out and floor the gas pedal",
-        "description": "-10 Health (Scrapes), -$250 Repairs, +8 Happiness",
+        "description": "-6 Health (Scrapes), -$250 Repairs, +4 Happiness",
         "type": "reckless",
         "effects": {
-          "health": -10,
+          "health": -6,
           "money": -250,
-          "karma": -10,
-          "happiness": 8
+          "karma": -4,
+          "happiness": 4
         },
         "result": "You lost traction on a wet turn and bumped a curb! You got minor scrapes and dented the car bumper."
       },
       {
         "text": "Drive carefully around the neighborhood and return safely",
-        "description": "+18 Happiness, +5 Smarts",
+        "description": "+5 Happiness, +2 Smarts",
         "type": "sneaky",
         "effects": {
-          "happiness": 18,
-          "smarts": 5,
-          "karma": -5
+          "happiness": 5,
+          "smarts": 2,
+          "karma": -2
         },
         "result": "You cruised under the city streetlights with radio blaring and slipped the car back undetected."
       },
       {
         "text": "Leave the keys alone and go to bed",
-        "description": "+6 Smarts",
+        "description": "+2 Smarts",
         "type": "wise",
         "effects": {
-          "smarts": 6,
-          "karma": 8
+          "smarts": 2,
+          "karma": 3
         },
         "result": "You resisted the temptation and went to sleep, avoiding catastrophic legal and physical danger."
       }
@@ -375,34 +375,34 @@
     "choice_count": 3,
     "choices": [
       {
-        "text": "YOLO ,500 of your savings into the coin",
-        "description": "50/50 Gamble: +, 500 Cash OR, -, 500 Loss, +10 Happiness",
+        "text": "YOLO $1,500 of your savings into the coin",
+        "description": "+$3,000 Cash, +5 Happiness, -2 Smarts",
         "type": "gambler",
         "effects": {
-          "money": 5000,
-          "happiness": 12,
-          "smarts": -4
+          "money": 3000,
+          "happiness": 5,
+          "smarts": -2
         },
         "result": "The coin went parabolic! You took out massive profits before the inevitable rug-pull crash."
       },
       {
-        "text": "Invest a cautious  to test the waters",
-        "description": "+ Cash, +6 Happiness, +4 Smarts",
+        "text": "Invest a cautious $150 to test the waters",
+        "description": "+$450 Cash, +3 Happiness, +2 Smarts",
         "type": "measured",
         "effects": {
           "money": 450,
-          "happiness": 6,
-          "smarts": 4
+          "happiness": 3,
+          "smarts": 2
         },
         "result": "You cashed out a modest 3x profit and celebrated with a steak dinner."
       },
       {
         "text": "Call it an obvious Ponzi scheme and pass",
-        "description": "+8 Smarts",
+        "description": "+3 Smarts",
         "type": "prudent",
         "effects": {
-          "smarts": 8,
-          "karma": 4
+          "smarts": 3,
+          "karma": 2
         },
         "result": "Three days later, the founders vanished with the liquidity pool. You congratulated yourself on your wisdom."
       }
@@ -424,34 +424,34 @@
     "choices": [
       {
         "text": "Rush to the emergency room for surgery",
-        "description": "+15 Health, -$250 Medical Copay, -5 Happiness",
+        "description": "+6 Health, -$250 Copay, -3 Happiness",
         "type": "lifesaving",
         "effects": {
-          "health": 15,
+          "health": 6,
           "money": -250,
-          "happiness": -5
+          "happiness": -3
         },
         "result": "Doctors diagnosed an inflamed appendix on the verge of rupture and performed an emergency appendectomy."
       },
       {
         "text": "Take ibuprofen and try to sleep it off",
-        "description": "-15 Health, -$150 Medicine, -12 Happiness",
+        "description": "-7 Health, -$150 Medicine, -5 Happiness",
         "type": "negligent",
         "effects": {
-          "health": -15,
+          "health": -7,
           "money": -150,
-          "happiness": -12
+          "happiness": -5
         },
         "result": "Your appendix became severely inflamed! You survived after an urgent clinic visit and antibiotics."
       },
       {
         "text": "Call an emergency telehealth doctor for guidance",
-        "description": "+12 Health, -$100 Telehealth Copay, +5 Smarts",
+        "description": "+4 Health, -$100 Copay, +2 Smarts",
         "type": "smart",
         "effects": {
-          "health": 12,
+          "health": 4,
           "money": -100,
-          "smarts": 5
+          "smarts": 2
         },
         "result": "The triage nurse urgently dispatched an ambulance, saving you from a fatal septic peritonitis."
       }
@@ -473,35 +473,35 @@
     "choices": [
       {
         "text": "Swerve hard into the concrete divider",
-        "description": "-10 Health (Airbag Saves You), -$350 Repair, -8 Happiness",
+        "description": "-6 Health, -$350 Repairs, -4 Happiness",
         "type": "survival",
         "effects": {
-          "health": -10,
+          "health": -6,
           "money": -350,
-          "happiness": -8
+          "happiness": -4
         },
         "result": "You smashed into the divider at high speed. Airbags deployed, saving your life despite minor bruises."
       },
       {
         "text": "Slam on brakes and brace for impact",
-        "description": "-15 Health (Whiplash), -$500 Deductible, -12 Happiness",
+        "description": "-8 Health, -$500 Deductible, -6 Happiness",
         "type": "bracing",
         "effects": {
-          "health": -15,
+          "health": -8,
           "money": -500,
-          "happiness": -12
+          "happiness": -6
         },
         "result": "The vehicles collided. Emergency responders treated your minor whiplash and the car was towed."
       },
       {
         "text": "Accelerate through the gap with lightning reflexes",
-        "description": "-5 Health, +$250 Insurance Bonus, +15 Happiness, +5 Smarts",
+        "description": "+$250 Insurance Bonus, +6 Happiness, +3 Smarts, -3 Health",
         "type": "heroic",
         "effects": {
           "money": 250,
-          "happiness": 15,
-          "smarts": 5,
-          "health": -5
+          "happiness": 6,
+          "smarts": 3,
+          "health": -3
         },
         "result": "With incredible reflexes you clipped past the wreckage by inches, suffering only minor neck stiffness!"
       }
@@ -523,33 +523,33 @@
     "choices": [
       {
         "text": "Blow the whistle to federal regulators",
-        "description": "+$5, 000 Whistleblower Bounty, -15 Happiness",
+        "description": "+$3,500 Whistleblower Bounty, -5 Happiness",
         "type": "justice",
         "effects": {
-          "karma": 35,
-          "money": 5000,
-          "happiness": -15
+          "karma": 8,
+          "money": 3500,
+          "happiness": -5
         },
         "result": "Federal agents raided the office. The corrupt CEO was arrested, and you received a federal bounty award!"
       },
       {
         "text": "Accept the hush money and alter the reports",
-        "description": "+$6, 000 Cash, -10 Smarts",
+        "description": "+$5,000 Cash, -3 Smarts",
         "type": "corrupt",
         "effects": {
-          "money": 6000,
-          "karma": -35,
-          "smarts": -10
+          "money": 5000,
+          "karma": -8,
+          "smarts": -3
         },
         "result": "You took the dirty envelope of cash. You bought luxury goods, but live in fear of a sudden FBI knock."
       },
       {
         "text": "Resign quietly to preserve your record",
-        "description": "-5 Happiness",
+        "description": "-3 Happiness",
         "type": "clean",
         "effects": {
-          "karma": 10,
-          "happiness": -5
+          "karma": 3,
+          "happiness": -3
         },
         "result": "You handed in your two-week notice and walked away with clean hands."
       }
@@ -571,31 +571,31 @@
     "choices": [
       {
         "text": "Scratch the prize numbers carefully with a coin",
-        "description": "JACKPOT: +, 000 Cash, +30 Happiness",
+        "description": "JACKPOT: +$10,000 Cash, +8 Happiness",
         "type": "lucky",
         "effects": {
-          "money": 15000,
-          "happiness": 30
+          "money": 10000,
+          "happiness": 8
         },
         "result": "JACKPOT! You scratched three matching gold bars and won a staggering ,000 cash payout on the spot!"
       },
       {
         "text": "Let the cashier scan the barcode directly",
-        "description": "+ Cash, +8 Happiness",
+        "description": "+$250 Cash, +4 Happiness",
         "type": "quick",
         "effects": {
           "money": 250,
-          "happiness": 8
+          "happiness": 4
         },
         "result": "The scanner chimed cheerfully: you won a solid  reward!"
       },
       {
         "text": "Gift the unscratched ticket to a stranger",
-        "description": "+15 Happiness",
+        "description": "+5 Happiness",
         "type": "altruistic",
         "effects": {
-          "karma": 25,
-          "happiness": 15
+          "karma": 6,
+          "happiness": 5
         },
         "result": "You handed the ticket to an impoverished stranger. They burst into tears of gratitude."
       }
@@ -617,32 +617,32 @@
     "choices": [
       {
         "text": "Accept the inheritance payout",
-        "description": "+, 500 Cash, +20 Happiness",
+        "description": "+$15,000 Cash, +6 Happiness",
         "type": "windfall",
         "effects": {
-          "money": 22500,
-          "happiness": 20
+          "money": 15000,
+          "happiness": 6
         },
         "result": "The probate funds cleared into your account: ,500 in liquid assets! Your net worth soared."
       },
       {
         "text": "Donate 50% to a charitable cancer hospice",
-        "description": "+, 250 Cash, +25 Happiness",
+        "description": "+$7,500 Cash, +6 Happiness",
         "type": "noble",
         "effects": {
-          "money": 11250,
-          "karma": 40,
-          "happiness": 25
+          "money": 7500,
+          "karma": 7,
+          "happiness": 6
         },
         "result": "You kept half and donated the rest to charity. Your generosity made regional news headlines."
       },
       {
         "text": "Distribute the entire fortune among poorer family members",
-        "description": "+30 Happiness",
+        "description": "+8 Happiness",
         "type": "saintly",
         "effects": {
-          "karma": 50,
-          "happiness": 30
+          "karma": 10,
+          "happiness": 8
         },
         "result": "You refused a single dollar and lifted three struggling families out of poverty. You are beloved."
       }
@@ -664,33 +664,33 @@
     "choices": [
       {
         "text": "Immediately hang up and report number to fraud agency",
-        "description": "+10 Smarts, +5 Happiness",
+        "description": "+3 Smarts, +3 Happiness",
         "type": "vigilant",
         "effects": {
-          "smarts": 10,
-          "karma": 8,
-          "happiness": 5
+          "smarts": 3,
+          "karma": 3,
+          "happiness": 3
         },
         "result": "You saw through the crude scam instantly, hung up, and reported the boiler-room operation to regulators."
       },
       {
         "text": "Panic and transfer $400 to the caller",
-        "description": "-$400 Cash, -15 Happiness, -6 Smarts",
+        "description": "-$400 Cash, -6 Happiness, -3 Smarts",
         "type": "victimized",
         "effects": {
           "money": -400,
-          "happiness": -15,
-          "smarts": -6
+          "happiness": -6,
+          "smarts": -3
         },
         "result": "You panicked and sent the money. You soon realized it was a total scam and wept in despair."
       },
       {
         "text": "Keep the scammer on the phone for two hours wasting their time",
-        "description": "+16 Happiness, +8 Smarts",
+        "description": "+5 Happiness, +3 Smarts",
         "type": "trolling",
         "effects": {
-          "happiness": 16,
-          "smarts": 8
+          "happiness": 5,
+          "smarts": 3
         },
         "result": "You pretended to be a confused billionaire and wasted two hours of the scammer's day until they swore and hung up."
       }
@@ -712,33 +712,33 @@
     "choices": [
       {
         "text": "Chew aspirin and dial emergency services (911)",
-        "description": "+15 Health, -$350 Emergency Copay, -5 Happiness",
+        "description": "+6 Health, -$350 Copay, -3 Happiness",
         "type": "emergency",
         "effects": {
-          "health": 15,
+          "health": 6,
           "money": -350,
-          "happiness": -5
+          "happiness": -3
         },
         "result": "Paramedics arrived within 6 minutes and administered clot-busting medication, saving your heart from fatal failure."
       },
       {
         "text": "Try to lie down on the sofa and rest",
-        "description": "-18 Health, -18 Happiness (Coronary Strain)",
+        "description": "-8 Health, -7 Happiness (Coronary Strain)",
         "type": "fatal_risk",
         "effects": {
-          "health": -18,
-          "happiness": -18
+          "health": -8,
+          "happiness": -7
         },
         "result": "You suffered acute coronary angina! After severe pain, you stabilized but your heart remains weakened."
       },
       {
         "text": "Ask a family member to drive you to the clinic",
-        "description": "-8 Health, -$150 Copay",
+        "description": "-4 Health, -$150 Copay",
         "type": "family",
         "effects": {
-          "health": -8,
+          "health": -4,
           "money": -150,
-          "karma": 5
+          "karma": 2
         },
         "result": "Your family rushed you to emergency care. Doctors stabilized you just in time with a coronary stent."
       }
@@ -760,34 +760,34 @@
     "choices": [
       {
         "text": "Take the plunge for viral street glory",
-        "description": "-8 Health, +15 Happiness, +6 Looks",
+        "description": "-5 Health, +5 Happiness, +3 Looks",
         "type": "daredevil",
         "effects": {
-          "health": -8,
-          "happiness": 15,
-          "looks": 6,
-          "karma": -5
+          "health": -5,
+          "happiness": 5,
+          "looks": 3,
+          "karma": -2
         },
         "result": "You leaped into the air! The water was shocking and stung your skin, but the crowd went wild."
       },
       {
         "text": "Refuse to jump and mock the stupidity of the dare",
-        "description": "+10 Smarts, -6 Happiness",
+        "description": "+3 Smarts, -2 Happiness",
         "type": "sensible",
         "effects": {
-          "smarts": 10,
-          "karma": 5,
-          "happiness": -6
+          "smarts": 3,
+          "karma": 2,
+          "happiness": -2
         },
         "result": "Your friends called you a coward, but another teenager jumped and broke both ankles. You smiled knowingly."
       },
       {
         "text": "Dare someone else to go first instead",
-        "description": "+5 Smarts",
+        "description": "+2 Smarts",
         "type": "deflecting",
         "effects": {
-          "smarts": 5,
-          "karma": -5
+          "smarts": 2,
+          "karma": -2
         },
         "result": "You passed the dare along and watched the ensuing chaos safely from the riverbank."
       }
@@ -809,46 +809,46 @@
     "choices": [
       {
         "text": "Drink heavily and dance on the furniture",
-        "description": "-15 Health, +20 Happiness, -8 Smarts",
+        "description": "-6 Health, +6 Happiness, -3 Smarts",
         "type": "wild",
         "effects": {
-          "health": -15,
-          "happiness": 20,
-          "smarts": -8,
-          "karma": -10
+          "health": -6,
+          "happiness": 6,
+          "smarts": -3,
+          "karma": -3
         },
         "result": "You partied like a rockstar, broke a chandelier, and woke up the next afternoon with a brutal hangover."
       },
       {
         "text": "Socialize responsibly and talk to your crush",
-        "description": "+15 Happiness, +8 Looks",
+        "description": "+6 Happiness, +3 Looks",
         "type": "romantic",
         "effects": {
-          "happiness": 15,
-          "looks": 8,
-          "karma": 5
+          "happiness": 6,
+          "looks": 3,
+          "karma": 2
         },
         "result": "You spent the evening having a deep, magical conversation with your crush out on the balcony."
       },
       {
         "text": "Be the designated driver for your friends",
-        "description": "+10 Smarts, +8 Happiness",
+        "description": "+3 Smarts, +3 Happiness",
         "type": "responsible",
         "effects": {
-          "karma": 25,
-          "smarts": 10,
-          "happiness": 8
+          "karma": 5,
+          "smarts": 3,
+          "happiness": 3
         },
         "result": "You drove four drunk friends home safely. Their parents sent you heartfelt thanks the next morning."
       },
       {
         "text": "Steal liquor bottles from the liquor cabinet",
-        "description": "+ Cash, -5 Happiness",
+        "description": "+$100 Cash, -2 Happiness",
         "type": "criminal",
         "effects": {
-          "money": 120,
-          "karma": -25,
-          "happiness": -5
+          "money": 100,
+          "karma": -6,
+          "happiness": -2
         },
         "result": "You swiped three expensive bottles of Scotch and slipped into the shadows."
       }
@@ -870,33 +870,33 @@
     "choices": [
       {
         "text": "Accept the severance package and hunt for new jobs",
-        "description": "+, 500 Severance Cash, -15 Happiness, +5 Smarts",
+        "description": "+$2,500 Severance Cash, -5 Happiness, +2 Smarts",
         "type": "severance",
         "effects": {
-          "money": 3500,
-          "happiness": -15,
-          "smarts": 5
+          "money": 2500,
+          "happiness": -5,
+          "smarts": 2
         },
         "result": "You signed your exit paperwork, pocketed your ,500 severance check, and began sending out resumes."
       },
       {
         "text": "Plead your case to the Vice President",
-        "description": "+10 Smarts, -10 Happiness (If retained)",
+        "description": "+3 Smarts, -4 Happiness (If retained)",
         "type": "diplomatic",
         "effects": {
-          "smarts": 10,
-          "happiness": -10
+          "smarts": 3,
+          "happiness": -4
         },
         "result": "Your articulate pitch convinced leadership of your indispensability, saving your desk from the chopping block."
       },
       {
         "text": "Trash the breakroom in a fit of rage",
-        "description": "-$800 Damages, +8 Happiness",
+        "description": "-$600 Damages, +4 Happiness",
         "type": "vengeful",
         "effects": {
-          "karma": -30,
-          "money": -800,
-          "happiness": 8
+          "karma": -7,
+          "money": -600,
+          "happiness": 4
         },
         "result": "You kicked over water coolers and trashed the office breakroom. Security escorted you off premises."
       }
@@ -918,34 +918,34 @@
     "choices": [
       {
         "text": "Undergo hip replacement surgery and physical therapy",
-        "description": "+15 Health, -$500 Medical Expenses, -8 Happiness",
+        "description": "+6 Health, -$500 Medical Expenses, -4 Happiness",
         "type": "surgery",
         "effects": {
-          "health": 15,
+          "health": 6,
           "money": -500,
-          "happiness": -8
+          "happiness": -4
         },
         "result": "Orthopedic surgeons repaired your injured hip. Physical therapy restored your mobility."
       },
       {
         "text": "Refuse surgery and rely on heavy painkillers",
-        "description": "-12 Health, -12 Happiness, -$100 Medication",
+        "description": "-6 Health, -6 Happiness, -$100 Medication",
         "type": "stubborn",
         "effects": {
-          "health": -12,
-          "happiness": -12,
+          "health": -6,
+          "happiness": -6,
           "money": -100
         },
         "result": "The bruise and strain took weeks to heal, leaving you with mild stiffness."
       },
       {
         "text": "Move into an assisted living senior community",
-        "description": "+10 Health, -$800 Facility Deposit, +12 Happiness",
+        "description": "+4 Health, -$600 Facility Deposit, +4 Happiness",
         "type": "assisted",
         "effects": {
-          "health": 10,
-          "money": -800,
-          "happiness": 12
+          "health": 4,
+          "money": -600,
+          "happiness": 4
         },
         "result": "You moved into a comfortable single-story suite with assisted nursing and social activities."
       }
