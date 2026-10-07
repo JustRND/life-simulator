@@ -81,14 +81,43 @@ func test_parent_anti_spam() -> void:
 	main_scene._interact_parent("father", "compliment")
 	assert(PlayerData.father_relationship == dad_comp_first, "Father relationship must NOT increase on spam compliment!")
 
-	# 5. Age up: buttons should unlock for age 11
+	# 5. Mother ask_money once
+	assert(PlayerData.last_mother_ask_money_age == -1, "Initial last_mother_ask_money_age should be -1")
+	var money_before_mom: int = PlayerData.money
+	main_scene._interact_parent("mother", "ask_money")
+	assert(PlayerData.last_mother_ask_money_age == 10, "last_mother_ask_money_age must be updated to 10")
+	var money_after_mom: int = PlayerData.money
+	assert(money_after_mom > money_before_mom, "Money should increase from asking mother")
+
+	# Attempt to spam mother ask_money again at age 10
+	main_scene._interact_parent("mother", "ask_money")
+	assert(PlayerData.money == money_after_mom, "Money must NOT increase on spam ask_money attempt!")
+
+	# 6. Father ask_money once
+	assert(PlayerData.last_father_ask_money_age == -1, "Initial last_father_ask_money_age should be -1")
+	var money_before_dad: int = PlayerData.money
+	main_scene._interact_parent("father", "ask_money")
+	assert(PlayerData.last_father_ask_money_age == 10, "last_father_ask_money_age must be updated to 10")
+	var money_after_dad: int = PlayerData.money
+	assert(money_after_dad > money_before_dad, "Money should increase from asking father")
+
+	# Attempt to spam father ask_money again at age 10
+	main_scene._interact_parent("father", "ask_money")
+	assert(PlayerData.money == money_after_dad, "Money must NOT increase on spam father ask_money attempt!")
+
+	# 7. Age up: buttons should unlock for age 11
 	PlayerData.age = 11
 	main_scene._interact_parent("mother", "spend_time")
 	assert(PlayerData.last_mother_spend_time_age == 11, "Must allow spending time once again after age up!")
 	assert(PlayerData.mother_relationship > rel_after_first, "Relationship must increase on legitimate new year usage")
 
+	var money_age_11_start: int = PlayerData.money
+	main_scene._interact_parent("mother", "ask_money")
+	assert(PlayerData.last_mother_ask_money_age == 11, "Must allow asking mother for money once again after age up!")
+	assert(PlayerData.money > money_age_11_start, "Money must increase on legitimate new year ask_money usage")
+
 	main_scene.queue_free()
-	print("✔ Test 2: Parent action anti-spam (spend_time & compliment strictly once per year) verified")
+	print("✔ Test 2: Parent action anti-spam (spend_time, compliment & ask_money strictly once per year) verified")
 
 func test_smarts_degradation_and_maintenance() -> void:
 	SaveManager.delete_save()

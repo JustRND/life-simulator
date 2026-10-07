@@ -2014,6 +2014,11 @@ func _setup_parent_action_row(vbox: VBoxContainer, parent_type: String) -> void:
 				is_used_this_year = true
 			elif not is_mother and PlayerData.last_father_compliment_age == PlayerData.age:
 				is_used_this_year = true
+		elif act_key == "ask_money":
+			if is_mother and PlayerData.last_mother_ask_money_age == PlayerData.age:
+				is_used_this_year = true
+			elif not is_mother and PlayerData.last_father_ask_money_age == PlayerData.age:
+				is_used_this_year = true
 
 		if is_used_this_year:
 			btn.text = act[0] + " (Used)"
@@ -2105,6 +2110,16 @@ func _interact_parent(parent_type: String, action: String) -> void:
 			if PlayerData.age < 5:
 				add_life_event("🍼 Restricted: Infants and toddlers cannot ask parents for money.", "relationship")
 				return
+			var already_used: bool = (is_mother and PlayerData.last_mother_ask_money_age == PlayerData.age) or (not is_mother and PlayerData.last_father_ask_money_age == PlayerData.age)
+			if already_used:
+				add_life_event("⏳ You have already asked your %s for money this year. Available again next year!" % role, "relationship")
+				update_ui()
+				return
+			if is_mother:
+				PlayerData.last_mother_ask_money_age = PlayerData.age
+			else:
+				PlayerData.last_father_ask_money_age = PlayerData.age
+
 			var rel := PlayerData.mother_relationship if is_mother else PlayerData.father_relationship
 			if rel >= 40:
 				var amount := randi_range(15, 60) if PlayerData.age < 18 else randi_range(30, 120)

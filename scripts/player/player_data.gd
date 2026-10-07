@@ -42,8 +42,10 @@ var active_buffs: Array = []
 var last_parent_interact_age: int = -1
 var last_mother_spend_time_age: int = -1
 var last_mother_compliment_age: int = -1
+var last_mother_ask_money_age: int = -1
 var last_father_spend_time_age: int = -1
 var last_father_compliment_age: int = -1
+var last_father_ask_money_age: int = -1
 var last_partner_interact_age: int = -1
 
 var karma: int = 0
@@ -126,8 +128,10 @@ func reset_player() -> void:
 	last_parent_interact_age = -1
 	last_mother_spend_time_age = -1
 	last_mother_compliment_age = -1
+	last_mother_ask_money_age = -1
 	last_father_spend_time_age = -1
 	last_father_compliment_age = -1
+	last_father_ask_money_age = -1
 	last_partner_interact_age = -1
 
 	age = 0

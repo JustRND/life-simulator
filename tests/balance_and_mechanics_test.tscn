@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://b123456789balance"]
+[gd_scene format=3 uid="uid://dqx17qnatleto"]
 
 [ext_resource type="Script" path="res://tests/balance_and_mechanics_test.gd" id="1_test"]
 

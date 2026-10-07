@@ -77,8 +77,10 @@ func save_game() -> void:
 		"last_parent_interact_age": PlayerData.last_parent_interact_age,
 		"last_mother_spend_time_age": PlayerData.last_mother_spend_time_age,
 		"last_mother_compliment_age": PlayerData.last_mother_compliment_age,
+		"last_mother_ask_money_age": PlayerData.last_mother_ask_money_age,
 		"last_father_spend_time_age": PlayerData.last_father_spend_time_age,
 		"last_father_compliment_age": PlayerData.last_father_compliment_age,
+		"last_father_ask_money_age": PlayerData.last_father_ask_money_age,
 		"last_partner_interact_age": PlayerData.last_partner_interact_age
 	}
 
@@ -185,8 +187,10 @@ func load_game() -> bool:
 	PlayerData.last_parent_interact_age = int(data.get("last_parent_interact_age", -1))
 	PlayerData.last_mother_spend_time_age = int(data.get("last_mother_spend_time_age", -1))
 	PlayerData.last_mother_compliment_age = int(data.get("last_mother_compliment_age", -1))
+	PlayerData.last_mother_ask_money_age = int(data.get("last_mother_ask_money_age", -1))
 	PlayerData.last_father_spend_time_age = int(data.get("last_father_spend_time_age", -1))
 	PlayerData.last_father_compliment_age = int(data.get("last_father_compliment_age", -1))
+	PlayerData.last_father_ask_money_age = int(data.get("last_father_ask_money_age", -1))
 	PlayerData.last_partner_interact_age = int(data.get("last_partner_interact_age", -1))
 
 	PlayerData.job_id = str(data.get("job_id", ""))
