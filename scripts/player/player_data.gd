@@ -126,6 +126,10 @@ var prison_sentence_years: int = 0
 var event_history: Array = []
 var life_log: Array = []
 
+var social_media: Dictionary = {}
+var pets: Array = []
+var will_recipient: String = "CHILDREN"
+
 
 func reset() -> void:
 	reset_player()
@@ -256,6 +260,9 @@ func reset_player() -> void:
 	active_buffs.clear()
 	total_donated_charity = 0
 	charity_donations_count = 0
+	social_media.clear()
+	pets.clear()
+	will_recipient = "CHILDREN"
 
 
 func has_license(license_id: String) -> bool:

@@ -759,21 +759,32 @@ func test_asset_marketplace_and_ownership() -> void:
 	var assets_vbox: VBoxContainer = main_scene.get_node("AssetsPanel/AssetsMargin/AssetsContent/AssetsScroll/AssetsList")
 	assert(assets_vbox.get_child_count() > 0, "AssetsList should render cards and sections")
 
-	# Check that Dealership buttons exist
+	# Check that Shopping Hub navigation button exists in Assets
+	var has_shop_hub = false
+	for btn in assets_vbox.find_children("*", "Button", true, false):
+		if "Shopping" in btn.text:
+			has_shop_hub = true
+	assert(has_shop_hub, "Shopping Hub button must be rendered in AssetsList")
+
+	# Check that Shopping modal in Activities renders vehicle and real estate dealerships
+	main_scene._show_shopping_modal()
+	assert(main_scene.shopping_modal_overlay != null and is_instance_valid(main_scene.shopping_modal_overlay), "Shopping modal must open")
+	var shop_buttons = main_scene.shopping_modal_overlay.find_children("*", "Button", true, false)
 	var has_cars_hub = false
 	var has_moto_hub = false
 	var has_prop_hub = false
-	for btn in assets_vbox.find_children("*", "Button", true, false):
-		if "Apex Cyber Motors" in btn.text:
+	for btn in shop_buttons:
+		if "Car Dealership" in btn.text or "Apex" in btn.text:
 			has_cars_hub = true
-		elif "Neon Speed Cycles" in btn.text:
+		elif "Motorcycle Dealer" in btn.text or "Thunder" in btn.text:
 			has_moto_hub = true
-		elif "Metro Prime Realty" in btn.text:
+		elif "Property Broker" in btn.text or "Real Estate" in btn.text:
 			has_prop_hub = true
 
-	assert(has_cars_hub, "Apex Cyber Motors Dealership button must be rendered")
-	assert(has_moto_hub, "Neon Speed Cycles Dealership button must be rendered")
-	assert(has_prop_hub, "Metro Prime Realty Dealership button must be rendered")
+	assert(has_cars_hub, "Car Dealerships button must be rendered in Shopping modal")
+	assert(has_moto_hub, "Motorcycle Dealers button must be rendered in Shopping modal")
+	assert(has_prop_hub, "Real Estate & Property Brokers button must be rendered in Shopping modal")
+	main_scene.shopping_modal_overlay.queue_free()
 
 	# 8. Save / Load persistence
 	SaveManager.save_game()

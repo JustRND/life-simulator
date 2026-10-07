@@ -10,6 +10,7 @@ const UndergroundProgression = preload("res://scripts/economy/underground_progre
 
 
 var portrait: TextureRect
+var panel_pull_up := preload("res://scripts/ui/panel_pull_up.gd").new()
 var portrait_key: String = ""
 var gender_input: OptionButton
 var creation_selected_ethnicity: String = "white"
@@ -90,6 +91,13 @@ var freelance_modal_overlay: Control = null
 var licensing_modal_overlay: Control = null
 var business_modal_overlay: Control = null
 var education_modal_overlay: Control = null
+var shopping_modal_overlay: Control = null
+var mind_body_modal_overlay: Control = null
+var social_media_modal_overlay: Control = null
+var pet_adoption_modal_overlay: Control = null
+var will_modal_overlay: Control = null
+var salon_modal_overlay: Control = null
+var spa_modal_overlay: Control = null
 
 # Assets Panel
 @onready var assets_panel: PanelContainer = $AssetsPanel
@@ -582,6 +590,16 @@ func age_up() -> void:
 
 	# 7e. Commercial Business Yearly Financial Simulation
 	_process_yearly_business_operations()
+
+	# 7f. Social Media Audience Growth & Monetization
+	var social_logs := SocialMediaManager.process_yearly_social_media(PlayerData)
+	for s_log in social_logs:
+		add_life_event(s_log, "lifestyle")
+
+	# 7g. Pet Lifespan, Care & Aging Simulation
+	var pet_logs := PetManager.process_yearly_pets(PlayerData)
+	for p_log in pet_logs:
+		add_life_event(p_log, "relationship")
 
 	# 8. Education Lifecycle Progression (Kindergarten @ 3, Primary @ 6, Middle @ 11, High @ 14, Grad @ 18)
 	if PlayerData.age == 3:
@@ -1358,7 +1376,10 @@ func show_tab(tab_name: String) -> void:
 			add_life_event("🧸 Restricted: You are %d years old. Financial assets and wealth management unlock at age 5 (Childhood)—advance age to grow up!" % PlayerData.age, "finance")
 		return
 
-	timeline_panel.visible = tab_name == "timeline"
+	panel_pull_up.cancel()
+	# Keep the main screen underneath the entering panel to avoid an empty flash.
+	var animated_tabs := ["infant", "assets", "relationships", "activities", "settings"]
+	timeline_panel.visible = tab_name == "timeline" or tab_name in animated_tabs
 	character_panel.visible = tab_name == "character"
 	infant_panel.visible = tab_name == "infant"
 	assets_panel.visible = tab_name == "assets"
@@ -1369,6 +1390,7 @@ func show_tab(tab_name: String) -> void:
 	if tab_name == "settings":
 		if settings_overlay != null:
 			settings_overlay.visible = true
+			panel_pull_up.play(settings_overlay.get_node("SettingsCard"))
 		return
 
 	if tab_name == "character":
@@ -1385,6 +1407,9 @@ func show_tab(tab_name: String) -> void:
 		_configure_button_contrasts()
 
 	_apply_translucent_scrollbars_recursive(self)
+	var opening_panels := {"infant": infant_panel, "assets": assets_panel, "relationships": relationships_panel, "activities": activities_panel}
+	if opening_panels.has(tab_name):
+		panel_pull_up.play(opening_panels[tab_name])
 
 
 # Avatar Button clicked -> opens Character profile panel!
@@ -1839,50 +1864,46 @@ func _render_assets_list() -> void:
 	sm.add_child(sv)
 
 	var stitle := Label.new()
-	stitle.text = "🛒 ASSET MARKETPLACES & SHOWROOMS"
-	stitle.add_theme_font_size_override("font_size", 24)
+	stitle.text = "🛍️ COMMERCIAL SHOPPING & BROKERAGES"
+	stitle.add_theme_font_size_override("font_size", 26)
 	stitle.add_theme_color_override("font_color", Color("#38bdf8"))
 	sv.add_child(stitle)
 
-	var sgrid := GridContainer.new()
-	sgrid.columns = 1
-	sgrid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	sgrid.add_theme_constant_override("v_separation", 12)
-	sv.add_child(sgrid)
+	var sdesc := Label.new()
+	sdesc.text = "Vehicle dealerships, real estate brokerages, jewelers, aircraft, and yacht dealers are now located in the dedicated Shopping hub inside Activities!"
+	sdesc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	sdesc.add_theme_font_size_override("font_size", 20)
+	sdesc.add_theme_color_override("font_color", Color("#cbd5e1"))
+	sv.add_child(sdesc)
 
-	# Dealership Button 1: Cars
-	var btn_cars := _create_cyber_button("🚗 Apex Cyber Motors (Car Dealership)", Color("#0284c7"), func():
-		_open_asset_marketplace_modal(AssetCatalog.CATEGORY_CARS)
+	var btn_open_shop := _create_cyber_button("🛍️ Open Commercial Shopping Hub ➔", Color("#38bdf8"), func():
+		_show_shopping_modal()
 	)
-	btn_cars.custom_minimum_size.y = 56
-	btn_cars.add_theme_font_size_override("font_size", 22)
-	sgrid.add_child(btn_cars)
-
-	# Dealership Button 2: Motorcycles
-	var btn_motos := _create_cyber_button("🏍️ Neon Speed Cycles (Motorcycle Showroom)", Color("#8b5cf6"), func():
-		_open_asset_marketplace_modal(AssetCatalog.CATEGORY_MOTORCYCLES)
-	)
-	btn_motos.custom_minimum_size.y = 56
-	btn_motos.add_theme_font_size_override("font_size", 22)
-	sgrid.add_child(btn_motos)
-
-	# Dealership Button 3: Properties
-	var btn_props := _create_cyber_button("🏠 Metro Prime Realty (Property Brokerage)", Color("#10b981"), func():
-		_open_asset_marketplace_modal(AssetCatalog.CATEGORY_PROPERTIES)
-	)
-	btn_props.custom_minimum_size.y = 56
-	btn_props.add_theme_font_size_override("font_size", 22)
-	sgrid.add_child(btn_props)
+	btn_open_shop.custom_minimum_size.y = 60
+	btn_open_shop.add_theme_font_size_override("font_size", 24)
+	sv.add_child(btn_open_shop)
 
 	assets_list.add_child(store_card)
 
-	# 2. Owned Vehicles Section (Cars & Motorcycles)
-	_render_owned_assets_section("🚗 OWNED VEHICLES & RIDES", [AssetCatalog.CATEGORY_CARS, AssetCatalog.CATEGORY_MOTORCYCLES], Color("#06b6d4"))
+	# 2. Owned Vehicles Section (Cars, Motorcycles, Bicycles)
+	_render_owned_assets_section("🚗 OWNED VEHICLES & RIDES", [AssetCatalog.CATEGORY_CARS, AssetCatalog.CATEGORY_MOTORCYCLES, AssetCatalog.CATEGORY_BICYCLES], Color("#06b6d4"))
 
-	# 3. Owned Real Estate Section (Properties)
+	# 3. Owned Aviation Aircraft
+	_render_owned_assets_section("✈️ OWNED AIRCRAFT & AVIATION", [AssetCatalog.CATEGORY_AIRCRAFT], Color("#38bdf8"))
+
+	# 4. Owned Marine Vessels
+	_render_owned_assets_section("🛥️ OWNED YACHTS & VESSELS", [AssetCatalog.CATEGORY_YACHTS], Color("#2563eb"))
+
+	# 5. Owned Real Estate Section (Properties)
 	_render_owned_assets_section("🏠 OWNED REAL ESTATE & PROPERTIES", [AssetCatalog.CATEGORY_PROPERTIES], Color("#10b981"))
 
-	# 4. Owned Commercial Enterprises (Businesses)
+	# 6. Owned Luxury Valuables & Fine Instruments
+	_render_owned_assets_section("💎 OWNED LUXURY VALUABLES & INSTRUMENTS", [AssetCatalog.CATEGORY_JEWELRY, AssetCatalog.CATEGORY_INSTRUMENTS], Color("#f59e0b"))
+
+	# 7. Owned Pets & Animal Companions
+	_render_owned_pets_section()
+
+	# 8. Owned Commercial Enterprises (Businesses)
 	_render_owned_businesses_section()
 
 
@@ -2017,19 +2038,156 @@ func _render_owned_assets_section(title_text: String, categories: Array, theme_c
 	assets_list.add_child(section_card)
 
 
+func _render_owned_pets_section() -> void:
+	var section_card := PanelContainer.new()
+	section_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#10b981")))
+	var sm := MarginContainer.new()
+	sm.add_theme_constant_override("margin_left", 20)
+	sm.add_theme_constant_override("margin_right", 20)
+	sm.add_theme_constant_override("margin_top", 18)
+	sm.add_theme_constant_override("margin_bottom", 18)
+	section_card.add_child(sm)
+
+	var sv := VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 14)
+	sm.add_child(sv)
+
+	var pets_list: Array = PlayerData.get("pets") if PlayerData.get("pets") is Array else []
+	var title_lbl := Label.new()
+	title_lbl.text = "🐾 OWNED PETS & COMPANIONS (%d)" % pets_list.size()
+	title_lbl.add_theme_font_size_override("font_size", 24)
+	title_lbl.add_theme_color_override("font_color", Color("#10b981"))
+	sv.add_child(title_lbl)
+
+	if pets_list.is_empty():
+		var empty_lbl := Label.new()
+		empty_lbl.text = "You do not currently care for any pets. Visit Pet Adoption in Activities to welcome a companion to your home!"
+		empty_lbl.add_theme_font_size_override("font_size", 20)
+		empty_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
+		empty_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		sv.add_child(empty_lbl)
+	else:
+		for i in range(pets_list.size()):
+			var pet: Dictionary = pets_list[i]
+			var pet_card := PanelContainer.new()
+			var pc_style := StyleBoxFlat.new()
+			pc_style.bg_color = Color("#07131e")
+			pc_style.border_color = Color("#10b981").darkened(0.2)
+			pc_style.set_border_width_all(2)
+			pc_style.set_corner_radius_all(12)
+			pet_card.add_theme_stylebox_override("panel", pc_style)
+			sv.add_child(pet_card)
+
+			var pm := MarginContainer.new()
+			pm.add_theme_constant_override("margin_left", 16)
+			pm.add_theme_constant_override("margin_right", 16)
+			pm.add_theme_constant_override("margin_top", 14)
+			pm.add_theme_constant_override("margin_bottom", 14)
+			pet_card.add_child(pm)
+
+			var pv := VBoxContainer.new()
+			pv.add_theme_constant_override("separation", 8)
+			pm.add_child(pv)
+
+			var p_icon: String = str(pet.get("icon", "🐾"))
+			var p_name: String = str(pet.get("name", "Companion"))
+			var p_breed: String = str(pet.get("breed", pet.get("species", "Animal")))
+			var p_age: int = int(pet.get("age", 1))
+			var p_upkeep: int = int(pet.get("upkeep", 100))
+			var p_health: int = int(pet.get("health", 100))
+			var p_hap: int = int(pet.get("happiness", 100))
+
+			var header_lbl := Label.new()
+			header_lbl.text = "%s %s • %s (%d yrs old)" % [p_icon, p_name, p_breed, p_age]
+			header_lbl.add_theme_font_size_override("font_size", 22)
+			header_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+			pv.add_child(header_lbl)
+
+			var stats_lbl := Label.new()
+			stats_lbl.text = "❤️ Health: %d%%   •   😊 Happiness: %d%%   •   🥩 Upkeep: $%s/yr" % [
+				p_health,
+				p_hap,
+				_format_number(p_upkeep)
+			]
+			stats_lbl.add_theme_font_size_override("font_size", 19)
+			stats_lbl.add_theme_color_override("font_color", Color("#4ade80"))
+			pv.add_child(stats_lbl)
+
+			var act_h := HBoxContainer.new()
+			act_h.add_theme_constant_override("separation", 10)
+			pv.add_child(act_h)
+
+			var pet_id: String = str(pet.get("id", ""))
+			var btn_play := _create_cyber_button("🎾 Play", Color("#38bdf8"), func():
+				var res := PetManager.interact_pet(PlayerData, pet_id, "play")
+				add_life_event(res["message"], "relationship")
+				update_ui()
+				update_assets_panel()
+			)
+			btn_play.custom_minimum_size.y = 48
+			btn_play.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			btn_play.add_theme_font_size_override("font_size", 18)
+			act_h.add_child(btn_play)
+
+			var btn_walk := _create_cyber_button("🦮 Walk", Color("#10b981"), func():
+				var res := PetManager.interact_pet(PlayerData, pet_id, "walk")
+				add_life_event(res["message"], "relationship")
+				update_ui()
+				update_assets_panel()
+			)
+			btn_walk.custom_minimum_size.y = 48
+			btn_walk.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			btn_walk.add_theme_font_size_override("font_size", 18)
+			act_h.add_child(btn_walk)
+
+			var btn_treat := _create_cyber_button("🍖 Treat", Color("#f59e0b"), func():
+				var res := PetManager.interact_pet(PlayerData, pet_id, "treat")
+				add_life_event(res["message"], "relationship")
+				update_ui()
+				update_assets_panel()
+			)
+			btn_treat.custom_minimum_size.y = 48
+			btn_treat.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			btn_treat.add_theme_font_size_override("font_size", 18)
+			act_h.add_child(btn_treat)
+
+			var btn_vet := _create_cyber_button("🩺 Vet Checkup", Color("#f43f5e"), func():
+				var res := PetManager.interact_pet(PlayerData, pet_id, "vet")
+				add_life_event(res["message"], "relationship")
+				update_ui()
+				update_assets_panel()
+			)
+			btn_vet.custom_minimum_size.y = 48
+			btn_vet.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			btn_vet.add_theme_font_size_override("font_size", 18)
+			act_h.add_child(btn_vet)
+
+	assets_list.add_child(section_card)
+
+
 func _open_asset_marketplace_modal(category: String) -> void:
 	var title_text: String = AssetCatalog.get_category_display_title(category)
 	var subtitle_text: String = AssetCatalog.get_category_subtitle(category)
 	var border_color: Color = Color("#0284c7")
-	if category == AssetCatalog.CATEGORY_MOTORCYCLES:
-		border_color = Color("#8b5cf6")
-	elif category == AssetCatalog.CATEGORY_PROPERTIES:
-		border_color = Color("#10b981")
+	match category:
+		AssetCatalog.CATEGORY_MOTORCYCLES:
+			border_color = Color("#8b5cf6")
+		AssetCatalog.CATEGORY_BICYCLES:
+			border_color = Color("#06b6d4")
+		AssetCatalog.CATEGORY_JEWELRY:
+			border_color = Color("#f59e0b")
+		AssetCatalog.CATEGORY_INSTRUMENTS:
+			border_color = Color("#ec4899")
+		AssetCatalog.CATEGORY_PROPERTIES:
+			border_color = Color("#10b981")
+		AssetCatalog.CATEGORY_AIRCRAFT:
+			border_color = Color("#38bdf8")
+		AssetCatalog.CATEGORY_YACHTS:
+			border_color = Color("#2563eb")
 
 	var modal_dict: Dictionary = _create_cyber_modal(title_text, subtitle_text, border_color)
 	var content_list: VBoxContainer = modal_dict["list"]
 	var overlay: Control = modal_dict["overlay"]
-
 
 	# Balance overview banner
 	var bal_card := PanelContainer.new()
@@ -2047,7 +2205,7 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		_format_number(PlayerData.bank_savings),
 		_format_number(PlayerData.money + PlayerData.bank_savings)
 	]
-	bal_lbl.add_theme_font_size_override("font_size", 20)
+	bal_lbl.add_theme_font_size_override("font_size", 22)
 	bal_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
 	bal_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	bm.add_child(bal_lbl)
@@ -2086,7 +2244,7 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		cv.add_theme_constant_override("separation", 14)
 		cm.add_child(cv)
 
-		# 1. IMAGE (CENTERED AT THE TOP CENTER OF THE CARD)
+		# 1. IMAGE OR GLYPH BADGE
 		var img_center := CenterContainer.new()
 		img_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		cv.add_child(img_center)
@@ -2096,18 +2254,33 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		img_frame_style.bg_color = Color("#030712")
 		img_frame_style.border_color = border_color.darkened(0.35)
 		img_frame_style.set_border_width_all(2)
-		img_frame_style.set_corner_radius_all(10)
+		img_frame_style.set_corner_radius_all(14)
 		img_frame.add_theme_stylebox_override("panel", img_frame_style)
 		img_center.add_child(img_frame)
 
-		var p_img := TextureRect.new()
-		p_img.custom_minimum_size = Vector2(400, 300)
-		p_img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		p_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		p_img.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		if ResourceLoader.exists(img_path):
+		if img_path != "" and ResourceLoader.exists(img_path):
+			var p_img := TextureRect.new()
+			p_img.custom_minimum_size = Vector2(400, 300)
+			p_img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			p_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			p_img.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 			p_img.texture = load(img_path)
-		img_frame.add_child(p_img)
+			img_frame.add_child(p_img)
+		else:
+			var icon_lbl := Label.new()
+			var glyph := "🛍️"
+			match category:
+				AssetCatalog.CATEGORY_BICYCLES: glyph = "🚲"
+				AssetCatalog.CATEGORY_JEWELRY: glyph = "💎"
+				AssetCatalog.CATEGORY_INSTRUMENTS: glyph = "🎸"
+				AssetCatalog.CATEGORY_AIRCRAFT: glyph = "✈️"
+				AssetCatalog.CATEGORY_YACHTS: glyph = "🛥️"
+			icon_lbl.text = glyph
+			icon_lbl.custom_minimum_size = Vector2(280, 150)
+			icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			icon_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			icon_lbl.add_theme_font_size_override("font_size", 76)
+			img_frame.add_child(icon_lbl)
 
 		# 2. PRODUCT NAME  ------- PRICE
 		var row_name_price := HBoxContainer.new()
@@ -2137,14 +2310,28 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		var upkeep_lbl := Label.new()
 		upkeep_lbl.text = "Annual Upkeep: $%s/yr" % _format_number(upkeep)
 		upkeep_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		upkeep_lbl.add_theme_font_size_override("font_size", 21)
+		upkeep_lbl.add_theme_font_size_override("font_size", 22)
 		upkeep_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
 		row_upkeep_perk.add_child(upkeep_lbl)
 
-		var perk_word := "Joyride" if category in [AssetCatalog.CATEGORY_CARS, AssetCatalog.CATEGORY_MOTORCYCLES] else "Residential"
+		var perk_word := "Performance"
+		match category:
+			AssetCatalog.CATEGORY_CARS, AssetCatalog.CATEGORY_MOTORCYCLES, AssetCatalog.CATEGORY_BICYCLES:
+				perk_word = "Ride"
+			AssetCatalog.CATEGORY_PROPERTIES:
+				perk_word = "Residential"
+			AssetCatalog.CATEGORY_JEWELRY:
+				perk_word = "Prestige"
+			AssetCatalog.CATEGORY_INSTRUMENTS:
+				perk_word = "Virtuoso"
+			AssetCatalog.CATEGORY_AIRCRAFT:
+				perk_word = "Flight"
+			AssetCatalog.CATEGORY_YACHTS:
+				perk_word = "Cruise"
+
 		var perk_lbl := Label.new()
 		perk_lbl.text = "%s Perk: +%d%% Happiness" % [perk_word, happiness_bonus]
-		perk_lbl.add_theme_font_size_override("font_size", 21)
+		perk_lbl.add_theme_font_size_override("font_size", 22)
 		perk_lbl.add_theme_color_override("font_color", Color("#f472b6"))
 		perk_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		row_upkeep_perk.add_child(perk_lbl)
@@ -2152,7 +2339,7 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		# 4. DESCRIPTION
 		var desc_lbl := Label.new()
 		desc_lbl.text = desc
-		desc_lbl.add_theme_font_size_override("font_size", 20)
+		desc_lbl.add_theme_font_size_override("font_size", 21)
 		desc_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
 		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(desc_lbl)
@@ -2164,15 +2351,22 @@ func _open_asset_marketplace_modal(category: String) -> void:
 
 		var has_veh_license: bool = true
 		var lic_required_name: String = ""
-		if category == AssetCatalog.CATEGORY_CARS:
-			has_veh_license = PlayerData.has_license("license_car")
-			lic_required_name = "Passenger Driver's License (Class C)"
-		elif category == AssetCatalog.CATEGORY_MOTORCYCLES:
-			has_veh_license = PlayerData.has_license("license_motorcycle")
-			lic_required_name = "Motorcycle Operator License (Class M)"
+		match category:
+			AssetCatalog.CATEGORY_CARS:
+				has_veh_license = PlayerData.has_license("license_car")
+				lic_required_name = "Passenger Driver's License (Class C)"
+			AssetCatalog.CATEGORY_MOTORCYCLES:
+				has_veh_license = PlayerData.has_license("license_motorcycle")
+				lic_required_name = "Motorcycle Operator License (Class M)"
+			AssetCatalog.CATEGORY_AIRCRAFT:
+				has_veh_license = PlayerData.has_license("license_pilot")
+				lic_required_name = "Private Pilot & Rotorcraft License"
+			AssetCatalog.CATEGORY_YACHTS:
+				has_veh_license = PlayerData.has_license("license_boating")
+				lic_required_name = "Master Coastal Boater & Yachting License"
 
 		var req_lbl := Label.new()
-		req_lbl.add_theme_font_size_override("font_size", 19)
+		req_lbl.add_theme_font_size_override("font_size", 20)
 		req_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		if not is_of_age:
 			req_lbl.text = "⚠️ Legal Requirement: Minimum Age %d+ Required (You are Age %d)" % [min_age, PlayerData.age]
@@ -2198,7 +2392,7 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		var btn_buy := _create_cyber_button("", border_color, func():
 			var buy_res = AssetCatalog.buy_asset(PlayerData, item_id)
 			if buy_res["success"]:
-				add_life_event("🚗 NEW ACQUISITION: You purchased %s for $%s!" % [item_name, _format_number(price)], "finance")
+				add_life_event("🛍️ NEW ACQUISITION: You purchased %s for $%s!" % [item_name, _format_number(price)], "finance")
 				overlay.queue_free()
 				update_ui()
 				update_assets_panel()
@@ -2206,8 +2400,8 @@ func _open_asset_marketplace_modal(category: String) -> void:
 				add_life_event(buy_res["message"], "finance")
 				show_tab("timeline")
 		)
-		btn_buy.custom_minimum_size.y = 60
-		btn_buy.add_theme_font_size_override("font_size", 23)
+		btn_buy.custom_minimum_size.y = 62
+		btn_buy.add_theme_font_size_override("font_size", 24)
 		btn_buy.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 		if not is_of_age:
@@ -2217,7 +2411,7 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		elif not has_veh_license:
 			btn_buy.disabled = true
 			btn_buy.modulate = Color(0.5, 0.5, 0.5, 0.6)
-			btn_buy.text = "🔒 Requires %s" % ("Driver's License" if category == AssetCatalog.CATEGORY_CARS else "Motorcycle License")
+			btn_buy.text = "🔒 Requires %s" % lic_required_name
 		elif not can_afford:
 			btn_buy.disabled = true
 			btn_buy.modulate = Color(0.6, 0.6, 0.6, 0.65)
@@ -4031,6 +4225,52 @@ func _on_doctor_item_pressed() -> void:
 	_show_doctor_modal()
 
 
+func _on_mind_body_item_pressed() -> void:
+	if PlayerData.age < 5:
+		if PlayerData.age == 0:
+			add_life_event("🍼 You are an infant! Wellness activities unlock at age 5.", "activity")
+		else:
+			add_life_event("🧸 You are a toddler! Wellness activities unlock at age 5.", "activity")
+		show_tab("timeline")
+		return
+	_show_mind_and_body_modal()
+
+
+func _on_shopping_item_pressed() -> void:
+	if PlayerData.age < 6:
+		if PlayerData.age == 0:
+			add_life_event("🍼 You are an infant! Shopping unlocks at age 6.", "finance")
+		else:
+			add_life_event("🧸 You are a toddler! Children cannot shop for vehicles or properties.", "finance")
+		show_tab("timeline")
+		return
+	_show_shopping_modal()
+
+
+func _on_social_media_item_pressed() -> void:
+	if PlayerData.age < 13:
+		add_life_event("🔒 Social Media Regulations: You must be at least 13 years old to create and manage social media accounts (Current age: %d)." % PlayerData.age, "lifestyle")
+		show_tab("timeline")
+		return
+	_show_social_media_modal()
+
+
+func _on_pet_adoption_item_pressed() -> void:
+	if PlayerData.age < 6:
+		add_life_event("🧸 You are too young to care for a pet on your own. Pet adoption unlocks at age 6!", "relationship")
+		show_tab("timeline")
+		return
+	_show_pet_adoption_modal()
+
+
+func _on_will_item_pressed() -> void:
+	if PlayerData.age < 18:
+		add_life_event("⚖️ Legal Requirement: Last Will & Testament estate planning unlocks at adulthood (Age 18+).", "finance")
+		show_tab("timeline")
+		return
+	_show_will_modal()
+
+
 func _on_gym_item_pressed() -> void:
 	if PlayerData.age < 13:
 		add_life_event("🏋️ Gym facilities and athletic clubs require an age of at least 13 (Current age: %d)." % PlayerData.age, "activity")
@@ -4453,7 +4693,7 @@ func _show_licensing_modal() -> void:
 	iv.add_child(ih)
 
 	var idesc := Label.new()
-	idesc.text = "State licenses certify vehicle operation and authorize specialized freelance occupations. Taking a state board qualification exam requires paying official examination fees.\n\nAvailable Funds: $%s Cash  •  $%s Bank Savings" % [_format_number(PlayerData.money), _format_number(PlayerData.bank_savings)]
+	idesc.text = "Earn boating, driving and professional licenses here. Aviation progression: complete Flight School, then take the Pilot License exam. School completion alone does not authorize aircraft operation.\n\nAvailable Funds: $%s Cash  •  $%s Bank Savings" % [_format_number(PlayerData.money), _format_number(PlayerData.bank_savings)]
 	idesc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	idesc.add_theme_font_size_override("font_size", 22)
 	idesc.add_theme_color_override("font_color", Color("#cbd5e1"))
@@ -4520,7 +4760,7 @@ func _show_licensing_modal() -> void:
 			var cert_btn := Button.new()
 			cert_btn.custom_minimum_size.y = 52
 			cert_btn.disabled = true
-			cert_btn.text = "✓ CERTIFIED & ACTIVE"
+			cert_btn.text = "✓ FLIGHT SCHOOL COMPLETED" if bool(lic.get("is_course", false)) else "✓ CERTIFIED & ACTIVE"
 			var sb := StyleBoxFlat.new()
 			sb.bg_color = Color("#064e3b")
 			sb.border_color = Color("#10b981")
@@ -4535,7 +4775,8 @@ func _show_licensing_modal() -> void:
 		else:
 			var eval := LicenseManager.can_take_license(lic_id)
 			if bool(eval.get("allowed", false)):
-				var btn_take := _create_cyber_button("📜 Pay $%s & Take Qualification Exam" % _format_number(fee), Color("#06b6d4"), func():
+				var action_text := "✈ Pay $%s & Complete Flight School" if bool(lic.get("is_course", false)) else "📜 Pay $%s & Take Qualification Exam"
+				var btn_take := _create_cyber_button(action_text % _format_number(fee), Color("#06b6d4"), func():
 					var res := LicenseManager.take_license(lic_id)
 					if bool(res.get("allowed", false)):
 						add_life_event(str(res.get("message", "License acquired!")), "milestone")
@@ -7615,6 +7856,982 @@ func _show_meditation_modal() -> void:
 	meditation_modal_overlay.visible = true
 
 
+func _show_mind_and_body_modal() -> void:
+	if mind_body_modal_overlay != null and is_instance_valid(mind_body_modal_overlay):
+		mind_body_modal_overlay.queue_free()
+
+	var modal := _create_cyber_modal("🧘 MIND & BODY WELLNESS", "Fitness, Grooming, Spa Rejuvenation & Mental Serenity", Color("#10b981"))
+	mind_body_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var summary_card := PanelContainer.new()
+	summary_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#10b981")))
+	var sm := MarginContainer.new()
+	sm.add_theme_constant_override("margin_left", 24)
+	sm.add_theme_constant_override("margin_right", 24)
+	sm.add_theme_constant_override("margin_top", 18)
+	sm.add_theme_constant_override("margin_bottom", 18)
+	summary_card.add_child(sm)
+
+	var sv := VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 12)
+	sm.add_child(sv)
+
+	var stat_title := Label.new()
+	stat_title.text = "✨ WELLNESS & VITALITY PROFILE"
+	stat_title.add_theme_font_size_override("font_size", 28)
+	stat_title.add_theme_color_override("font_color", Color("#34d399"))
+	sv.add_child(stat_title)
+
+	var vitals_lbl := Label.new()
+	vitals_lbl.text = "❤️ Health: %d%%   •   ✨ Looks: %d%%   •   😊 Happiness: %d%%   •   🧠 Smarts: %d%%" % [
+		PlayerData.health,
+		PlayerData.looks,
+		PlayerData.happiness,
+		PlayerData.smarts
+	]
+	vitals_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vitals_lbl.add_theme_font_size_override("font_size", 24)
+	vitals_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+	sv.add_child(vitals_lbl)
+
+	list.add_child(summary_card)
+
+	var gym_btn := _create_cyber_button("🏋️ Titan Cyber Gym & Athletic Fitness\nStrength training, cardio tracks, aquatic laps, combat boxing and all-inclusive annual memberships.", Color("#38bdf8"), func():
+		mind_body_modal_overlay.queue_free()
+		_show_gym_modal()
+	)
+	gym_btn.custom_minimum_size.y = 80
+	gym_btn.add_theme_font_size_override("font_size", 24)
+	list.add_child(gym_btn)
+
+	var salon_btn := _create_cyber_button("💇 Luxe Hair & Beauty Salon\nStyling, designer haircuts, beard grooming, manicures, and aesthetic beauty pampering.", Color("#ec4899"), func():
+		mind_body_modal_overlay.queue_free()
+		_show_salon_modal()
+	)
+	salon_btn.custom_minimum_size.y = 80
+	salon_btn.add_theme_font_size_override("font_size", 24)
+	list.add_child(salon_btn)
+
+	var spa_btn := _create_cyber_button("🧖 Oasis Luxury Day Spa & Thermal Baths\nVolcanic hot springs, deep tissue massages, eucalyptus saunas, mud facials, and VIP retreats.", Color("#06b6d4"), func():
+		mind_body_modal_overlay.queue_free()
+		_show_spa_modal()
+	)
+	spa_btn.custom_minimum_size.y = 80
+	spa_btn.add_theme_font_size_override("font_size", 24)
+	list.add_child(spa_btn)
+
+	var med_btn := _create_cyber_button("🧘 Nirvana Mindfulness & Meditation\nBreathwork, hatha yoga, singing sound baths, chakra balancing, and transcendental retreats.", Color("#a855f7"), func():
+		mind_body_modal_overlay.queue_free()
+		_show_meditation_modal()
+	)
+	med_btn.custom_minimum_size.y = 80
+	med_btn.add_theme_font_size_override("font_size", 24)
+	list.add_child(med_btn)
+
+	mind_body_modal_overlay.visible = true
+
+
+func _show_salon_modal() -> void:
+	if salon_modal_overlay != null and is_instance_valid(salon_modal_overlay):
+		salon_modal_overlay.queue_free()
+
+	var modal := _create_cyber_modal("💇 LUXE HAIR & BEAUTY SALON", "Professional Stylists, Precision Trims & Aesthetic Makeovers", Color("#ec4899"))
+	salon_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var summary_card := PanelContainer.new()
+	summary_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#ec4899")))
+	var sm := MarginContainer.new()
+	sm.add_theme_constant_override("margin_left", 24)
+	sm.add_theme_constant_override("margin_right", 24)
+	sm.add_theme_constant_override("margin_top", 18)
+	sm.add_theme_constant_override("margin_bottom", 18)
+	summary_card.add_child(sm)
+
+	var sv := VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 10)
+	sm.add_child(sv)
+
+	var profile_lbl := Label.new()
+	profile_lbl.text = "✨ Current Looks: %d%%   •   😊 Happiness: %d%%   •   💵 Funds: $%s" % [
+		PlayerData.looks,
+		PlayerData.happiness,
+		_format_number(PlayerData.money + PlayerData.bank_savings)
+	]
+	profile_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	profile_lbl.add_theme_font_size_override("font_size", 24)
+	profile_lbl.add_theme_color_override("font_color", Color("#fdf2f8"))
+	sv.add_child(profile_lbl)
+	list.add_child(summary_card)
+
+	var services := [
+		{"name": "✂️ Quick Trim & Clean Up", "cost": 40, "looks": 5, "hap": 4, "desc": "Clean up split ends and neckline for a neat, fresh look."},
+		{"name": "💇 Designer Haircut & Blowout", "cost": 120, "looks": 12, "hap": 8, "desc": "A custom haircut crafted by senior stylists with premium blow-dry."},
+		{"name": "🎨 Balayage Color & Highlights", "cost": 260, "looks": 18, "hap": 14, "desc": "Luminous hand-painted highlights and nourishing gloss treatment."},
+		{"name": "🧔 Deluxe Hot Towel Beard Grooming", "cost": 65, "looks": 8, "hap": 6, "desc": "Straight-razor edge detailing, essential oils, and hot towel facial compress."},
+		{"name": "💅 Luxury Gel Manicure & Pedicure", "cost": 95, "looks": 9, "hap": 9, "desc": "Exfoliating foot soak, cuticles, hand massage, and resilient gel finish."}
+	]
+
+	for s in services:
+		var cost: int = int(s["cost"])
+		var btn_text := "%s ($%d)\n%s (+%d%% Looks, +%d%% Happiness)" % [s["name"], cost, s["desc"], s["looks"], s["hap"]]
+		var btn := _create_cyber_button(btn_text, Color("#ec4899"), func():
+			var total_funds: int = PlayerData.money + PlayerData.bank_savings
+			if total_funds < cost:
+				add_life_event("💸 INSUFFICIENT FUNDS: The salon service costs $%d, but you only have $%d." % [cost, total_funds], "finance")
+				show_tab("timeline")
+				salon_modal_overlay.queue_free()
+				return
+			if PlayerData.money >= cost:
+				PlayerData.money -= cost
+			else:
+				var rem := cost - PlayerData.money
+				PlayerData.money = 0
+				PlayerData.bank_savings -= rem
+			PlayerData.looks = mini(100, PlayerData.looks + int(s["looks"]))
+			PlayerData.happiness = mini(100, PlayerData.happiness + int(s["hap"]))
+			add_life_event("💇 SALON MAKEOVER: You treated yourself to %s ($%d). Looks +%d%%, Happiness +%d%%!" % [s["name"], cost, s["looks"], s["hap"]], "lifestyle")
+			update_ui()
+			SaveManager.save_game()
+			salon_modal_overlay.queue_free()
+		)
+		btn.custom_minimum_size.y = 74
+		btn.add_theme_font_size_override("font_size", 23)
+		list.add_child(btn)
+
+	salon_modal_overlay.visible = true
+
+
+func _show_spa_modal() -> void:
+	if spa_modal_overlay != null and is_instance_valid(spa_modal_overlay):
+		spa_modal_overlay.queue_free()
+
+	var modal := _create_cyber_modal("🧖 OASIS LUXURY DAY SPA", "Hydrotherapy, Swedish Massages & Deep Thermal Rejuvenation", Color("#06b6d4"))
+	spa_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var summary_card := PanelContainer.new()
+	summary_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#06b6d4")))
+	var sm := MarginContainer.new()
+	sm.add_theme_constant_override("margin_left", 24)
+	sm.add_theme_constant_override("margin_right", 24)
+	sm.add_theme_constant_override("margin_top", 18)
+	sm.add_theme_constant_override("margin_bottom", 18)
+	summary_card.add_child(sm)
+
+	var sv := VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 10)
+	sm.add_child(sv)
+
+	var profile_lbl := Label.new()
+	profile_lbl.text = "❤️ Health: %d%%   •   😊 Happiness: %d%%   •   💵 Funds: $%s" % [
+		PlayerData.health,
+		PlayerData.happiness,
+		_format_number(PlayerData.money + PlayerData.bank_savings)
+	]
+	profile_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	profile_lbl.add_theme_font_size_override("font_size", 24)
+	profile_lbl.add_theme_color_override("font_color", Color("#ecfeff"))
+	sv.add_child(profile_lbl)
+	list.add_child(summary_card)
+
+	var services := [
+		{"name": "♨️ Volcanic Mineral Hot Springs", "cost": 90, "health": 6, "hap": 8, "looks": 2, "desc": "Immerse in geothermal sulfur-rich hot springs to alleviate muscular soreness."},
+		{"name": "💆 90-Minute Swedish Massage", "cost": 180, "health": 10, "hap": 15, "looks": 3, "desc": "Targeted acupressure and long fluid strokes melting chronic tension away."},
+		{"name": "🧴 Dead Sea Botanical Mud Facial", "cost": 140, "health": 4, "hap": 10, "looks": 12, "desc": "Mineral-rich therapeutic mud mask cleansing pores and restoring radiant skin."},
+		{"name": "🌿 Eucalyptus Herbal Sauna & Cold Plunge", "cost": 110, "health": 8, "hap": 10, "looks": 3, "desc": "Cardiovascular heat conditioning combined with energizing ice immersion."},
+		{"name": "👑 Royal Imperial VIP Day Retreat", "cost": 500, "health": 18, "hap": 25, "looks": 16, "desc": "Full private cabana, champagne aromatherapy, four-hand massage, and whole-body exfoliation."}
+	]
+
+	for s in services:
+		var cost: int = int(s["cost"])
+		var btn_text := "%s ($%d)\n%s (+%d%% Health, +%d%% Happiness, +%d%% Looks)" % [s["name"], cost, s["desc"], s["health"], s["hap"], s["looks"]]
+		var btn := _create_cyber_button(btn_text, Color("#06b6d4"), func():
+			var total_funds: int = PlayerData.money + PlayerData.bank_savings
+			if total_funds < cost:
+				add_life_event("💸 INSUFFICIENT FUNDS: The spa treatment costs $%d, but you only have $%d." % [cost, total_funds], "finance")
+				show_tab("timeline")
+				spa_modal_overlay.queue_free()
+				return
+			if PlayerData.money >= cost:
+				PlayerData.money -= cost
+			else:
+				var rem := cost - PlayerData.money
+				PlayerData.money = 0
+				PlayerData.bank_savings -= rem
+			PlayerData.health = mini(100, PlayerData.health + int(s["health"]))
+			PlayerData.happiness = mini(100, PlayerData.happiness + int(s["hap"]))
+			PlayerData.looks = mini(100, PlayerData.looks + int(s["looks"]))
+			add_life_event("🧖 LUXURY SPA REJUVENATION: You enjoyed %s ($%d). Health +%d%%, Happiness +%d%%, Looks +%d%%!" % [s["name"], cost, s["health"], s["hap"], s["looks"]], "lifestyle")
+			update_ui()
+			SaveManager.save_game()
+			spa_modal_overlay.queue_free()
+		)
+		btn.custom_minimum_size.y = 74
+		btn.add_theme_font_size_override("font_size", 23)
+		list.add_child(btn)
+
+	spa_modal_overlay.visible = true
+
+
+func _show_shopping_modal() -> void:
+	if shopping_modal_overlay != null and is_instance_valid(shopping_modal_overlay):
+		shopping_modal_overlay.queue_free()
+
+	var modal := _create_cyber_modal("🛍️ COMMERCIAL SHOPPING & DEALERSHIPS", "Vehicles, Properties, Aircraft, Yachts & Luxury Valuables", Color("#38bdf8"))
+	shopping_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var summary_card := PanelContainer.new()
+	summary_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#38bdf8")))
+	var sm := MarginContainer.new()
+	sm.add_theme_constant_override("margin_left", 24)
+	sm.add_theme_constant_override("margin_right", 24)
+	sm.add_theme_constant_override("margin_top", 18)
+	sm.add_theme_constant_override("margin_bottom", 18)
+	summary_card.add_child(sm)
+
+	var sv := VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 10)
+	sm.add_child(sv)
+
+	var funds_lbl := Label.new()
+	var total_avail: int = PlayerData.money + PlayerData.bank_savings
+	funds_lbl.text = "💳 Capital Available: Cash $%s   •   Bank Savings: $%s   (Total: $%s)" % [
+		_format_number(PlayerData.money),
+		_format_number(PlayerData.bank_savings),
+		_format_number(total_avail)
+	]
+	funds_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	funds_lbl.add_theme_font_size_override("font_size", 24)
+	funds_lbl.add_theme_color_override("font_color", Color("#f0f9ff"))
+	sv.add_child(funds_lbl)
+	list.add_child(summary_card)
+
+	var shopping_categories := [
+		{
+			"category": AssetCatalog.CATEGORY_BICYCLES,
+			"title": "🚲 Velocity Eco-Cycles (Bicycles)",
+			"desc": "Commuter cruisers, electric ebikes, gravel racers, and carbon performance bicycles.",
+			"color": Color("#06b6d4")
+		},
+		{
+			"category": AssetCatalog.CATEGORY_CARS,
+			"title": "🚗 Apex Motors Showroom (Car Dealerships)",
+			"desc": "Compact hatchbacks, executive electric sedans, muscle roadsters, and hypercars.",
+			"color": Color("#0284c7")
+		},
+		{
+			"category": AssetCatalog.CATEGORY_MOTORCYCLES,
+			"title": "🏍️ Thunder Cycles (Motorcycle Dealers)",
+			"desc": "City scooters, bobbers, cafe racers, adventure tourers, and superbikes.",
+			"color": Color("#8b5cf6")
+		},
+		{
+			"category": AssetCatalog.CATEGORY_JEWELRY,
+			"title": "💎 Aurelia Haute Jewelers & Gemologists",
+			"desc": "Chronographs, diamond solitaires, sapphire necklaces, and prestige gold timepieces.",
+			"color": Color("#f59e0b")
+		},
+		{
+			"category": AssetCatalog.CATEGORY_INSTRUMENTS,
+			"title": "🎸 Virtuoso Instruments & Pro Audio",
+			"desc": "Acoustic concert guitars, electronic synthesizers, violins, and Steinway grand pianos.",
+			"color": Color("#ec4899")
+		},
+		{
+			"category": AssetCatalog.CATEGORY_PROPERTIES,
+			"title": "🏢 Pinnacle Real Estate & Property Brokers",
+			"desc": "Modern condos, suburban family estates, penthouse lofts, and oceanfront mega mansions.",
+			"color": Color("#10b981")
+		},
+		{
+			"category": AssetCatalog.CATEGORY_AIRCRAFT,
+			"title": "✈️ Skylink Aviation & Rotorcraft Dealerships",
+			"desc": "Aerobatic light aircraft, turbine helicopters, and intercontinental private business jets.",
+			"color": Color("#38bdf8")
+		},
+		{
+			"category": AssetCatalog.CATEGORY_YACHTS,
+			"title": "🛥️ Oceanking Marine & Luxury Yacht Dealers",
+			"desc": "High-performance jet skis, catamaran cruisers, offshore yachts, and mega superyachts.",
+			"color": Color("#2563eb")
+		}
+	]
+
+	for item in shopping_categories:
+		var cat_id: String = item["category"]
+		var btn_text: String = "%s\n%s" % [item["title"], item["desc"]]
+		var btn := _create_cyber_button(btn_text, item["color"], func():
+			shopping_modal_overlay.queue_free()
+			_open_asset_marketplace_modal(cat_id)
+		)
+		btn.custom_minimum_size.y = 80
+		btn.add_theme_font_size_override("font_size", 24)
+		list.add_child(btn)
+
+	shopping_modal_overlay.visible = true
+
+
+func _show_social_media_modal() -> void:
+	if social_media_modal_overlay != null and is_instance_valid(social_media_modal_overlay):
+		social_media_modal_overlay.queue_free()
+
+	var modal := _create_cyber_modal("📱 SOCIAL MEDIA & CONTENT CREATION", "Manage Online Presence, Go Viral, Build Fanbases & Monetize", Color("#38bdf8"))
+	social_media_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var summary_card := PanelContainer.new()
+	summary_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#38bdf8")))
+	var sm := MarginContainer.new()
+	sm.add_theme_constant_override("margin_left", 24)
+	sm.add_theme_constant_override("margin_right", 24)
+	sm.add_theme_constant_override("margin_top", 18)
+	sm.add_theme_constant_override("margin_bottom", 18)
+	summary_card.add_child(sm)
+
+	var sv := VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 10)
+	sm.add_child(sv)
+
+	var total_followers: int = 0
+	var active_accounts_count: int = 0
+	if PlayerData.get("social_media") is Dictionary:
+		for p_key in PlayerData.social_media:
+			var acc: Dictionary = PlayerData.social_media[p_key]
+			total_followers += int(acc.get("followers", 0))
+			active_accounts_count += 1
+
+	var stat_lbl := Label.new()
+	stat_lbl.text = "🌐 Active Platforms: %d/5   •   👥 Global Audience: %s followers   •   Age: %d" % [
+		active_accounts_count,
+		_format_number(total_followers),
+		PlayerData.age
+	]
+	stat_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	stat_lbl.add_theme_font_size_override("font_size", 24)
+	stat_lbl.add_theme_color_override("font_color", Color("#f0f9ff"))
+	sv.add_child(stat_lbl)
+	list.add_child(summary_card)
+
+	var platforms: Dictionary = SocialMediaManager.get_platforms()
+	for p_key in platforms:
+		var p_info: Dictionary = platforms[p_key]
+		var p_name: String = str(p_info["name"])
+		var p_icon: String = str(p_info["icon"])
+		var p_color: Color = Color(str(p_info["color"]))
+		var metric: String = str(p_info["metric"])
+		var p_desc: String = str(p_info["desc"])
+		var has_acc: bool = SocialMediaManager.has_account(PlayerData, p_key)
+
+		var p_card := PanelContainer.new()
+		p_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(p_color))
+		var cm := MarginContainer.new()
+		cm.add_theme_constant_override("margin_left", 20)
+		cm.add_theme_constant_override("margin_right", 20)
+		cm.add_theme_constant_override("margin_top", 16)
+		cm.add_theme_constant_override("margin_bottom", 16)
+		p_card.add_child(cm)
+
+		var cv := VBoxContainer.new()
+		cv.add_theme_constant_override("separation", 12)
+		cm.add_child(cv)
+
+		if not has_acc:
+			var head_lbl := Label.new()
+			head_lbl.text = "%s %s" % [p_icon, p_name]
+			head_lbl.add_theme_font_size_override("font_size", 26)
+			head_lbl.add_theme_color_override("font_color", p_color)
+			cv.add_child(head_lbl)
+
+			var d_lbl := Label.new()
+			d_lbl.text = "%s (Tracks %s)" % [p_desc, metric]
+			d_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			d_lbl.add_theme_font_size_override("font_size", 20)
+			d_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+			cv.add_child(d_lbl)
+
+			var btn_create := _create_cyber_button("✨ Launch New %s Account" % p_name, p_color, func():
+				var res := SocialMediaManager.create_account(PlayerData, p_key)
+				if res["success"]:
+					add_life_event(res["message"], "lifestyle")
+					update_ui()
+					_show_social_media_modal()
+				else:
+					add_life_event(res["message"], "lifestyle")
+					show_tab("timeline")
+			)
+			btn_create.custom_minimum_size.y = 56
+			btn_create.add_theme_font_size_override("font_size", 22)
+			cv.add_child(btn_create)
+		else:
+			var acc_data: Dictionary = SocialMediaManager.get_account(PlayerData, p_key)
+			var handle: String = str(acc_data.get("handle", ""))
+			var followers: int = int(acc_data.get("followers", 0))
+			var is_verif: bool = bool(acc_data.get("is_verified", false))
+			var verif_badge := " ☑️ [VERIFIED]" if is_verif else ""
+
+			var head_h := HBoxContainer.new()
+			cv.add_child(head_h)
+
+			var title_lbl := Label.new()
+			title_lbl.text = "%s %s • %s%s" % [p_icon, p_name, handle, verif_badge]
+			title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			title_lbl.add_theme_font_size_override("font_size", 26)
+			title_lbl.add_theme_color_override("font_color", p_color)
+			head_h.add_child(title_lbl)
+
+			var stats_lbl := Label.new()
+			stats_lbl.text = "📈 %s: %s   •   Total Posts: %d" % [
+				metric,
+				_format_number(followers),
+				int(acc_data.get("posts_count", 0))
+			]
+			stats_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			stats_lbl.add_theme_font_size_override("font_size", 22)
+			stats_lbl.add_theme_color_override("font_color", Color("#4ade80"))
+			cv.add_child(stats_lbl)
+
+			var act_grid := GridContainer.new()
+			act_grid.columns = 2
+			act_grid.add_theme_constant_override("h_separation", 12)
+			act_grid.add_theme_constant_override("v_separation", 10)
+			cv.add_child(act_grid)
+
+			var btn_post := _create_cyber_button("📝 Create New Post", Color("#38bdf8"), func():
+				var res := SocialMediaManager.create_post(PlayerData, p_key)
+				add_life_event(res["message"], "lifestyle")
+				update_ui()
+				_show_social_media_modal()
+			)
+			btn_post.custom_minimum_size.y = 52
+			btn_post.add_theme_font_size_override("font_size", 20)
+			act_grid.add_child(btn_post)
+
+			var verif_text := "☑️ Verified" if is_verif else "☑️ Apply for Blue Tick"
+			var btn_verif := _create_cyber_button(verif_text, Color("#60a5fa"), func():
+				var res := SocialMediaManager.apply_verification(PlayerData, p_key)
+				add_life_event(res["message"], "lifestyle")
+				update_ui()
+				_show_social_media_modal()
+			)
+			btn_verif.custom_minimum_size.y = 52
+			btn_verif.add_theme_font_size_override("font_size", 20)
+			if is_verif:
+				btn_verif.disabled = true
+				btn_verif.modulate = Color(0.6, 0.6, 0.6, 0.7)
+			act_grid.add_child(btn_verif)
+
+			var btn_buy_foll := _create_cyber_button("📈 Buy Followers / Ads ($150)", Color("#f59e0b"), func():
+				var res := SocialMediaManager.buy_followers(PlayerData, p_key, 0)
+				add_life_event(res["message"], "lifestyle")
+				update_ui()
+				_show_social_media_modal()
+			)
+			btn_buy_foll.custom_minimum_size.y = 52
+			btn_buy_foll.add_theme_font_size_override("font_size", 20)
+			act_grid.add_child(btn_buy_foll)
+
+			var btn_troll := _create_cyber_button("😈 Troll Someone Online", Color("#a855f7"), func():
+				var res := SocialMediaManager.troll_someone(PlayerData, p_key)
+				add_life_event(res["message"], "lifestyle")
+				update_ui()
+				_show_social_media_modal()
+			)
+			btn_troll.custom_minimum_size.y = 52
+			btn_troll.add_theme_font_size_override("font_size", 20)
+			act_grid.add_child(btn_troll)
+
+			var btn_delete := _create_cyber_button("🗑️ Delete %s Account" % p_name, Color("#f43f5e"), func():
+				var res := SocialMediaManager.delete_account(PlayerData, p_key)
+				add_life_event(res["message"], "lifestyle")
+				update_ui()
+				_show_social_media_modal()
+			)
+			btn_delete.custom_minimum_size.y = 52
+			btn_delete.add_theme_font_size_override("font_size", 20)
+			cv.add_child(btn_delete)
+
+		list.add_child(p_card)
+
+	social_media_modal_overlay.visible = true
+
+
+func _show_pet_adoption_modal() -> void:
+	if pet_adoption_modal_overlay != null and is_instance_valid(pet_adoption_modal_overlay):
+		pet_adoption_modal_overlay.queue_free()
+
+	var modal := _create_cyber_modal("🐾 COMPANION PET ADOPTION & RANCH", "Rescue Shelters, Certified Breeders, Pet Stores & Equestrian Ranches", Color("#10b981"))
+	pet_adoption_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var summary_card := PanelContainer.new()
+	summary_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#10b981")))
+	var sm := MarginContainer.new()
+	sm.add_theme_constant_override("margin_left", 24)
+	sm.add_theme_constant_override("margin_right", 24)
+	sm.add_theme_constant_override("margin_top", 18)
+	sm.add_theme_constant_override("margin_bottom", 18)
+	summary_card.add_child(sm)
+
+	var sv := VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 10)
+	sm.add_child(sv)
+
+	var funds_lbl := Label.new()
+	var total_funds: int = PlayerData.money + PlayerData.bank_savings
+	var pets_count: int = PlayerData.pets.size() if PlayerData.get("pets") is Array else 0
+	funds_lbl.text = "🐾 Current Household Pets: %d   •   Available Capital: $%s" % [
+		pets_count,
+		_format_number(total_funds)
+	]
+	funds_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	funds_lbl.add_theme_font_size_override("font_size", 24)
+	funds_lbl.add_theme_color_override("font_color", Color("#f0fdf4"))
+	sv.add_child(funds_lbl)
+	list.add_child(summary_card)
+
+	var adoption_centers := [
+		{
+			"type": "dog_shelter",
+			"title": "🐕 Canine Rescue Shelter (Free Adoption)",
+			"desc": "Loving rescued dogs and crossbreeds of varying ages looking for a forever home.",
+			"color": Color("#10b981")
+		},
+		{
+			"type": "cat_shelter",
+			"title": "🐈 Feline Haven Rescue Shelter (Free Adoption)",
+			"desc": "Affectionate rescue cats and playful kittens eager for cozy companionship.",
+			"color": Color("#06b6d4")
+		},
+		{
+			"type": "dog_breeder",
+			"title": "🐶 Certified Canine Breeders (Puppies <= 1 y.o.)",
+			"desc": "Purebred puppies with registered pedigrees, health certifications, and lineage records.",
+			"color": Color("#f59e0b")
+		},
+		{
+			"type": "cat_breeder",
+			"title": "🐱 Certified Feline Breeders (Kittens <= 1 y.o.)",
+			"desc": "Championship bloodline kittens including Persians, Bengals, Ragdolls, and Maine Coons.",
+			"color": Color("#ec4899")
+		},
+		{
+			"type": "pet_store",
+			"title": "🐢 Critter Corner Exotic Pet Store",
+			"desc": "Turtles, rabbits, birds, ornamental fish, ball pythons, and fancy hooded rats.",
+			"color": Color("#8b5cf6")
+		},
+		{
+			"type": "ranch",
+			"title": "🐎 Heritage Equestrian Ranch & Stables",
+			"desc": "Purebred thoroughbreds, desert Arabians, Friesians, and quarter horses for purchase.",
+			"color": Color("#38bdf8")
+		}
+	]
+
+	for c in adoption_centers:
+		var c_type: String = str(c["type"])
+		var btn_text: String = "%s\n%s" % [c["title"], c["desc"]]
+		var btn := _create_cyber_button(btn_text, c["color"], func():
+			pet_adoption_modal_overlay.queue_free()
+			match c_type:
+				"dog_shelter":
+					_show_pet_shelter_modal(PetManager.SOURCE_DOG_SHELTER)
+				"cat_shelter":
+					_show_pet_shelter_modal(PetManager.SOURCE_CAT_SHELTER)
+				"dog_breeder":
+					_show_pet_breeder_modal(PetManager.SOURCE_DOG_BREEDER)
+				"cat_breeder":
+					_show_pet_breeder_modal(PetManager.SOURCE_CAT_BREEDER)
+				"pet_store":
+					_show_pet_store_modal()
+				"ranch":
+					_show_pet_ranch_modal()
+		)
+		btn.custom_minimum_size.y = 80
+		btn.add_theme_font_size_override("font_size", 24)
+		list.add_child(btn)
+
+	pet_adoption_modal_overlay.visible = true
+
+
+func _show_pet_shelter_modal(shelter_type: String) -> void:
+	if pet_adoption_modal_overlay != null and is_instance_valid(pet_adoption_modal_overlay):
+		pet_adoption_modal_overlay.queue_free()
+
+	var is_dog: bool = (shelter_type == PetManager.SOURCE_DOG_SHELTER)
+	var title: String = "🐕 CANINE RESCUE SHELTER" if is_dog else "🐈 FELINE HAVEN RESCUE SHELTER"
+	var subtitle: String = "Free Adoptions • Give Rescued Animals a Loving Forever Home"
+	var border_color: Color = Color("#10b981") if is_dog else Color("#06b6d4")
+
+	var modal := _create_cyber_modal(title, subtitle, border_color)
+	pet_adoption_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var animals := PetManager.get_shelter_animals(shelter_type)
+	for a in animals:
+		var p_card := PanelContainer.new()
+		p_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(border_color))
+		var cm := MarginContainer.new()
+		cm.add_theme_constant_override("margin_left", 20)
+		cm.add_theme_constant_override("margin_right", 20)
+		cm.add_theme_constant_override("margin_top", 16)
+		cm.add_theme_constant_override("margin_bottom", 16)
+		p_card.add_child(cm)
+
+		var cv := VBoxContainer.new()
+		cv.add_theme_constant_override("separation", 10)
+		cm.add_child(cv)
+
+		var head_lbl := Label.new()
+		head_lbl.text = "%s %s • %s" % [a["icon"], a["breed"], a["age_str"]]
+		head_lbl.add_theme_font_size_override("font_size", 24)
+		head_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+		cv.add_child(head_lbl)
+
+		var stats_lbl := Label.new()
+		stats_lbl.text = "❤️ Health: %d%%   •   😊 Happiness: %d%%   •   🥩 Upkeep: $%d/yr   •   Fee: FREE" % [
+			a["health"],
+			a["happiness"],
+			a["upkeep"]
+		]
+		stats_lbl.add_theme_font_size_override("font_size", 20)
+		stats_lbl.add_theme_color_override("font_color", Color("#4ade80"))
+		cv.add_child(stats_lbl)
+
+		var pet_spec: Dictionary = a
+		var btn_adopt := _create_cyber_button("🐾 Adopt for Free!", border_color, func():
+			var res := PetManager.adopt_pet(PlayerData, pet_spec)
+			if res["success"]:
+				add_life_event(res["message"], "relationship")
+				pet_adoption_modal_overlay.queue_free()
+				update_ui()
+				update_assets_panel()
+			else:
+				add_life_event(res["message"], "relationship")
+				show_tab("timeline")
+		)
+		btn_adopt.custom_minimum_size.y = 52
+		btn_adopt.add_theme_font_size_override("font_size", 22)
+		cv.add_child(btn_adopt)
+
+		list.add_child(p_card)
+
+	pet_adoption_modal_overlay.visible = true
+
+
+func _show_pet_breeder_modal(breeder_type: String) -> void:
+	if pet_adoption_modal_overlay != null and is_instance_valid(pet_adoption_modal_overlay):
+		pet_adoption_modal_overlay.queue_free()
+
+	var is_dog: bool = (breeder_type == PetManager.SOURCE_DOG_BREEDER)
+	var title: String = "🐶 CERTIFIED CANINE BREEDER" if is_dog else "🐱 CERTIFIED FELINE BREEDER"
+	var subtitle: String = "Registered Purebred Puppies & Kittens (Kitten/Puppy -> 1 y.o. Max)"
+	var border_color: Color = Color("#f59e0b") if is_dog else Color("#ec4899")
+
+	var modal := _create_cyber_modal(title, subtitle, border_color)
+	pet_adoption_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var animals := PetManager.get_breeder_animals(breeder_type)
+	for a in animals:
+		var p_card := PanelContainer.new()
+		p_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(border_color))
+		var cm := MarginContainer.new()
+		cm.add_theme_constant_override("margin_left", 20)
+		cm.add_theme_constant_override("margin_right", 20)
+		cm.add_theme_constant_override("margin_top", 16)
+		cm.add_theme_constant_override("margin_bottom", 16)
+		p_card.add_child(cm)
+
+		var cv := VBoxContainer.new()
+		cv.add_theme_constant_override("separation", 10)
+		cm.add_child(cv)
+
+		var head_lbl := Label.new()
+		head_lbl.text = "%s Purebred %s • %s" % [a["icon"], a["breed"], a["age_str"]]
+		head_lbl.add_theme_font_size_override("font_size", 24)
+		head_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+		cv.add_child(head_lbl)
+
+		var price: int = int(a["price"])
+		var upkeep: int = int(a["upkeep"])
+		var stats_lbl := Label.new()
+		stats_lbl.text = "💰 Price: $%s   •   🥩 Upkeep: $%s/yr   •   ❤️ Health: %d%%" % [
+			_format_number(price),
+			_format_number(upkeep),
+			a["health"]
+		]
+		stats_lbl.add_theme_font_size_override("font_size", 20)
+		stats_lbl.add_theme_color_override("font_color", Color("#4ade80"))
+		cv.add_child(stats_lbl)
+
+		var pet_spec: Dictionary = a
+		var can_afford: bool = (PlayerData.money + PlayerData.bank_savings) >= price
+		var btn_buy := _create_cyber_button("🐾 Purchase for $%s" % _format_number(price), border_color, func():
+			var res := PetManager.adopt_pet(PlayerData, pet_spec)
+			if res["success"]:
+				add_life_event(res["message"], "relationship")
+				pet_adoption_modal_overlay.queue_free()
+				update_ui()
+				update_assets_panel()
+			else:
+				add_life_event(res["message"], "relationship")
+				show_tab("timeline")
+		)
+		btn_buy.custom_minimum_size.y = 52
+		btn_buy.add_theme_font_size_override("font_size", 22)
+		if not can_afford:
+			btn_buy.disabled = true
+			btn_buy.modulate = Color(0.6, 0.6, 0.6, 0.65)
+			btn_buy.text = "🔒 Requires $%s (Insufficient Funds)" % _format_number(price)
+		cv.add_child(btn_buy)
+
+		list.add_child(p_card)
+
+	pet_adoption_modal_overlay.visible = true
+
+
+func _show_pet_store_modal() -> void:
+	if pet_adoption_modal_overlay != null and is_instance_valid(pet_adoption_modal_overlay):
+		pet_adoption_modal_overlay.queue_free()
+
+	var modal := _create_cyber_modal("🐢 CRITTER CORNER EXOTIC PET STORE", "Turtles, Rats, Snakes, Rabbits, Birds & Ornamental Fish", Color("#8b5cf6"))
+	pet_adoption_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var animals := PetManager.get_pet_store_animals()
+	for a in animals:
+		var p_card := PanelContainer.new()
+		p_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#8b5cf6")))
+		var cm := MarginContainer.new()
+		cm.add_theme_constant_override("margin_left", 20)
+		cm.add_theme_constant_override("margin_right", 20)
+		cm.add_theme_constant_override("margin_top", 16)
+		cm.add_theme_constant_override("margin_bottom", 16)
+		p_card.add_child(cm)
+
+		var cv := VBoxContainer.new()
+		cv.add_theme_constant_override("separation", 10)
+		cm.add_child(cv)
+
+		var head_lbl := Label.new()
+		head_lbl.text = "%s %s • %s" % [a["icon"], a["species"], a["age_str"]]
+		head_lbl.add_theme_font_size_override("font_size", 24)
+		head_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+		cv.add_child(head_lbl)
+
+		var price: int = int(a["price"])
+		var upkeep: int = int(a["upkeep"])
+		var stats_lbl := Label.new()
+		stats_lbl.text = "💰 Price: $%s   •   🥩 Upkeep: $%s/yr   •   ⏳ Lifespan: ~%d yrs" % [
+			_format_number(price),
+			_format_number(upkeep),
+			a["lifespan"]
+		]
+		stats_lbl.add_theme_font_size_override("font_size", 20)
+		stats_lbl.add_theme_color_override("font_color", Color("#4ade80"))
+		cv.add_child(stats_lbl)
+
+		var pet_spec: Dictionary = a
+		var can_afford: bool = (PlayerData.money + PlayerData.bank_savings) >= price
+		var btn_buy := _create_cyber_button("🐾 Purchase for $%s" % _format_number(price), Color("#8b5cf6"), func():
+			var res := PetManager.adopt_pet(PlayerData, pet_spec)
+			if res["success"]:
+				add_life_event(res["message"], "relationship")
+				pet_adoption_modal_overlay.queue_free()
+				update_ui()
+				update_assets_panel()
+			else:
+				add_life_event(res["message"], "relationship")
+				show_tab("timeline")
+		)
+		btn_buy.custom_minimum_size.y = 52
+		btn_buy.add_theme_font_size_override("font_size", 22)
+		if not can_afford:
+			btn_buy.disabled = true
+			btn_buy.modulate = Color(0.6, 0.6, 0.6, 0.65)
+			btn_buy.text = "🔒 Requires $%s (Insufficient Funds)" % _format_number(price)
+		cv.add_child(btn_buy)
+
+		list.add_child(p_card)
+
+	pet_adoption_modal_overlay.visible = true
+
+
+func _show_pet_ranch_modal() -> void:
+	if pet_adoption_modal_overlay != null and is_instance_valid(pet_adoption_modal_overlay):
+		pet_adoption_modal_overlay.queue_free()
+
+	var modal := _create_cyber_modal("🐎 HERITAGE EQUESTRIAN RANCH & STABLES", "Equestrian Purchases: Purebred Horses, Desert Arabians & Thoroughbreds", Color("#38bdf8"))
+	pet_adoption_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var horses := PetManager.get_ranch_horses()
+	for h in horses:
+		var p_card := PanelContainer.new()
+		p_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#38bdf8")))
+		var cm := MarginContainer.new()
+		cm.add_theme_constant_override("margin_left", 20)
+		cm.add_theme_constant_override("margin_right", 20)
+		cm.add_theme_constant_override("margin_top", 16)
+		cm.add_theme_constant_override("margin_bottom", 16)
+		p_card.add_child(cm)
+
+		var cv := VBoxContainer.new()
+		cv.add_theme_constant_override("separation", 10)
+		cm.add_child(cv)
+
+		var head_lbl := Label.new()
+		head_lbl.text = "%s %s • %s" % [h["icon"], h["breed"], h["age_str"]]
+		head_lbl.add_theme_font_size_override("font_size", 24)
+		head_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+		cv.add_child(head_lbl)
+
+		var price: int = int(h["price"])
+		var upkeep: int = int(h["upkeep"])
+		var stats_lbl := Label.new()
+		stats_lbl.text = "💰 Price: $%s   •   🥩 Upkeep: $%s/yr   •   ❤️ Health: %d%%" % [
+			_format_number(price),
+			_format_number(upkeep),
+			h["health"]
+		]
+		stats_lbl.add_theme_font_size_override("font_size", 20)
+		stats_lbl.add_theme_color_override("font_color", Color("#4ade80"))
+		cv.add_child(stats_lbl)
+
+		var pet_spec: Dictionary = h
+		var can_afford: bool = (PlayerData.money + PlayerData.bank_savings) >= price
+		var btn_buy := _create_cyber_button("🐎 Purchase Horse ($%s)" % _format_number(price), Color("#38bdf8"), func():
+			var res := PetManager.adopt_pet(PlayerData, pet_spec)
+			if res["success"]:
+				add_life_event(res["message"], "relationship")
+				pet_adoption_modal_overlay.queue_free()
+				update_ui()
+				update_assets_panel()
+			else:
+				add_life_event(res["message"], "relationship")
+				show_tab("timeline")
+		)
+		btn_buy.custom_minimum_size.y = 52
+		btn_buy.add_theme_font_size_override("font_size", 22)
+		if not can_afford:
+			btn_buy.disabled = true
+			btn_buy.modulate = Color(0.6, 0.6, 0.6, 0.65)
+			btn_buy.text = "🔒 Requires $%s (Insufficient Funds)" % _format_number(price)
+		cv.add_child(btn_buy)
+
+		list.add_child(p_card)
+
+	pet_adoption_modal_overlay.visible = true
+
+
+func _show_will_modal() -> void:
+	if will_modal_overlay != null and is_instance_valid(will_modal_overlay):
+		will_modal_overlay.queue_free()
+
+	var modal := _create_cyber_modal("⚖️ LAST WILL & TESTAMENT", "Estate Planning, Asset Distribution & Inheritance Beneficiaries", Color("#f59e0b"))
+	will_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var summary_card := PanelContainer.new()
+	summary_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
+	var sm := MarginContainer.new()
+	sm.add_theme_constant_override("margin_left", 24)
+	sm.add_theme_constant_override("margin_right", 24)
+	sm.add_theme_constant_override("margin_top", 18)
+	sm.add_theme_constant_override("margin_bottom", 18)
+	summary_card.add_child(sm)
+
+	var sv := VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 10)
+	sm.add_child(sv)
+
+	var total_assets_val: int = 0
+	for a in PlayerData.owned_assets:
+		total_assets_val += int(a.get("current_value", a.get("purchase_price", 0)))
+	var total_estate: int = PlayerData.money + PlayerData.bank_savings + total_assets_val
+
+	var val_lbl := Label.new()
+	val_lbl.text = "🏛️ TOTAL ESTIMATED ESTATE VALUE: $%s\n💵 Liquid Funds: $%s Cash + $%s Bank   •   🏰 Asset Portfolio: $%s (%d Assets)" % [
+		_format_number(total_estate),
+		_format_number(PlayerData.money),
+		_format_number(PlayerData.bank_savings),
+		_format_number(total_assets_val),
+		PlayerData.owned_assets.size()
+	]
+	val_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	val_lbl.add_theme_font_size_override("font_size", 24)
+	val_lbl.add_theme_color_override("font_color", Color("#fef3c7"))
+	sv.add_child(val_lbl)
+
+	var cur_beneficiary: String = PlayerData.get("will_recipient")
+	if cur_beneficiary == "":
+		cur_beneficiary = "CHILDREN"
+	var cur_name := "Surviving Children"
+	match cur_beneficiary:
+		"CHARITY": cur_name = "Philanthropic Charities"
+		"SPOUSE": cur_name = "Surviving Spouse / Partner"
+		"SPLIT": cur_name = "Equal Split Across Family"
+		_: cur_name = "Surviving Children"
+
+	var cur_lbl := Label.new()
+	cur_lbl.text = "📜 Current Active Beneficiary: %s" % cur_name
+	cur_lbl.add_theme_font_size_override("font_size", 24)
+	cur_lbl.add_theme_color_override("font_color", Color("#34d399"))
+	sv.add_child(cur_lbl)
+	list.add_child(summary_card)
+
+	var options := [
+		{
+			"id": "CHILDREN",
+			"title": "👶 All to Surviving Children",
+			"desc": "Bequeath 100% of all cash, bank savings, vehicles, and real property equally among your surviving children.",
+			"color": Color("#38bdf8")
+		},
+		{
+			"id": "SPOUSE",
+			"title": "💍 All to Surviving Spouse / Partner",
+			"desc": "Designate your beloved husband or wife as the sole heir to your entire financial and real estate fortune.",
+			"color": Color("#ec4899")
+		},
+		{
+			"id": "CHARITY",
+			"title": "🏛️ Donate Entire Estate to Charity",
+			"desc": "Dedicate all accumulated wealth and properties to global humanitarian charities. Leaves a saintly karmic legacy!",
+			"color": Color("#10b981")
+		},
+		{
+			"id": "SPLIT",
+			"title": "⚖️ Equal Split Across Family",
+			"desc": "Distribute equal shares of the estate across your surviving spouse and all children without favoritism.",
+			"color": Color("#f59e0b")
+		}
+	]
+
+	for opt in options:
+		var opt_id: String = str(opt["id"])
+		var is_selected: bool = (cur_beneficiary == opt_id)
+		var badge: String = " [SELECTED ACTIVE HEIR]" if is_selected else ""
+		var btn_text: String = "%s%s\n%s" % [opt["title"], badge, opt["desc"]]
+		var btn := _create_cyber_button(btn_text, opt["color"], func():
+			PlayerData.will_recipient = opt_id
+			add_life_event("⚖️ NOTARIZED WILL: You updated your estate beneficiary to '%s'!" % opt["title"], "milestone")
+			SaveManager.save_game()
+			update_ui()
+			_show_will_modal()
+		)
+		btn.custom_minimum_size.y = 80
+		btn.add_theme_font_size_override("font_size", 24)
+		if is_selected:
+			btn.modulate = Color(0.8, 1.0, 0.8, 1.0)
+		list.add_child(btn)
+
+	will_modal_overlay.visible = true
+
+
 func _show_charity_modal() -> void:
 	if charity_modal_overlay != null and is_instance_valid(charity_modal_overlay):
 		charity_modal_overlay.queue_free()
@@ -8689,6 +9906,55 @@ func _show_death_screen(cause: String) -> void:
 	cp_v.add_child(epitaph_lbl)
 
 	vbox.add_child(coroner_p)
+
+	# Will Execution Card
+	var will_exec_p := PanelContainer.new()
+	will_exec_p.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
+	var wp_m := MarginContainer.new()
+	wp_m.add_theme_constant_override("margin_left", 24)
+	wp_m.add_theme_constant_override("margin_right", 24)
+	wp_m.add_theme_constant_override("margin_top", 18)
+	wp_m.add_theme_constant_override("margin_bottom", 18)
+	will_exec_p.add_child(wp_m)
+
+	var wp_v := VBoxContainer.new()
+	wp_v.add_theme_constant_override("separation", 10)
+	wp_m.add_child(wp_v)
+
+	var will_exec_header := Label.new()
+	will_exec_header.text = "⚖️ LAST WILL & TESTAMENT ESTATE EXECUTION"
+	will_exec_header.add_theme_font_size_override("font_size", 22)
+	will_exec_header.add_theme_color_override("font_color", Color("#fbbf24"))
+	wp_v.add_child(will_exec_header)
+
+	var total_estate_val: int = PlayerData.money + PlayerData.bank_savings
+	for a in PlayerData.owned_assets:
+		total_estate_val += int(a.get("current_value", a.get("purchase_price", 0)))
+
+	var will_recip_str: String = "Your Surviving Children"
+	match PlayerData.get("will_recipient"):
+		"CHARITY":
+			will_recip_str = "Global Humanitarian Charities"
+		"SPOUSE":
+			will_recip_str = "Your Surviving Spouse & Partner"
+		"SPLIT":
+			will_recip_str = "Your Surviving Spouse and Children (Divided Equally)"
+		_:
+			will_recip_str = "Your Surviving Children"
+
+	var will_exec_desc := Label.new()
+	will_exec_desc.text = "In accordance with your legally notarized Last Will & Testament, your total estate valued at $%s (including $%s liquid capital and %d registered assets) has been formally transferred to %s." % [
+		_format_number(total_estate_val),
+		_format_number(PlayerData.money + PlayerData.bank_savings),
+		PlayerData.owned_assets.size(),
+		will_recip_str
+	]
+	will_exec_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	will_exec_desc.add_theme_font_size_override("font_size", 20)
+	will_exec_desc.add_theme_color_override("font_color", Color("#f8fafc"))
+	wp_v.add_child(will_exec_desc)
+
+	vbox.add_child(will_exec_p)
 
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL

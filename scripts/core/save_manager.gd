@@ -112,7 +112,10 @@ func save_game() -> void:
 		"last_casino_age": PlayerData.last_casino_age,
 		"casino_plays_this_year": PlayerData.casino_plays_this_year,
 		"last_overtime_age": PlayerData.last_overtime_age,
-		"last_childhood_gig_age": PlayerData.last_childhood_gig_age
+		"last_childhood_gig_age": PlayerData.last_childhood_gig_age,
+		"social_media": PlayerData.social_media,
+		"pets": PlayerData.pets,
+		"will_recipient": PlayerData.will_recipient
 	}
 
 	var file := FileAccess.open(
@@ -279,6 +282,9 @@ func load_game() -> bool:
 
 	PlayerData.event_history = data.get("event_history", [])
 	PlayerData.life_log = data.get("life_log", [])
+	PlayerData.social_media = Dictionary(data.get("social_media", {}))
+	PlayerData.pets = Array(data.get("pets", []))
+	PlayerData.will_recipient = str(data.get("will_recipient", "CHILDREN"))
 
 	print("Game loaded.")
 	return true

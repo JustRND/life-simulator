@@ -139,6 +139,35 @@ const LICENSES: Array[Dictionary] = [
 		"unlocked_feature": "Freelance Event Mixologist",
 		"job_id": "freelance_mixologist",
 		"description": "Beverage control commission certification allowing high-end cocktail craft, mixology catering, and private event bar service."
+	},
+	{
+		"id": "flight_school",
+		"name": "Flight School",
+		"icon": "✈️",
+		"fee": 6000,
+		"min_age": 18,
+		"is_course": true,
+		"unlocked_feature": "Eligibility for the Pilot License Exam",
+		"description": "Complete ground school and supervised flight training. This course awards a completion certificate; you must then earn a separate pilot license before operating aircraft."
+	},
+	{
+		"id": "license_pilot",
+		"name": "Private Pilot & Rotorcraft License",
+		"icon": "✈️",
+		"fee": 4500,
+		"requires_license": "flight_school",
+		"min_age": 18,
+		"unlocked_feature": "Airplane & Helicopter Piloting",
+		"description": "Federal aviation authority flight license permitting the legal operation of private propeller aircraft, business jets, and turbine helicopters."
+	},
+	{
+		"id": "license_boating",
+		"name": "Master Coastal Boater & Yachting License",
+		"icon": "🛥️",
+		"fee": 1200,
+		"min_age": 18,
+		"unlocked_feature": "Yacht & Marine Vessel Piloting",
+		"description": "Maritime safety qualification permitting the legal navigation and commanding of power speedboats, cruisers, and luxury ocean yachts."
 	}
 ]
 
@@ -166,10 +195,14 @@ static func can_take_license(license_id: String) -> Dictionary:
 	if PlayerData.age < min_age:
 		return {"allowed": false, "reason": "Age Restricted: Must be at least Age %d (Current Age: %d)." % [min_age, PlayerData.age]}
 
+	var prerequisite: String = str(lic.get("requires_license", ""))
+	if not prerequisite.is_empty() and not PlayerData.has_license(prerequisite):
+		return {"allowed": false, "reason": "Complete Flight School before taking the pilot license exam."}
+
 	var fee: int = int(lic.get("fee", 0))
 	var total_funds: int = PlayerData.money + PlayerData.bank_savings
 	if total_funds < fee:
-		return {"allowed": false, "reason": "Insufficient funds: Exam & certification fee is $%d (Available: $%d)." % [fee, total_funds]}
+		return {"allowed": false, "reason": "Insufficient funds: Required fee is $%d (Available: $%d)." % [fee, total_funds]}
 
 	return {"allowed": true, "reason": "Eligible to certify."}
 
@@ -193,6 +226,10 @@ static func take_license(license_id: String) -> Dictionary:
 	PlayerData.grant_license(license_id)
 	var lic_name: String = str(lic.get("name", "License"))
 	var unlocked: String = str(lic.get("unlocked_feature", ""))
+	if bool(lic.get("is_course", false)):
+		var message := "You completed Flight School for $%d! You can now take the separate pilot license exam." % fee
+		PlayerData.add_life_log_entry(message, "milestone")
+		return {"allowed": true, "message": message, "license": lic}
 
 	PlayerData.add_life_log_entry("📜 LICENSE EXAM PASSED: You paid the $%d exam fee and officially earned your %s! Unlocked: %s." % [
 		fee,

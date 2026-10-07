@@ -1,9 +1,14 @@
 class_name AssetCatalog
 extends RefCounted
 
+const CATEGORY_BICYCLES := "bicycles"
 const CATEGORY_CARS := "cars"
 const CATEGORY_MOTORCYCLES := "motorcycles"
+const CATEGORY_JEWELRY := "jewelry"
+const CATEGORY_INSTRUMENTS := "instruments"
 const CATEGORY_PROPERTIES := "properties"
+const CATEGORY_AIRCRAFT := "aircraft"
+const CATEGORY_YACHTS := "yachts"
 
 const ITEMS := {
 	# =========================================================================
@@ -544,6 +549,263 @@ const ITEMS := {
 		"desc": "The ultimate expression of planetary wealth. A private orbital space station suite with panoramic glass observation lounge.",
 		"image_path": "res://assets/items/properties/prop_orbital.jpg",
 		"min_age": 21
+	},
+	# =========================================================================
+	# 🚲 BICYCLES (Bicycle Category)
+	# =========================================================================
+	"bike_commuter": {
+		"id": "bike_commuter",
+		"category": CATEGORY_BICYCLES,
+		"name": "Vintage Urban Commuter Bike",
+		"price": 240,
+		"upkeep": 0,
+		"happiness_bonus": 4,
+		"desc": "A timeless 3-speed steel city cruiser with a front basket and bell. Perfect for sunny rides through the neighborhood.",
+		"image_path": "",
+		"min_age": 6
+	},
+	"bike_mountain": {
+		"id": "bike_mountain",
+		"category": CATEGORY_BICYCLES,
+		"name": "Apex Trail Mountain Bike",
+		"price": 680,
+		"upkeep": 0,
+		"happiness_bonus": 7,
+		"desc": "Rugged dual-suspension trail bike equipped with hydraulic disc brakes and knobby off-road tires.",
+		"image_path": "",
+		"min_age": 10
+	},
+	"bike_road": {
+		"id": "bike_road",
+		"category": CATEGORY_BICYCLES,
+		"name": "Aero Carbon Racing Bike",
+		"price": 2600,
+		"upkeep": 40,
+		"happiness_bonus": 12,
+		"desc": "Ultra-lightweight aerodynamic carbon fiber road bike designed for blistering highway sprints and endurance racing.",
+		"image_path": "",
+		"min_age": 14
+	},
+	"bike_cargo_ev": {
+		"id": "bike_cargo_ev",
+		"category": CATEGORY_BICYCLES,
+		"name": "Volt Cargo Electric e-Bike",
+		"price": 4400,
+		"upkeep": 80,
+		"happiness_bonus": 16,
+		"desc": "High-torque pedal-assist electric cargo bike with integrated lithium battery and heavy-duty utility carrier.",
+		"image_path": "",
+		"min_age": 14
+	},
+	# =========================================================================
+	# 💎 JEWELRY (Jewelers)
+	# =========================================================================
+	"jewelry_silver_ring": {
+		"id": "jewelry_silver_ring",
+		"category": CATEGORY_JEWELRY,
+		"name": "Engraved Sterling Silver Signet Ring",
+		"price": 450,
+		"upkeep": 0,
+		"happiness_bonus": 5,
+		"desc": "A solid sterling silver heirloom ring featuring subtle hand-chiseled detailing.",
+		"image_path": "",
+		"min_age": 14
+	},
+	"jewelry_pearl_necklace": {
+		"id": "jewelry_pearl_necklace",
+		"category": CATEGORY_JEWELRY,
+		"name": "South Sea Cultured Pearl Necklace",
+		"price": 1950,
+		"upkeep": 0,
+		"happiness_bonus": 10,
+		"desc": "An elegant string of glowing iridescent cultured pearls finished with an 18k white gold clasp.",
+		"image_path": "",
+		"min_age": 16
+	},
+	"jewelry_diamond_bracelet": {
+		"id": "jewelry_diamond_bracelet",
+		"category": CATEGORY_JEWELRY,
+		"name": "Platinum Diamond Tennis Bracelet",
+		"price": 7800,
+		"upkeep": 0,
+		"happiness_bonus": 18,
+		"desc": "A dazzling continuous band of brilliant-cut diamonds prong-set in pure platinum.",
+		"image_path": "",
+		"min_age": 18
+	},
+	"jewelry_luxury_watch": {
+		"id": "jewelry_luxury_watch",
+		"category": CATEGORY_JEWELRY,
+		"name": "Geneva Tourbillon Chronometer Watch",
+		"price": 28500,
+		"upkeep": 250,
+		"happiness_bonus": 26,
+		"desc": "A masterwork Swiss mechanical timepiece with an open-heart tourbillon escapement and alligator leather strap.",
+		"image_path": "",
+		"min_age": 18
+	},
+	"jewelry_royal_tiara": {
+		"id": "jewelry_royal_tiara",
+		"category": CATEGORY_JEWELRY,
+		"name": "Royal Emerald & Diamond Diadem",
+		"price": 145000,
+		"upkeep": 600,
+		"happiness_bonus": 38,
+		"desc": "An opulent museum-grade diadem crowned with Colombian emeralds and hundreds of pavé diamonds.",
+		"image_path": "",
+		"min_age": 18
+	},
+	# =========================================================================
+	# 🎸 MUSICAL INSTRUMENTS (Music Stores)
+	# =========================================================================
+	"inst_acoustic_guitar": {
+		"id": "inst_acoustic_guitar",
+		"category": CATEGORY_INSTRUMENTS,
+		"name": "Solid Spruce Acoustic Guitar",
+		"price": 380,
+		"upkeep": 0,
+		"happiness_bonus": 6,
+		"desc": "A resonant dreadnought acoustic guitar with warm spruce projection and smooth rosewood fretboard.",
+		"image_path": "",
+		"min_age": 8
+	},
+	"inst_electric_guitar": {
+		"id": "inst_electric_guitar",
+		"category": CATEGORY_INSTRUMENTS,
+		"name": "Custom Sunburst Stratocaster",
+		"price": 1850,
+		"upkeep": 0,
+		"happiness_bonus": 12,
+		"desc": "An iconic electric guitar finished in vintage three-color sunburst with single-coil pickups and tremolo bridge.",
+		"image_path": "",
+		"min_age": 12
+	},
+	"inst_cello": {
+		"id": "inst_cello",
+		"category": CATEGORY_INSTRUMENTS,
+		"name": "Handcrafted Master Cello",
+		"price": 6400,
+		"upkeep": 80,
+		"happiness_bonus": 16,
+		"desc": "Carved from European flamed maple with an ebony fingerboard, producing deep, haunting orchestral resonance.",
+		"image_path": "",
+		"min_age": 14
+	},
+	"inst_synthesizer": {
+		"id": "inst_synthesizer",
+		"category": CATEGORY_INSTRUMENTS,
+		"name": "Vintage Analog Polyphonic Synthesizer",
+		"price": 14000,
+		"upkeep": 120,
+		"happiness_bonus": 22,
+		"desc": "A legendary vintage synth with voltage-controlled oscillators, analog ladder filters, and warm wooden side cheeks.",
+		"image_path": "",
+		"min_age": 16
+	},
+	"inst_grand_piano": {
+		"id": "inst_grand_piano",
+		"category": CATEGORY_INSTRUMENTS,
+		"name": "Concert Grand Piano 'Imperial 97'",
+		"price": 72000,
+		"upkeep": 550,
+		"happiness_bonus": 32,
+		"desc": "The crown jewel of acoustic pianos. Handcrafted in Vienna with 97 keys and unmatched dynamic projection.",
+		"image_path": "",
+		"min_age": 16
+	},
+	# =========================================================================
+	# ✈️ AIRPLANES & HELICOPTERS (Airplane & Helicopter Dealers)
+	# =========================================================================
+	"aircraft_cessna": {
+		"id": "aircraft_cessna",
+		"category": CATEGORY_AIRCRAFT,
+		"name": "Skyhawk 172 Light Propeller Plane",
+		"price": 185000,
+		"upkeep": 9500,
+		"happiness_bonus": 26,
+		"desc": "A renowned four-seat single-engine high-wing aircraft. The gold standard for private cross-country flying.",
+		"image_path": "",
+		"min_age": 18
+	},
+	"aircraft_helicopter": {
+		"id": "aircraft_helicopter",
+		"category": CATEGORY_AIRCRAFT,
+		"name": "RotorCraft 505 Executive Helicopter",
+		"price": 1450000,
+		"upkeep": 65000,
+		"happiness_bonus": 38,
+		"desc": "A high-visibility turbine rotorcraft with glass cockpit and leather cabin seating for executive hops.",
+		"image_path": "",
+		"min_age": 18
+	},
+	"aircraft_personal_jet": {
+		"id": "aircraft_personal_jet",
+		"category": CATEGORY_AIRCRAFT,
+		"name": "Aero Vision SF50 Personal Light Jet",
+		"price": 2950000,
+		"upkeep": 135000,
+		"happiness_bonus": 48,
+		"desc": "A revolutionary carbon-fiber single-engine personal jet capable of cruising at 28,000 feet in whisper-quiet luxury.",
+		"image_path": "",
+		"min_age": 18
+	},
+	"aircraft_business_jet": {
+		"id": "aircraft_business_jet",
+		"category": CATEGORY_AIRCRAFT,
+		"name": "Apex G650 Ultra Long-Range Private Jet",
+		"price": 48000000,
+		"upkeep": 1600000,
+		"happiness_bonus": 65,
+		"desc": "The pinnacle of private aviation. Intercontinental speed, master stateroom, conference lounge, and private flight crew.",
+		"image_path": "",
+		"min_age": 18
+	},
+	# =========================================================================
+	# 🛥️ YACHTS & MARINE VESSELS (Yacht Dealers)
+	# =========================================================================
+	"yacht_speedboat": {
+		"id": "yacht_speedboat",
+		"category": CATEGORY_YACHTS,
+		"name": "Veloce 24ft Twin-Turbo Speedboat",
+		"price": 46000,
+		"upkeep": 2800,
+		"happiness_bonus": 16,
+		"desc": "A sleek performance powerboat built for wakesurfing, waterskiing, and high-speed coastal cruising.",
+		"image_path": "",
+		"min_age": 18
+	},
+	"yacht_cruiser": {
+		"id": "yacht_cruiser",
+		"category": CATEGORY_YACHTS,
+		"name": "Riviera 42ft Luxury Sport Cruiser",
+		"price": 380000,
+		"upkeep": 18500,
+		"happiness_bonus": 28,
+		"desc": "A twin-diesel express cabin cruiser with sunbathing deck, full galley, and sleeping quarters for weekend voyages.",
+		"image_path": "",
+		"min_age": 18
+	},
+	"yacht_flybridge": {
+		"id": "yacht_flybridge",
+		"category": CATEGORY_YACHTS,
+		"name": "Perseo 76ft Flybridge Superyacht",
+		"price": 2400000,
+		"upkeep": 95000,
+		"happiness_bonus": 42,
+		"desc": "An Italian-designed luxury motor yacht with panoramic flybridge lounge, hydraulic swim platform, and VIP suites.",
+		"image_path": "",
+		"min_age": 18
+	},
+	"yacht_megayacht": {
+		"id": "yacht_megayacht",
+		"category": CATEGORY_YACHTS,
+		"name": "Oceanic Sovereign 180ft Megayacht",
+		"price": 34000000,
+		"upkeep": 1250000,
+		"happiness_bonus": 62,
+		"desc": "A multi-deck floating palace featuring a helipad, infinity pool, beach club, cinema, and dedicated maritime crew.",
+		"image_path": "",
+		"min_age": 18
 	}
 }
 
@@ -561,23 +823,43 @@ static func get_items_by_category(category: String) -> Array[Dictionary]:
 
 static func get_category_display_title(category: String) -> String:
 	match category:
+		CATEGORY_BICYCLES:
+			return "🚲 VELO CYCLES • BICYCLE EMPORIUM"
 		CATEGORY_CARS:
 			return "🚗 APEX CYBER MOTORS • CAR DEALERSHIP"
 		CATEGORY_MOTORCYCLES:
 			return "🏍️ NEON SPEED CYCLES • MOTORCYCLE SHOWROOM"
+		CATEGORY_JEWELRY:
+			return "💎 AURA & BRILLIANCE • HAUTE JEWELERS"
+		CATEGORY_INSTRUMENTS:
+			return "🎸 STRATOSPHERE SOUNDS • MUSIC STORE"
 		CATEGORY_PROPERTIES:
 			return "🏠 METRO PRIME REALTY • PROPERTY BROKERAGE"
+		CATEGORY_AIRCRAFT:
+			return "✈️ AERO LUXE FLIGHT • AIRCRAFT DEALERSHIP"
+		CATEGORY_YACHTS:
+			return "🛥️ OCEANIC HORIZON • YACHT & MARINE BROKERS"
 		_:
 			return "COMMERCIAL MARKETPLACE"
 
 static func get_category_subtitle(category: String) -> String:
 	match category:
+		CATEGORY_BICYCLES:
+			return "Eco-friendly commuter bikes, rugged trail riders, aero racers, and electric cargo haulers."
 		CATEGORY_CARS:
 			return "Acquire personal automobiles for swift transit, personal prestige, and weekend joyrides."
 		CATEGORY_MOTORCYCLES:
 			return "Feel the open rush of two-wheeled performance, agility, and street rebellion."
+		CATEGORY_JEWELRY:
+			return "Acquire heirloom gemstones, luxury tourbillons, and platinum diamond jewelry."
+		CATEGORY_INSTRUMENTS:
+			return "Fine handcrafted guitars, concert pianos, analog synths, and orchestral strings."
 		CATEGORY_PROPERTIES:
 			return "Invest in luxury real estate, escape landlord rent, and build long-term generational equity."
+		CATEGORY_AIRCRAFT:
+			return "High-performance propeller aircraft, turbine helicopters, and intercontinental private jets."
+		CATEGORY_YACHTS:
+			return "Ocean power speedboats, luxury flybridge cruisers, and multi-deck sovereign megayachts."
 		_:
 			return "Browse luxury and commercial goods available for acquisition."
 
@@ -610,6 +892,16 @@ static func can_purchase_asset(player_data: Node, item_id: String) -> Dictionary
 		return {
 			"allowed": false,
 			"reason": "Requires Motorcycle Operator License (Class M). Take the qualification exam in Activities -> Licensing first!"
+		}
+	if category == CATEGORY_AIRCRAFT and not player_data.has_license("license_pilot"):
+		return {
+			"allowed": false,
+			"reason": "Requires Private Pilot & Rotorcraft License. Take the flight certification exam in Activities -> Licensing first!"
+		}
+	if category == CATEGORY_YACHTS and not player_data.has_license("license_boating"):
+		return {
+			"allowed": false,
+			"reason": "Requires Master Coastal Boater & Yachting License. Take the certification exam in Activities -> Licensing first!"
 		}
 
 	var total_funds: int = player_data.money + player_data.bank_savings
@@ -692,10 +984,23 @@ static func use_asset(player_data: Node, instance_id: String) -> Dictionary:
 			var bonus: int = int(asset.get("happiness_bonus", 5))
 			player_data.happiness = mini(100, player_data.happiness + bonus)
 			var action_desc := ""
-			if cat in [CATEGORY_CARS, CATEGORY_MOTORCYCLES]:
-				action_desc = "You took your %s out for an exhilarating joyride! Happiness +%d%%." % [asset.get("name", "ride"), bonus]
-			else:
-				action_desc = "You spent a serene, luxurious weekend relaxing at your %s! Happiness +%d%%." % [asset.get("name", "residence"), bonus]
+			match cat:
+				CATEGORY_BICYCLES:
+					action_desc = "You went for an energizing ride on your %s through city greenways! Happiness +%d%%." % [asset.get("name", "bike"), bonus]
+				CATEGORY_CARS, CATEGORY_MOTORCYCLES:
+					action_desc = "You took your %s out for an exhilarating joyride! Happiness +%d%%." % [asset.get("name", "ride"), bonus]
+				CATEGORY_JEWELRY:
+					player_data.looks = mini(100, player_data.looks + 1)
+					action_desc = "You wore your exquisite %s to an exclusive gala! Looks +1%, Happiness +%d%%." % [asset.get("name", "jewelry"), bonus]
+				CATEGORY_INSTRUMENTS:
+					player_data.smarts = mini(100, player_data.smarts + 1)
+					action_desc = "You practiced complex musical compositions on your %s! Smarts +1%, Happiness +%d%%." % [asset.get("name", "instrument"), bonus]
+				CATEGORY_AIRCRAFT:
+					action_desc = "You piloted your %s high above the cloud line! Happiness +%d%%." % [asset.get("name", "aircraft"), bonus]
+				CATEGORY_YACHTS:
+					action_desc = "You cruised aboard your %s across sparkling coastal waters! Happiness +%d%%." % [asset.get("name", "yacht"), bonus]
+				_:
+					action_desc = "You spent a serene, luxurious weekend relaxing at your %s! Happiness +%d%%." % [asset.get("name", "residence"), bonus]
 			return {
 				"success": true,
 				"message": action_desc
@@ -719,13 +1024,24 @@ static func process_yearly_assets(player_data: Node) -> Array[String]:
 				asset["condition"] = maxi(10, int(asset.get("condition", 100)) - 15)
 				logs.append("⚠️ Maintenance Neglect: You lacked sufficient funds to service your %s ($%d upkeep). Its condition deteriorated." % [asset.get("name", "asset"), upkeep])
 
-		# 2. Value adjustments (Vehicles depreciate ~6%, Real estate appreciates ~2%)
+		# 2. Value adjustments (Vehicles depreciate, real estate/fine art/jewelry appreciate)
 		var cur_val: int = int(asset.get("current_value", asset.get("purchase_price", 0)))
 		var orig_price: int = int(asset.get("purchase_price", cur_val))
 		if cat in [CATEGORY_CARS, CATEGORY_MOTORCYCLES]:
 			var floor_val: int = int(orig_price * 0.20)
 			var dep: int = int(cur_val * 0.06)
 			asset["current_value"] = maxi(floor_val, cur_val - dep)
+		elif cat == CATEGORY_BICYCLES:
+			var floor_val: int = int(orig_price * 0.15)
+			var dep: int = int(cur_val * 0.08)
+			asset["current_value"] = maxi(floor_val, cur_val - dep)
+		elif cat in [CATEGORY_AIRCRAFT, CATEGORY_YACHTS]:
+			var floor_val: int = int(orig_price * 0.25)
+			var dep: int = int(cur_val * 0.05)
+			asset["current_value"] = maxi(floor_val, cur_val - dep)
+		elif cat in [CATEGORY_JEWELRY, CATEGORY_INSTRUMENTS]:
+			var app: int = int(cur_val * 0.01)
+			asset["current_value"] = cur_val + app
 		elif cat == CATEGORY_PROPERTIES:
 			var app: int = int(cur_val * 0.02)
 			asset["current_value"] = cur_val + app
