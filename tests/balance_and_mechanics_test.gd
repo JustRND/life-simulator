@@ -687,6 +687,12 @@ func test_asset_marketplace_and_ownership() -> void:
 	PlayerData.bank_savings = 500000
 	var prev_nw = PlayerData.get_net_worth()
 
+	# Vehicle purchase license gating check
+	var unlic_car = AssetCatalog.buy_asset(PlayerData, "car_hatchback")
+	assert(not unlic_car["success"], "Vehicle purchase must require driving license")
+	PlayerData.licenses.append("license_car")
+	PlayerData.licenses.append("license_motorcycle")
+
 	var buy_car = AssetCatalog.buy_asset(PlayerData, "car_hatchback")
 	assert(buy_car["success"], "Should successfully purchase car_hatchback")
 	assert(PlayerData.owned_assets.size() == 1, "Player should now own 1 asset")

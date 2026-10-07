@@ -585,26 +585,52 @@ static func can_afford(player_data: Node, price: int) -> bool:
 	var total_funds: int = player_data.money + player_data.bank_savings
 	return total_funds >= price
 
-static func buy_asset(player_data: Node, item_id: String) -> Dictionary:
+static func can_purchase_asset(player_data: Node, item_id: String) -> Dictionary:
 	if not ITEMS.has(item_id):
-		return {"success": false, "message": "Item not found in catalog."}
-	
+		return {"allowed": false, "reason": "Item not found in catalog."}
+
 	var item: Dictionary = ITEMS[item_id]
+	var category: String = str(item.get("category", ""))
 	var price: int = int(item.get("price", 0))
 	var min_age: int = int(item.get("min_age", 18))
 
 	if player_data.age < min_age:
 		return {
-			"success": false,
-			"message": "Legal age requirement not met. You must be at least %d years old to purchase this asset." % min_age
+			"allowed": false,
+			"reason": "Legal age requirement not met. You must be at least %d years old to purchase this asset." % min_age
+		}
+
+	# Vehicle Driver/Operator License Verification
+	if category == CATEGORY_CARS and not player_data.has_license("license_car"):
+		return {
+			"allowed": false,
+			"reason": "Requires Passenger Driver's License (Class C). Take the qualification exam in Activities -> Licensing first!"
+		}
+	if category == CATEGORY_MOTORCYCLES and not player_data.has_license("license_motorcycle"):
+		return {
+			"allowed": false,
+			"reason": "Requires Motorcycle Operator License (Class M). Take the qualification exam in Activities -> Licensing first!"
 		}
 
 	var total_funds: int = player_data.money + player_data.bank_savings
 	if total_funds < price:
 		return {
-			"success": false,
-			"message": "Insufficient funds. You require $%d (Total available: $%d)." % [price, total_funds]
+			"allowed": false,
+			"reason": "Insufficient funds. You require $%d (Total available: $%d)." % [price, total_funds]
 		}
+
+	return {"allowed": true, "reason": "Eligible to purchase."}
+
+static func buy_asset(player_data: Node, item_id: String) -> Dictionary:
+	var eval := can_purchase_asset(player_data, item_id)
+	if not bool(eval.get("allowed", false)):
+		return {
+			"success": false,
+			"message": str(eval.get("reason", "Cannot purchase asset."))
+		}
+
+	var item: Dictionary = ITEMS[item_id]
+	var price: int = int(item.get("price", 0))
 
 	# Debit funds: Prefer cash first, then draw remainder from bank savings
 	if player_data.money >= price:

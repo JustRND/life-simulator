@@ -12,6 +12,7 @@ const AssetCatalog = preload("res://scripts/economy/asset_catalog.gd")
 const LicenseManager = preload("res://scripts/economy/license_manager.gd")
 const FreelanceManager = preload("res://scripts/economy/freelance_manager.gd")
 const BusinessManager = preload("res://scripts/economy/business_manager.gd")
+const CharityManager = preload("res://scripts/economy/charity_manager.gd")
 
 
 var portrait: TextureRect
@@ -214,6 +215,10 @@ func _connect_runtime_signals() -> void:
 	var dating_app_btn := get_node_or_null("ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/DatingAppItem") as Button
 	if dating_app_btn != null and not dating_app_btn.pressed.is_connected(_on_dating_app_item_pressed):
 		dating_app_btn.pressed.connect(_on_dating_app_item_pressed)
+
+	var charity_btn := get_node_or_null("ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/CharityActItem") as Button
+	if charity_btn != null and not charity_btn.pressed.is_connected(_on_charity_item_pressed):
+		charity_btn.pressed.connect(_on_charity_item_pressed)
 
 
 func _configure_ui() -> void:
@@ -2163,11 +2168,23 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		var is_of_age: bool = PlayerData.age >= min_age
 		var total_available: int = PlayerData.money + PlayerData.bank_savings
 
+		var has_veh_license: bool = true
+		var lic_required_name: String = ""
+		if category == AssetCatalog.CATEGORY_CARS:
+			has_veh_license = PlayerData.has_license("license_car")
+			lic_required_name = "Passenger Driver's License (Class C)"
+		elif category == AssetCatalog.CATEGORY_MOTORCYCLES:
+			has_veh_license = PlayerData.has_license("license_motorcycle")
+			lic_required_name = "Motorcycle Operator License (Class M)"
+
 		var req_lbl := Label.new()
 		req_lbl.add_theme_font_size_override("font_size", 19)
 		req_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		if not is_of_age:
 			req_lbl.text = "⚠️ Legal Requirement: Minimum Age %d+ Required (You are Age %d)" % [min_age, PlayerData.age]
+			req_lbl.add_theme_color_override("font_color", Color("#f87171"))
+		elif not has_veh_license:
+			req_lbl.text = "🔒 License Requirement: %s Required (❌ Not Certified • Visit Licensing Bureau in Activities)" % lic_required_name
 			req_lbl.add_theme_color_override("font_color", Color("#f87171"))
 		elif not can_afford:
 			var shortage := price - total_available
@@ -2178,7 +2195,8 @@ func _open_asset_marketplace_modal(category: String) -> void:
 			]
 			req_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
 		else:
-			req_lbl.text = "✅ Requirements Met: Age %d+ Verified • Available Funds: $%s" % [min_age, _format_number(total_available)]
+			var lic_status := " • License Certified" if lic_required_name != "" else ""
+			req_lbl.text = "✅ Requirements Met: Age %d+ Verified%s • Available Funds: $%s" % [min_age, lic_status, _format_number(total_available)]
 			req_lbl.add_theme_color_override("font_color", Color("#34d399"))
 		cv.add_child(req_lbl)
 
@@ -2202,6 +2220,10 @@ func _open_asset_marketplace_modal(category: String) -> void:
 			btn_buy.disabled = true
 			btn_buy.modulate = Color(0.5, 0.5, 0.5, 0.6)
 			btn_buy.text = "Age Restricted (Requires Age %d+)" % min_age
+		elif not has_veh_license:
+			btn_buy.disabled = true
+			btn_buy.modulate = Color(0.5, 0.5, 0.5, 0.6)
+			btn_buy.text = "🔒 Requires %s" % ("Driver's License" if category == AssetCatalog.CATEGORY_CARS else "Motorcycle License")
 		elif not can_afford:
 			btn_buy.disabled = true
 			btn_buy.modulate = Color(0.6, 0.6, 0.6, 0.65)
@@ -4052,6 +4074,17 @@ func _on_dating_app_item_pressed() -> void:
 	_show_dating_app_modal()
 
 
+func _on_charity_item_pressed() -> void:
+	if PlayerData.age < 6:
+		if PlayerData.age == 0:
+			add_life_event("🍼 You are an infant! Infants cannot participate in philanthropy yet—tap the AGE button to grow up.", "activity")
+		else:
+			add_life_event("🧸 You are too young! Children under age 6 cannot manage money or donate to charity yet.", "activity")
+		show_tab("timeline")
+		return
+	_show_charity_modal()
+
+
 func _show_career_ladder() -> void:
 	if PlayerData.job_id.is_empty():
 		return
@@ -5699,7 +5732,7 @@ func _show_education_modal() -> void:
 			)
 			list.add_child(btn_trivia)
 
-	# Annual Action Gating Banner to prevent status modifier exploits
+	# Annual Action Gating Banner
 	var has_done_school_activity_this_year: bool = (PlayerData.last_school_activity_age == PlayerData.age)
 	if has_done_school_activity_this_year:
 		var lock_banner := PanelContainer.new()
@@ -5712,7 +5745,7 @@ func _show_education_modal() -> void:
 		lock_banner.add_child(lm)
 
 		var ll := Label.new()
-		ll.text = "⏳ ANNUAL SCHOOL PARTICIPATION COMPLETED\nYou have already taken a school activity for Age %d.\nTo prevent status modifier exploits, study options are locked until next year. Advance age (+1 Year) to participate again!" % PlayerData.age
+		ll.text = "⏳ ANNUAL SCHOOL PARTICIPATION COMPLETED\nYou have already taken a school activity for Age %d.\nAcademic activities are concluded for this school year. Advance age (+1 Year) to participate again!" % PlayerData.age
 		ll.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		ll.add_theme_font_size_override("font_size", 23)
 		ll.add_theme_color_override("font_color", Color("#fbbf24"))
@@ -6771,6 +6804,7 @@ var death_screen_overlay: ColorRect = null
 var gym_modal_overlay: ColorRect = null
 var meditation_modal_overlay: ColorRect = null
 var dating_app_modal_overlay: ColorRect = null
+var charity_modal_overlay: ColorRect = null
 var romance_action_modal_overlay: ColorRect = null
 var current_dating_candidate: Dictionary = {}
 
@@ -7109,6 +7143,13 @@ func _close_meditation_modal_and_return_to_main() -> void:
 	show_tab("timeline")
 
 
+func _close_charity_modal_and_return_to_main() -> void:
+	if charity_modal_overlay != null and is_instance_valid(charity_modal_overlay):
+		charity_modal_overlay.queue_free()
+		charity_modal_overlay = null
+	show_tab("timeline")
+
+
 func _purchase_gym_membership() -> bool:
 	var fee: int = PlayerData.gym_membership_annual_fee
 	if PlayerData.bank_savings >= fee:
@@ -7331,7 +7372,7 @@ Stop annual auto-debit payments (Visits will revert to standard day-pass fees)",
 		var ll := Label.new()
 		ll.text = "⏳ ANNUAL WORKOUT COMPLETED
 You have already pushed your limits at the gym for Age %d.
-To avoid muscle strain and exploit prevention, training options are locked until next year. Advance age (+1 Year) to train again!" % PlayerData.age
+To avoid muscle strain and allow adequate recovery, training options are locked until next year. Advance age (+1 Year) to train again!" % PlayerData.age
 		ll.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		ll.add_theme_font_size_override("font_size", 20)
 		ll.add_theme_color_override("font_color", Color("#fbbf24"))
@@ -7482,7 +7523,7 @@ func _show_meditation_modal() -> void:
 		lock_banner.add_child(lm)
 
 		var ll := Label.new()
-		ll.text = "⏳ ANNUAL MINDFULNESS SESSION COMPLETED\nYou have already completed your meditation session for Age %d.\nTo prevent status modifier exploits, mindfulness options are locked until next year. Advance age (+1 Year) to meditate again!" % PlayerData.age
+		ll.text = "⏳ ANNUAL MINDFULNESS SESSION COMPLETED\nYou have already completed your meditation session for Age %d.\nMindfulness and meditation sessions are complete for this year. Advance age (+1 Year) to meditate again!" % PlayerData.age
 		ll.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		ll.add_theme_font_size_override("font_size", 23)
 		ll.add_theme_color_override("font_color", Color("#fbbf24"))
@@ -7571,6 +7612,230 @@ func _show_meditation_modal() -> void:
 			list.add_child(btn)
 
 	meditation_modal_overlay.visible = true
+
+
+func _show_charity_modal() -> void:
+	if charity_modal_overlay != null and is_instance_valid(charity_modal_overlay):
+		charity_modal_overlay.queue_free()
+
+	var modal := _create_cyber_modal("🤝 PHILANTHROPY & CHARITY", "Donate to Worthy Causes • Purify Your Soul & Unlock Permanent Blessings", Color("#10b981"))
+	charity_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	# 1. Summary & Spiritual State Card
+	var summary_card := PanelContainer.new()
+	summary_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#10b981")))
+	var sm := MarginContainer.new()
+	sm.add_theme_constant_override("margin_left", 20)
+	sm.add_theme_constant_override("margin_right", 20)
+	sm.add_theme_constant_override("margin_top", 16)
+	sm.add_theme_constant_override("margin_bottom", 16)
+	summary_card.add_child(sm)
+
+	var sv := VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 8)
+	sm.add_child(sv)
+
+	var funds_lbl := Label.new()
+	var total_avail: int = PlayerData.money + PlayerData.bank_savings
+	funds_lbl.text = "💳 Available Funds: Cash $%s   •   Bank Savings: $%s   (Total: $%s)" % [
+		_format_number(PlayerData.money),
+		_format_number(PlayerData.bank_savings),
+		_format_number(total_avail)
+	]
+	funds_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	funds_lbl.add_theme_font_size_override("font_size", 24)
+	funds_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
+	sv.add_child(funds_lbl)
+
+	# Vitals and Spiritual State (Karma numbers are strictly HIDDEN)
+	var vitals_lbl := Label.new()
+	var spiritual_state: String = "Neutral Spirit"
+	if PlayerData.karma >= 80:
+		spiritual_state = "🌟 Seraphic & Luminescent (Greatly Blessed)"
+	elif PlayerData.karma >= 50:
+		spiritual_state = "✨ Pure, Virtuous & Compassionate"
+	elif PlayerData.karma >= 25:
+		spiritual_state = "🌱 Kind Hearted & Generous"
+	elif PlayerData.karma < 0:
+		spiritual_state = "🌑 Heavy Karmic Burden"
+
+	vitals_lbl.text = "😊 Happiness: %d%%   •   Spiritual State: %s" % [
+		PlayerData.happiness,
+		spiritual_state
+	]
+	vitals_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vitals_lbl.add_theme_font_size_override("font_size", 23)
+	vitals_lbl.add_theme_color_override("font_color", Color("#a7f3d0"))
+	sv.add_child(vitals_lbl)
+
+	if PlayerData.total_donated_charity > 0:
+		var stat_lbl := Label.new()
+		stat_lbl.text = "💖 Lifetime Philanthropy: $%s donated across %d contributions" % [
+			_format_number(PlayerData.total_donated_charity),
+			PlayerData.charity_donations_count
+		]
+		stat_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		stat_lbl.add_theme_font_size_override("font_size", 21)
+		stat_lbl.add_theme_color_override("font_color", Color("#fde047"))
+		sv.add_child(stat_lbl)
+
+	list.add_child(summary_card)
+
+	# 2. Active Blessings Card (if any)
+	var active_charity_buff_count: int = 0
+	for c in CharityManager.get_all_charities():
+		if PlayerData.has_buff(str(c.get("buff_id", ""))):
+			active_charity_buff_count += 1
+
+	if active_charity_buff_count > 0:
+		var buff_card := PanelContainer.new()
+		buff_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
+		var bm := MarginContainer.new()
+		bm.add_theme_constant_override("margin_left", 20)
+		bm.add_theme_constant_override("margin_right", 20)
+		bm.add_theme_constant_override("margin_top", 14)
+		bm.add_theme_constant_override("margin_bottom", 14)
+		buff_card.add_child(bm)
+
+		var bv := VBoxContainer.new()
+		bv.add_theme_constant_override("separation", 6)
+		bm.add_child(bv)
+
+		var buff_title := Label.new()
+		buff_title.text = "✨ ACTIVE PERMANENT PHILANTHROPIC BLESSINGS (%d Unlocked):" % active_charity_buff_count
+		buff_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		buff_title.add_theme_font_size_override("font_size", 22)
+		buff_title.add_theme_color_override("font_color", Color("#fbbf24"))
+		bv.add_child(buff_title)
+
+		for c in CharityManager.get_all_charities():
+			var b_id: String = str(c.get("buff_id", ""))
+			if PlayerData.has_buff(b_id):
+				var b_lbl := Label.new()
+				b_lbl.text = "  • %s: %s" % [str(c.get("buff_name", "")), str(c.get("buff_desc", ""))]
+				b_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				b_lbl.add_theme_font_size_override("font_size", 19)
+				b_lbl.add_theme_color_override("font_color", Color("#fef08a"))
+				bv.add_child(b_lbl)
+
+		list.add_child(buff_card)
+
+	# 3. Charity Options List
+	var charities: Array[Dictionary] = CharityManager.get_all_charities()
+	for c in charities:
+		var c_id: String = str(c.get("id", ""))
+		var c_name: String = str(c.get("name", "Charity"))
+		var c_icon: String = str(c.get("icon", "🤝"))
+		var amount: int = int(c.get("donation_amount", 100))
+		var min_age: int = int(c.get("min_age", 6))
+		var b_id: String = str(c.get("buff_id", ""))
+		var b_name: String = str(c.get("buff_name", ""))
+		var b_desc: String = str(c.get("buff_desc", ""))
+		var desc: String = str(c.get("description", ""))
+		var is_blessed: bool = PlayerData.has_buff(b_id)
+
+		var card := PanelContainer.new()
+		var card_style := StyleBoxFlat.new()
+		card_style.bg_color = Color("#071318")
+		card_style.border_color = Color("#10b981") if is_blessed else Color("#059669")
+		card_style.set_border_width_all(2)
+		card_style.set_corner_radius_all(14)
+		card_style.shadow_color = Color(0, 0, 0, 0.45)
+		card_style.shadow_size = 6
+		card.add_theme_stylebox_override("panel", card_style)
+		list.add_child(card)
+
+		var cm := MarginContainer.new()
+		cm.add_theme_constant_override("margin_left", 22)
+		cm.add_theme_constant_override("margin_right", 22)
+		cm.add_theme_constant_override("margin_top", 18)
+		cm.add_theme_constant_override("margin_bottom", 18)
+		card.add_child(cm)
+
+		var cv := VBoxContainer.new()
+		cv.add_theme_constant_override("separation", 12)
+		cm.add_child(cv)
+
+		# Top Header Row: Icon + Name ... Amount
+		var top_row := HBoxContainer.new()
+		top_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cv.add_child(top_row)
+
+		var name_lbl := Label.new()
+		name_lbl.text = "%s %s" % [c_icon, c_name]
+		name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		name_lbl.add_theme_font_size_override("font_size", 25)
+		name_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+		name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		top_row.add_child(name_lbl)
+
+		var amt_lbl := Label.new()
+		amt_lbl.text = "$%s" % _format_number(amount)
+		amt_lbl.add_theme_font_size_override("font_size", 28)
+		amt_lbl.add_theme_color_override("font_color", Color("#34d399"))
+		amt_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		top_row.add_child(amt_lbl)
+
+		# Description
+		var desc_lbl := Label.new()
+		desc_lbl.text = desc
+		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc_lbl.add_theme_font_size_override("font_size", 20)
+		desc_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+		cv.add_child(desc_lbl)
+
+		# Buff & Spiritual Impact row (NO numerical karma!)
+		var perk_box := VBoxContainer.new()
+		perk_box.add_theme_constant_override("separation", 4)
+		cv.add_child(perk_box)
+
+		var buff_lbl := Label.new()
+		var buff_status_prefix := "✨ [Unlocked] " if is_blessed else "🔒 [Cosmic Blessing] "
+		buff_lbl.text = "%s%s: %s" % [buff_status_prefix, b_name, b_desc]
+		buff_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		buff_lbl.add_theme_font_size_override("font_size", 20)
+		buff_lbl.add_theme_color_override("font_color", Color("#38bdf8") if is_blessed else Color("#67e8f9"))
+		perk_box.add_child(buff_lbl)
+
+		var karma_lbl := Label.new()
+		karma_lbl.text = "💫 Spiritual Impact: Profoundly purifies your soul, elevates your karma, and brings deep joy."
+		karma_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		karma_lbl.add_theme_font_size_override("font_size", 19)
+		karma_lbl.add_theme_color_override("font_color", Color("#a7f3d0"))
+		perk_box.add_child(karma_lbl)
+
+		# Button / Gating
+		var eval := CharityManager.can_donate(PlayerData, c_id)
+		var is_allowed: bool = bool(eval.get("allowed", false))
+		var reason: String = str(eval.get("reason", ""))
+
+		if not is_allowed:
+			var dis_btn := _create_disabled_cyber_button("Contribute $%s" % _format_number(amount), reason)
+			cv.add_child(dis_btn)
+		else:
+			var btn_text: String = "💖 Donate $%s" % _format_number(amount)
+			if is_blessed:
+				btn_text = "💖 Re-Donate $%s (Continue Blessing)" % _format_number(amount)
+			var donate_btn := _create_cyber_button(btn_text, Color("#10b981"), func():
+				_execute_charity_donation(c_id)
+			)
+			cv.add_child(donate_btn)
+
+	charity_modal_overlay.visible = true
+
+
+func _execute_charity_donation(charity_id: String) -> void:
+	var res: Dictionary = CharityManager.donate(PlayerData, charity_id)
+	if not bool(res.get("success", false)):
+		add_life_event(str(res.get("reason", "Unable to donate.")), "finance")
+		return
+
+	var msg: String = str(res.get("message", "Donation made."))
+	add_life_event("🤝 CHARITY DONATION: %s" % msg, "finance")
+	update_ui()
+	SaveManager.save_game()
+	_show_charity_modal()
 
 
 # --- 1. DOCTOR MODAL ---

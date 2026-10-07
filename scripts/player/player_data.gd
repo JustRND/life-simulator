@@ -40,6 +40,8 @@ var children: Array = []
 var pregnancy: Dictionary = {}
 var active_debuffs: Array = []
 var active_buffs: Array = []
+var total_donated_charity: int = 0
+var charity_donations_count: int = 0
 var last_parent_interact_age: int = -1
 var last_mother_spend_time_age: int = -1
 var last_mother_compliment_age: int = -1
@@ -252,6 +254,8 @@ func reset_player() -> void:
 	pregnancy = {}
 	active_debuffs.clear()
 	active_buffs.clear()
+	total_donated_charity = 0
+	charity_donations_count = 0
 
 
 func has_license(license_id: String) -> bool:
@@ -558,6 +562,26 @@ func enforce_buffs_and_debuffs() -> void:
 		looks = maxi(looks, 90)
 	if "blessed_mind" in active_buffs:
 		happiness = maxi(happiness, 80)
+	# Philanthropy & Charity Cosmic Buffs
+	if "buff_philanthropist_heart" in active_buffs:
+		happiness = maxi(happiness, 50)
+	if "buff_animal_guardian" in active_buffs:
+		happiness = maxi(happiness, 55)
+	if "buff_youth_mentor" in active_buffs:
+		smarts = maxi(smarts, 60)
+	if "buff_lifesavers_blessing" in active_buffs:
+		health = maxi(health, 60)
+	if "buff_eco_guardian" in active_buffs:
+		happiness = maxi(happiness, 65)
+	if "buff_grand_benefactor" in active_buffs:
+		happiness = maxi(happiness, 75)
+		health = maxi(health, 70)
+
+
+func add_buff(buff_id: String) -> void:
+	if not buff_id in active_buffs:
+		active_buffs.append(buff_id)
+		enforce_buffs_and_debuffs()
 
 
 func has_buff(buff_id: String) -> bool:

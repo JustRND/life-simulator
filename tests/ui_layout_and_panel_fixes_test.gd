@@ -3,6 +3,8 @@ extends Node
 const MainScreenScene = preload("res://scenes/main/main_screen.tscn")
 const BusinessManager = preload("res://scripts/economy/business_manager.gd")
 const LicenseManager = preload("res://scripts/economy/license_manager.gd")
+const AssetCatalog = preload("res://scripts/economy/asset_catalog.gd")
+const CharityManager = preload("res://scripts/economy/charity_manager.gd")
 
 func _ready() -> void:
 	print("--- BEGIN UI LAYOUT & PANEL FIXES VERIFICATION ---")
@@ -11,6 +13,9 @@ func _ready() -> void:
 	test_assets_panel_business_relocation()
 	test_custom_business_name_input()
 	test_modal_clipping_fixes()
+	test_vehicle_purchase_license_gating()
+	test_charity_activities_button_and_donations()
+	test_education_exploit_text_removal()
 	print("--- ALL UI LAYOUT & PANEL FIXES VERIFIED SUCCESSFULLY! ---")
 	get_tree().quit(0)
 
@@ -161,3 +166,133 @@ func test_modal_clipping_fixes() -> void:
 	overlay.queue_free()
 	screen.queue_free()
 	print("✔ Modal non-clipping architecture verified.")
+
+func test_vehicle_purchase_license_gating() -> void:
+	print("Testing Vehicle Purchase License Requirements...")
+	PlayerData.reset()
+	PlayerData.age = 22
+	PlayerData.money = 500000
+	PlayerData.licenses.clear()
+
+	# 1. Car requires license_car
+	var car_eval := AssetCatalog.can_purchase_asset(PlayerData, "car_sedan")
+	assert(not bool(car_eval.get("allowed", false)), "Car purchase must be blocked without car license")
+	assert(str(car_eval.get("reason", "")).contains("Passenger Driver's License"), "Reason must mention Passenger Driver's License: %s" % car_eval.get("reason"))
+
+	# 2. Motorcycle requires license_motorcycle
+	var moto_eval := AssetCatalog.can_purchase_asset(PlayerData, "moto_cruiser")
+	assert(not bool(moto_eval.get("allowed", false)), "Motorcycle purchase must be blocked without motorcycle license")
+	assert(str(moto_eval.get("reason", "")).contains("Motorcycle Operator License"), "Reason must mention Motorcycle Operator License: %s" % moto_eval.get("reason"))
+
+	# 3. Property does not require vehicle license
+	var prop_eval := AssetCatalog.can_purchase_asset(PlayerData, "prop_condo")
+	assert(bool(prop_eval.get("allowed", false)), "Property purchase should be allowed when funds and age match: %s" % prop_eval.get("reason"))
+
+	# 4. Grant car license and verify car purchase succeeds
+	PlayerData.licenses.append("license_car")
+	var car_eval_with_lic := AssetCatalog.can_purchase_asset(PlayerData, "car_sedan")
+	assert(bool(car_eval_with_lic.get("allowed", false)), "Car purchase should be allowed with car license: %s" % car_eval_with_lic.get("reason"))
+
+	var buy_car_res := AssetCatalog.buy_asset(PlayerData, "car_sedan")
+	assert(bool(buy_car_res.get("success", false)), "Car purchase must succeed: %s" % buy_car_res.get("message"))
+	assert(PlayerData.owned_assets.size() == 1, "Player should have 1 owned asset")
+
+	# 5. Grant motorcycle license and verify motorcycle purchase succeeds
+	PlayerData.licenses.append("license_motorcycle")
+	var moto_eval_with_lic := AssetCatalog.can_purchase_asset(PlayerData, "moto_cruiser")
+	assert(bool(moto_eval_with_lic.get("allowed", false)), "Motorcycle purchase should be allowed with motorcycle license: %s" % moto_eval_with_lic.get("reason"))
+
+	var buy_moto_res := AssetCatalog.buy_asset(PlayerData, "moto_cruiser")
+	assert(bool(buy_moto_res.get("success", false)), "Motorcycle purchase must succeed: %s" % buy_moto_res.get("message"))
+	assert(PlayerData.owned_assets.size() == 2, "Player should now have 2 owned assets")
+
+	print("✔ Vehicle purchase license gating verified.")
+
+func test_charity_activities_button_and_donations() -> void:
+	print("Testing Charity Button and Philanthropy System...")
+	var screen = MainScreenScene.instantiate()
+	add_child(screen)
+
+	# 1. Verify Charity Button exists in ActivitiesPanel
+	var charity_btn: Button = screen.get_node_or_null("ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/CharityActItem")
+	assert(charity_btn != null, "CharityActItem must exist under ActList in ActivitiesPanel")
+	assert(charity_btn.text.contains("Charity"), "Charity button text must contain 'Charity': %s" % charity_btn.text)
+
+	# 2. Verify charities catalog
+	var charities := CharityManager.get_all_charities()
+	assert(charities.size() >= 6, "Must provide multiple charity options (found %d)" % charities.size())
+
+	# 3. Verify hidden karma rule across all charities!
+	for c in charities:
+		var desc: String = str(c.get("description", ""))
+		var b_desc: String = str(c.get("buff_desc", ""))
+		var c_name: String = str(c.get("name", ""))
+
+		# Description must NOT mention specific numerical karma value
+		assert(not desc.to_lower().contains("karma +") and not desc.to_lower().contains("+1") and not desc.to_lower().contains("+2"), "Charity description must NEVER specify karma numerical boost: %s" % desc)
+		assert(not b_desc.to_lower().contains("karma +") and not b_desc.to_lower().contains("+1") and not b_desc.to_lower().contains("+2"), "Buff description must NEVER specify karma numerical boost: %s" % b_desc)
+
+		assert(int(c.get("hidden_karma_boost", 0)) > 0, "Charity %s must have positive hidden karma boost" % c_name)
+		assert(int(c.get("happiness_boost", 0)) > 0, "Charity %s must have positive happiness boost" % c_name)
+		assert(str(c.get("buff_id", "")) != "", "Charity %s must have a unique buff" % c_name)
+
+	# 4. Verify age requirement gating
+	PlayerData.reset()
+	PlayerData.age = 4
+	PlayerData.money = 1000
+	var age_eval := CharityManager.can_donate(PlayerData, "charity_food_bank")
+	assert(not bool(age_eval.get("allowed", false)), "Player under min age should not be allowed to donate")
+
+	# 5. Verify funds gating
+	PlayerData.age = 18
+	PlayerData.money = 50
+	PlayerData.bank_savings = 0
+	var funds_eval := CharityManager.can_donate(PlayerData, "charity_food_bank")
+	assert(not bool(funds_eval.get("allowed", false)), "Player with insufficient funds should not be allowed to donate")
+
+	# 6. Verify successful donation, hidden karma increase, happiness increase, buff granting
+	PlayerData.money = 100000
+	PlayerData.bank_savings = 50000
+	PlayerData.karma = 10
+	PlayerData.happiness = 30
+	PlayerData.active_buffs.clear()
+
+	var prev_money := PlayerData.money
+	var donate_res := CharityManager.donate(PlayerData, "charity_food_bank")
+	assert(bool(donate_res.get("success", false)), "Donation should succeed: %s" % str(donate_res))
+	assert(PlayerData.money == prev_money - 100, "Should deduct $100 donation fee")
+	assert(PlayerData.happiness > 30, "Happiness must increase significantly")
+	assert(PlayerData.karma > 10, "Hidden karma must increase significantly")
+	assert(PlayerData.has_buff("buff_philanthropist_heart"), "Must grant Heartwarming Gratitude buff")
+	assert(PlayerData.total_donated_charity == 100, "Lifetime donated tracking must be updated")
+
+	# 7. Verify buff protection (floor)
+	PlayerData.happiness = 10
+	PlayerData.enforce_buffs_and_debuffs()
+	assert(PlayerData.happiness >= 50, "buff_philanthropist_heart must prevent happiness from dropping below 50%")
+
+	# 8. Test grand benefactor donation
+	var donate_grand := CharityManager.donate(PlayerData, "charity_childrens_wing")
+	assert(bool(donate_grand.get("success", false)), "Grand donation must succeed")
+	assert(PlayerData.has_buff("buff_grand_benefactor"), "Must grant buff_grand_benefactor")
+	PlayerData.happiness = 20
+	PlayerData.health = 20
+	PlayerData.enforce_buffs_and_debuffs()
+	assert(PlayerData.happiness >= 75, "Grand benefactor must enforce happiness floor at 75%")
+	assert(PlayerData.health >= 70, "Grand benefactor must enforce health floor at 70%")
+
+	screen.queue_free()
+	print("✔ Charity button and philanthropy system verified.")
+
+func test_education_exploit_text_removal() -> void:
+	print("Testing Removal of 'Exploit' text across Education and Activity Panels...")
+	var screen = MainScreenScene.instantiate()
+	add_child(screen)
+
+	# Verify script content does not contain exploit phrase in study/gating banners
+	var script_src: String = FileAccess.get_file_as_string("res://scenes/main/main_screen.gd")
+	assert(not script_src.contains("To prevent status modifier exploits"), "'To prevent status modifier exploits' must be removed from codebase")
+	assert(not script_src.contains("exploit prevention"), "'exploit prevention' must be removed from workout banner")
+
+	screen.queue_free()
+	print("✔ Removal of exploit wording verified.")
