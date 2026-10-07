@@ -657,6 +657,7 @@ text = "✕"
 [node name="CharacterScroll" type="ScrollContainer" parent="CharacterPanel/CharacterMargin/CharacterContent" unique_id=1757646919]
 layout_mode = 2
 size_flags_vertical = 3
+horizontal_scroll_mode = 0
 
 [node name="ProfileCards" type="VBoxContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll" unique_id=812663314]
 layout_mode = 2
@@ -686,27 +687,35 @@ text = "Personal Identity"
 
 [node name="CharacterName" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/IdentityCard/Margin/VBox" unique_id=1822725376]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_font_sizes/font_size = 26
 text = "Name: Alex Morgan"
+autowrap_mode = 3
 
 [node name="CharacterStage" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/IdentityCard/Margin/VBox" unique_id=293784330]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_font_sizes/font_size = 26
 text = "Stage: Infant (Age 0)"
+autowrap_mode = 3
 
 [node name="CharacterBirthplace" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/IdentityCard/Margin/VBox" unique_id=1145889576]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_font_sizes/font_size = 26
 text = "Born in: Indonesia"
+autowrap_mode = 3
 
 [node name="CharacterBirthday" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/IdentityCard/Margin/VBox" unique_id=679609672]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_font_sizes/font_size = 26
 text = "Birthday: January 1 • Capricorn"
+autowrap_mode = 3
 
 [node name="FamilyCard" type="PanelContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards" unique_id=1267887817]
 layout_mode = 2
@@ -731,15 +740,19 @@ text = "Family & Conception"
 
 [node name="CharacterMother" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FamilyCard/Margin/VBox" unique_id=325530611]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_font_sizes/font_size = 24
 text = "Mother: Ella Castro (grocer)"
+autowrap_mode = 3
 
 [node name="CharacterFather" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FamilyCard/Margin/VBox" unique_id=1140618815]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_font_sizes/font_size = 24
 text = "Father: Unknown"
+autowrap_mode = 3
 
 [node name="CharacterStory" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FamilyCard/Margin/VBox" unique_id=2071646810]
 layout_mode = 2
@@ -810,8 +823,9 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 36
 text = "TODDLER & LIFE OVERVIEW"
+autowrap_mode = 3
 
 [node name="CloseInfantButton" type="Button" parent="InfantPanel/InfantMargin/InfantContent/InfantHeaderRow" unique_id=1142441444]
 custom_minimum_size = Vector2(80, 60)
@@ -838,21 +852,27 @@ theme_override_constants/separation = 10
 
 [node name="CurrentStageLabel" type="Label" parent="InfantPanel/InfantMargin/InfantContent/StatusCard/StatusMargin/StatusBox" unique_id=2003773398]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 28
 text = "Life Stage: Alex Miller (Age 0)"
+autowrap_mode = 3
 
 [node name="CurrentJobLabel" type="Label" parent="InfantPanel/InfantMargin/InfantContent/StatusCard/StatusMargin/StatusBox" unique_id=2119090330]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.2, 0.83, 0.6, 1)
 theme_override_font_sizes/font_size = 24
 text = "Current Job: Unemployed"
+autowrap_mode = 3
 
 [node name="CurrentEduLabel" type="Label" parent="InfantPanel/InfantMargin/InfantContent/StatusCard/StatusMargin/StatusBox" unique_id=2119090331]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.78, 0.82, 1, 1)
 theme_override_font_sizes/font_size = 24
 text = "Current Education: None (Preschool)"
+autowrap_mode = 3
 
 [node name="GradesContainer" type="VBoxContainer" parent="InfantPanel/InfantMargin/InfantContent/StatusCard/StatusMargin/StatusBox" unique_id=2119090332]
 layout_mode = 2
@@ -860,9 +880,11 @@ theme_override_constants/separation = 4
 
 [node name="GradesLabel" type="Label" parent="InfantPanel/InfantMargin/InfantContent/StatusCard/StatusMargin/StatusBox/GradesContainer" unique_id=2119090333]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.22, 0.77, 0.99, 1)
 theme_override_font_sizes/font_size = 22
 text = "Academic Grades: 75% (B)"
+autowrap_mode = 3
 
 [node name="GradesProgressBar" type="ProgressBar" parent="InfantPanel/InfantMargin/InfantContent/StatusCard/StatusMargin/StatusBox/GradesContainer" unique_id=2119090334]
 custom_minimum_size = Vector2(0, 24)
@@ -898,14 +920,17 @@ text = "✨ Unique Events"
 
 [node name="HistoryHeaderLabel" type="Label" parent="InfantPanel/InfantMargin/InfantContent" unique_id=1335347047]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
 theme_override_font_sizes/font_size = 28
 text = "LIFE HISTORY & MILESTONES"
+autowrap_mode = 3
 
 [node name="HistoryScroll" type="ScrollContainer" parent="InfantPanel/InfantMargin/InfantContent" unique_id=858582819]
 custom_minimum_size = Vector2(0, 520)
 layout_mode = 2
 size_flags_vertical = 3
+horizontal_scroll_mode = 0
 
 [node name="HistoryList" type="VBoxContainer" parent="InfantPanel/InfantMargin/InfantContent/HistoryScroll" unique_id=966034552]
 layout_mode = 2
@@ -975,6 +1000,7 @@ First National Pixel Bank"
 [node name="AssetsScroll" type="ScrollContainer" parent="AssetsPanel/AssetsMargin/AssetsContent" unique_id=1706536333]
 layout_mode = 2
 size_flags_vertical = 3
+horizontal_scroll_mode = 0
 
 [node name="AssetsList" type="VBoxContainer" parent="AssetsPanel/AssetsMargin/AssetsContent/AssetsScroll" unique_id=357184857]
 layout_mode = 2
@@ -1089,6 +1115,7 @@ text = "✕"
 [node name="BankScroll" type="ScrollContainer" parent="BankPanel/BankMargin/BankContent" unique_id=128471928]
 layout_mode = 2
 size_flags_vertical = 3
+horizontal_scroll_mode = 0
 
 [node name="BankList" type="VBoxContainer" parent="BankPanel/BankMargin/BankContent/BankScroll" unique_id=892347123]
 layout_mode = 2
@@ -1177,6 +1204,7 @@ text = "✕"
 [node name="RelScroll" type="ScrollContainer" parent="RelationshipsPanel/RelMargin/RelContent" unique_id=158802062]
 layout_mode = 2
 size_flags_vertical = 3
+horizontal_scroll_mode = 0
 
 [node name="RelList" type="VBoxContainer" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll" unique_id=875942829]
 layout_mode = 2
@@ -1316,6 +1344,7 @@ text = "✕"
 [node name="ActScroll" type="ScrollContainer" parent="ActivitiesPanel/ActMargin/ActContent" unique_id=181154892]
 layout_mode = 2
 size_flags_vertical = 3
+horizontal_scroll_mode = 0
 
 [node name="ActList" type="VBoxContainer" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll" unique_id=1644637230]
 layout_mode = 2

@@ -1365,6 +1365,7 @@ func update_history_panel() -> void:
 
 		count += 1
 		var card := PanelContainer.new()
+		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var card_style := StyleBoxFlat.new()
 		if is_milestone:
 			card_style.bg_color = Color("#17120a")
@@ -1410,6 +1411,7 @@ func update_history_panel() -> void:
 		var desc_lbl := Label.new()
 		desc_lbl.text = str(entry.get("text", ""))
 		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		desc_lbl.add_theme_font_size_override("font_size", 22)
 		desc_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
 		vbox.add_child(desc_lbl)
@@ -1425,6 +1427,7 @@ func update_history_panel() -> void:
 		else:
 			empty.text = "No life events recorded yet.\nYour milestones, achievements, and unique choices will appear here."
 		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		empty.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		empty.add_theme_font_size_override("font_size", 24)
 		empty.add_theme_color_override("font_color", Color("#94a3b8"))
 		history_list.add_child(empty)
@@ -1468,15 +1471,21 @@ func update_character_panel() -> void:
 func update_infant_panel() -> void:
 	var infant_title: Label = get_node_or_null("InfantPanel/InfantMargin/InfantContent/InfantHeaderRow/InfantTitle")
 	if infant_title != null:
+		infant_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		infant_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		infant_title.text = "%s & LIFE OVERVIEW" % PlayerData.get_stage_name().to_upper()
 
 	# 1. Life Stage: NAME AND AGE
 	if current_stage_label != null:
+		current_stage_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		current_stage_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var name_str: String = PlayerData.first_name if PlayerData.first_name != "" else "Character"
 		current_stage_label.text = "👤 %s  •  %s %s (Age %d)" % [name_str, PlayerData.get_stage_icon(), PlayerData.get_stage_name(), PlayerData.age]
 
 	# 4. CURRENT JOB
 	if current_job_label != null:
+		current_job_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		current_job_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		if PlayerData.job_title != "":
 			current_job_label.text = "💼 Current Job: %s at %s ($%s/yr)" % [PlayerData.job_title, PlayerData.job_company, _format_number(PlayerData.job_salary)]
 			current_job_label.add_theme_color_override("font_color", Color("#34d399"))
@@ -1486,10 +1495,14 @@ func update_infant_panel() -> void:
 
 	# 5. CURRENT EDUCATION LEVEL
 	if current_edu_label != null:
+		current_edu_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		current_edu_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		current_edu_label.text = "🎓 Current Education: %s" % PlayerData.get_education_display_string()
 
 	# 6. CURRENT GRADES & GRADES PROGRESS BAR
 	if grades_label != null:
+		grades_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		grades_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		if PlayerData.age < 3:
 			grades_label.text = "📊 Academic Readiness: %d%% • Kindergarten begins at Age 3" % PlayerData.grades
 			grades_label.add_theme_color_override("font_color", Color("#38bdf8"))
