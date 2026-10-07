@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://b7vux8q191c4d"]
+[gd_scene format=3 uid="uid://b7vux8q2a1c4d"]
 
 [ext_resource type="Script" path="res://tests/ui_layout_and_panel_fixes_test.gd" id="1_test"]
 

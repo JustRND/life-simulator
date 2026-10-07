@@ -1,10 +1,6 @@
 extends Node
 
 const MainScreenScene = preload("res://scenes/main/main_screen.tscn")
-const BusinessManager = preload("res://scripts/economy/business_manager.gd")
-const LicenseManager = preload("res://scripts/economy/license_manager.gd")
-const AssetCatalog = preload("res://scripts/economy/asset_catalog.gd")
-const CharityManager = preload("res://scripts/economy/charity_manager.gd")
 
 func _ready() -> void:
 	print("--- BEGIN UI LAYOUT & PANEL FIXES VERIFICATION ---")

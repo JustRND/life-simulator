@@ -3,16 +3,10 @@ const CreationOptions = preload("res://scripts/core/creation_options.gd")
 const NameCatalog = preload("res://scripts/core/name_catalog.gd")
 const PortraitCatalog = preload("res://scripts/core/portrait_catalog.gd")
 const BirthStoryGenerator = preload("res://scripts/core/birth_story_generator.gd")
-const EducationCatalog = preload("res://scripts/education/education_catalog.gd")
 const RomanceRules = preload("res://scripts/core/romance_rules.gd")
 const RelationshipExtras = preload("res://scripts/core/relationship_extras.gd")
 const CareerProgression = preload("res://scripts/economy/career_progression.gd")
 const UndergroundProgression = preload("res://scripts/economy/underground_progression.gd")
-const AssetCatalog = preload("res://scripts/economy/asset_catalog.gd")
-const LicenseManager = preload("res://scripts/economy/license_manager.gd")
-const FreelanceManager = preload("res://scripts/economy/freelance_manager.gd")
-const BusinessManager = preload("res://scripts/economy/business_manager.gd")
-const CharityManager = preload("res://scripts/economy/charity_manager.gd")
 
 
 var portrait: TextureRect
@@ -2120,13 +2114,13 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		row_name_price.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		cv.add_child(row_name_price)
 
-		var name_label := Label.new()
-		name_label.text = item_name
-		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		name_label.add_theme_font_size_override("font_size", 28)
-		name_label.add_theme_color_override("font_color", Color("#f8fafc"))
-		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		row_name_price.add_child(name_label)
+		var item_name_lbl := Label.new()
+		item_name_lbl.text = item_name
+		item_name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		item_name_lbl.add_theme_font_size_override("font_size", 28)
+		item_name_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+		item_name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		row_name_price.add_child(item_name_lbl)
 
 		var price_label := Label.new()
 		price_label.text = "$%s" % _format_number(price)
@@ -3478,20 +3472,24 @@ func _show_proposal_modal() -> void:
 				selected.append(id)
 			else:
 				selected.erase(id)
-			refresh.call()
+			if refresh.is_valid():
+				refresh.call()
 		)
 		list.add_child(button)
 	list.add_child(total)
 	list.add_child(confirm)
-	refresh.call()
+	if refresh.is_valid():
+		refresh.call()
 
 
 func _apply_romance_icon(button: Button, icon_name: String) -> void:
-	button.icon = load("res://assets/ui/romance/%s.svg" % icon_name)
-	button.expand_icon = true
-	button.add_theme_constant_override("icon_max_width", 64)
-	button.add_theme_constant_override("h_separation", 18)
-	button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	var path := "res://assets/ui/romance/%s.svg" % icon_name
+	if ResourceLoader.exists(path):
+		button.icon = load(path)
+		button.expand_icon = true
+		button.add_theme_constant_override("icon_max_width", 64)
+		button.add_theme_constant_override("h_separation", 18)
+		button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
 
 func _show_partner_gift_modal() -> void:
@@ -3551,7 +3549,8 @@ func _show_wedding_modal() -> void:
 				button.text = ("[SELECTED] " if on else "") + caption
 				if on:
 					selected[section] = index
-					refresh.call()
+					if refresh.is_valid():
+						refresh.call()
 			)
 			list.add_child(button)
 			button.button_pressed = index == 0
@@ -3562,7 +3561,8 @@ func _show_wedding_modal() -> void:
 			romance_action_modal_overlay.queue_free()
 		_show_postpone_modal()
 	))
-	refresh.call()
+	if refresh.is_valid():
+		refresh.call()
 
 
 func _show_postpone_modal() -> void:
@@ -7056,7 +7056,7 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	}
 
 
-func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callable) -> Button:
+func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callable = Callable()) -> Button:
 	var btn := Button.new()
 	btn.text = btn_text
 	btn.custom_minimum_size.y = 56
@@ -7083,7 +7083,8 @@ func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callabl
 	hover.border_color = Color("#ffffff")
 	btn.add_theme_stylebox_override("hover", hover)
 
-	btn.pressed.connect(on_click)
+	if on_click.is_valid():
+		btn.pressed.connect(on_click)
 	return btn
 
 
@@ -8446,7 +8447,7 @@ func _show_casino_modal() -> void:
 	casino_modal_overlay.visible = true
 
 
-func _play_dice_roll(prediction: String, modal: Dictionary) -> void:
+func _play_dice_roll(prediction: String, _modal: Dictionary = {}) -> void:
 	if PlayerData.casino_plays_this_year >= 5:
 		return
 	if PlayerData.money < current_dice_bet_amount:

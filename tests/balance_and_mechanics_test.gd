@@ -1,10 +1,5 @@
 extends Node
 const RelationshipExtras = preload("res://scripts/core/relationship_extras.gd")
-const AssetCatalog = preload("res://scripts/economy/asset_catalog.gd")
-const LicenseManager = preload("res://scripts/economy/license_manager.gd")
-const FreelanceManager = preload("res://scripts/economy/freelance_manager.gd")
-const BusinessManager = preload("res://scripts/economy/business_manager.gd")
-const EducationCatalog = preload("res://scripts/education/education_catalog.gd")
 
 
 func _ready() -> void:
