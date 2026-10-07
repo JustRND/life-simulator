@@ -1,4 +1,5 @@
 extends Node
+const RelationshipExtras = preload("res://scripts/core/relationship_extras.gd")
 
 func _ready() -> void:
 	print("--- BEGIN BALANCE & NEW MECHANICS TEST ---")
@@ -6,6 +7,7 @@ func _ready() -> void:
 	test_parent_anti_spam()
 	test_smarts_degradation_and_maintenance()
 	test_dating_and_anti_spam()
+	test_event_popup_chance()
 	print("--- ALL BALANCE & NEW MECHANICS TESTS PASSED! ---")
 	get_tree().quit(0)
 
@@ -227,13 +229,14 @@ func test_dating_and_anti_spam() -> void:
 	# 3. Partner Gift (once per year)
 	assert(PlayerData.last_partner_gift_age == -1, "last_partner_gift_age should initially be -1")
 	var money_before_gift: int = PlayerData.money
-	main_scene._interact_partner("gift")
+	var gift_res := RelationshipExtras.give_gift(PlayerData, 0)
+	assert(not gift_res.is_empty(), "Gift giving should succeed")
 	assert(PlayerData.last_partner_gift_age == 22, "last_partner_gift_age must update to current age 22")
-	assert(PlayerData.money == money_before_gift - 150, "Gift cost $150 deducted")
+	assert(PlayerData.money < money_before_gift, "Gift cost should be deducted")
 
 	# Spam gift at age 22 should be blocked
-	main_scene._interact_partner("gift")
-	assert(PlayerData.money == money_before_gift - 150, "Spamming partner gift must be blocked!")
+	var spam_res := RelationshipExtras.give_gift(PlayerData, 0)
+	assert(spam_res.is_empty(), "Spamming partner gift must be blocked!")
 
 	# 4. Propose (locked once proposed that year)
 	assert(PlayerData.last_partner_propose_age == -1, "last_partner_propose_age should initially be -1")
@@ -329,3 +332,54 @@ func test_dating_and_anti_spam() -> void:
 
 	main_scene.queue_free()
 	print("✔ Test 4: Dating anti-spam, 2-year baby interval, breakup cooldown, clinic, casino limits verified")
+
+
+func test_event_popup_chance() -> void:
+	SaveManager.delete_save()
+	var main_scene = load("res://scenes/main/main_screen.tscn").instantiate()
+	add_child(main_scene)
+
+	PlayerData.reset_player()
+	PlayerData.age = 20
+
+	# 1. With 0% chance, no event popup ever appears
+	main_scene.annual_event_popup_chance = 0.0
+	for i in range(20):
+		main_scene.current_event = null
+		main_scene.trigger_event()
+		assert(main_scene.current_event == null, "Event should never trigger when chance is 0.0!")
+		assert(not main_scene.event_overlay.visible, "Event overlay must stay hidden!")
+		assert(not main_scene.age_button.disabled, "Age button must remain enabled during quiet years!")
+
+	# 2. With 100% chance, event triggers when eligible event exists
+	main_scene.annual_event_popup_chance = 1.0
+	main_scene.current_event = null
+	main_scene.trigger_event()
+	assert(main_scene.current_event != null, "Event should trigger when chance is 1.0 and eligible events exist!")
+	assert(main_scene.event_overlay.visible, "Event overlay must become visible!")
+	assert(main_scene.age_button.disabled, "Age button must be disabled while event popup is open!")
+
+	# Close event
+	main_scene.event_overlay.visible = false
+	main_scene.current_event = null
+	main_scene.age_button.disabled = false
+
+	# 3. With default 45% chance, verify non-100% distribution across aging steps
+	main_scene.annual_event_popup_chance = 0.45
+	var event_count := 0
+	var trials := 500
+	for i in range(trials):
+		main_scene.current_event = null
+		main_scene.event_overlay.visible = false
+		main_scene.trigger_event()
+		if main_scene.current_event != null:
+			event_count += 1
+
+	var rate: float = float(event_count) / float(trials)
+	print("  Event popup rate across " + str(trials) + " trials: " + str(snapped(rate * 100.0, 0.1)) + "% (Target ~45%)")
+	assert(rate >= 0.35 and rate <= 0.55, "Event rate must be reasonably close to 45% (got " + str(rate) + ")")
+	assert(rate < 0.90, "Events must NOT always trigger every year!")
+
+	main_scene.queue_free()
+	print("✔ Test 5: Chance-based event popups (not popping up every year) verified")
+

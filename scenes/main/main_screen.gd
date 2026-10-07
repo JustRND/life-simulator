@@ -5,6 +5,7 @@ const PortraitCatalog = preload("res://scripts/core/portrait_catalog.gd")
 const BirthStoryGenerator = preload("res://scripts/core/birth_story_generator.gd")
 const EducationCatalog = preload("res://scripts/education/education_catalog.gd")
 const RomanceRules = preload("res://scripts/core/romance_rules.gd")
+const RelationshipExtras = preload("res://scripts/core/relationship_extras.gd")
 const CareerProgression = preload("res://scripts/economy/career_progression.gd")
 const UndergroundProgression = preload("res://scripts/economy/underground_progression.gd")
 
@@ -18,6 +19,7 @@ var creation_avatar_desc: Label
 
 var current_event = null
 var current_event_choices: Array = []
+var annual_event_popup_chance: float = 0.45
 
 # Profile Strip Nodes
 @onready var avatar_button: Button = $ProfileStrip/ProfileMargin/ProfileRow/AvatarButton
@@ -669,6 +671,12 @@ func age_up() -> void:
 
 	# 11. Relationships Aging, Neglect & Consequences
 	_process_relationships_aging()
+	if not PlayerData.pregnancy.is_empty():
+		var baby_female := randf() < 0.5
+		var baby_name := NameCatalog.random_name(PlayerData.birthplace if not PlayerData.birthplace.is_empty() else "United States", baby_female).split(" ")[0]
+		var birth := RelationshipExtras.deliver_due_baby(PlayerData, baby_name, "FEMALE" if baby_female else "MALE")
+		if not birth.is_empty():
+			add_life_event(birth, "family")
 
 	trigger_event()
 	update_ui()
@@ -895,6 +903,24 @@ func _on_age_button_pressed() -> void:
 
 
 func trigger_event() -> void:
+	if PlayerData.is_dead:
+		return
+
+	# Chance-based event popups: Events don't always pop up every year to avoid feeling spammy.
+	# Some years are peaceful, uneventful, and let the player focus on gameplay choices.
+	if randf() > annual_event_popup_chance:
+		current_event = null
+		current_event_choices.clear()
+		age_button.disabled = false
+		return
+
+	var carrier := RelationshipExtras.pregnancy_carrier(PlayerData)
+	if not carrier.is_empty() and randf() < 0.08:
+		current_event = {"id": "unplanned_pregnancy", "title": "UNEXPECTED PREGNANCY", "unplanned_pregnancy": true,
+			"text": "%s unexpectedly pregnant. You had not planned to start a family before marriage, and the news brings anxiety and tension with your parents." % ("You are" if carrier == "player" else PlayerData.get_partner_name() + " is")}
+		current_event_choices = [{"text": "Take time to process the news", "description": "Your happiness -12 • Partner happiness -8 • Living parent relationships -8"}]
+		show_event_popup()
+		return
 	if not PlayerData.is_dead and not PlayerData.is_in_prison and PlayerData.age >= 18 and not PlayerData.has_partner() and randf() < 0.25:
 		var candidate := _generate_dating_candidate()
 		var venues: Array[String] = ["a coffee date", "a picnic in the park", "a night at the arcade", "a walk through the night market"]
@@ -1035,10 +1061,12 @@ func choose_event_option(choice_index: int) -> void:
 	PlayerData.apply_effects(choice.get("effects", {}))
 
 	var result_text: String = str(choice.get("result", ""))
+	if current_event.has("unplanned_pregnancy"):
+		result_text = RelationshipExtras.begin_unplanned_pregnancy(PlayerData)
 	if current_event.has("candidate"):
 		result_text = RomanceRules.date_result(PlayerData, current_event.candidate, bool(choice.get("accept_date", false)), randf())
 	if result_text != "":
-		add_life_event(result_text, "relationship" if current_event.has("candidate") else "event")
+		add_life_event(result_text, "family" if current_event.has("unplanned_pregnancy") else ("relationship" if current_event.has("candidate") else "event"))
 
 	PlayerData.record_event(event_id)
 
@@ -2454,7 +2482,7 @@ func _setup_partner_card_ui() -> void:
 		var actions: Array = [
 			["Spend Time", "spend_time", "#0284c7"],
 			["Compliment", "compliment", "#8b5cf6"],
-			["Gift ($150)", "gift", "#10b981"]
+			["Choose Gift", "gift", "#10b981"]
 		]
 
 		if p_status in ["Boyfriend", "Girlfriend"]:
@@ -2475,8 +2503,7 @@ func _setup_partner_card_ui() -> void:
 
 		var break_word := "Divorce" if p_status in ["Wife", "Husband"] else "Break Up"
 		actions.append(["💔 " + break_word, "breakup", "#ef4444"])
-		if p_status in ["Wife", "Husband"] or p_rel >= 60:
-			actions.append(["🍼 Have Baby", "have_baby", "#ec4899"])
+		actions.append(["🍼 Have Baby", "have_baby", "#ec4899"])
 
 		for act in actions:
 			var btn := Button.new()
@@ -2498,7 +2525,7 @@ func _setup_partner_card_ui() -> void:
 			elif act_key == "gift":
 				if PlayerData.last_partner_gift_age == PlayerData.age:
 					is_locked = true
-					button_title = "Gift ($150) (Used)"
+					button_title = "Gift (Used)"
 					lock_tooltip = "Already gave a gift to your partner this year. Available again next year."
 			elif act_key == "propose":
 				if PlayerData.last_partner_propose_age == PlayerData.age:
@@ -2511,7 +2538,15 @@ func _setup_partner_card_ui() -> void:
 					button_title = "💔 " + break_word + " (Locked)"
 					lock_tooltip = "Already broke up/divorced this year. Available again next year."
 			elif act_key == "have_baby":
-				if PlayerData.last_baby_age != -1 and (PlayerData.age - PlayerData.last_baby_age < 2):
+				if p_status not in ["Wife", "Husband"]:
+					is_locked = true
+					button_title = "Have Baby (Marry First)"
+					lock_tooltip = "Planned babies unlock after marriage."
+				elif not PlayerData.pregnancy.is_empty():
+					is_locked = true
+					button_title = "Baby Expected"
+					lock_tooltip = "A baby is already expected next year."
+				elif PlayerData.last_baby_age != -1 and (PlayerData.age - PlayerData.last_baby_age < 2):
 					var wait_years: int = 2 - (PlayerData.age - PlayerData.last_baby_age)
 					is_locked = true
 					button_title = "🍼 Have Baby (%d-Yr Wait)" % wait_years
@@ -2761,27 +2796,8 @@ func _interact_partner(action: String) -> void:
 			], "relationship")
 
 		"gift":
-			if PlayerData.last_partner_gift_age == PlayerData.age:
-				add_life_event("⏳ You have already given %s a gift this year. Available again next year!" % p_name, "relationship")
-				update_ui()
-				return
-			if PlayerData.money < 150:
-				add_life_event("You cannot afford the $150 gift for %s." % p_name, "finance")
-				show_tab("timeline")
-				return
-			PlayerData.last_partner_gift_age = PlayerData.age
-			PlayerData.money -= 150
-			var rel_gain := randi_range(14, 18)
-			var happy_gain := 8
-			PlayerData.set_partner_relationship(p_rel + rel_gain)
-			PlayerData.happiness = mini(100, PlayerData.happiness + happy_gain)
-			PlayerData.last_partner_interact_age = PlayerData.age
-			add_life_event("You surprised your %s, %s, with a thoughtful gift ($150)! They were ecstatic. Relationship +%d%%, Happiness +%d%%." % [
-				p_status.to_lower(),
-				p_name,
-				rel_gain,
-				happy_gain
-			], "relationship")
+			_show_partner_gift_modal()
+			return
 
 		"propose":
 			if PlayerData.last_partner_propose_age == PlayerData.age:
@@ -2868,6 +2884,7 @@ func _show_proposal_modal() -> void:
 		var message := RomanceRules.propose(PlayerData, selected, randf())
 		_finish_romance_action(message)
 	)
+	_apply_romance_icon(confirm, "present")
 	var refresh := func():
 		var cost := 0
 		var joy := 0
@@ -2880,6 +2897,7 @@ func _show_proposal_modal() -> void:
 		var gift: Dictionary = RomanceRules.GIFTS[id]
 		var gift_text := "%s • $%s\nPartner happiness +%d" % [gift.name, _format_number(int(gift.cost)), int(gift.joy)]
 		var button := _create_cyber_button(gift_text, Color("#ec4899"), func(): pass)
+		_apply_romance_icon(button, ["wildflowers", "roses", "silver_ring", "diamond_ring", "platinum_ring"][id])
 		button.toggle_mode = true
 		var selected_style := StyleBoxFlat.new()
 		selected_style.bg_color = Color("#302040")
@@ -2902,29 +2920,83 @@ func _show_proposal_modal() -> void:
 	refresh.call()
 
 
+func _apply_romance_icon(button: Button, icon_name: String) -> void:
+	button.icon = load("res://assets/ui/romance/%s.svg" % icon_name)
+	button.expand_icon = true
+	button.add_theme_constant_override("icon_max_width", 64)
+	button.add_theme_constant_override("h_separation", 18)
+	button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+
+
+func _show_partner_gift_modal() -> void:
+	if PlayerData.is_dead or not PlayerData.has_partner():
+		return
+	var modal := _create_cyber_modal("A LITTLE SOMETHING", "Choose an everyday gift for %s. One gift per year; proposal gifts are separate." % PlayerData.get_partner_name(), Color("#34d399"))
+	romance_action_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+	for id in range(RelationshipExtras.GIFTS.size()):
+		var gift: Dictionary = RelationshipExtras.GIFTS[id]
+		var button := _create_cyber_button("%s • $%s\nPartner happiness +%d • Relationship +%d • Your happiness +4" % [gift.name, _format_number(int(gift.cost)), int(gift.joy), int(gift.bond)], Color("#34d399"), func():
+			_finish_romance_action(RelationshipExtras.give_gift(PlayerData, id))
+		)
+		_apply_romance_icon(button, str(gift.icon))
+		button.disabled = PlayerData.last_partner_gift_age == PlayerData.age or PlayerData.money < int(gift.cost)
+		list.add_child(button)
+
+
 func _show_wedding_modal() -> void:
 	if not RomanceRules.can_marry(PlayerData):
 		return
-	var modal := _create_cyber_modal("WEDDING CEREMONY", "Plan your wedding with %s, or postpone until you feel ready." % PlayerData.get_partner_name(), Color("#38bdf8"))
+	var modal := _create_cyber_modal("PLAN YOUR WEDDING", "Choose a venue, celebration style and guest list for your wedding with %s. Each choice changes the total price and both partners' happiness." % PlayerData.get_partner_name(), Color("#38bdf8"))
 	romance_action_modal_overlay = modal.overlay
 	var list: VBoxContainer = modal.list
-	var ceremonies: Array = [
-		{"name": "City Hall Wedding", "cost": 300},
-		{"name": "Grand Neon Cathedral & Banquet", "cost": 5000}
-	]
-	for ceremony in ceremonies:
-		var cost := int(ceremony.cost)
-		var ceremony_name := str(ceremony.name)
-		var button := _create_cyber_button("%s • $%s" % [ceremony_name, _format_number(cost)], Color("#38bdf8"), func():
-			_finish_romance_action(RomanceRules.marry(PlayerData, cost, ceremony_name), "milestone")
-		)
-		button.disabled = PlayerData.money < cost
-		list.add_child(button)
+	var selected: Array[int] = [0, 0, 0]
+	var total := Label.new()
+	total.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	total.add_theme_font_size_override("font_size", 26)
+	var confirm := _create_cyber_button("Celebrate & marry", Color("#38bdf8"), func():
+		_finish_romance_action(RelationshipExtras.celebrate_wedding(PlayerData, selected[0], selected[1], selected[2]), "milestone")
+	)
+	_apply_romance_icon(confirm, "diamond_ring")
+	var refresh := func():
+		var quote := RelationshipExtras.wedding_quote(selected[0], selected[1], selected[2])
+		total.text = "Total: $%s • Both partners' happiness +%d (max 100)\nAvailable cash: $%s" % [_format_number(int(quote.cost)), int(quote.joy), _format_number(PlayerData.money)]
+		confirm.disabled = PlayerData.money < int(quote.cost)
+	var headings: Array[String] = ["VENUE", "CELEBRATION STYLE", "GUEST LIST"]
+	var options: Array = [RelationshipExtras.VENUES, RelationshipExtras.STYLES, RelationshipExtras.GUESTS]
+	for section in range(options.size()):
+		var heading := Label.new()
+		heading.text = headings[section]
+		heading.add_theme_font_size_override("font_size", 28)
+		heading.add_theme_color_override("font_color", Color("#64e6ff"))
+		list.add_child(heading)
+		var group := ButtonGroup.new()
+		for index in range(options[section].size()):
+			var option: Dictionary = options[section][index]
+			var caption := "%s • $%s • Happiness +%d" % [option.name, _format_number(int(option.cost)), int(option.joy)]
+			var button := _create_cyber_button(caption, Color("#38bdf8"), func(): pass)
+			button.toggle_mode = true
+			button.button_group = group
+			var selected_style := load_style_box_cyber_card(Color("#64e6ff"))
+			selected_style.bg_color = Color("#19354c")
+			button.add_theme_stylebox_override("pressed", selected_style)
+			button.add_theme_stylebox_override("hover_pressed", selected_style)
+			button.toggled.connect(func(on: bool):
+				button.text = ("[SELECTED] " if on else "") + caption
+				if on:
+					selected[section] = index
+					refresh.call()
+			)
+			list.add_child(button)
+			button.button_pressed = index == 0
+	list.add_child(total)
+	list.add_child(confirm)
 	list.add_child(_create_cyber_button("Postpone wedding", Color("#8b5cf6"), func():
 		if is_instance_valid(romance_action_modal_overlay):
 			romance_action_modal_overlay.queue_free()
 		_show_postpone_modal()
 	))
+	refresh.call()
 
 
 func _show_postpone_modal() -> void:

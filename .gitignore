@@ -8,3 +8,6 @@ Thumbs.db
 
 # VS Code local settings
 .vscode/
+
+# Local scratch / test work
+work/
