@@ -59,15 +59,20 @@ func install(overlay: Control) -> void:
 	_load_identity()
 	var card := overlay.get_node("SettingsCard") as Control
 	card.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	card.offset_left = 40
-	card.offset_top = 40
-	card.offset_right = -40
-	card.offset_bottom = -40
+	card.offset_left = 0
+	card.offset_top = 260.0
+	card.offset_right = 0
+	card.offset_bottom = 0
 	var margin := card.get_node("SettingsMargin")
 	var content := margin.get_node("SettingsContent") as VBoxContainer
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 22)
+	column.add_theme_constant_override("separation", 24)
 	margin.add_child(column)
+
+	var header := content.get_node_or_null("SettingsHeader")
+	if header != null:
+		header.reparent(column)
+
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -75,16 +80,18 @@ func install(overlay: Control) -> void:
 	content.reparent(scroll)
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var account := _button("ACCOUNT / LOGIN", content, _open_account)
-	content.move_child(account, 3)
+	content.move_child(account, 2 if header != null else 3)
 	var terms := _button("Terms & Conditions", content, func(): _open_document("Terms & Conditions", TERMS))
-	content.move_child(terms, 4)
+	content.move_child(terms, 3 if header != null else 4)
 	var privacy := _button("Privacy Policy", content, func(): _open_document("Privacy Policy", PRIVACY))
-	content.move_child(privacy, 5)
-	var uid_label := _label("UID: " + local_uid, 21)
+	content.move_child(privacy, 4 if header != null else 5)
+	var uid_label := _label("UID: " + local_uid, 22)
 	uid_label.name = "UIDLabel"
 	uid_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(uid_label)
-	column.add_child(_label("Local profile • " + ("Saved on this device" if profile_persisted else "ID could not be saved; storage unavailable"), 20))
+	var local_prof_lbl := _label("Local profile • " + ("Saved on this device" if profile_persisted else "ID could not be saved; storage unavailable"), 20)
+	local_prof_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	column.add_child(local_prof_lbl)
 	_build_page()
 
 func _load_identity() -> void:
@@ -105,17 +112,18 @@ func _build_page() -> void:
 	get_parent().add_child(page)
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.z_index = 91
-	page.add_theme_stylebox_override("panel", _style(Color("#090f1d"), Color("#64e6ff"), 36))
+	page.add_theme_stylebox_override("panel", _style(Color(0.055, 0.085, 0.17, 0.98), Color("#244872"), 36))
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 24)
 	page.add_child(column)
 	var header := HBoxContainer.new()
 	column.add_child(header)
-	title = _label("ACCOUNT", 38)
+	title = _label("ACCOUNT", 40)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
-	var close := _button("X", header, _close_page)
-	close.custom_minimum_size.x = 84
+	var close := _button("✕", header, _close_page)
+	close.custom_minimum_size = Vector2(80, 60)
+	close.add_theme_font_size_override("font_size", 28)
 	close.tooltip_text = "Back to Settings"
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -126,6 +134,7 @@ func _build_page() -> void:
 	body.add_theme_constant_override("separation", 24)
 	scroll.add_child(body)
 	page.hide()
+	preload("res://scripts/ui/panel_pull_up.gd").watch(page)
 
 func _clear_body() -> void:
 	_clear_credentials()

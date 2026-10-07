@@ -18,6 +18,7 @@ func _ready() -> void:
 	add_theme_stylebox_override("panel", _style(Color("#090f1d"), Color("#090f1d"), 0))
 	_build()
 	visible = false
+	preload("res://scripts/ui/panel_pull_up.gd").watch(self)
 
 func install_button(row: HBoxContainer) -> void:
 	_shop_button = Button.new()

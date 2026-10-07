@@ -1592,33 +1592,28 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.012, 0.059, 0.094, 0.76)
+color = Color(0, 0, 0, 0)
 
 [node name="SettingsCard" type="PanelContainer" parent="SettingsOverlay" unique_id=1769669262]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -400.0
-offset_top = -380.0
-offset_right = 400.0
-offset_bottom = 380.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 260.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = SubResource("event_card")
+theme_override_styles/panel = SubResource("panel_paper")
 
 [node name="SettingsMargin" type="MarginContainer" parent="SettingsOverlay/SettingsCard" unique_id=551827548]
 layout_mode = 2
-theme_override_constants/margin_left = 36
-theme_override_constants/margin_top = 32
-theme_override_constants/margin_right = 36
-theme_override_constants/margin_bottom = 32
+theme_override_constants/margin_left = 42
+theme_override_constants/margin_top = 36
+theme_override_constants/margin_right = 42
+theme_override_constants/margin_bottom = 36
 
 [node name="SettingsContent" type="VBoxContainer" parent="SettingsOverlay/SettingsCard/SettingsMargin" unique_id=778650370]
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 24
 
 [node name="SettingsHeader" type="HBoxContainer" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent" unique_id=438779933]
 layout_mode = 2
@@ -1627,11 +1622,11 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
-theme_override_font_sizes/font_size = 38
-text = "⚙  SETTINGS"
+theme_override_font_sizes/font_size = 40
+text = "SETTINGS"
 
 [node name="CloseSettingsHeaderButton" type="Button" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/SettingsHeader" unique_id=321787064]
-custom_minimum_size = Vector2(70, 50)
+custom_minimum_size = Vector2(80, 60)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_colors/font_hover_color = Color(1, 0.35, 0.35, 1)

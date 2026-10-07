@@ -7,6 +7,24 @@ var _top := 0.0
 var _bottom := 0.0
 
 
+# One controller per surface so nested panels can finish independently.
+static func watch(panel: Control, visibility_source: Control = null) -> void:
+	if panel.has_meta("pull_up_controller"):
+		return
+	var controller = load("res://scripts/ui/panel_pull_up.gd").new()
+	panel.set_meta("pull_up_controller", controller)
+	var source := visibility_source if visibility_source != null else panel
+	source.visibility_changed.connect(func():
+		if source.is_visible_in_tree():
+			controller.play(panel)
+		else:
+			controller.cancel()
+	)
+	panel.tree_exiting.connect(controller.cancel)
+	if source.is_visible_in_tree():
+		controller.play(panel)
+
+
 func cancel() -> void:
 	if _tween != null and _tween.is_valid():
 		_tween.kill()

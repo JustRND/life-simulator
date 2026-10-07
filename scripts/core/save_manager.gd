@@ -3,8 +3,8 @@ extends Node
 const SAVE_PATH := "user://savegame.json"
 
 
-func save_game() -> void:
-	var save_data := {
+func capture_data() -> Dictionary:
+	return {
 		"first_name": PlayerData.first_name,
 		"birthplace": PlayerData.birthplace,
 		"gender": PlayerData.gender,
@@ -118,27 +118,33 @@ func save_game() -> void:
 		"will_recipient": PlayerData.will_recipient
 	}
 
-	var file := FileAccess.open(
-		SAVE_PATH,
-		FileAccess.WRITE
-	)
+func save_game(path: String = SAVE_PATH) -> bool:
+	var save_data := capture_data()
+	return write_data(path, save_data)
+
+
+func write_data(path: String, data: Dictionary) -> bool:
+	var file := FileAccess.open(path + ".tmp", FileAccess.WRITE)
 
 	if file == null:
 		push_error("Could not open save file.")
-		return
+		return false
 
-	file.store_string(JSON.stringify(save_data, "\t"))
+	file.store_string(JSON.stringify(data, "\t"))
+	file.flush()
+	var write_error := file.get_error()
 	file.close()
+	if write_error != OK:
+		return false
+	return DirAccess.rename_absolute(ProjectSettings.globalize_path(path + ".tmp"), ProjectSettings.globalize_path(path)) == OK
 
-	print("Game saved.")
 
-
-func load_game() -> bool:
-	if not FileAccess.file_exists(SAVE_PATH):
+func load_game(path: String = SAVE_PATH) -> bool:
+	if not FileAccess.file_exists(path):
 		return false
 
 	var file := FileAccess.open(
-		SAVE_PATH,
+		path,
 		FileAccess.READ
 	)
 
@@ -153,6 +159,8 @@ func load_game() -> bool:
 
 	if typeof(data) != TYPE_DICTIONARY:
 		push_error("Save file is invalid.")
+		return false
+	if not valid_data(data):
 		return false
 
 	PlayerData.first_name = str(data.get("first_name", ""))
@@ -288,6 +296,22 @@ func load_game() -> bool:
 
 	print("Game loaded.")
 	return true
+
+
+func valid_data(data: Dictionary) -> bool:
+	if not data.has("first_name") or not data.has("age") or not data.has("has_started_game"):
+		return false
+	var sample := capture_data()
+	for key in sample:
+		if not data.has(key):
+			continue # Older saves may omit newly added fields.
+		var expected := typeof(sample[key])
+		var actual := typeof(data[key])
+		if expected in [TYPE_INT, TYPE_FLOAT] and actual in [TYPE_INT, TYPE_FLOAT]:
+			continue
+		if expected != actual:
+			return false
+	return int(data.age) >= 0
 
 
 func delete_save() -> void:

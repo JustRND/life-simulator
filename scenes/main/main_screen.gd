@@ -51,6 +51,7 @@ var annual_event_popup_chance: float = 0.45
 @onready var validation_label: Label = $NewGamePanel/CenterContainer/CreationCard/NewGameContent/ValidationLabel
 
 # 4 Action Buttons flanking Age Button
+@onready var action_bar: PanelContainer = $SafeArea/MainColumn/ActionBar
 @onready var infant_button: Button = $SafeArea/MainColumn/ActionBar/ActionRow/InfantButton
 @onready var assets_button: Button = $SafeArea/MainColumn/ActionBar/ActionRow/AssetsButton
 @onready var relationships_button: Button = $SafeArea/MainColumn/ActionBar/ActionRow/RelationshipsButton
@@ -152,6 +153,10 @@ func _ready() -> void:
 	settings_pages.name = "SettingsPages"
 	add_child(settings_pages)
 	settings_pages.install(settings_overlay)
+	var pull_up = preload("res://scripts/ui/panel_pull_up.gd")
+	pull_up.watch(event_overlay.get_node("EventPanel"), event_overlay)
+	pull_up.watch(reset_confirmation_overlay.get_node("ConfirmCard"), reset_confirmation_overlay)
+	pull_up.watch(new_game_panel)
 
 	# Soft UI taps, including buttons created later by modal panels.
 	if get_node_or_null("ButtonSounds") == null:
@@ -186,6 +191,10 @@ func _ready() -> void:
 		hide_new_game_screen()
 		rebuild_life_feed()
 		update_ui()
+		if action_bar != null:
+			action_bar.visible = true
+		if age_button != null:
+			age_button.visible = true
 		if PlayerData.is_dead:
 			_show_death_screen(PlayerData.cause_of_death if PlayerData.cause_of_death != "" else "Health Complications")
 	else:
@@ -1288,6 +1297,10 @@ func _on_confirm_reset_pressed() -> void:
 
 
 func show_new_game_screen() -> void:
+	if action_bar != null:
+		action_bar.visible = false
+	if age_button != null:
+		age_button.visible = false
 	if name_input != null:
 		name_input.text = ""
 
@@ -1378,7 +1391,7 @@ func show_tab(tab_name: String) -> void:
 
 	panel_pull_up.cancel()
 	# Keep the main screen underneath the entering panel to avoid an empty flash.
-	var animated_tabs := ["infant", "assets", "relationships", "activities", "settings"]
+	var animated_tabs := ["infant", "assets", "relationships", "activities", "settings", "character", "bank"]
 	timeline_panel.visible = tab_name == "timeline" or tab_name in animated_tabs
 	character_panel.visible = tab_name == "character"
 	infant_panel.visible = tab_name == "infant"
@@ -1387,11 +1400,19 @@ func show_tab(tab_name: String) -> void:
 	relationships_panel.visible = tab_name == "relationships"
 	activities_panel.visible = tab_name == "activities"
 
+	var is_home: bool = (tab_name == "timeline")
+	if action_bar != null:
+		action_bar.visible = is_home
+	if age_button != null:
+		age_button.visible = is_home
+
 	if tab_name == "settings":
 		if settings_overlay != null:
 			settings_overlay.visible = true
 			panel_pull_up.play(settings_overlay.get_node("SettingsCard"))
 		return
+	elif settings_overlay != null:
+		settings_overlay.visible = false
 
 	if tab_name == "character":
 		update_character_panel()
@@ -1407,7 +1428,7 @@ func show_tab(tab_name: String) -> void:
 		_configure_button_contrasts()
 
 	_apply_translucent_scrollbars_recursive(self)
-	var opening_panels := {"infant": infant_panel, "assets": assets_panel, "relationships": relationships_panel, "activities": activities_panel}
+	var opening_panels := {"infant": infant_panel, "assets": assets_panel, "relationships": relationships_panel, "activities": activities_panel, "character": character_panel, "bank": bank_panel}
 	if opening_panels.has(tab_name):
 		panel_pull_up.play(opening_panels[tab_name])
 
@@ -7189,6 +7210,7 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	margin_outer.add_theme_constant_override("margin_top", 44)
 	margin_outer.add_theme_constant_override("margin_bottom", 44)
 	overlay.add_child(margin_outer)
+	preload("res://scripts/ui/panel_pull_up.gd").watch(margin_outer, overlay)
 
 	var card := PanelContainer.new()
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -9717,6 +9739,10 @@ func _play_dice_roll(prediction: String, _modal: Dictionary = {}) -> void:
 
 # --- 4. DEATH SCREEN SYSTEM ---
 func _show_death_screen(cause: String) -> void:
+	if action_bar != null:
+		action_bar.visible = false
+	if age_button != null:
+		age_button.visible = false
 	if death_screen_overlay != null and is_instance_valid(death_screen_overlay):
 		death_screen_overlay.queue_free()
 
@@ -9741,6 +9767,7 @@ func _show_death_screen(cause: String) -> void:
 	screen_margin.add_theme_constant_override("margin_top", 44)
 	screen_margin.add_theme_constant_override("margin_bottom", 44)
 	death_screen_overlay.add_child(screen_margin)
+	preload("res://scripts/ui/panel_pull_up.gd").watch(screen_margin, death_screen_overlay)
 
 	var card := PanelContainer.new()
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL

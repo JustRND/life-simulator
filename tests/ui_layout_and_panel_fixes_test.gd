@@ -12,6 +12,7 @@ func _ready() -> void:
 	test_vehicle_purchase_license_gating()
 	test_charity_activities_button_and_donations()
 	test_education_exploit_text_removal()
+	test_panel_bottom_bar_hiding_and_settings_fullscreen()
 	print("--- ALL UI LAYOUT & PANEL FIXES VERIFIED SUCCESSFULLY! ---")
 	get_tree().quit(0)
 
@@ -292,3 +293,68 @@ func test_education_exploit_text_removal() -> void:
 
 	screen.queue_free()
 	print("✔ Removal of exploit wording verified.")
+
+func test_panel_bottom_bar_hiding_and_settings_fullscreen() -> void:
+	print("Testing Bottom Bar Hiding When Panels Open & Full Screen Settings...")
+	var screen = MainScreenScene.instantiate()
+	add_child(screen)
+
+	PlayerData.age = 20
+
+	# 1. Timeline (home): action bar and age button must be visible
+	screen.show_tab("timeline")
+	assert(screen.action_bar != null, "ActionBar must exist")
+	assert(screen.age_button != null, "AgeButton must exist")
+	assert(screen.action_bar.visible == true, "ActionBar must be visible on timeline")
+	assert(screen.age_button.visible == true, "AgeButton must be visible on timeline")
+
+	# 2. When opening panels, bottom 5 buttons (ActionBar + AgeButton) must be hidden
+	var panels_to_test := ["activities", "relationships", "assets", "infant", "character", "bank", "settings"]
+	for p in panels_to_test:
+		screen.show_tab(p)
+		assert(screen.action_bar.visible == false, "ActionBar must be HIDDEN when %s panel is open" % p)
+		assert(screen.age_button.visible == false, "AgeButton must be HIDDEN when %s panel is open" % p)
+
+		# Returning to timeline restores the bottom row
+		if p == "settings":
+			screen._on_close_settings_button_pressed()
+		else:
+			screen._on_close_panel_button_pressed()
+		assert(screen.action_bar.visible == true, "ActionBar must be RESTORED after closing %s panel" % p)
+		assert(screen.age_button.visible == true, "AgeButton must be RESTORED after closing %s panel" % p)
+
+	# 3. Settings panel format matching ActivitiesPanel
+	var act_panel: PanelContainer = screen.activities_panel
+	var settings_card: PanelContainer = screen.settings_overlay.get_node("SettingsCard")
+	assert(settings_card != null, "SettingsCard must exist")
+
+	# Full-screen layout matching: offset_top == 260.0, anchor_bottom == 1.0, anchor_right == 1.0
+	assert(is_equal_approx(settings_card.offset_top, act_panel.offset_top), "SettingsCard offset_top (%f) must match ActivitiesPanel (%f)" % [settings_card.offset_top, act_panel.offset_top])
+	assert(settings_card.anchor_bottom == 1.0, "SettingsCard anchor_bottom must be 1.0")
+	assert(settings_card.anchor_right == 1.0, "SettingsCard anchor_right must be 1.0")
+
+	# Margins matching ActivitiesPanel (42, 36, 42, 36)
+	var settings_margin: MarginContainer = settings_card.get_node("SettingsMargin")
+	var act_margin: MarginContainer = act_panel.get_node("ActMargin")
+	assert(settings_margin.get_theme_constant("margin_left") == act_margin.get_theme_constant("margin_left"), "SettingsMargin left must match ActMargin")
+	assert(settings_margin.get_theme_constant("margin_top") == act_margin.get_theme_constant("margin_top"), "SettingsMargin top must match ActMargin")
+	assert(settings_margin.get_theme_constant("margin_right") == act_margin.get_theme_constant("margin_right"), "SettingsMargin right must match ActMargin")
+	assert(settings_margin.get_theme_constant("margin_bottom") == act_margin.get_theme_constant("margin_bottom"), "SettingsMargin bottom must match ActMargin")
+
+	# Title font size matching ActivitiesPanel (40)
+	var settings_title: Label = settings_card.find_child("SettingsTitle", true, false)
+	var act_title: Label = act_panel.find_child("ActTitle", true, false)
+	assert(settings_title != null and act_title != null, "Titles must exist")
+	assert(settings_title.get_theme_font_size("font_size") == act_title.get_theme_font_size("font_size"), "SettingsTitle font_size (%d) must match ActTitle (%d)" % [settings_title.get_theme_font_size("font_size"), act_title.get_theme_font_size("font_size")])
+
+	# Close button size & font size matching ActivitiesPanel
+	var close_settings_btn: Button = settings_card.find_child("CloseSettingsHeaderButton", true, false)
+	var close_act_btn: Button = act_panel.find_child("CloseActButton", true, false)
+	assert(close_settings_btn != null and close_act_btn != null, "Close buttons must exist")
+	assert(close_settings_btn.custom_minimum_size == close_act_btn.custom_minimum_size, "CloseSettingsHeaderButton size must match CloseActButton")
+	assert(close_settings_btn.get_theme_font_size("font_size") == close_act_btn.get_theme_font_size("font_size"), "Close button font sizes must match")
+	assert(close_settings_btn.text == "✕", "Close button text must be ✕")
+
+	screen.queue_free()
+	print("✔ Bottom bar hiding and full screen settings layout verified.")
+

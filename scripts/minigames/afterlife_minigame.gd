@@ -178,6 +178,7 @@ func _build_ui() -> void:
 	screen_margin.add_theme_constant_override("margin_top", 44)
 	screen_margin.add_theme_constant_override("margin_bottom", 44)
 	overlay.add_child(screen_margin)
+	preload("res://scripts/ui/panel_pull_up.gd").watch(screen_margin, overlay)
 
 	var card := PanelContainer.new()
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
