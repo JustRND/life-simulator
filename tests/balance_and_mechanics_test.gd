@@ -621,14 +621,14 @@ func test_asset_marketplace_and_ownership() -> void:
 	PlayerData.money = 10000
 	PlayerData.bank_savings = 250000
 
-	# 1. Verify Catalog structure and all 9 pixel art textures exist on disk
+	# 1. Verify Catalog structure and all pixel art textures exist on disk
 	var cars = AssetCatalog.get_items_by_category(AssetCatalog.CATEGORY_CARS)
 	var motos = AssetCatalog.get_items_by_category(AssetCatalog.CATEGORY_MOTORCYCLES)
 	var props = AssetCatalog.get_items_by_category(AssetCatalog.CATEGORY_PROPERTIES)
 
-	assert(cars.size() >= 3, "Catalog must contain at least 3 cars")
-	assert(motos.size() >= 3, "Catalog must contain at least 3 motorcycles")
-	assert(props.size() >= 3, "Catalog must contain at least 3 properties")
+	assert(cars.size() >= 16, "Catalog must contain at least 16 cars: found %d" % cars.size())
+	assert(motos.size() >= 16, "Catalog must contain at least 16 motorcycles: found %d" % motos.size())
+	assert(props.size() >= 16, "Catalog must contain at least 16 properties: found %d" % props.size())
 
 	for cat_items in [cars, motos, props]:
 		for item in cat_items:
@@ -657,8 +657,9 @@ func test_asset_marketplace_and_ownership() -> void:
 	var buy_car = AssetCatalog.buy_asset(PlayerData, "car_hatchback")
 	assert(buy_car["success"], "Should successfully purchase car_hatchback")
 	assert(PlayerData.owned_assets.size() == 1, "Player should now own 1 asset")
-	assert(PlayerData.money == 20000 - 3500, "Cash should be debited first for purchase")
-	assert(PlayerData.get_total_asset_value() == 3500, "Asset value should match purchase price initially")
+	var car_price: int = buy_car["asset"]["purchase_price"]
+	assert(PlayerData.money == 20000 - car_price, "Cash should be debited first for purchase")
+	assert(PlayerData.get_total_asset_value() == car_price, "Asset value should match purchase price initially")
 	assert(PlayerData.get_net_worth() == prev_nw, "Net worth should remain stable (cash converted to physical asset)")
 
 	var buy_moto = AssetCatalog.buy_asset(PlayerData, "moto_sportbike")

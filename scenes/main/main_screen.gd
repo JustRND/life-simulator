@@ -2028,73 +2028,119 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		card_style.bg_color = Color("#070e1c")
 		card_style.border_color = border_color.darkened(0.2)
 		card_style.set_border_width_all(2)
-		card_style.set_corner_radius_all(12)
+		card_style.set_corner_radius_all(14)
+		card_style.shadow_color = Color(0, 0, 0, 0.5)
+		card_style.shadow_size = 8
 		card.add_theme_stylebox_override("panel", card_style)
 		content_list.add_child(card)
 
 		var cm := MarginContainer.new()
-		cm.add_theme_constant_override("margin_left", 20)
-		cm.add_theme_constant_override("margin_right", 20)
-		cm.add_theme_constant_override("margin_top", 18)
-		cm.add_theme_constant_override("margin_bottom", 18)
+		cm.add_theme_constant_override("margin_left", 24)
+		cm.add_theme_constant_override("margin_right", 24)
+		cm.add_theme_constant_override("margin_top", 22)
+		cm.add_theme_constant_override("margin_bottom", 22)
 		card.add_child(cm)
 
-		var ch := HBoxContainer.new()
-		ch.add_theme_constant_override("separation", 22)
-		cm.add_child(ch)
+		var cv := VBoxContainer.new()
+		cv.add_theme_constant_override("separation", 14)
+		cm.add_child(cv)
 
-		# The Pixel Art Picture Preview
+		# 1. IMAGE (CENTERED AT THE TOP CENTER OF THE CARD)
+		var img_center := CenterContainer.new()
+		img_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cv.add_child(img_center)
+
+		var img_frame := PanelContainer.new()
+		var img_frame_style := StyleBoxFlat.new()
+		img_frame_style.bg_color = Color("#030712")
+		img_frame_style.border_color = border_color.darkened(0.35)
+		img_frame_style.set_border_width_all(2)
+		img_frame_style.set_corner_radius_all(10)
+		img_frame.add_theme_stylebox_override("panel", img_frame_style)
+		img_center.add_child(img_frame)
+
 		var p_img := TextureRect.new()
-		p_img.custom_minimum_size = Vector2(160, 160)
+		p_img.custom_minimum_size = Vector2(400, 300)
 		p_img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		p_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		p_img.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		if ResourceLoader.exists(img_path):
 			p_img.texture = load(img_path)
-		ch.add_child(p_img)
+		img_frame.add_child(p_img)
 
-		# Product Info Column
-		var pv := VBoxContainer.new()
-		pv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		pv.add_theme_constant_override("separation", 8)
-		ch.add_child(pv)
-
-		var title_row := HBoxContainer.new()
-		pv.add_child(title_row)
+		# 2. PRODUCT NAME  ------- PRICE
+		var row_name_price := HBoxContainer.new()
+		row_name_price.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cv.add_child(row_name_price)
 
 		var name_label := Label.new()
 		name_label.text = item_name
 		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		name_label.add_theme_font_size_override("font_size", 24)
+		name_label.add_theme_font_size_override("font_size", 28)
 		name_label.add_theme_color_override("font_color", Color("#f8fafc"))
 		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		title_row.add_child(name_label)
+		row_name_price.add_child(name_label)
 
 		var price_label := Label.new()
 		price_label.text = "$%s" % _format_number(price)
-		price_label.add_theme_font_size_override("font_size", 26)
+		price_label.add_theme_font_size_override("font_size", 30)
 		price_label.add_theme_color_override("font_color", Color("#4ade80"))
-		title_row.add_child(price_label)
+		price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		row_name_price.add_child(price_label)
 
-		var stats_lbl := Label.new()
+		# 3. UPKEEP   -------   PERK
+		var row_upkeep_perk := HBoxContainer.new()
+		row_upkeep_perk.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cv.add_child(row_upkeep_perk)
+
+		var upkeep_lbl := Label.new()
+		upkeep_lbl.text = "Annual Upkeep: $%s/yr" % _format_number(upkeep)
+		upkeep_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		upkeep_lbl.add_theme_font_size_override("font_size", 21)
+		upkeep_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
+		row_upkeep_perk.add_child(upkeep_lbl)
+
 		var perk_word := "Joyride" if category in [AssetCatalog.CATEGORY_CARS, AssetCatalog.CATEGORY_MOTORCYCLES] else "Residential"
-		stats_lbl.text = "Annual Upkeep: $%s/yr   •   %s Perk: +%d%% Happiness" % [_format_number(upkeep), perk_word, happiness_bonus]
-		stats_lbl.add_theme_font_size_override("font_size", 18)
-		stats_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
-		stats_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		pv.add_child(stats_lbl)
+		var perk_lbl := Label.new()
+		perk_lbl.text = "%s Perk: +%d%% Happiness" % [perk_word, happiness_bonus]
+		perk_lbl.add_theme_font_size_override("font_size", 21)
+		perk_lbl.add_theme_color_override("font_color", Color("#f472b6"))
+		perk_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		row_upkeep_perk.add_child(perk_lbl)
 
+		# 4. DESCRIPTION
 		var desc_lbl := Label.new()
 		desc_lbl.text = desc
-		desc_lbl.add_theme_font_size_override("font_size", 18)
+		desc_lbl.add_theme_font_size_override("font_size", 20)
 		desc_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
 		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		pv.add_child(desc_lbl)
+		cv.add_child(desc_lbl)
 
-		# Purchase button
+		# 5. REQUIREMENTS
 		var can_afford: bool = AssetCatalog.can_afford(PlayerData, price)
 		var is_of_age: bool = PlayerData.age >= min_age
+		var total_available: int = PlayerData.money + PlayerData.bank_savings
 
+		var req_lbl := Label.new()
+		req_lbl.add_theme_font_size_override("font_size", 19)
+		req_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		if not is_of_age:
+			req_lbl.text = "⚠️ Legal Requirement: Minimum Age %d+ Required (You are Age %d)" % [min_age, PlayerData.age]
+			req_lbl.add_theme_color_override("font_color", Color("#f87171"))
+		elif not can_afford:
+			var shortage := price - total_available
+			req_lbl.text = "⚠️ Financial Requirement: $%s Required • Short by $%s (Available: $%s)" % [
+				_format_number(price),
+				_format_number(shortage),
+				_format_number(total_available)
+			]
+			req_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
+		else:
+			req_lbl.text = "✅ Requirements Met: Age %d+ Verified • Available Funds: $%s" % [min_age, _format_number(total_available)]
+			req_lbl.add_theme_color_override("font_color", Color("#34d399"))
+		cv.add_child(req_lbl)
+
+		# 6. PURCHASE ACTION BUTTON
 		var btn_buy := _create_cyber_button("", border_color, func():
 			var buy_res = AssetCatalog.buy_asset(PlayerData, item_id)
 			if buy_res["success"]:
@@ -2106,8 +2152,8 @@ func _open_asset_marketplace_modal(category: String) -> void:
 				add_life_event(buy_res["message"], "finance")
 				show_tab("timeline")
 		)
-		btn_buy.custom_minimum_size.y = 56
-		btn_buy.add_theme_font_size_override("font_size", 22)
+		btn_buy.custom_minimum_size.y = 60
+		btn_buy.add_theme_font_size_override("font_size", 23)
 		btn_buy.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 		if not is_of_age:
@@ -2121,7 +2167,7 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		else:
 			btn_buy.text = "Purchase for $%s" % _format_number(price)
 
-		pv.add_child(btn_buy)
+		cv.add_child(btn_buy)
 
 
 func load_style_box_cyber_card(border_col: Color = Color("#22d3ee")) -> StyleBoxFlat:
