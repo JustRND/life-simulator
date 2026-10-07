@@ -1,6 +1,9 @@
 extends Node
 
 var age: int = 0
+var life_id: String = ""
+var finance_market: Dictionary = {}
+var learning_activities: Dictionary = {}
 
 var health: int = 80
 var happiness: int = 75
@@ -108,6 +111,11 @@ var has_gym_membership: bool = false
 var gym_membership_annual_fee: int = 300
 var last_gym_activity_age: int = -1
 var last_meditation_activity_age: int = -1
+var last_salon_activity_age: int = -1
+var last_spa_activity_age: int = -1
+var last_dating_app_age: int = -1
+var last_pet_adoption_age: int = -1
+var last_charity_donation_age: Dictionary = {}
 
 var job_id: String = ""
 var job_title: String = ""
@@ -136,6 +144,9 @@ func reset() -> void:
 
 
 func reset_player() -> void:
+	finance_market = {}
+	learning_activities = {}
+	life_id = Crypto.new().generate_random_bytes(16).hex_encode()
 	first_name = ""
 	birthplace = ""
 	gender = "MALE"
@@ -231,6 +242,11 @@ func reset_player() -> void:
 	gym_membership_annual_fee = 300
 	last_gym_activity_age = -1
 	last_meditation_activity_age = -1
+	last_salon_activity_age = -1
+	last_spa_activity_age = -1
+	last_dating_app_age = -1
+	last_pet_adoption_age = -1
+	last_charity_donation_age.clear()
 
 	job_id = ""
 	job_title = ""
@@ -376,7 +392,10 @@ func get_total_asset_value() -> int:
 
 
 func get_net_worth() -> int:
-	return money + bank_savings + get_total_asset_value() - get_total_debt()
+	var business_value := 0
+	for business in owned_businesses:
+		business_value += int(maxi(0, int(business.get("valuation", 0)) + int(business.get("treasury", 0)) - int(business.get("loan_balance", 0)) - int(business.get("unpaid_taxes", 0))) * float(business.get("owner_fraction", 1.0)))
+	return money + bank_savings + get_total_asset_value() + business_value + preload("res://scripts/economy/finance_market.gd").portfolio_value(self) - get_total_debt()
 
 
 func get_owned_assets_by_category(category: String) -> Array[Dictionary]:
@@ -716,10 +735,14 @@ func start_reincarnated_life(identity: Dictionary, debuffs: Array, buffs: Array)
 
 
 func takeover_as_child(child: Dictionary, inherited_money: int, inherited_assets: Array = []) -> void:
+	var inherited_businesses := owned_businesses.duplicate(true)
+	var inherited_market := finance_market.duplicate(true)
 	var prev_parent_name: String = first_name
 	var prev_gender: String = gender
 	var assets_copy: Array = inherited_assets.duplicate(true)
 	reset_player()
+	owned_businesses = inherited_businesses
+	finance_market = inherited_market
 
 	first_name = str(child.get("name", "Child"))
 	gender = str(child.get("gender", "MALE"))
@@ -727,6 +750,13 @@ func takeover_as_child(child: Dictionary, inherited_money: int, inherited_assets
 	portrait_track = int(child.get("portrait_track", 0))
 	portrait_variant = int(child.get("portrait_variant", 0))
 	age = int(child.get("age", 18))
+	if not finance_market.is_empty():
+		finance_market.last_age = age
+		finance_market.history = []
+		for company in finance_market.get("issuers", []):
+			company.opened_age = age
+			if not str(company.get("business_uid", "")).is_empty():
+				company.owner = first_name
 	has_started_game = true
 
 	health = int(child.get("health", 85))

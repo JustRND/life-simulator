@@ -5,6 +5,9 @@ const SAVE_PATH := "user://savegame.json"
 
 func capture_data() -> Dictionary:
 	return {
+		"life_id": PlayerData.life_id,
+		"finance_market": PlayerData.finance_market,
+		"learning_activities": PlayerData.learning_activities,
 		"first_name": PlayerData.first_name,
 		"birthplace": PlayerData.birthplace,
 		"gender": PlayerData.gender,
@@ -62,6 +65,11 @@ func capture_data() -> Dictionary:
 		"gym_membership_annual_fee": PlayerData.gym_membership_annual_fee,
 		"last_gym_activity_age": PlayerData.last_gym_activity_age,
 		"last_meditation_activity_age": PlayerData.last_meditation_activity_age,
+		"last_salon_activity_age": PlayerData.last_salon_activity_age,
+		"last_spa_activity_age": PlayerData.last_spa_activity_age,
+		"last_dating_app_age": PlayerData.last_dating_app_age,
+		"last_pet_adoption_age": PlayerData.last_pet_adoption_age,
+		"last_charity_donation_age": PlayerData.last_charity_donation_age,
 		"job_id": PlayerData.job_id,
 		"job_title": PlayerData.job_title,
 		"job_company": PlayerData.job_company,
@@ -162,8 +170,19 @@ func load_game(path: String = SAVE_PATH) -> bool:
 		return false
 	if not valid_data(data):
 		return false
+	return apply_data(data)
+
+
+func apply_data(data: Dictionary) -> bool:
+	if not valid_data(data):
+		return false
 
 	PlayerData.first_name = str(data.get("first_name", ""))
+	PlayerData.finance_market = Dictionary(data.get("finance_market", {}))
+	PlayerData.learning_activities = Dictionary(data.get("learning_activities", {}))
+	PlayerData.life_id = str(data.get("life_id", ""))
+	if PlayerData.life_id.is_empty():
+		PlayerData.life_id = (PlayerData.first_name + str(data.get("birth_story", ""))).sha256_text().left(32)
 	PlayerData.birthplace = str(data.get("birthplace", ""))
 	PlayerData.gender = str(data.get("gender", "MALE"))
 	PlayerData.ethnicity = str(data.get("ethnicity", "white"))
@@ -224,6 +243,11 @@ func load_game(path: String = SAVE_PATH) -> bool:
 	PlayerData.gym_membership_annual_fee = int(data.get("gym_membership_annual_fee", 300))
 	PlayerData.last_gym_activity_age = int(data.get("last_gym_activity_age", -1))
 	PlayerData.last_meditation_activity_age = int(data.get("last_meditation_activity_age", -1))
+	PlayerData.last_salon_activity_age = int(data.get("last_salon_activity_age", -1))
+	PlayerData.last_spa_activity_age = int(data.get("last_spa_activity_age", -1))
+	PlayerData.last_dating_app_age = int(data.get("last_dating_app_age", -1))
+	PlayerData.last_pet_adoption_age = int(data.get("last_pet_adoption_age", -1))
+	PlayerData.last_charity_donation_age = Dictionary(data.get("last_charity_donation_age", {}))
 	PlayerData.karma = int(data.get("karma", 0))
 	PlayerData.children = Array(data.get("children", []))
 	PlayerData.pregnancy = Dictionary(data.get("pregnancy", {}))

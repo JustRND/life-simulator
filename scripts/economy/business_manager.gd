@@ -311,7 +311,7 @@ static func found_business(biz_id: String, business_name: String = "") -> Dictio
 static func get_total_business_valuation() -> int:
 	var total: int = 0
 	for b in PlayerData.owned_businesses:
-		total += int(b.get("valuation", 0)) + int(b.get("treasury", 0))
+		total += int(maxi(0, int(b.get("valuation", 0)) + int(b.get("treasury", 0)) - int(b.get("loan_balance", 0)) - int(b.get("unpaid_taxes", 0))) * float(b.get("owner_fraction", 1.0)))
 	return total
 
 
@@ -337,12 +337,14 @@ static func simulate_yearly_businesses() -> Array[Dictionary]:
 		var market_roll: float = randf_range(0.85, 1.25)
 
 		var generated_revenue: int = int(float(randi_range(min_rev, max_rev)) * mkt_mult * emp_mult * market_roll)
+		var scale: float = float(b.get("revenue_scale", 1.0))
+		generated_revenue = int(generated_revenue * scale)
 
 		# Expenses: Base OpEx + Employee payroll ($25k each) + Marketing budget + Loan interest
 		var payroll: int = emp_count * 25000
 		var loan_bal: int = int(b.get("loan_balance", 0))
 		var loan_interest: int = int(float(loan_bal) * float(b.get("loan_interest_rate", BUSINESS_LOAN_INTEREST_RATE)))
-		var total_opex: int = base_opex + payroll + mkt + loan_interest
+		var total_opex: int = int((base_opex + payroll) * scale) + mkt + loan_interest
 
 		var net_profit: int = generated_revenue - total_opex
 
@@ -357,6 +359,7 @@ static func simulate_yearly_businesses() -> Array[Dictionary]:
 		b["annual_revenue"] = generated_revenue
 		b["annual_opex"] = total_opex
 		b["net_profit"] = net_profit
+		b["cumulative_net_profit"] = int(b.get("cumulative_net_profit", 0)) + net_profit - tax_accrued
 
 		# Update business valuation based on revenue and net profit
 		var base_val: int = int(generated_revenue * 1.5) + maxi(0, net_profit * 3)
@@ -473,18 +476,20 @@ static func withdraw_owner_dividend(b: Dictionary, amount: int) -> Dictionary:
 	var treasury: int = int(b.get("treasury", 0))
 	if amount <= 0:
 		return {"success": false, "message": "Invalid dividend amount."}
-	if treasury < amount:
+	if treasury - int(b.get("unpaid_taxes", 0)) < amount:
 		return {"success": false, "message": "Insufficient funds in business treasury (Current: $%d)." % treasury}
 
 	b["treasury"] = treasury - amount
-	PlayerData.money += amount
+	# Listed businesses distribute the public 20% to outside shareholders.
+	var owner_amount := int(amount * float(b.get("owner_fraction", 1.0)))
+	PlayerData.money += owner_amount
 
 	PlayerData.add_life_log_entry("💰 OWNER DIVIDEND: You withdrew $%d from %s into your personal pocket cash." % [
-		amount,
+		owner_amount,
 		str(b.get("name", "Business"))
 	], "finance")
 
-	return {"success": true, "message": "Withdrew $%d dividend to personal cash." % amount}
+	return {"success": true, "message": "Distributed $%d; your ownership share paid $%d to personal cash." % [amount, owner_amount]}
 
 
 static func deposit_owner_capital(b: Dictionary, amount: int) -> Dictionary:
@@ -534,7 +539,8 @@ static func liquidate_business(biz_uid: String) -> Dictionary:
 	var unpaid_tax: int = int(b.get("unpaid_taxes", 0))
 
 	# Net liquidation proceeds: Valuation + Treasury - Loan - Unpaid taxes
-	var net_proceeds: int = (val + treasury) - (loan + unpaid_tax)
+	var net_proceeds: int = int(((val + treasury) - (loan + unpaid_tax)) * float(b.get("owner_fraction", 1.0)))
+	load("res://scripts/economy/finance_market.gd").release_business(PlayerData, b)
 	if net_proceeds > 0:
 		PlayerData.money += net_proceeds
 	else:

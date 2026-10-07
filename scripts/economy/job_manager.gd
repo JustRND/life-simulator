@@ -34,6 +34,7 @@ func load_jobs() -> void:
 
 	for job in jobs:
 		if job is Dictionary and job.has("id"):
+			job["salary"] = preload("res://scripts/economy/balance_rules.gd").salary(int(job.get("salary", 0)), str(job.get("category", "")))
 			_jobs_by_id[str(job["id"])] = job
 
 	print("Loaded %d jobs across %d categories." % [jobs.size(), categories.size()])

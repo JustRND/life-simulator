@@ -106,6 +106,12 @@ static func can_donate(player_data: Node, charity_id: String) -> Dictionary:
 			"reason": "Age Restricted: Must be at least Age %d+ to make this donation (Current Age: %d)." % [min_age, player_data.age]
 		}
 
+	if player_data.get("last_charity_donation_age") is Dictionary and int(player_data.last_charity_donation_age.get(charity_id, -1)) == player_data.age:
+		return {
+			"allowed": false,
+			"reason": "Annual Contribution Made: You have already supported this charity for Age %d. Contributions reset next year." % player_data.age
+		}
+
 	var cost: int = int(def.get("donation_amount", 100))
 	var total_funds: int = player_data.money + player_data.bank_savings
 	if total_funds < cost:
@@ -131,6 +137,10 @@ static func donate(player_data: Node, charity_id: String) -> Dictionary:
 		var rem: int = cost - player_data.money
 		player_data.money = 0
 		player_data.bank_savings = maxi(0, player_data.bank_savings - rem)
+
+	if not player_data.get("last_charity_donation_age") is Dictionary:
+		player_data.last_charity_donation_age = {}
+	player_data.last_charity_donation_age[charity_id] = player_data.age
 
 	# Karma and Happiness boosts (KARMA VALUE IS KEPT STRICTLY HIDDEN)
 	var karma_boost: int = int(def.get("hidden_karma_boost", 15))

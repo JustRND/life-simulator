@@ -1718,17 +1718,6 @@ theme_override_styles/normal = SubResource("danger")
 theme_override_styles/hover = SubResource("danger")
 text = "RESET LIFE PROGRESS"
 
-[node name="CloseSettingsButton" type="Button" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent" unique_id=749248842]
-custom_minimum_size = Vector2(0, 68)
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_hover_color = Color(1, 0.35, 0.35, 1)
-theme_override_font_sizes/font_size = 24
-theme_override_styles/normal = SubResource("event_choice_normal")
-theme_override_styles/pressed = SubResource("event_choice_pressed")
-theme_override_styles/hover = SubResource("event_choice_hover")
-text = "RETURN TO GAME"
-
 [node name="ResetConfirmationOverlay" type="ColorRect" parent="." unique_id=263286308]
 visible = false
 z_index = 60
@@ -2156,7 +2145,6 @@ horizontal_alignment = 1
 [connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/CharityActItem" to="." method="_on_charity_item_pressed"]
 [connection signal="pressed" from="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/SettingsHeader/CloseSettingsHeaderButton" to="." method="_on_close_settings_button_pressed"]
 [connection signal="pressed" from="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/DangerCard/Margin/VBox/ResetProgressButton" to="." method="_on_reset_progress_button_pressed"]
-[connection signal="pressed" from="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/CloseSettingsButton" to="." method="_on_close_settings_button_pressed"]
 [connection signal="pressed" from="ResetConfirmationOverlay/ConfirmCard/ConfirmMargin/ConfirmContent/ButtonsRow/CancelResetButton" to="." method="_on_cancel_reset_pressed"]
 [connection signal="pressed" from="ResetConfirmationOverlay/ConfirmCard/ConfirmMargin/ConfirmContent/ButtonsRow/ConfirmResetButton" to="." method="_on_confirm_reset_pressed"]
 [connection signal="pressed" from="NewGamePanel/CenterContainer/CreationCard/NewGameContent/StartGameButton" to="." method="_on_start_game_button_pressed"]

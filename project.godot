@@ -21,6 +21,7 @@ EventManager="*uid://bil5aqj1hnoec"
 PlayerData="*uid://j2djogrti2b7"
 SaveManager="*uid://bnknu013vcdc"
 JobManager="*res://scripts/economy/job_manager.gd"
+LifeLibrary="*res://scripts/core/life_library.gd"
 
 [display]
 

@@ -13,6 +13,7 @@ func _ready() -> void:
 	test_charity_activities_button_and_donations()
 	test_education_exploit_text_removal()
 	test_panel_bottom_bar_hiding_and_settings_fullscreen()
+	test_activity_anti_spam_once_per_age()
 	print("--- ALL UI LAYOUT & PANEL FIXES VERIFIED SUCCESSFULLY! ---")
 	get_tree().quit(0)
 
@@ -357,4 +358,88 @@ func test_panel_bottom_bar_hiding_and_settings_fullscreen() -> void:
 
 	screen.queue_free()
 	print("✔ Bottom bar hiding and full screen settings layout verified.")
+
+func test_activity_anti_spam_once_per_age() -> void:
+	print("Testing Activity Anti-Spam (Once per Age Limit)...")
+	var screen = MainScreenScene.instantiate()
+	add_child(screen)
+
+	PlayerData.reset()
+	PlayerData.age = 22
+	PlayerData.money = 20000
+	PlayerData.bank_savings = 50000
+
+	# 1. Social Media Anti-Spam
+	SocialMediaManager.create_account(PlayerData, "youtube")
+	var post1 = SocialMediaManager.create_post(PlayerData, "youtube")
+	assert(post1["success"], "First post must succeed")
+	var post2 = SocialMediaManager.create_post(PlayerData, "youtube")
+	assert(not post2["success"], "Second post at same age must be blocked: %s" % post2["message"])
+	assert(post2["message"].contains("Annual Post Limit"), "Post message must mention annual limit")
+
+	var ad1 = SocialMediaManager.buy_followers(PlayerData, "youtube", 0)
+	assert(ad1["success"], "First ad campaign must succeed")
+	var ad2 = SocialMediaManager.buy_followers(PlayerData, "youtube", 0)
+	assert(not ad2["success"], "Second ad campaign at same age must be blocked: %s" % ad2["message"])
+	assert(ad2["message"].contains("Annual Campaign Limit"), "Ad message must mention annual limit")
+
+	var troll1 = SocialMediaManager.troll_someone(PlayerData, "youtube")
+	assert(troll1["success"], "First troll must succeed")
+	var troll2 = SocialMediaManager.troll_someone(PlayerData, "youtube")
+	assert(not troll2["success"], "Second troll at same age must be blocked: %s" % troll2["message"])
+	assert(troll2["message"].contains("Internet Cooldown") or troll2["message"].contains("next year"), "Troll message must mention cooldown until next year")
+
+	# 2. Charity Anti-Spam
+	var donate1 = CharityManager.donate(PlayerData, "charity_food_bank")
+	assert(donate1["success"], "First donation to charity_food_bank must succeed")
+	var can_donate_again = CharityManager.can_donate(PlayerData, "charity_food_bank")
+	assert(not can_donate_again["allowed"], "Second donation to charity_food_bank at same age must be rejected")
+	assert(can_donate_again["reason"].contains("Annual Contribution Made") or can_donate_again["reason"].contains("next year"), "Must state annual contribution made")
+
+	# 3. Salon & Spa Tracking & UI Lock
+	assert(PlayerData.last_salon_activity_age == -1, "last_salon_activity_age starts at -1")
+	PlayerData.last_salon_activity_age = PlayerData.age
+	assert(PlayerData.last_salon_activity_age == 22, "last_salon_activity_age records current age")
+	PlayerData.last_spa_activity_age = PlayerData.age
+	assert(PlayerData.last_spa_activity_age == 22, "last_spa_activity_age records current age")
+
+	# 4. Pet Interaction & Adoption Anti-Spam
+	var cat_spec = {"id": "test_cat", "name": "Mimi", "type": "cat", "species": "Persian Cat", "breed": "Persian", "price": 0, "upkeep": 50, "icon": "🐱", "health": 90, "happiness": 90, "lifespan": 15}
+	var adopt1 = PetManager.adopt_pet(PlayerData, cat_spec, "Mimi", true)
+	assert(adopt1["success"], "First adoption must succeed")
+	var adopt2 = PetManager.adopt_pet(PlayerData, cat_spec, "Kiki", true)
+	assert(not adopt2["success"], "Second adoption at same age must be blocked")
+	assert(adopt2["message"].contains("Annual Adoption Limit"), "Must cite annual adoption limit")
+
+	var pet_inst = PlayerData.pets[0]
+	var play1 = PetManager.interact_pet(PlayerData, pet_inst["id"], "play")
+	assert(play1["success"], "First pet play must succeed")
+	var play2 = PetManager.interact_pet(PlayerData, pet_inst["id"], "play")
+	assert(not play2["success"], "Second pet play at same age must be blocked")
+
+	# 5. Dating App Anti-Spam
+	assert(PlayerData.last_dating_app_age == -1, "last_dating_app_age starts at -1")
+	PlayerData.last_dating_app_age = PlayerData.age
+
+	# 6. Save & Load Persistence of Anti-Spam variables
+	SaveManager.save_game()
+	PlayerData.reset()
+	SaveManager.load_game()
+	assert(PlayerData.last_salon_activity_age == 22, "last_salon_activity_age must persist")
+	assert(PlayerData.last_spa_activity_age == 22, "last_spa_activity_age must persist")
+	assert(PlayerData.last_dating_app_age == 22, "last_dating_app_age must persist")
+	assert(PlayerData.last_pet_adoption_age == 22, "last_pet_adoption_age must persist")
+	assert(PlayerData.last_charity_donation_age.get("charity_food_bank") == 22, "last_charity_donation_age must persist")
+
+	# 7. Aging Up resets availability
+	PlayerData.age = 23
+	var post_new_age = SocialMediaManager.create_post(PlayerData, "youtube")
+	assert(post_new_age["success"], "Post must succeed after aging up")
+	var can_donate_new_age = CharityManager.can_donate(PlayerData, "charity_food_bank")
+	assert(can_donate_new_age["allowed"], "Donation must be allowed after aging up")
+	var play_new_age = PetManager.interact_pet(PlayerData, pet_inst["id"], "play")
+	assert(play_new_age["success"], "Pet play must succeed after aging up")
+
+	screen.queue_free()
+	print("✔ All activity buttons anti-spam (once per age) verified successfully.")
 

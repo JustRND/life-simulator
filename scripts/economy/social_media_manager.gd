@@ -138,6 +138,9 @@ static func create_post(player_data: Node, platform: String) -> Dictionary:
 	var p_info: Dictionary = PLATFORMS[platform]
 	var metric: String = p_info.metric
 
+	if int(account.get("last_post_age", -1)) == player_data.age:
+		return {"success": false, "message": "Annual Post Limit: You have already shared a post on %s for Age %d. Followers await fresh content next year!" % [p_info.name, player_data.age]}
+
 	account["posts_count"] = int(account.get("posts_count", 0)) + 1
 	account["last_post_age"] = player_data.age
 
@@ -245,6 +248,9 @@ static func buy_followers(player_data: Node, platform: String, tier: int) -> Dic
 	var p_info: Dictionary = PLATFORMS[platform]
 	var metric: String = p_info.metric
 
+	if int(account.get("last_ad_age", -1)) == player_data.age:
+		return {"success": false, "message": "Annual Campaign Limit: You have already run a promotional campaign on %s for Age %d. Ad algorithms need time to recalibrate before next year!" % [p_info.name, player_data.age]}
+
 	var tiers := [
 		{"amount": 1000, "cost": 150},
 		{"amount": 5000, "cost": 650},
@@ -268,6 +274,8 @@ static func buy_followers(player_data: Node, platform: String, tier: int) -> Dic
 		var rem: int = cost - player_data.money
 		player_data.money = 0
 		player_data.bank_savings -= rem
+
+	account["last_ad_age"] = player_data.age
 
 	# 15% risk of bot detection purge
 	if randf() < 0.15:
@@ -317,6 +325,11 @@ static func troll_someone(player_data: Node, platform: String) -> Dictionary:
 	var account: Dictionary = player_data.social_media[platform]
 	var p_info: Dictionary = PLATFORMS[platform]
 	var metric: String = p_info.metric
+
+	if int(account.get("last_troll_age", -1)) == player_data.age:
+		return {"success": false, "message": "Internet Cooldown: You have already engaged in online drama on %s for Age %d. Moderation algorithms are watching until next year!" % [p_info.name, player_data.age]}
+
+	account["last_troll_age"] = player_data.age
 
 	# Trolling increases happiness, decreases karma
 	player_data.happiness = mini(100, player_data.happiness + 12)

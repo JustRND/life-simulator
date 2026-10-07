@@ -153,6 +153,13 @@ func _ready() -> void:
 	settings_pages.name = "SettingsPages"
 	add_child(settings_pages)
 	settings_pages.install(settings_overlay)
+	var options := preload("res://scripts/ui/options_menu.gd").new()
+	options.name = "OptionsMenu"
+	add_child(options)
+	options.install(self, settings_pages)
+	var theme_controller := preload("res://scripts/ui/theme_controller.gd").new()
+	theme_controller.name = "ThemeController"
+	add_child(theme_controller)
 	var pull_up = preload("res://scripts/ui/panel_pull_up.gd")
 	pull_up.watch(event_overlay.get_node("EventPanel"), event_overlay)
 	pull_up.watch(reset_confirmation_overlay.get_node("ConfirmCard"), reset_confirmation_overlay)
@@ -333,8 +340,8 @@ func _configure_action_bar() -> void:
 	# Configure MenuButton (Settings Cog) in TopBar with smooth tactile micro-animations
 	var menu_btn := get_node_or_null("TopBar/Row/MenuButton") as Button
 	if menu_btn != null:
-		if ResourceLoader.exists("res://assets/icons/icon_menu.png"):
-			menu_btn.icon = load("res://assets/icons/icon_menu.png")
+		if ResourceLoader.exists("res://assets/ui/options_menu.svg"):
+			menu_btn.icon = load("res://assets/ui/options_menu.svg")
 			menu_btn.text = ""
 			menu_btn.expand_icon = true
 			menu_btn.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -1026,6 +1033,10 @@ func _on_age_button_pressed() -> void:
 func trigger_event() -> void:
 	if PlayerData.is_dead:
 		return
+	if PlayerData.age >= 18 and not PlayerData.is_in_prison and not LifeLibrary.data.people.is_empty() and randf() < 0.25:
+		var person: Dictionary = LifeLibrary.data.people.pick_random()
+		add_life_event("You met %s from %s and enjoyed a friendly conversation. Happiness +2." % [person.name, person.country], "event")
+		PlayerData.happiness = mini(100, PlayerData.happiness + 2)
 
 	# Chance-based event popups: Events don't always pop up every year to avoid feeling spammy.
 	# Some years are peaceful, uneventful, and let the player focus on gameplay choices.
@@ -1342,6 +1353,8 @@ func _on_start_game_button_pressed() -> void:
 	PlayerData.reset_player()
 
 	PlayerData.first_name = entered_name
+	LifeLibrary.data.active_slot = ""
+	LifeLibrary.persist()
 	PlayerData.birthplace = selected_country
 	PlayerData.gender = "MALE" if gender_input.selected == 0 else "FEMALE"
 	PlayerData.ethnicity = creation_selected_ethnicity
@@ -2139,7 +2152,8 @@ func _render_owned_pets_section() -> void:
 			pv.add_child(act_h)
 
 			var pet_id: String = str(pet.get("id", ""))
-			var btn_play := _create_cyber_button("🎾 Play", Color("#38bdf8"), func():
+			var has_played_this_year: bool = int(pet.get("last_play_age", -1)) == PlayerData.age
+			var btn_play := _create_cyber_button("🎾 Play (Used)" if has_played_this_year else "🎾 Play", Color("#38bdf8"), func():
 				var res := PetManager.interact_pet(PlayerData, pet_id, "play")
 				add_life_event(res["message"], "relationship")
 				update_ui()
@@ -2148,9 +2162,14 @@ func _render_owned_pets_section() -> void:
 			btn_play.custom_minimum_size.y = 48
 			btn_play.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			btn_play.add_theme_font_size_override("font_size", 18)
+			if has_played_this_year:
+				btn_play.disabled = true
+				btn_play.modulate = Color(0.6, 0.6, 0.6, 0.7)
+				btn_play.tooltip_text = "Completed for Age %d (Wait until next year)" % PlayerData.age
 			act_h.add_child(btn_play)
 
-			var btn_walk := _create_cyber_button("🦮 Walk", Color("#10b981"), func():
+			var has_walked_this_year: bool = int(pet.get("last_walk_age", -1)) == PlayerData.age
+			var btn_walk := _create_cyber_button("🦮 Walk (Used)" if has_walked_this_year else "🦮 Walk", Color("#10b981"), func():
 				var res := PetManager.interact_pet(PlayerData, pet_id, "walk")
 				add_life_event(res["message"], "relationship")
 				update_ui()
@@ -2159,9 +2178,14 @@ func _render_owned_pets_section() -> void:
 			btn_walk.custom_minimum_size.y = 48
 			btn_walk.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			btn_walk.add_theme_font_size_override("font_size", 18)
+			if has_walked_this_year:
+				btn_walk.disabled = true
+				btn_walk.modulate = Color(0.6, 0.6, 0.6, 0.7)
+				btn_walk.tooltip_text = "Completed for Age %d (Wait until next year)" % PlayerData.age
 			act_h.add_child(btn_walk)
 
-			var btn_treat := _create_cyber_button("🍖 Treat", Color("#f59e0b"), func():
+			var has_treated_this_year: bool = int(pet.get("last_treat_age", -1)) == PlayerData.age
+			var btn_treat := _create_cyber_button("🍖 Treat (Used)" if has_treated_this_year else "🍖 Treat", Color("#f59e0b"), func():
 				var res := PetManager.interact_pet(PlayerData, pet_id, "treat")
 				add_life_event(res["message"], "relationship")
 				update_ui()
@@ -2170,9 +2194,14 @@ func _render_owned_pets_section() -> void:
 			btn_treat.custom_minimum_size.y = 48
 			btn_treat.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			btn_treat.add_theme_font_size_override("font_size", 18)
+			if has_treated_this_year:
+				btn_treat.disabled = true
+				btn_treat.modulate = Color(0.6, 0.6, 0.6, 0.7)
+				btn_treat.tooltip_text = "Completed for Age %d (Wait until next year)" % PlayerData.age
 			act_h.add_child(btn_treat)
 
-			var btn_vet := _create_cyber_button("🩺 Vet Checkup", Color("#f43f5e"), func():
+			var has_vetted_this_year: bool = int(pet.get("last_vet_age", -1)) == PlayerData.age
+			var btn_vet := _create_cyber_button("🩺 Vet (Used)" if has_vetted_this_year else "🩺 Vet Checkup", Color("#f43f5e"), func():
 				var res := PetManager.interact_pet(PlayerData, pet_id, "vet")
 				add_life_event(res["message"], "relationship")
 				update_ui()
@@ -2181,6 +2210,10 @@ func _render_owned_pets_section() -> void:
 			btn_vet.custom_minimum_size.y = 48
 			btn_vet.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			btn_vet.add_theme_font_size_override("font_size", 18)
+			if has_vetted_this_year:
+				btn_vet.disabled = true
+				btn_vet.modulate = Color(0.6, 0.6, 0.6, 0.7)
+				btn_vet.tooltip_text = "Completed for Age %d (Wait until next year)" % PlayerData.age
 			act_h.add_child(btn_vet)
 
 	assets_list.add_child(section_card)
@@ -3895,9 +3928,17 @@ func _generate_dating_candidate() -> Dictionary:
 
 	var cand_eth: String = PortraitCatalog.ETHNICITIES.pick_random()
 	var cand_track: int = randi_range(0, 3)
+	var custom := LifeLibrary.custom_candidate(target_gender)
+	var cand_country: String = PlayerData.birthplace
+	if not custom.is_empty() and randf() < 0.5:
+		chosen_name = str(custom.name)
+		cand_eth = str(custom.ethnicity)
+		cand_track = int(custom.portrait_track)
+		cand_country = str(custom.country)
 
 	return {
 		"name": chosen_name,
+		"nationality": cand_country,
 		"gender": target_gender,
 		"age": cand_age,
 		"occupation": occupations.pick_random(),
@@ -4002,9 +4043,16 @@ func _render_dating_candidate_ui(list: VBoxContainer) -> void:
 
 	var name_lbl := Label.new()
 	name_lbl.text = "%s, %d" % [str(cand["name"]), int(cand["age"])]
+	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_lbl.add_theme_font_size_override("font_size", 34)
 	name_lbl.add_theme_color_override("font_color", Color("#f43f5e"))
 	info_vbox.add_child(name_lbl)
+	if not str(cand.get("nationality", "")).is_empty():
+		var nationality := Label.new()
+		nationality.text = str(cand.nationality)
+		nationality.add_theme_font_size_override("font_size", 22)
+		nationality.add_theme_color_override("font_color", Color("#aee4f5"))
+		info_vbox.add_child(nationality)
 
 	var match_lbl := Label.new()
 	match_lbl.text = "💖 %d%% Compatibility Match" % int(cand["compatibility"])
@@ -4063,21 +4111,44 @@ func _render_dating_candidate_ui(list: VBoxContainer) -> void:
 	list.add_child(profile_card)
 
 	# Action Buttons
-	var ask_out_btn := _create_cyber_button("💘 ASK OUT / MATCH
-Shoot your shot and ask %s to become your partner" % str(cand["name"]), Color("#f43f5e"), func():
-		_ask_out_dating_candidate(list)
-	)
-	list.add_child(ask_out_btn)
+	var has_dated_this_year: bool = (PlayerData.last_dating_app_age == PlayerData.age)
+	if has_dated_this_year:
+		var lock_banner := PanelContainer.new()
+		lock_banner.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
+		var lm := MarginContainer.new()
+		lm.add_theme_constant_override("margin_left", 20)
+		lm.add_theme_constant_override("margin_right", 20)
+		lm.add_theme_constant_override("margin_top", 14)
+		lm.add_theme_constant_override("margin_bottom", 14)
+		lock_banner.add_child(lm)
 
-	var pass_btn := _create_cyber_button("⏭️ PASS / NEXT PROFILE
-Browse the next available single in your area", Color("#64748b"), func():
-		current_dating_candidate = _generate_dating_candidate()
-		_render_dating_candidate_ui(list)
-	)
-	list.add_child(pass_btn)
+		var ll := Label.new()
+		ll.text = "⏳ ANNUAL DATING SEARCH COMPLETED\nYou have already explored matchmaking singles for Age %d.\nGive romantic connections time to develop. Advance age (+1 Year) to swipe and match again!" % PlayerData.age
+		ll.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		ll.add_theme_font_size_override("font_size", 23)
+		ll.add_theme_color_override("font_color", Color("#fbbf24"))
+		lm.add_child(ll)
+		list.add_child(lock_banner)
+
+		var done_btn := _create_disabled_cyber_button("💘 Matchmaking Completed for Age %d" % PlayerData.age, "Advance age (+1 Year) to swipe again.")
+		list.add_child(done_btn)
+	else:
+		var ask_out_btn := _create_cyber_button("💘 ASK OUT / MATCH\nShoot your shot and ask %s to become your partner" % str(cand["name"]), Color("#f43f5e"), func():
+			_ask_out_dating_candidate(list)
+		)
+		list.add_child(ask_out_btn)
+
+		var pass_btn := _create_cyber_button("⏭️ PASS / NEXT PROFILE\nBrowse the next available single in your area", Color("#64748b"), func():
+			current_dating_candidate = _generate_dating_candidate()
+			_render_dating_candidate_ui(list)
+		)
+		list.add_child(pass_btn)
 
 
 func _ask_out_dating_candidate(list: VBoxContainer) -> void:
+	if PlayerData.last_dating_app_age == PlayerData.age:
+		return
+
 	if PlayerData.has_partner():
 		add_life_event("⚠️ You are already in a relationship with %s! Break up or divorce first before dating someone new." % PlayerData.get_partner_name(), "relationship")
 		show_tab("timeline")
@@ -4089,6 +4160,8 @@ func _ask_out_dating_candidate(list: VBoxContainer) -> void:
 		show_tab("timeline")
 		_close_dating_app_modal()
 		return
+
+	PlayerData.last_dating_app_age = PlayerData.age
 
 	var cand: Dictionary = current_dating_candidate
 	var match_chance: int = 60 + int(PlayerData.looks * 0.25) + int(PlayerData.smarts * 0.15)
@@ -7987,6 +8060,25 @@ func _show_salon_modal() -> void:
 	sv.add_child(profile_lbl)
 	list.add_child(summary_card)
 
+	var has_salon_this_year: bool = (PlayerData.last_salon_activity_age == PlayerData.age)
+	if has_salon_this_year:
+		var lock_banner := PanelContainer.new()
+		lock_banner.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
+		var lm := MarginContainer.new()
+		lm.add_theme_constant_override("margin_left", 20)
+		lm.add_theme_constant_override("margin_right", 20)
+		lm.add_theme_constant_override("margin_top", 14)
+		lm.add_theme_constant_override("margin_bottom", 14)
+		lock_banner.add_child(lm)
+
+		var ll := Label.new()
+		ll.text = "⏳ ANNUAL SALON VISIT COMPLETED\nYou have already received styling and grooming services for Age %d.\nStyling and aesthetic pampering are complete for this year. Advance age (+1 Year) to visit the salon again!" % PlayerData.age
+		ll.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		ll.add_theme_font_size_override("font_size", 23)
+		ll.add_theme_color_override("font_color", Color("#fbbf24"))
+		lm.add_child(ll)
+		list.add_child(lock_banner)
+
 	var services := [
 		{"name": "✂️ Quick Trim & Clean Up", "cost": 40, "looks": 5, "hap": 4, "desc": "Clean up split ends and neckline for a neat, fresh look."},
 		{"name": "💇 Designer Haircut & Blowout", "cost": 120, "looks": 12, "hap": 8, "desc": "A custom haircut crafted by senior stylists with premium blow-dry."},
@@ -7998,29 +8090,35 @@ func _show_salon_modal() -> void:
 	for s in services:
 		var cost: int = int(s["cost"])
 		var btn_text := "%s ($%d)\n%s (+%d%% Looks, +%d%% Happiness)" % [s["name"], cost, s["desc"], s["looks"], s["hap"]]
-		var btn := _create_cyber_button(btn_text, Color("#ec4899"), func():
-			var total_funds: int = PlayerData.money + PlayerData.bank_savings
-			if total_funds < cost:
-				add_life_event("💸 INSUFFICIENT FUNDS: The salon service costs $%d, but you only have $%d." % [cost, total_funds], "finance")
-				show_tab("timeline")
+		if has_salon_this_year:
+			list.add_child(_create_disabled_cyber_button(btn_text, "Completed for Age %d (Age up to visit next year)" % PlayerData.age))
+		else:
+			var btn := _create_cyber_button(btn_text, Color("#ec4899"), func():
+				if PlayerData.last_salon_activity_age == PlayerData.age:
+					return
+				var total_funds: int = PlayerData.money + PlayerData.bank_savings
+				if total_funds < cost:
+					add_life_event("💸 INSUFFICIENT FUNDS: The salon service costs $%d, but you only have $%d." % [cost, total_funds], "finance")
+					show_tab("timeline")
+					salon_modal_overlay.queue_free()
+					return
+				if PlayerData.money >= cost:
+					PlayerData.money -= cost
+				else:
+					var rem := cost - PlayerData.money
+					PlayerData.money = 0
+					PlayerData.bank_savings -= rem
+				PlayerData.last_salon_activity_age = PlayerData.age
+				PlayerData.looks = mini(100, PlayerData.looks + int(s["looks"]))
+				PlayerData.happiness = mini(100, PlayerData.happiness + int(s["hap"]))
+				add_life_event("💇 SALON MAKEOVER: You treated yourself to %s ($%d). Looks +%d%%, Happiness +%d%%!" % [s["name"], cost, s["looks"], s["hap"]], "lifestyle")
+				update_ui()
+				SaveManager.save_game()
 				salon_modal_overlay.queue_free()
-				return
-			if PlayerData.money >= cost:
-				PlayerData.money -= cost
-			else:
-				var rem := cost - PlayerData.money
-				PlayerData.money = 0
-				PlayerData.bank_savings -= rem
-			PlayerData.looks = mini(100, PlayerData.looks + int(s["looks"]))
-			PlayerData.happiness = mini(100, PlayerData.happiness + int(s["hap"]))
-			add_life_event("💇 SALON MAKEOVER: You treated yourself to %s ($%d). Looks +%d%%, Happiness +%d%%!" % [s["name"], cost, s["looks"], s["hap"]], "lifestyle")
-			update_ui()
-			SaveManager.save_game()
-			salon_modal_overlay.queue_free()
-		)
-		btn.custom_minimum_size.y = 74
-		btn.add_theme_font_size_override("font_size", 23)
-		list.add_child(btn)
+			)
+			btn.custom_minimum_size.y = 74
+			btn.add_theme_font_size_override("font_size", 23)
+			list.add_child(btn)
 
 	salon_modal_overlay.visible = true
 
@@ -8058,6 +8156,25 @@ func _show_spa_modal() -> void:
 	sv.add_child(profile_lbl)
 	list.add_child(summary_card)
 
+	var has_spa_this_year: bool = (PlayerData.last_spa_activity_age == PlayerData.age)
+	if has_spa_this_year:
+		var lock_banner := PanelContainer.new()
+		lock_banner.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
+		var lm := MarginContainer.new()
+		lm.add_theme_constant_override("margin_left", 20)
+		lm.add_theme_constant_override("margin_right", 20)
+		lm.add_theme_constant_override("margin_top", 14)
+		lm.add_theme_constant_override("margin_bottom", 14)
+		lock_banner.add_child(lm)
+
+		var ll := Label.new()
+		ll.text = "⏳ ANNUAL SPA RETREAT COMPLETED\nYou have already enjoyed luxury spa therapy for Age %d.\nHydrotherapy, thermal soaks, and massages are complete for this year. Advance age (+1 Year) to visit the spa again!" % PlayerData.age
+		ll.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		ll.add_theme_font_size_override("font_size", 23)
+		ll.add_theme_color_override("font_color", Color("#fbbf24"))
+		lm.add_child(ll)
+		list.add_child(lock_banner)
+
 	var services := [
 		{"name": "♨️ Volcanic Mineral Hot Springs", "cost": 90, "health": 6, "hap": 8, "looks": 2, "desc": "Immerse in geothermal sulfur-rich hot springs to alleviate muscular soreness."},
 		{"name": "💆 90-Minute Swedish Massage", "cost": 180, "health": 10, "hap": 15, "looks": 3, "desc": "Targeted acupressure and long fluid strokes melting chronic tension away."},
@@ -8069,32 +8186,39 @@ func _show_spa_modal() -> void:
 	for s in services:
 		var cost: int = int(s["cost"])
 		var btn_text := "%s ($%d)\n%s (+%d%% Health, +%d%% Happiness, +%d%% Looks)" % [s["name"], cost, s["desc"], s["health"], s["hap"], s["looks"]]
-		var btn := _create_cyber_button(btn_text, Color("#06b6d4"), func():
-			var total_funds: int = PlayerData.money + PlayerData.bank_savings
-			if total_funds < cost:
-				add_life_event("💸 INSUFFICIENT FUNDS: The spa treatment costs $%d, but you only have $%d." % [cost, total_funds], "finance")
-				show_tab("timeline")
+		if has_spa_this_year:
+			list.add_child(_create_disabled_cyber_button(btn_text, "Completed for Age %d (Age up to visit next year)" % PlayerData.age))
+		else:
+			var btn := _create_cyber_button(btn_text, Color("#06b6d4"), func():
+				if PlayerData.last_spa_activity_age == PlayerData.age:
+					return
+				var total_funds: int = PlayerData.money + PlayerData.bank_savings
+				if total_funds < cost:
+					add_life_event("💸 INSUFFICIENT FUNDS: The spa treatment costs $%d, but you only have $%d." % [cost, total_funds], "finance")
+					show_tab("timeline")
+					spa_modal_overlay.queue_free()
+					return
+				if PlayerData.money >= cost:
+					PlayerData.money -= cost
+				else:
+					var rem := cost - PlayerData.money
+					PlayerData.money = 0
+					PlayerData.bank_savings -= rem
+				PlayerData.last_spa_activity_age = PlayerData.age
+				PlayerData.health = mini(100, PlayerData.health + int(s["health"]))
+				PlayerData.happiness = mini(100, PlayerData.happiness + int(s["hap"]))
+				PlayerData.looks = mini(100, PlayerData.looks + int(s["looks"]))
+				add_life_event("🧖 LUXURY SPA REJUVENATION: You enjoyed %s ($%d). Health +%d%%, Happiness +%d%%, Looks +%d%%!" % [s["name"], cost, s["health"], s["hap"], s["looks"]], "lifestyle")
+				update_ui()
+				SaveManager.save_game()
 				spa_modal_overlay.queue_free()
-				return
-			if PlayerData.money >= cost:
-				PlayerData.money -= cost
-			else:
-				var rem := cost - PlayerData.money
-				PlayerData.money = 0
-				PlayerData.bank_savings -= rem
-			PlayerData.health = mini(100, PlayerData.health + int(s["health"]))
-			PlayerData.happiness = mini(100, PlayerData.happiness + int(s["hap"]))
-			PlayerData.looks = mini(100, PlayerData.looks + int(s["looks"]))
-			add_life_event("🧖 LUXURY SPA REJUVENATION: You enjoyed %s ($%d). Health +%d%%, Happiness +%d%%, Looks +%d%%!" % [s["name"], cost, s["health"], s["hap"], s["looks"]], "lifestyle")
-			update_ui()
-			SaveManager.save_game()
-			spa_modal_overlay.queue_free()
-		)
-		btn.custom_minimum_size.y = 74
-		btn.add_theme_font_size_override("font_size", 23)
-		list.add_child(btn)
+			)
+			btn.custom_minimum_size.y = 74
+			btn.add_theme_font_size_override("font_size", 23)
+			list.add_child(btn)
 
 	spa_modal_overlay.visible = true
+
 
 
 func _show_shopping_modal() -> void:
@@ -8321,7 +8445,11 @@ func _show_social_media_modal() -> void:
 			act_grid.add_theme_constant_override("v_separation", 10)
 			cv.add_child(act_grid)
 
-			var btn_post := _create_cyber_button("📝 Create New Post", Color("#38bdf8"), func():
+			var has_posted_this_year: bool = int(acc_data.get("last_post_age", -1)) == PlayerData.age
+			var post_text: String = "📝 Post Shared (Age %d)" % PlayerData.age if has_posted_this_year else "📝 Create New Post"
+			var btn_post := _create_cyber_button(post_text, Color("#38bdf8"), func():
+				if int(acc_data.get("last_post_age", -1)) == PlayerData.age:
+					return
 				var res := SocialMediaManager.create_post(PlayerData, p_key)
 				add_life_event(res["message"], "lifestyle")
 				update_ui()
@@ -8329,6 +8457,10 @@ func _show_social_media_modal() -> void:
 			)
 			btn_post.custom_minimum_size.y = 52
 			btn_post.add_theme_font_size_override("font_size", 20)
+			if has_posted_this_year:
+				btn_post.disabled = true
+				btn_post.modulate = Color(0.6, 0.6, 0.6, 0.7)
+				btn_post.tooltip_text = "Completed for Age %d (Age up to post again next year)" % PlayerData.age
 			act_grid.add_child(btn_post)
 
 			var verif_text := "☑️ Verified" if is_verif else "☑️ Apply for Blue Tick"
@@ -8345,7 +8477,11 @@ func _show_social_media_modal() -> void:
 				btn_verif.modulate = Color(0.6, 0.6, 0.6, 0.7)
 			act_grid.add_child(btn_verif)
 
-			var btn_buy_foll := _create_cyber_button("📈 Buy Followers / Ads ($150)", Color("#f59e0b"), func():
+			var has_ad_this_year: bool = int(acc_data.get("last_ad_age", -1)) == PlayerData.age
+			var ad_text: String = "📈 Campaign Run (Age %d)" % PlayerData.age if has_ad_this_year else "📈 Buy Followers / Ads ($150)"
+			var btn_buy_foll := _create_cyber_button(ad_text, Color("#f59e0b"), func():
+				if int(acc_data.get("last_ad_age", -1)) == PlayerData.age:
+					return
 				var res := SocialMediaManager.buy_followers(PlayerData, p_key, 0)
 				add_life_event(res["message"], "lifestyle")
 				update_ui()
@@ -8353,9 +8489,17 @@ func _show_social_media_modal() -> void:
 			)
 			btn_buy_foll.custom_minimum_size.y = 52
 			btn_buy_foll.add_theme_font_size_override("font_size", 20)
+			if has_ad_this_year:
+				btn_buy_foll.disabled = true
+				btn_buy_foll.modulate = Color(0.6, 0.6, 0.6, 0.7)
+				btn_buy_foll.tooltip_text = "Completed for Age %d (Age up to run campaign next year)" % PlayerData.age
 			act_grid.add_child(btn_buy_foll)
 
-			var btn_troll := _create_cyber_button("😈 Troll Someone Online", Color("#a855f7"), func():
+			var has_trolled_this_year: bool = int(acc_data.get("last_troll_age", -1)) == PlayerData.age
+			var troll_text: String = "😈 Trolled (Age %d)" % PlayerData.age if has_trolled_this_year else "😈 Troll Someone Online"
+			var btn_troll := _create_cyber_button(troll_text, Color("#a855f7"), func():
+				if int(acc_data.get("last_troll_age", -1)) == PlayerData.age:
+					return
 				var res := SocialMediaManager.troll_someone(PlayerData, p_key)
 				add_life_event(res["message"], "lifestyle")
 				update_ui()
@@ -8363,6 +8507,10 @@ func _show_social_media_modal() -> void:
 			)
 			btn_troll.custom_minimum_size.y = 52
 			btn_troll.add_theme_font_size_override("font_size", 20)
+			if has_trolled_this_year:
+				btn_troll.disabled = true
+				btn_troll.modulate = Color(0.6, 0.6, 0.6, 0.7)
+				btn_troll.tooltip_text = "Completed for Age %d (Age up to troll next year)" % PlayerData.age
 			act_grid.add_child(btn_troll)
 
 			var btn_delete := _create_cyber_button("🗑️ Delete %s Account" % p_name, Color("#f43f5e"), func():
@@ -8414,6 +8562,25 @@ func _show_pet_adoption_modal() -> void:
 	sv.add_child(funds_lbl)
 	list.add_child(summary_card)
 
+	var has_adopted_this_year: bool = (PlayerData.last_pet_adoption_age == PlayerData.age)
+	if has_adopted_this_year:
+		var lock_banner := PanelContainer.new()
+		lock_banner.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
+		var lm := MarginContainer.new()
+		lm.add_theme_constant_override("margin_left", 20)
+		lm.add_theme_constant_override("margin_right", 20)
+		lm.add_theme_constant_override("margin_top", 14)
+		lm.add_theme_constant_override("margin_bottom", 14)
+		lock_banner.add_child(lm)
+
+		var ll := Label.new()
+		ll.text = "⏳ ANNUAL PET ADOPTION COMPLETED\nYou have already adopted a companion pet for Age %d.\nGive your new companion time to settle into their home. Advance age (+1 Year) to adopt another pet!" % PlayerData.age
+		ll.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		ll.add_theme_font_size_override("font_size", 23)
+		ll.add_theme_color_override("font_color", Color("#fbbf24"))
+		lm.add_child(ll)
+		list.add_child(lock_banner)
+
 	var adoption_centers := [
 		{
 			"type": "dog_shelter",
@@ -8456,25 +8623,28 @@ func _show_pet_adoption_modal() -> void:
 	for c in adoption_centers:
 		var c_type: String = str(c["type"])
 		var btn_text: String = "%s\n%s" % [c["title"], c["desc"]]
-		var btn := _create_cyber_button(btn_text, c["color"], func():
-			pet_adoption_modal_overlay.queue_free()
-			match c_type:
-				"dog_shelter":
-					_show_pet_shelter_modal(PetManager.SOURCE_DOG_SHELTER)
-				"cat_shelter":
-					_show_pet_shelter_modal(PetManager.SOURCE_CAT_SHELTER)
-				"dog_breeder":
-					_show_pet_breeder_modal(PetManager.SOURCE_DOG_BREEDER)
-				"cat_breeder":
-					_show_pet_breeder_modal(PetManager.SOURCE_CAT_BREEDER)
-				"pet_store":
-					_show_pet_store_modal()
-				"ranch":
-					_show_pet_ranch_modal()
-		)
-		btn.custom_minimum_size.y = 80
-		btn.add_theme_font_size_override("font_size", 24)
-		list.add_child(btn)
+		if has_adopted_this_year:
+			list.add_child(_create_disabled_cyber_button(btn_text, "Completed for Age %d (Age up to adopt next year)" % PlayerData.age))
+		else:
+			var btn := _create_cyber_button(btn_text, c["color"], func():
+				pet_adoption_modal_overlay.queue_free()
+				match c_type:
+					"dog_shelter":
+						_show_pet_shelter_modal(PetManager.SOURCE_DOG_SHELTER)
+					"cat_shelter":
+						_show_pet_shelter_modal(PetManager.SOURCE_CAT_SHELTER)
+					"dog_breeder":
+						_show_pet_breeder_modal(PetManager.SOURCE_DOG_BREEDER)
+					"cat_breeder":
+						_show_pet_breeder_modal(PetManager.SOURCE_CAT_BREEDER)
+					"pet_store":
+						_show_pet_store_modal()
+					"ranch":
+						_show_pet_ranch_modal()
+			)
+			btn.custom_minimum_size.y = 80
+			btn.add_theme_font_size_override("font_size", 24)
+			list.add_child(btn)
 
 	pet_adoption_modal_overlay.visible = true
 
@@ -8524,8 +8694,9 @@ func _show_pet_shelter_modal(shelter_type: String) -> void:
 		cv.add_child(stats_lbl)
 
 		var pet_spec: Dictionary = a
+		var has_adopted_this_year: bool = (PlayerData.last_pet_adoption_age == PlayerData.age)
 		var btn_adopt := _create_cyber_button("🐾 Adopt for Free!", border_color, func():
-			var res := PetManager.adopt_pet(PlayerData, pet_spec)
+			var res := PetManager.adopt_pet(PlayerData, pet_spec, "", true)
 			if res["success"]:
 				add_life_event(res["message"], "relationship")
 				pet_adoption_modal_overlay.queue_free()
@@ -8537,6 +8708,10 @@ func _show_pet_shelter_modal(shelter_type: String) -> void:
 		)
 		btn_adopt.custom_minimum_size.y = 52
 		btn_adopt.add_theme_font_size_override("font_size", 22)
+		if has_adopted_this_year:
+			btn_adopt.disabled = true
+			btn_adopt.modulate = Color(0.6, 0.6, 0.6, 0.7)
+			btn_adopt.text = "🐾 Adoption Completed for Age %d" % PlayerData.age
 		cv.add_child(btn_adopt)
 
 		list.add_child(p_card)
@@ -8591,9 +8766,10 @@ func _show_pet_breeder_modal(breeder_type: String) -> void:
 		cv.add_child(stats_lbl)
 
 		var pet_spec: Dictionary = a
+		var has_adopted_this_year: bool = (PlayerData.last_pet_adoption_age == PlayerData.age)
 		var can_afford: bool = (PlayerData.money + PlayerData.bank_savings) >= price
 		var btn_buy := _create_cyber_button("🐾 Purchase for $%s" % _format_number(price), border_color, func():
-			var res := PetManager.adopt_pet(PlayerData, pet_spec)
+			var res := PetManager.adopt_pet(PlayerData, pet_spec, "", true)
 			if res["success"]:
 				add_life_event(res["message"], "relationship")
 				pet_adoption_modal_overlay.queue_free()
@@ -8605,7 +8781,11 @@ func _show_pet_breeder_modal(breeder_type: String) -> void:
 		)
 		btn_buy.custom_minimum_size.y = 52
 		btn_buy.add_theme_font_size_override("font_size", 22)
-		if not can_afford:
+		if has_adopted_this_year:
+			btn_buy.disabled = true
+			btn_buy.modulate = Color(0.6, 0.6, 0.6, 0.7)
+			btn_buy.text = "🐾 Adoption Completed for Age %d" % PlayerData.age
+		elif not can_afford:
 			btn_buy.disabled = true
 			btn_buy.modulate = Color(0.6, 0.6, 0.6, 0.65)
 			btn_buy.text = "🔒 Requires $%s (Insufficient Funds)" % _format_number(price)
@@ -8658,9 +8838,10 @@ func _show_pet_store_modal() -> void:
 		cv.add_child(stats_lbl)
 
 		var pet_spec: Dictionary = a
+		var has_adopted_this_year: bool = (PlayerData.last_pet_adoption_age == PlayerData.age)
 		var can_afford: bool = (PlayerData.money + PlayerData.bank_savings) >= price
 		var btn_buy := _create_cyber_button("🐾 Purchase for $%s" % _format_number(price), Color("#8b5cf6"), func():
-			var res := PetManager.adopt_pet(PlayerData, pet_spec)
+			var res := PetManager.adopt_pet(PlayerData, pet_spec, "", true)
 			if res["success"]:
 				add_life_event(res["message"], "relationship")
 				pet_adoption_modal_overlay.queue_free()
@@ -8672,7 +8853,11 @@ func _show_pet_store_modal() -> void:
 		)
 		btn_buy.custom_minimum_size.y = 52
 		btn_buy.add_theme_font_size_override("font_size", 22)
-		if not can_afford:
+		if has_adopted_this_year:
+			btn_buy.disabled = true
+			btn_buy.modulate = Color(0.6, 0.6, 0.6, 0.7)
+			btn_buy.text = "🐾 Adoption Completed for Age %d" % PlayerData.age
+		elif not can_afford:
 			btn_buy.disabled = true
 			btn_buy.modulate = Color(0.6, 0.6, 0.6, 0.65)
 			btn_buy.text = "🔒 Requires $%s (Insufficient Funds)" % _format_number(price)
@@ -8725,9 +8910,10 @@ func _show_pet_ranch_modal() -> void:
 		cv.add_child(stats_lbl)
 
 		var pet_spec: Dictionary = h
+		var has_adopted_this_year: bool = (PlayerData.last_pet_adoption_age == PlayerData.age)
 		var can_afford: bool = (PlayerData.money + PlayerData.bank_savings) >= price
 		var btn_buy := _create_cyber_button("🐎 Purchase Horse ($%s)" % _format_number(price), Color("#38bdf8"), func():
-			var res := PetManager.adopt_pet(PlayerData, pet_spec)
+			var res := PetManager.adopt_pet(PlayerData, pet_spec, "", true)
 			if res["success"]:
 				add_life_event(res["message"], "relationship")
 				pet_adoption_modal_overlay.queue_free()
@@ -8739,7 +8925,11 @@ func _show_pet_ranch_modal() -> void:
 		)
 		btn_buy.custom_minimum_size.y = 52
 		btn_buy.add_theme_font_size_override("font_size", 22)
-		if not can_afford:
+		if has_adopted_this_year:
+			btn_buy.disabled = true
+			btn_buy.modulate = Color(0.6, 0.6, 0.6, 0.7)
+			btn_buy.text = "🐎 Purchase Completed for Age %d" % PlayerData.age
+		elif not can_afford:
 			btn_buy.disabled = true
 			btn_buy.modulate = Color(0.6, 0.6, 0.6, 0.65)
 			btn_buy.text = "🔒 Requires $%s (Insufficient Funds)" % _format_number(price)
@@ -9430,7 +9620,7 @@ func _show_casino_modal() -> void:
 		PlayerData.last_casino_age = PlayerData.age
 		PlayerData.casino_plays_this_year = 0
 
-	var max_plays := 5
+	var max_plays := 1
 	var plays_left := maxi(0, max_plays - PlayerData.casino_plays_this_year)
 	var casino_locked: bool = plays_left <= 0
 
@@ -9466,7 +9656,7 @@ func _show_casino_modal() -> void:
 
 	var scratch_btn_text := "Scratch Ticket ($25) (Limit Reached)" if casino_locked else "Scratch Ticket ($25)"
 	var btn_scratch := _create_cyber_button(scratch_btn_text, Color("#f59e0b"), func():
-		if PlayerData.casino_plays_this_year >= 5:
+		if PlayerData.casino_plays_this_year >= 1:
 			return
 		if PlayerData.money >= 25:
 			PlayerData.money -= 25
@@ -9502,7 +9692,7 @@ func _show_casino_modal() -> void:
 	if casino_locked:
 		btn_scratch.disabled = true
 		btn_scratch.modulate = Color(0.6, 0.6, 0.6, 0.65)
-		btn_scratch.tooltip_text = "Annual gaming limit reached (5 plays per year). Come back next year!"
+		btn_scratch.tooltip_text = "Annual gaming limit reached (1 play per year). Come back next year!"
 	v_scratch.add_child(btn_scratch)
 	list.add_child(card_scratch)
 
@@ -9541,7 +9731,7 @@ func _show_casino_modal() -> void:
 
 	var spin_btn_text := "Spin Reels ($50) (Limit Reached)" if casino_locked else "Spin Reels ($50)"
 	var btn_spin := _create_cyber_button(spin_btn_text, Color("#f59e0b"), func():
-		if PlayerData.casino_plays_this_year >= 5:
+		if PlayerData.casino_plays_this_year >= 1:
 			return
 		if PlayerData.money >= 50:
 			PlayerData.money -= 50
@@ -9599,7 +9789,7 @@ func _show_casino_modal() -> void:
 	if casino_locked:
 		btn_spin.disabled = true
 		btn_spin.modulate = Color(0.6, 0.6, 0.6, 0.65)
-		btn_spin.tooltip_text = "Annual gaming limit reached (5 plays per year). Come back next year!"
+		btn_spin.tooltip_text = "Annual gaming limit reached (1 play per year). Come back next year!"
 	v_slots.add_child(btn_spin)
 	list.add_child(card_slots)
 
@@ -9679,7 +9869,7 @@ func _show_casino_modal() -> void:
 		if casino_locked:
 			btn_opt.disabled = true
 			btn_opt.modulate = Color(0.6, 0.6, 0.6, 0.65)
-			btn_opt.tooltip_text = "Annual gaming limit reached (5 plays per year). Come back next year!"
+			btn_opt.tooltip_text = "Annual gaming limit reached (1 play per year). Come back next year!"
 		v_dice.add_child(btn_opt)
 
 	list.add_child(card_dice)
@@ -9687,7 +9877,7 @@ func _show_casino_modal() -> void:
 
 
 func _play_dice_roll(prediction: String, _modal: Dictionary = {}) -> void:
-	if PlayerData.casino_plays_this_year >= 5:
+	if PlayerData.casino_plays_this_year >= 1:
 		return
 	if PlayerData.money < current_dice_bet_amount:
 		casino_dice_result_lbl.text = "Insufficient funds for $%d wager!" % current_dice_bet_amount
@@ -10912,7 +11102,6 @@ func _on_menu_btn_hover() -> void:
 		menu_btn.pivot_offset = menu_btn.size / 2.0
 		var tween := create_tween().set_parallel(true)
 		tween.tween_property(menu_btn, "scale", Vector2(1.16, 1.16), 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tween.tween_property(menu_btn, "rotation_degrees", menu_btn.rotation_degrees + 90.0, 0.25).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 		tween.tween_property(menu_btn, "modulate", Color(1.2, 1.3, 1.5, 1.0), 0.2)
 
 

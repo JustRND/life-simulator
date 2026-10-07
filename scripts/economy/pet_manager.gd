@@ -184,7 +184,12 @@ static func get_ranch_horses() -> Array[Dictionary]:
 	return list
 
 
-static func adopt_pet(player_data: Node, pet_spec: Dictionary, custom_name: String = "") -> Dictionary:
+static func adopt_pet(player_data: Node, pet_spec: Dictionary, custom_name: String = "", enforce_annual_limit: bool = false) -> Dictionary:
+	if enforce_annual_limit:
+		var last_adopt_age = player_data.get("last_pet_adoption_age")
+		if last_adopt_age != null and int(last_adopt_age) == player_data.age:
+			return {"success": false, "message": "Annual Adoption Limit: You have already adopted a companion pet for Age %d! Advance age (+1 Year) to adopt another pet." % player_data.age}
+
 	var price: int = int(pet_spec.get("price", 0))
 	var total_funds: int = player_data.money + player_data.bank_savings
 	if price > 0 and total_funds < price:
@@ -220,10 +225,15 @@ static func adopt_pet(player_data: Node, pet_spec: Dictionary, custom_name: Stri
 		"upkeep": int(pet_spec.get("upkeep", 150)),
 		"lifespan": int(pet_spec.get("lifespan", 15)),
 		"adopted_age": player_data.age,
-		"last_interact_age": -1
+		"last_interact_age": -1,
+		"last_play_age": -1,
+		"last_walk_age": -1,
+		"last_treat_age": -1,
+		"last_vet_age": -1
 	}
 
 	player_data.pets.append(new_pet)
+	player_data.last_pet_adoption_age = player_data.age
 	player_data.happiness = mini(100, player_data.happiness + 15)
 
 	var log_desc := ""
@@ -260,10 +270,16 @@ static func interact_pet(player_data: Node, pet_id: String, action: String) -> D
 			var pet_name: String = str(pet.get("name", "your pet"))
 			var p_type: String = str(pet.get("type", "dog"))
 
+			var act_field := "last_" + action + "_age"
+			if int(pet.get(act_field, -1)) == player_data.age:
+				var verb: String = "played with" if action == "play" else ("walked" if action == "walk" else ("given treats to" if action == "treat" else "taken to the vet"))
+				return {"success": false, "message": "Already done for Age %d! You have already %s %s this year. Wait until next year!" % [player_data.age, verb, pet_name]}
+
 			match action:
 				"play":
 					pet["happiness"] = mini(100, int(pet.get("happiness", 80)) + 15)
 					player_data.happiness = mini(100, player_data.happiness + 8)
+					pet[act_field] = player_data.age
 					player_data.add_life_log_entry("🎾 You spent joyous time playing and bonding with %s! Happiness +8%%." % pet_name, "activity")
 					return {"success": true, "message": "You played and cuddled with %s! %s is wagging and purring with joy." % [pet_name, pet_name]}
 				"walk":
@@ -273,6 +289,7 @@ static func interact_pet(player_data: Node, pet_id: String, action: String) -> D
 					pet["health"] = mini(100, int(pet.get("health", 80)) + 6)
 					player_data.health = mini(100, player_data.health + 4)
 					player_data.happiness = mini(100, player_data.happiness + 6)
+					pet[act_field] = player_data.age
 					player_data.add_life_log_entry("🦮 You took %s on a refreshing outdoor walk through the park! Health +4%%, Happiness +6%%." % pet_name, "activity")
 					return {"success": true, "message": "You went on a scenic walk with %s! Great cardio for both of you." % pet_name}
 				"treat":
@@ -282,6 +299,7 @@ static func interact_pet(player_data: Node, pet_id: String, action: String) -> D
 					player_data.money -= treat_cost
 					pet["happiness"] = mini(100, int(pet.get("happiness", 80)) + 20)
 					player_data.happiness = mini(100, player_data.happiness + 5)
+					pet[act_field] = player_data.age
 					return {"success": true, "message": "You fed %s delicious artisan treats! %s happily devoured them." % [pet_name, pet_name]}
 				"vet":
 					var vet_cost := 160
@@ -295,6 +313,7 @@ static func interact_pet(player_data: Node, pet_id: String, action: String) -> D
 						player_data.money = 0
 						player_data.bank_savings -= rem
 					pet["health"] = mini(100, int(pet.get("health", 70)) + 30)
+					pet[act_field] = player_data.age
 					player_data.add_life_log_entry("🩺 You brought %s to the veterinarian clinic for shots and health checkups ($%d). Health restored!" % [pet_name, vet_cost], "activity")
 					return {"success": true, "message": "The veterinarian gave %s a clean bill of health! Pet Health +30%%." % pet_name}
 

@@ -102,7 +102,7 @@ static func generate_profile(first_name: String, country: String, gender: String
 	var gender_term := "male" if gender.to_upper() == "MALE" else "female"
 
 	var lines: Array[String] = []
-	lines.append("I am a %s who came into the world in %s." % [gender_term, country])
+	lines.append("I am a %s who came into the world in %s." % [gender_term, LifeLibrary.birth_location(country)])
 	lines.append(circumstance)
 	lines.append("My birthday is %s %d. I am a %s." % [month_name, day, zodiac])
 	lines.append("My name is %s." % first_name)

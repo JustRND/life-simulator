@@ -111,6 +111,10 @@ func _build_page() -> void:
 	page.name = "SettingsDetailPage"
 	get_parent().add_child(page)
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	page.offset_left = 0
+	page.offset_top = 260.0
+	page.offset_right = 0
+	page.offset_bottom = 0
 	page.z_index = 91
 	page.add_theme_stylebox_override("panel", _style(Color(0.055, 0.085, 0.17, 0.98), Color("#244872"), 36))
 	var column := VBoxContainer.new()
@@ -233,8 +237,8 @@ func _save_local() -> void:
 	if not PlayerData.has_started_game:
 		status.text = "Your local profile is ready. Start a life before saving progress."
 		return
-	SaveManager.save_game()
-	status.text = "Local save requested. Cloud sync is not connected."
+	_close_page()
+	get_parent().get_node("OptionsMenu")._save_life()
 
 func _label(text: String, font_size: int) -> Label:
 	var label := Label.new()

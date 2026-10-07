@@ -7,6 +7,10 @@ static func paths() -> Dictionary:
 		var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/economy/career_paths.json"))
 		if parsed is Dictionary:
 			_paths = parsed
+			for job_id in _paths:
+				var category: String = str(JobManager.get_job_by_id(job_id).get("category", ""))
+				for stage in _paths[job_id]:
+					stage.salary = preload("res://scripts/economy/balance_rules.gd").salary(int(stage.salary), category)
 	return _paths
 
 static func begin(player: Node) -> void:
