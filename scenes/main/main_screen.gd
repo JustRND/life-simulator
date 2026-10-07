@@ -8,6 +8,8 @@ const RomanceRules = preload("res://scripts/core/romance_rules.gd")
 const RelationshipExtras = preload("res://scripts/core/relationship_extras.gd")
 const CareerProgression = preload("res://scripts/economy/career_progression.gd")
 const UndergroundProgression = preload("res://scripts/economy/underground_progression.gd")
+const AssetCatalog = preload("res://scripts/economy/asset_catalog.gd")
+
 
 var portrait: TextureRect
 var portrait_key: String = ""
@@ -92,6 +94,7 @@ var education_modal_overlay: Control = null
 @onready var assets_panel: PanelContainer = $AssetsPanel
 @onready var assets_cash_label: Label = $AssetsPanel/AssetsMargin/AssetsContent/AssetsCashLabel
 @onready var bank_button: Button = $AssetsPanel/AssetsMargin/AssetsContent/BankButton
+@onready var assets_list: VBoxContainer = $AssetsPanel/AssetsMargin/AssetsContent/AssetsScroll/AssetsList
 
 # Bank Panel
 @onready var bank_panel: PanelContainer = $BankPanel
@@ -536,6 +539,11 @@ func age_up() -> void:
 			PlayerData.has_gym_membership = false
 			PlayerData.happiness = maxi(5, PlayerData.happiness - 4)
 			add_life_event("⚠️ GYM MEMBERSHIP CANCELLED: You lacked sufficient funds ($%s) in your bank account to renew your gym membership. It has been cancelled." % _format_number(gym_fee), "finance")
+
+	# 7b. Owned Assets Upkeep, Depreciation & Equity Appreciation
+	var asset_logs := AssetCatalog.process_yearly_assets(PlayerData)
+	for log_msg in asset_logs:
+		add_life_event(log_msg, "finance")
 
 	# 8. Education Lifecycle Progression (Kindergarten @ 3, Primary @ 6, Middle @ 11, High @ 14, Grad @ 18)
 	if PlayerData.age == 3:
@@ -1742,12 +1750,378 @@ func quit_job() -> void:
 
 
 func update_assets_panel() -> void:
-	assets_cash_label.text = "Cash on Hand: $%s\nBank Savings: $%s\nTotal Net Worth: $%s" % [
+	var total_assets: int = PlayerData.get_total_asset_value()
+	var net_worth: int = PlayerData.get_net_worth()
+	var total_cash: int = PlayerData.money
+	var savings: int = PlayerData.bank_savings
+	var debt_val: int = PlayerData.get_total_debt()
+
+	if net_worth < 0:
+		assets_cash_label.text = "Cash: $%s  •  Bank: $%s  •  Assets: $%s  •  Debt: $%s\nTotal Net Worth: -$%s" % [
+			_format_number(total_cash),
+			_format_number(savings),
+			_format_number(total_assets),
+			_format_number(debt_val),
+			_format_number(absi(net_worth))
+		]
+		assets_cash_label.add_theme_color_override("font_color", Color("#ef4444"))
+	else:
+		assets_cash_label.text = "Cash: $%s  •  Bank: $%s  •  Assets: $%s\nTotal Net Worth: $%s" % [
+			_format_number(total_cash),
+			_format_number(savings),
+			_format_number(total_assets),
+			_format_number(net_worth)
+		]
+		assets_cash_label.add_theme_color_override("font_color", Color("#22c55e"))
+
+	_render_assets_list()
+	_configure_button_contrasts()
+
+
+func _render_assets_list() -> void:
+	if assets_list == null:
+		return
+
+	for child in assets_list.get_children():
+		assets_list.remove_child(child)
+		child.queue_free()
+
+	# 1. Commercial Dealerships & Brokerages Hub Card
+	var store_card := PanelContainer.new()
+	store_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#38bdf8")))
+	var sm := MarginContainer.new()
+	sm.add_theme_constant_override("margin_left", 20)
+	sm.add_theme_constant_override("margin_right", 20)
+	sm.add_theme_constant_override("margin_top", 18)
+	sm.add_theme_constant_override("margin_bottom", 18)
+	store_card.add_child(sm)
+
+	var sv := VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 14)
+	sm.add_child(sv)
+
+	var stitle := Label.new()
+	stitle.text = "🛒 ASSET MARKETPLACES & SHOWROOMS"
+	stitle.add_theme_font_size_override("font_size", 24)
+	stitle.add_theme_color_override("font_color", Color("#38bdf8"))
+	sv.add_child(stitle)
+
+	var sgrid := GridContainer.new()
+	sgrid.columns = 1
+	sgrid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sgrid.add_theme_constant_override("v_separation", 12)
+	sv.add_child(sgrid)
+
+	# Dealership Button 1: Cars
+	var btn_cars := _create_cyber_button("🚗 Apex Cyber Motors (Car Dealership)", Color("#0284c7"), func():
+		_open_asset_marketplace_modal(AssetCatalog.CATEGORY_CARS)
+	)
+	btn_cars.custom_minimum_size.y = 56
+	btn_cars.add_theme_font_size_override("font_size", 22)
+	sgrid.add_child(btn_cars)
+
+	# Dealership Button 2: Motorcycles
+	var btn_motos := _create_cyber_button("🏍️ Neon Speed Cycles (Motorcycle Showroom)", Color("#8b5cf6"), func():
+		_open_asset_marketplace_modal(AssetCatalog.CATEGORY_MOTORCYCLES)
+	)
+	btn_motos.custom_minimum_size.y = 56
+	btn_motos.add_theme_font_size_override("font_size", 22)
+	sgrid.add_child(btn_motos)
+
+	# Dealership Button 3: Properties
+	var btn_props := _create_cyber_button("🏠 Metro Prime Realty (Property Brokerage)", Color("#10b981"), func():
+		_open_asset_marketplace_modal(AssetCatalog.CATEGORY_PROPERTIES)
+	)
+	btn_props.custom_minimum_size.y = 56
+	btn_props.add_theme_font_size_override("font_size", 22)
+	sgrid.add_child(btn_props)
+
+	assets_list.add_child(store_card)
+
+	# 2. Owned Vehicles Section (Cars & Motorcycles)
+	_render_owned_assets_section("🚗 OWNED VEHICLES & RIDES", [AssetCatalog.CATEGORY_CARS, AssetCatalog.CATEGORY_MOTORCYCLES], Color("#06b6d4"))
+
+	# 3. Owned Real Estate Section (Properties)
+	_render_owned_assets_section("🏠 OWNED REAL ESTATE & PROPERTIES", [AssetCatalog.CATEGORY_PROPERTIES], Color("#10b981"))
+
+
+func _render_owned_assets_section(title_text: String, categories: Array, theme_color: Color) -> void:
+	var section_card := PanelContainer.new()
+	section_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(theme_color))
+	var sm := MarginContainer.new()
+	sm.add_theme_constant_override("margin_left", 20)
+	sm.add_theme_constant_override("margin_right", 20)
+	sm.add_theme_constant_override("margin_top", 18)
+	sm.add_theme_constant_override("margin_bottom", 18)
+	section_card.add_child(sm)
+
+	var sv := VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 14)
+	sm.add_child(sv)
+
+	var matching_items: Array[Dictionary] = []
+	for item in PlayerData.owned_assets:
+		if str(item.get("category", "")) in categories:
+			matching_items.append(item)
+
+	var title_lbl := Label.new()
+	title_lbl.text = "%s (%d)" % [title_text, matching_items.size()]
+	title_lbl.add_theme_font_size_override("font_size", 24)
+	title_lbl.add_theme_color_override("font_color", theme_color)
+	sv.add_child(title_lbl)
+
+	if matching_items.is_empty():
+		var empty_lbl := Label.new()
+		empty_lbl.text = "You do not currently own any assets in this category. Visit the marketplaces above to acquire vehicles or properties!"
+		empty_lbl.add_theme_font_size_override("font_size", 20)
+		empty_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
+		empty_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		sv.add_child(empty_lbl)
+	else:
+		for item in matching_items:
+			var item_card := PanelContainer.new()
+			var ic_style := StyleBoxFlat.new()
+			ic_style.bg_color = Color("#070e1c")
+			ic_style.border_color = theme_color.darkened(0.2)
+			ic_style.set_border_width_all(2)
+			ic_style.set_corner_radius_all(10)
+			item_card.add_theme_stylebox_override("panel", ic_style)
+			sv.add_child(item_card)
+
+			var im := MarginContainer.new()
+			im.add_theme_constant_override("margin_left", 16)
+			im.add_theme_constant_override("margin_right", 16)
+			im.add_theme_constant_override("margin_top", 14)
+			im.add_theme_constant_override("margin_bottom", 14)
+			item_card.add_child(im)
+
+			var ih := HBoxContainer.new()
+			ih.add_theme_constant_override("separation", 18)
+			im.add_child(ih)
+
+			# Pixel art picture preview
+			var img_rect := TextureRect.new()
+			img_rect.custom_minimum_size = Vector2(130, 130)
+			img_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			img_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			img_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			var img_path: String = str(item.get("image_path", ""))
+			if ResourceLoader.exists(img_path):
+				img_rect.texture = load(img_path)
+			ih.add_child(img_rect)
+
+			var iv := VBoxContainer.new()
+			iv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			iv.add_theme_constant_override("separation", 6)
+			ih.add_child(iv)
+
+			var name_lbl := Label.new()
+			name_lbl.text = str(item.get("name", "Asset"))
+			name_lbl.add_theme_font_size_override("font_size", 22)
+			name_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+			name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			iv.add_child(name_lbl)
+
+			var cur_val: int = int(item.get("current_value", item.get("purchase_price", 0)))
+			var upkeep: int = int(item.get("upkeep", 0))
+			var val_lbl := Label.new()
+			val_lbl.text = "Resale Value: $%s   •   Upkeep: $%s/yr" % [_format_number(cur_val), _format_number(upkeep)]
+			val_lbl.add_theme_font_size_override("font_size", 18)
+			val_lbl.add_theme_color_override("font_color", Color("#4ade80"))
+			val_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			iv.add_child(val_lbl)
+
+			# Action Row: Joyride / Relax and Sell
+			var act_row := HBoxContainer.new()
+			act_row.add_theme_constant_override("separation", 10)
+			iv.add_child(act_row)
+
+			var cat: String = str(item.get("category", ""))
+			var is_used: bool = int(item.get("last_used_age", -1)) == PlayerData.age
+			var use_text := "Joyride (Used)" if is_used else "🏎️ Joyride"
+			if cat == AssetCatalog.CATEGORY_PROPERTIES:
+				use_text = "Relax (Used)" if is_used else "🎉 Host Party"
+
+			var instance_id: String = str(item.get("instance_id", ""))
+			var btn_use := _create_cyber_button(use_text, Color("#0284c7"), func():
+				var res = AssetCatalog.use_asset(PlayerData, instance_id)
+				if res["success"]:
+					add_life_event(res["message"], "lifestyle")
+					update_ui()
+					update_assets_panel()
+				else:
+					add_life_event(res["message"], "lifestyle")
+					show_tab("timeline")
+			)
+			btn_use.custom_minimum_size.y = 48
+			btn_use.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			btn_use.add_theme_font_size_override("font_size", 18)
+			if is_used:
+				btn_use.disabled = true
+				btn_use.modulate = Color(0.6, 0.6, 0.6, 0.65)
+			act_row.add_child(btn_use)
+
+			var btn_sell := _create_cyber_button("💰 Sell ($%s)" % _format_number(cur_val), Color("#f43f5e"), func():
+				var res = AssetCatalog.sell_asset(PlayerData, instance_id)
+				if res["success"]:
+					add_life_event("💰 ASSET SOLD: You sold %s for $%s!" % [item.get("name", "Asset"), _format_number(res["sale_price"])], "finance")
+					update_ui()
+					update_assets_panel()
+			)
+			btn_sell.custom_minimum_size.y = 48
+			btn_sell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			btn_sell.add_theme_font_size_override("font_size", 18)
+			act_row.add_child(btn_sell)
+
+	assets_list.add_child(section_card)
+
+
+func _open_asset_marketplace_modal(category: String) -> void:
+	var title_text: String = AssetCatalog.get_category_display_title(category)
+	var subtitle_text: String = AssetCatalog.get_category_subtitle(category)
+	var border_color: Color = Color("#0284c7")
+	if category == AssetCatalog.CATEGORY_MOTORCYCLES:
+		border_color = Color("#8b5cf6")
+	elif category == AssetCatalog.CATEGORY_PROPERTIES:
+		border_color = Color("#10b981")
+
+	var modal_dict: Dictionary = _create_cyber_modal(title_text, subtitle_text, border_color)
+	var content_list: VBoxContainer = modal_dict["list"]
+	var overlay: Control = modal_dict["overlay"]
+
+
+	# Balance overview banner
+	var bal_card := PanelContainer.new()
+	bal_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(border_color))
+	var bm := MarginContainer.new()
+	bm.add_theme_constant_override("margin_left", 18)
+	bm.add_theme_constant_override("margin_right", 18)
+	bm.add_theme_constant_override("margin_top", 12)
+	bm.add_theme_constant_override("margin_bottom", 12)
+	bal_card.add_child(bm)
+
+	var bal_lbl := Label.new()
+	bal_lbl.text = "💳 Available Funds: Cash $%s   •   Bank Savings: $%s   (Total: $%s)" % [
 		_format_number(PlayerData.money),
 		_format_number(PlayerData.bank_savings),
-		_format_number(PlayerData.get_net_worth())
+		_format_number(PlayerData.money + PlayerData.bank_savings)
 	]
-	_configure_button_contrasts()
+	bal_lbl.add_theme_font_size_override("font_size", 20)
+	bal_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
+	bal_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	bm.add_child(bal_lbl)
+	content_list.add_child(bal_card)
+
+	var items: Array[Dictionary] = AssetCatalog.get_items_by_category(category)
+	for item in items:
+		var item_id: String = str(item.get("id", ""))
+		var item_name: String = str(item.get("name", ""))
+		var price: int = int(item.get("price", 0))
+		var upkeep: int = int(item.get("upkeep", 0))
+		var happiness_bonus: int = int(item.get("happiness_bonus", 5))
+		var desc: String = str(item.get("desc", ""))
+		var img_path: String = str(item.get("image_path", ""))
+		var min_age: int = int(item.get("min_age", 18))
+
+		var card := PanelContainer.new()
+		var card_style := StyleBoxFlat.new()
+		card_style.bg_color = Color("#070e1c")
+		card_style.border_color = border_color.darkened(0.2)
+		card_style.set_border_width_all(2)
+		card_style.set_corner_radius_all(12)
+		card.add_theme_stylebox_override("panel", card_style)
+		content_list.add_child(card)
+
+		var cm := MarginContainer.new()
+		cm.add_theme_constant_override("margin_left", 20)
+		cm.add_theme_constant_override("margin_right", 20)
+		cm.add_theme_constant_override("margin_top", 18)
+		cm.add_theme_constant_override("margin_bottom", 18)
+		card.add_child(cm)
+
+		var ch := HBoxContainer.new()
+		ch.add_theme_constant_override("separation", 22)
+		cm.add_child(ch)
+
+		# The Pixel Art Picture Preview
+		var p_img := TextureRect.new()
+		p_img.custom_minimum_size = Vector2(160, 160)
+		p_img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		p_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		p_img.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		if ResourceLoader.exists(img_path):
+			p_img.texture = load(img_path)
+		ch.add_child(p_img)
+
+		# Product Info Column
+		var pv := VBoxContainer.new()
+		pv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		pv.add_theme_constant_override("separation", 8)
+		ch.add_child(pv)
+
+		var title_row := HBoxContainer.new()
+		pv.add_child(title_row)
+
+		var name_label := Label.new()
+		name_label.text = item_name
+		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		name_label.add_theme_font_size_override("font_size", 24)
+		name_label.add_theme_color_override("font_color", Color("#f8fafc"))
+		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		title_row.add_child(name_label)
+
+		var price_label := Label.new()
+		price_label.text = "$%s" % _format_number(price)
+		price_label.add_theme_font_size_override("font_size", 26)
+		price_label.add_theme_color_override("font_color", Color("#4ade80"))
+		title_row.add_child(price_label)
+
+		var stats_lbl := Label.new()
+		var perk_word := "Joyride" if category in [AssetCatalog.CATEGORY_CARS, AssetCatalog.CATEGORY_MOTORCYCLES] else "Residential"
+		stats_lbl.text = "Annual Upkeep: $%s/yr   •   %s Perk: +%d%% Happiness" % [_format_number(upkeep), perk_word, happiness_bonus]
+		stats_lbl.add_theme_font_size_override("font_size", 18)
+		stats_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
+		stats_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		pv.add_child(stats_lbl)
+
+		var desc_lbl := Label.new()
+		desc_lbl.text = desc
+		desc_lbl.add_theme_font_size_override("font_size", 18)
+		desc_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		pv.add_child(desc_lbl)
+
+		# Purchase button
+		var can_afford: bool = AssetCatalog.can_afford(PlayerData, price)
+		var is_of_age: bool = PlayerData.age >= min_age
+
+		var btn_buy := _create_cyber_button("", border_color, func():
+			var buy_res = AssetCatalog.buy_asset(PlayerData, item_id)
+			if buy_res["success"]:
+				add_life_event("🚗 NEW ACQUISITION: You purchased %s for $%s!" % [item_name, _format_number(price)], "finance")
+				overlay.queue_free()
+				update_ui()
+				update_assets_panel()
+			else:
+				add_life_event(buy_res["message"], "finance")
+				show_tab("timeline")
+		)
+		btn_buy.custom_minimum_size.y = 56
+		btn_buy.add_theme_font_size_override("font_size", 22)
+		btn_buy.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+		if not is_of_age:
+			btn_buy.disabled = true
+			btn_buy.modulate = Color(0.5, 0.5, 0.5, 0.6)
+			btn_buy.text = "Age Restricted (Requires Age %d+)" % min_age
+		elif not can_afford:
+			btn_buy.disabled = true
+			btn_buy.modulate = Color(0.6, 0.6, 0.6, 0.65)
+			btn_buy.text = "Cannot Afford ($%s)" % _format_number(price)
+		else:
+			btn_buy.text = "Purchase for $%s" % _format_number(price)
+
+		pv.add_child(btn_buy)
 
 
 func load_style_box_cyber_card(border_col: Color = Color("#22d3ee")) -> StyleBoxFlat:

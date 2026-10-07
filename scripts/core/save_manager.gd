@@ -39,6 +39,7 @@ func save_game() -> void:
 		"tax_debt": PlayerData.tax_debt,
 		"loan_balance": PlayerData.loan_balance,
 		"loan_interest_rate": PlayerData.loan_interest_rate,
+		"owned_assets": PlayerData.owned_assets,
 		"education_level": PlayerData.education_level,
 		"grades": PlayerData.grades,
 		"has_scholarship": PlayerData.has_scholarship,
@@ -207,6 +208,12 @@ func load_game() -> bool:
 	PlayerData.pregnancy = Dictionary(data.get("pregnancy", {}))
 	PlayerData.active_debuffs = Array(data.get("active_debuffs", []))
 	PlayerData.active_buffs = Array(data.get("active_buffs", []))
+	PlayerData.owned_assets.clear()
+	var saved_assets = data.get("owned_assets", [])
+	if saved_assets is Array:
+		for a in saved_assets:
+			if a is Dictionary:
+				PlayerData.owned_assets.append(a)
 	PlayerData.enforce_buffs_and_debuffs()
 
 	PlayerData.partner = Dictionary(data.get("partner", {}))

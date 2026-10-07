@@ -82,6 +82,7 @@ var debt: int = 0
 var tax_debt: int = 0
 var loan_balance: int = 0
 var loan_interest_rate: float = 0.08
+var owned_assets: Array[Dictionary] = []
 
 var education_level: String = "None"
 var grades: int = 75
@@ -201,6 +202,7 @@ func reset_player() -> void:
 	debt = 0
 	tax_debt = 0
 	loan_balance = 0
+	owned_assets.clear()
 
 	education_level = "None"
 	grades = 75
@@ -322,8 +324,23 @@ func has_completed_degree() -> bool:
 	return education_level == "University Graduate" or degrees.size() > 0
 
 
+func get_total_asset_value() -> int:
+	var total: int = 0
+	for item in owned_assets:
+		total += int(item.get("current_value", item.get("purchase_price", 0)))
+	return total
+
+
 func get_net_worth() -> int:
-	return money + bank_savings - get_total_debt()
+	return money + bank_savings + get_total_asset_value() - get_total_debt()
+
+
+func get_owned_assets_by_category(category: String) -> Array[Dictionary]:
+	var list: Array[Dictionary] = []
+	for item in owned_assets:
+		if item.get("category", "") == category:
+			list.append(item)
+	return list
 
 
 func has_illness(illness_id: String) -> bool:

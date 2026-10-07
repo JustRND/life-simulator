@@ -1,5 +1,7 @@
 extends Node
 const RelationshipExtras = preload("res://scripts/core/relationship_extras.gd")
+const AssetCatalog = preload("res://scripts/economy/asset_catalog.gd")
+
 
 func _ready() -> void:
 	print("--- BEGIN BALANCE & NEW MECHANICS TEST ---")
@@ -11,6 +13,7 @@ func _ready() -> void:
 	test_grades_degradation_and_courses()
 	test_educational_minigames()
 	test_relationship_panel_layout()
+	test_asset_marketplace_and_ownership()
 	print("--- ALL BALANCE & NEW MECHANICS TESTS PASSED! ---")
 	get_tree().quit(0)
 
@@ -605,5 +608,147 @@ func test_relationship_panel_layout() -> void:
 
 	main_scene.queue_free()
 	print("✔ Test 8: Relationship panel 2-column layout, baby gifting restrictions, and Afterlife non-clipping layout verified")
+
+
+func test_asset_marketplace_and_ownership() -> void:
+	print("--- Running Test 9: Asset Marketplace, Ownership, Upkeep, and Visual Art Previews ---")
+	SaveManager.delete_save()
+	var main_scene = load("res://scenes/main/main_screen.tscn").instantiate()
+	add_child(main_scene)
+
+	PlayerData.reset_player()
+	PlayerData.age = 25
+	PlayerData.money = 10000
+	PlayerData.bank_savings = 250000
+
+	# 1. Verify Catalog structure and all 9 pixel art textures exist on disk
+	var cars = AssetCatalog.get_items_by_category(AssetCatalog.CATEGORY_CARS)
+	var motos = AssetCatalog.get_items_by_category(AssetCatalog.CATEGORY_MOTORCYCLES)
+	var props = AssetCatalog.get_items_by_category(AssetCatalog.CATEGORY_PROPERTIES)
+
+	assert(cars.size() >= 3, "Catalog must contain at least 3 cars")
+	assert(motos.size() >= 3, "Catalog must contain at least 3 motorcycles")
+	assert(props.size() >= 3, "Catalog must contain at least 3 properties")
+
+	for cat_items in [cars, motos, props]:
+		for item in cat_items:
+			var img_path: String = item.get("image_path", "")
+			assert(not img_path.is_empty(), "Item %s must define an image_path" % item.get("name"))
+			assert(ResourceLoader.exists(img_path), "Pixel art texture at '%s' must exist in project" % img_path)
+			var tex = load(img_path)
+			assert(tex != null, "Pixel art texture at '%s' must successfully load as Texture2D" % img_path)
+
+	# 2. Underage and insufficient fund validations
+	PlayerData.age = 14
+	var car_underage = AssetCatalog.buy_asset(PlayerData, "car_hatchback")
+	assert(not car_underage["success"], "Underage player should not be able to purchase a car")
+
+	PlayerData.age = 25
+	PlayerData.money = 100
+	PlayerData.bank_savings = 100
+	var car_broke = AssetCatalog.buy_asset(PlayerData, "car_sportscar")
+	assert(not car_broke["success"], "Player with insufficient funds should not be able to purchase")
+
+	# 3. Successful Purchases and Net Worth tracking
+	PlayerData.money = 20000
+	PlayerData.bank_savings = 500000
+	var prev_nw = PlayerData.get_net_worth()
+
+	var buy_car = AssetCatalog.buy_asset(PlayerData, "car_hatchback")
+	assert(buy_car["success"], "Should successfully purchase car_hatchback")
+	assert(PlayerData.owned_assets.size() == 1, "Player should now own 1 asset")
+	assert(PlayerData.money == 20000 - 3500, "Cash should be debited first for purchase")
+	assert(PlayerData.get_total_asset_value() == 3500, "Asset value should match purchase price initially")
+	assert(PlayerData.get_net_worth() == prev_nw, "Net worth should remain stable (cash converted to physical asset)")
+
+	var buy_moto = AssetCatalog.buy_asset(PlayerData, "moto_sportbike")
+	assert(buy_moto["success"], "Should successfully purchase moto_sportbike")
+	assert(PlayerData.owned_assets.size() == 2, "Player should now own 2 assets")
+
+	var buy_prop = AssetCatalog.buy_asset(PlayerData, "prop_house")
+	assert(buy_prop["success"], "Should successfully purchase prop_house")
+	assert(PlayerData.owned_assets.size() == 3, "Player should now own 3 assets")
+
+	assert(PlayerData.get_owned_assets_by_category(AssetCatalog.CATEGORY_CARS).size() == 1, "Should have 1 car")
+	assert(PlayerData.get_owned_assets_by_category(AssetCatalog.CATEGORY_MOTORCYCLES).size() == 1, "Should have 1 motorcycle")
+	assert(PlayerData.get_owned_assets_by_category(AssetCatalog.CATEGORY_PROPERTIES).size() == 1, "Should have 1 property")
+
+	# 4. Joyride and Relax Perks (with anti-spam per year)
+	var car_asset: Dictionary = PlayerData.get_owned_assets_by_category(AssetCatalog.CATEGORY_CARS)[0]
+	var car_id: String = car_asset["instance_id"]
+	var initial_happy = PlayerData.happiness
+
+	var joyride1 = AssetCatalog.use_asset(PlayerData, car_id)
+	assert(joyride1["success"], "Joyride should succeed")
+	assert(PlayerData.happiness >= initial_happy, "Joyride should boost happiness")
+
+	var joyride2 = AssetCatalog.use_asset(PlayerData, car_id)
+	assert(not joyride2["success"], "Joyride spam in same year should be blocked")
+
+	var prop_asset: Dictionary = PlayerData.get_owned_assets_by_category(AssetCatalog.CATEGORY_PROPERTIES)[0]
+	var prop_id: String = prop_asset["instance_id"]
+	var party1 = AssetCatalog.use_asset(PlayerData, prop_id)
+	assert(party1["success"], "Hosting party should succeed")
+	var party2 = AssetCatalog.use_asset(PlayerData, prop_id)
+	assert(not party2["success"], "Party spam in same year should be blocked")
+
+	# 5. Annual Processing: Upkeep, Depreciation for vehicles, Appreciation for real estate
+	var car_val_before = car_asset["current_value"]
+	var prop_val_before = prop_asset["current_value"]
+	var total_upkeep_expected = car_asset["upkeep"] + PlayerData.get_owned_assets_by_category(AssetCatalog.CATEGORY_MOTORCYCLES)[0]["upkeep"] + prop_asset["upkeep"]
+
+	var cash_before_ageup = PlayerData.money
+	var savings_before_ageup = PlayerData.bank_savings
+	var total_funds_before = cash_before_ageup + savings_before_ageup
+
+	var yearly_logs: Array[String] = AssetCatalog.process_yearly_assets(PlayerData)
+	var total_funds_after = PlayerData.money + PlayerData.bank_savings
+	assert(total_funds_after == total_funds_before - total_upkeep_expected, "Funds debited must exactly equal total upkeep")
+
+
+	var updated_car = PlayerData.get_owned_assets_by_category(AssetCatalog.CATEGORY_CARS)[0]
+	var updated_prop = PlayerData.get_owned_assets_by_category(AssetCatalog.CATEGORY_PROPERTIES)[0]
+	assert(updated_car["current_value"] < car_val_before, "Vehicles must depreciate each year")
+	assert(updated_prop["current_value"] > prop_val_before, "Real estate must appreciate each year")
+
+	# 6. Selling an Asset
+	var car_resale = updated_car["current_value"]
+	var money_before_sale = PlayerData.money
+	var sell_res = AssetCatalog.sell_asset(PlayerData, car_id)
+	assert(sell_res["success"], "Selling car should succeed")
+	assert(PlayerData.money == money_before_sale + car_resale, "Sale proceeds should be deposited to cash")
+	assert(PlayerData.get_owned_assets_by_category(AssetCatalog.CATEGORY_CARS).size() == 0, "Car should no longer be owned")
+
+	# 7. UI Integration in Assets Panel
+	main_scene.update_assets_panel()
+	var assets_vbox: VBoxContainer = main_scene.get_node("AssetsPanel/AssetsMargin/AssetsContent/AssetsScroll/AssetsList")
+	assert(assets_vbox.get_child_count() > 0, "AssetsList should render cards and sections")
+
+	# Check that Dealership buttons exist
+	var has_cars_hub = false
+	var has_moto_hub = false
+	var has_prop_hub = false
+	for btn in assets_vbox.find_children("*", "Button", true, false):
+		if "Apex Cyber Motors" in btn.text:
+			has_cars_hub = true
+		elif "Neon Speed Cycles" in btn.text:
+			has_moto_hub = true
+		elif "Metro Prime Realty" in btn.text:
+			has_prop_hub = true
+
+	assert(has_cars_hub, "Apex Cyber Motors Dealership button must be rendered")
+	assert(has_moto_hub, "Neon Speed Cycles Dealership button must be rendered")
+	assert(has_prop_hub, "Metro Prime Realty Dealership button must be rendered")
+
+	# 8. Save / Load persistence
+	SaveManager.save_game()
+	PlayerData.owned_assets.clear()
+	assert(PlayerData.owned_assets.is_empty(), "Cleared owned assets in memory")
+	SaveManager.load_game()
+	assert(PlayerData.owned_assets.size() == 2, "SaveManager must reload the 2 remaining owned assets (moto + prop)")
+
+	main_scene.queue_free()
+	print("✔ Test 9: Asset Marketplace, Ownership, Upkeep, and Visual Art Previews verified successfully!")
+
 
 
