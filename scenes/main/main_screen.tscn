@@ -1245,18 +1245,21 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
 theme_override_font_sizes/font_size = 28
 text = "Mother: Ella Castro"
+autowrap_mode = 3
 
 [node name="MotherJobLabel" type="Label" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/MotherCard/Margin/HBox/MotherVBox" unique_id=1660769666]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_font_sizes/font_size = 24
 text = "Occupation: Grocer"
+autowrap_mode = 3
 
 [node name="MotherStatusLabel" type="Label" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/MotherCard/Margin/HBox/MotherVBox" unique_id=691528122]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.68, 0.78, 0.9, 1)
 theme_override_font_sizes/font_size = 22
 text = "Relationship: Warm & Loving"
+autowrap_mode = 3
 
 [node name="FatherCard" type="PanelContainer" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList" unique_id=1212954611]
 layout_mode = 2
@@ -1290,18 +1293,22 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
 theme_override_font_sizes/font_size = 28
 text = "Father: Carlos Castro"
+autowrap_mode = 3
 
 [node name="FatherJobLabel" type="Label" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/FatherCard/Margin/HBox/FatherVBox" unique_id=1275561853]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_font_sizes/font_size = 24
 text = "Occupation: Carpenter"
+autowrap_mode = 3
 
 [node name="FatherStatusLabel" type="Label" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/FatherCard/Margin/HBox/FatherVBox" unique_id=1608615251]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.68, 0.78, 0.9, 1)
 theme_override_font_sizes/font_size = 22
 text = "Relationship: Good"
+autowrap_mode = 3
+
 
 [node name="ActivitiesPanel" type="PanelContainer" parent="." unique_id=1478149788]
 visible = false

@@ -950,5 +950,248 @@
         "result": "You moved into a comfortable single-story suite with assisted nursing and social activities."
       }
     ]
+  },
+  {
+    "id": "elementary_spelling_bee",
+    "min_age": 6,
+    "max_age": 10,
+    "repeatable": true,
+    "weight": 80,
+    "conditions": {},
+    "title": "SCHOOL SPELLING BEE",
+    "text_variants": [
+      "Your primary school is hosting the annual Grade-Level Spelling Bee contest in the auditorium.",
+      "The English teacher selects you as one of the representatives for your class in the spelling competition."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Study vocabulary flashcards every evening",
+        "description": "+8% Grades, +3 Smarts, -2 Happiness",
+        "type": "diligent",
+        "effects": {
+          "grades": 8,
+          "smarts": 3,
+          "happiness": -2
+        },
+        "result": "You made it to the championship round and spelled 'chrysanthemum' flawlessly! Grades +8%."
+      },
+      {
+        "text": "Compete with cheerful confidence and zero preparation",
+        "description": "+4% Grades, +4 Happiness",
+        "type": "casual",
+        "effects": {
+          "grades": 4,
+          "smarts": 1,
+          "happiness": 4
+        },
+        "result": "You placed in the top five and had a fun afternoon on stage. Grades +4%."
+      },
+      {
+        "text": "Fake a stomach ache to skip the competition",
+        "description": "-6% Grades, +3 Happiness",
+        "type": "evasive",
+        "effects": {
+          "grades": -6,
+          "happiness": 3
+        },
+        "result": "You spent the afternoon relaxing in the nurse's office, but forfeited your academic marks. Grades -6%."
+      }
+    ]
+  },
+  {
+    "id": "science_fair_competition",
+    "min_age": 11,
+    "max_age": 14,
+    "repeatable": true,
+    "weight": 80,
+    "conditions": {},
+    "title": "ANNUAL SCIENCE FAIR",
+    "text_variants": [
+      "Your middle school announces the District Science Fair with competitive ribbons and trophies.",
+      "Science class projects are due this week for the school-wide STEM showcase exhibition."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Build an intricate solar-powered desalination model",
+        "description": "+10% Grades, +4 Smarts, +5 Karma",
+        "type": "inventive",
+        "effects": {
+          "grades": 10,
+          "smarts": 4,
+          "karma": 5,
+          "happiness": 4
+        },
+        "result": "The judges were blown away by your engineering prototype and awarded you 1st Place Blue Ribbon! Grades +10%."
+      },
+      {
+        "text": "Team up with a studious classmate to build a papier-mâché volcano",
+        "description": "+6% Grades, +2 Smarts, +3 Happiness",
+        "type": "collaborative",
+        "effects": {
+          "grades": 6,
+          "smarts": 2,
+          "happiness": 3
+        },
+        "result": "Red vinegar lava erupted on cue and the crowd loved the spectacle. Grades +6%."
+      },
+      {
+        "text": "Cobble together a poster 30 minutes before judging",
+        "description": "-8% Grades, -3 Smarts",
+        "type": "lazy",
+        "effects": {
+          "grades": -8,
+          "smarts": -3,
+          "happiness": -2
+        },
+        "result": "Your poster fell down twice and the teacher gave you an unenthusiastic mark. Grades -8%."
+      }
+    ]
+  },
+  {
+    "id": "highschool_math_olympiad",
+    "min_age": 14,
+    "max_age": 18,
+    "repeatable": true,
+    "weight": 80,
+    "conditions": {},
+    "title": "HIGH SCHOOL MATH OLYMPIAD",
+    "text_variants": [
+      "The Mathematics department invites you to compete in the regional high school calculus and logic Olympiad.",
+      "A statewide academic decathlon team is recruiting candidates from your high school class."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Master algebraic proofs and practice previous Olympiad problem sets",
+        "description": "+12% Grades, +5 Smarts, +5 Happiness",
+        "type": "rigorous",
+        "effects": {
+          "grades": 12,
+          "smarts": 5,
+          "happiness": 5
+        },
+        "result": "You solved the hardest proof with minutes to spare and scored in the 98th percentile! Grades +12%."
+      },
+      {
+        "text": "Join the team casually to hang out with friends",
+        "description": "+6% Grades, +2 Smarts, +4 Happiness",
+        "type": "social",
+        "effects": {
+          "grades": 6,
+          "smarts": 2,
+          "happiness": 4
+        },
+        "result": "You collaborated smoothly with your peers and brought home an honorable mention certificate. Grades +6%."
+      },
+      {
+        "text": "Sneak a formula cheat sheet into your calculator sleeve",
+        "description": "-10% Grades, -10 Karma",
+        "type": "dishonest",
+        "effects": {
+          "grades": -10,
+          "karma": -10,
+          "happiness": -8
+        },
+        "result": "A proctor noticed your suspicious glance and disqualified your paper on the spot! Disciplinary warning issued."
+      }
+    ]
+  },
+  {
+    "id": "college_pop_quiz",
+    "min_age": 18,
+    "max_age": 28,
+    "repeatable": true,
+    "weight": 80,
+    "conditions": {},
+    "title": "SURPRISE POP QUIZ",
+    "text_variants": [
+      "The professor locks the lecture hall doors and passes out an unannounced pop quiz on this week's assigned reading.",
+      "An unannounced comprehensive mid-semester test catches the entire class completely off guard."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Rely on attentive lecture notes and work methodically through each question",
+        "description": "+8% Grades, +3 Smarts, +3 Happiness",
+        "type": "focused",
+        "effects": {
+          "grades": 8,
+          "smarts": 3,
+          "happiness": 3
+        },
+        "result": "You breezed through every analytical section and received top marks on the curve! Grades +8%."
+      },
+      {
+        "text": "Carefully deduce answers by eliminating obviously wrong options",
+        "description": "+4% Grades, +1 Smarts",
+        "type": "tactical",
+        "effects": {
+          "grades": 4,
+          "smarts": 1
+        },
+        "result": "Your educated guesses yielded a respectable solid passing mark. Grades +4%."
+      },
+      {
+        "text": "Panic and guess randomly across the entire Scantron sheet",
+        "description": "-7% Grades, -4 Happiness",
+        "type": "chaotic",
+        "effects": {
+          "grades": -7,
+          "happiness": -4
+        },
+        "result": "Statistical probability betrayed you and you scored near the bottom of the distribution. Grades -7%."
+      }
+    ]
+  },
+  {
+    "id": "professional_accreditation_exam",
+    "min_age": 22,
+    "max_age": 70,
+    "repeatable": true,
+    "weight": 70,
+    "conditions": {},
+    "title": "ACADEMIC & PROFESSIONAL RE-CERTIFICATION",
+    "text_variants": [
+      "Industry credential boards announce updated regulatory standards and competency recertification exams.",
+      "A continuing education board invites you to renew your professional credentials and academic certification."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Enroll in intensive weekend prep coursework and sit for the exam",
+        "description": "+12% Grades, +4 Smarts, -$150 Exam Fee",
+        "type": "dedicated",
+        "effects": {
+          "grades": 12,
+          "smarts": 4,
+          "money": -150,
+          "happiness": 4
+        },
+        "result": "You passed the official licensing exam with distinction! Academic proficiency and qualifications fully renewed (+12% Grades)."
+      },
+      {
+        "text": "Sit for the exam relying on daily career experience",
+        "description": "+6% Grades, +2 Smarts, -$100 Fee",
+        "type": "practical",
+        "effects": {
+          "grades": 6,
+          "smarts": 2,
+          "money": -100
+        },
+        "result": "Your real-world experience carried you across the passing line. Credentials refreshed (+6% Grades)."
+      },
+      {
+        "text": "Ignore the renewal notice and let your academic standing lapse",
+        "description": "-10% Grades, -2 Smarts",
+        "type": "neglect",
+        "effects": {
+          "grades": -10,
+          "smarts": -2
+        },
+        "result": "Your certification lapsed. Without active maintenance, your academic marks slipped by -10%."
+      }
+    ]
   }
-]
+]

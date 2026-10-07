@@ -259,8 +259,11 @@ func get_letter_grade() -> String:
 		return "C"
 	elif grades >= 55:
 		return "D"
+	elif grades > 0:
+		return "F (Failing)"
 	else:
-		return "F"
+		return "0% (Course Required)"
+
 
 
 func get_education_display_string() -> String:
@@ -417,6 +420,10 @@ func apply_effects(effects: Dictionary) -> void:
 	looks += int(effects.get("looks", 0))
 	karma += int(effects.get("karma", 0))
 
+	if effects.has("grades"):
+		grades = clamp(grades + int(effects.get("grades", 0)), 0, 100)
+		last_school_activity_age = age
+
 	var delta_money: int = int(effects.get("money", 0))
 	if delta_money >= 0:
 		money += delta_money
@@ -438,8 +445,10 @@ func apply_effects(effects: Dictionary) -> void:
 	smarts = clamp(smarts, 0, 100)
 	looks = clamp(looks, 0, 100)
 	karma = clamp(karma, -100, 100)
+	grades = clamp(grades, 0, 100)
 
 	enforce_buffs_and_debuffs()
+
 
 
 func add_life_log_entry(text: String, kind: String = "event") -> void:

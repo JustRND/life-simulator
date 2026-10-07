@@ -79,14 +79,21 @@ func can_apply(job: Dictionary, age: int, stats: Dictionary, education_data: Dic
 	var reqs: Dictionary = job.get("requirements", {})
 
 	# Education & Grades Check
+	var current_grade: int = int(education_data.get("grades", 75))
+	if current_grade == 0 and str(job.get("id", "")) not in ["dishwasher", "farmhand", "janitor", "street_sweeper"]:
+		return {
+			"allowed": false,
+			"reason": "Academic credentials expired (0%). You must complete an Academic Refresher Course first."
+		}
+
 	if reqs.has("min_grades"):
 		var req_grade: int = int(reqs["min_grades"])
-		var current_grade: int = int(education_data.get("grades", 75))
 		if current_grade < req_grade:
 			return {
 				"allowed": false,
 				"reason": "Requires %d%% academic marks (Your Grade: %d%%)." % [req_grade, current_grade]
 			}
+
 
 	if reqs.has("min_education"):
 		var req_edu: String = str(reqs["min_education"])

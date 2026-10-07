@@ -83,11 +83,18 @@ static func can_enroll(inst: Dictionary, grades: int, smarts: int) -> Dictionary
 	var req_grades: int = int(inst.get("min_grades", 60))
 	var req_smarts: int = int(inst.get("min_smarts", 50))
 
+	if grades == 0:
+		return {
+			"allowed": false,
+			"reason": "Academic credentials expired (0%). You must complete an Academic Refresher Course before enrolling."
+		}
+
 	if grades < req_grades:
 		return {
 			"allowed": false,
 			"reason": "Minimum High School GPA of %d%% required (Your Grade: %d%%)." % [req_grades, grades]
 		}
+
 
 	if smarts < req_smarts:
 		return {

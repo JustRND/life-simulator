@@ -592,11 +592,9 @@ func age_up() -> void:
 			var m_label: String = " (%s)" % PlayerData.university_major_title if PlayerData.university_major_title != "" else ""
 			add_life_event("You finished Year %d of 4 at %s%s (Grades: %d%%)." % [PlayerData.university_years, uni_title, m_label, PlayerData.grades], "education")
 
-	# Grade drift based on smarts
-	if PlayerData.education_level in ["Kindergarten", "Primary School", "Middle School", "High School", "University Student"]:
-		var smarts_bonus: int = int((float(PlayerData.smarts) - 50.0) / 10.0)
-		var grade_delta: int = smarts_bonus + randi_range(-3, 3)
-		PlayerData.grades = clamp(PlayerData.grades + grade_delta, 35, 100)
+	# Grades Degradation & Maintenance System (Forces active educational participation)
+	_process_yearly_grades_decay(prev_age)
+
 
 	# Smarts Degradation & Maintenance System (Forces players to actively use education system)
 	_process_yearly_smarts_decay(prev_age)
@@ -741,6 +739,56 @@ func _process_yearly_smarts_decay(prev_age: int) -> void:
 			var decay := randi_range(1, 3)
 			PlayerData.smarts = maxi(5, PlayerData.smarts - decay)
 			add_life_event("📉 Cognitive Decline: Without regular reading, study, or mental challenges at age %d, your cognitive sharpness dulled (Smarts -%d)." % [prev_age, decay], "education")
+
+
+func _process_yearly_grades_decay(prev_age: int) -> void:
+	if PlayerData.is_dead:
+		return
+
+	# Early infancy and toddler development (Ages 0-2): no grades degradation before schooling begins
+	if prev_age < 3:
+		return
+
+	var studied_last_year: bool = (PlayerData.last_school_activity_age == prev_age)
+	var is_student: bool = PlayerData.education_level in ["Kindergarten", "Primary School", "Middle School", "High School", "University Student"]
+	var is_intellectual: bool = _is_intellectual_career(PlayerData.job_id, PlayerData.job_title)
+
+	if is_student:
+		if studied_last_year:
+			# Maintained or gently boosted based on smarts
+			var smarts_bonus: int = int((float(PlayerData.smarts) - 50.0) / 12.0)
+			var drift: int = smarts_bonus + randi_range(0, 2)
+			PlayerData.grades = clamp(PlayerData.grades + drift, 0, 100)
+		else:
+			# Neglected schooling: grades degrade noticeably each unmaintained year (8-12 points)
+			var drop: int = randi_range(8, 12)
+			if PlayerData.smarts >= 80:
+				drop = maxi(5, drop - 3)
+			PlayerData.grades = maxi(0, PlayerData.grades - drop)
+			if PlayerData.grades == 0:
+				add_life_event("🚨 ACADEMIC RECORD EXPIRED (0%%): You completely neglected your studies at age %d and your grades dropped to 0%%! You must complete an Academic Refresher Course." % prev_age, "education")
+			elif PlayerData.grades < 55:
+				add_life_event("📉 Academic Warning: Without active study at age %d, your marks fell by %d%% to %d%% (%s)!" % [prev_age, drop, PlayerData.grades, PlayerData.get_letter_grade()], "education")
+			else:
+				add_life_event("Academic Neglect: You skipped academic tasks at age %d. Grades dropped by %d%% to %d%% (%s)." % [prev_age, drop, PlayerData.grades, PlayerData.get_letter_grade()], "education")
+	else:
+		# Non-students / graduates / adults
+		if studied_last_year:
+			# Maintained via reading, seminars, minigames, or courses
+			pass
+		elif is_intellectual:
+			# Intellectual careers (doctors, engineers, scientists) slow academic decay
+			var drop: int = randi_range(1, 3)
+			PlayerData.grades = maxi(0, PlayerData.grades - drop)
+			if PlayerData.grades == 0:
+				add_life_event("⚠️ ACADEMIC RECORD EXPIRED: Your academic qualification has decayed to 0% due to disuse. You must take an Academic Refresher Course to certify credentials.", "education")
+		else:
+			# Adult without study or mental challenges: grades decay overtime (5-8 points)
+			var drop: int = randi_range(5, 8)
+			PlayerData.grades = maxi(0, PlayerData.grades - drop)
+			if PlayerData.grades == 0:
+				add_life_event("⚠️ ACADEMIC RECORD EXPIRED: Your academic qualification has decayed to 0% due to years of disuse! Employers and universities now require you to take an Academic Refresher Course.", "education")
+
 
 
 func randomize_stats() -> void:
@@ -1622,10 +1670,11 @@ func update_infant_panel() -> void:
 			grades_label.text = "📊 Academic Readiness: %d%% • Kindergarten begins at Age 3" % PlayerData.grades
 			grades_label.add_theme_color_override("font_color", Color("#38bdf8"))
 		else:
-			var standing: String = "Honor Roll" if PlayerData.grades >= 85 else ("Satisfactory" if PlayerData.grades >= 70 else ("Passing" if PlayerData.grades >= 55 else "Failing"))
-			grades_label.text = "📊 Current Grades: %d%% (%s) • %s" % [PlayerData.grades, PlayerData.get_letter_grade(), standing]
+			var standing: String = "Honor Roll" if PlayerData.grades >= 85 else ("Satisfactory" if PlayerData.grades >= 70 else ("Passing" if PlayerData.grades >= 55 else ("Failing" if PlayerData.grades > 0 else "EXPIRED (Course Required)")))
+			grades_label.text = "📊 Current Marks: %d%% (%s) • %s" % [PlayerData.grades, PlayerData.get_letter_grade(), standing]
 			var g_color: Color = Color("#10b981") if PlayerData.grades >= 85 else (Color("#38bdf8") if PlayerData.grades >= 70 else (Color("#fbbf24") if PlayerData.grades >= 55 else Color("#ef4444")))
 			grades_label.add_theme_color_override("font_color", g_color)
+
 
 	if grades_progress_bar != null:
 		grades_progress_bar.value = PlayerData.grades
@@ -2023,9 +2072,11 @@ func _setup_parent_action_row(vbox: VBoxContainer, parent_type: String) -> void:
 	if not is_alive:
 		return
 
-	var row := HBoxContainer.new()
+	var row := GridContainer.new()
 	row.name = row_name
-	row.add_theme_constant_override("separation", 14)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("h_separation", 12)
+	row.add_theme_constant_override("v_separation", 10)
 
 	var actions := []
 	if PlayerData.age < 5:
@@ -2047,6 +2098,8 @@ func _setup_parent_action_row(vbox: VBoxContainer, parent_type: String) -> void:
 	if PlayerData.is_doctor():
 		actions.append(["🩺 Doctor Checkup (Free)", "doctor_checkup", "#06b6d4"])
 		actions.append(["💉 Vitamin Shot ($30)", "doctor_vitamin_shot", "#10b981"])
+
+	row.columns = 2 if actions.size() > 1 else 1
 
 	for act in actions:
 		var btn := Button.new()
@@ -2091,9 +2144,10 @@ func _setup_parent_action_row(vbox: VBoxContainer, parent_type: String) -> void:
 		else:
 			btn.text = act[0]
 
-		btn.custom_minimum_size.y = 64
+		btn.custom_minimum_size.y = 56
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.add_theme_font_size_override("font_size", 24)
+		btn.add_theme_font_size_override("font_size", 22)
+		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color("#1e293b")
@@ -2113,6 +2167,7 @@ func _setup_parent_action_row(vbox: VBoxContainer, parent_type: String) -> void:
 		row.add_child(btn)
 
 	vbox.add_child(row)
+
 
 
 func _interact_parent(parent_type: String, action: String) -> void:
@@ -2419,6 +2474,7 @@ func _setup_partner_card_ui() -> void:
 		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f43f5e")))
 
 		var cm := MarginContainer.new()
+		cm.name = "Margin"
 		cm.add_theme_constant_override("margin_left", 20)
 		cm.add_theme_constant_override("margin_top", 20)
 		cm.add_theme_constant_override("margin_right", 20)
@@ -2426,6 +2482,7 @@ func _setup_partner_card_ui() -> void:
 		card.add_child(cm)
 
 		var ch := HBoxContainer.new()
+		ch.name = "HBox"
 		ch.add_theme_constant_override("separation", 20)
 		cm.add_child(ch)
 
@@ -2449,18 +2506,21 @@ func _setup_partner_card_ui() -> void:
 		name_lbl.text = "%s: %s (Age %d)" % [p_status, p_name, p_age]
 		name_lbl.add_theme_font_size_override("font_size", 28)
 		name_lbl.add_theme_color_override("font_color", Color("#f43f5e"))
+		name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(name_lbl)
 
 		var job_lbl := Label.new()
 		job_lbl.text = "Occupation: %s  •  Education: %s" % [p_occ, p_edu]
 		job_lbl.add_theme_font_size_override("font_size", 24)
 		job_lbl.add_theme_color_override("font_color", Color("#f1f5f9"))
+		job_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(job_lbl)
 
 		var hob_lbl := Label.new()
 		hob_lbl.text = "Interests: %s" % ", ".join(p_hobbies)
 		hob_lbl.add_theme_font_size_override("font_size", 20)
 		hob_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+		hob_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(hob_lbl)
 
 		var stat_lbl := Label.new()
@@ -2468,16 +2528,18 @@ func _setup_partner_card_ui() -> void:
 		stat_lbl.text = "Relationship: %d%% (%s)  •  Together: %d %s" % [p_rel, _relationship_status_text(p_rel), p_years, yr_str]
 		stat_lbl.add_theme_font_size_override("font_size", 22)
 		stat_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
+		stat_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(stat_lbl)
 
 		# Visual Relationship Bar
 		_setup_relationship_bar(cv, "PartnerRelBar", p_rel)
 
-		# Action Row
+		# Action Row - 2 Columns ensures touch-friendly, comfortable buttons that never clip
 		var act_row := GridContainer.new()
-		act_row.columns = 3
-		act_row.add_theme_constant_override("h_separation", 14)
-		act_row.add_theme_constant_override("v_separation", 14)
+		act_row.columns = 2
+		act_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		act_row.add_theme_constant_override("h_separation", 12)
+		act_row.add_theme_constant_override("v_separation", 10)
 
 		var actions: Array = [
 			["Spend Time", "spend_time", "#0284c7"],
@@ -2498,6 +2560,7 @@ func _setup_partner_card_ui() -> void:
 			cv.add_child(engagement_note)
 		var partner_joy := Label.new()
 		partner_joy.text = "Partner happiness: %d%%" % int(p.get("happiness", 50))
+		partner_joy.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		partner_joy.add_theme_font_size_override("font_size", 20)
 		cv.add_child(partner_joy)
 
@@ -2556,9 +2619,11 @@ func _setup_partner_card_ui() -> void:
 				lock_tooltip = "You must age up before marrying."
 
 			btn.text = button_title
-			btn.custom_minimum_size.y = 64
+			btn.custom_minimum_size.y = 56
 			btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			btn.add_theme_font_size_override("font_size", 24)
+			btn.add_theme_font_size_override("font_size", 22)
+			btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
 
 			var style := StyleBoxFlat.new()
 			style.bg_color = Color("#1e293b")
@@ -2692,6 +2757,7 @@ func _setup_children_cards_ui() -> void:
 		title.text = "%s (%s, Age %d)" % [c_name, "Daughter" if c_gender == "FEMALE" else "Son", c_age]
 		title.add_theme_font_size_override("font_size", 24)
 		title.add_theme_color_override("font_color", Color("#f472b6"))
+		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(title)
 
 		_setup_relationship_bar(cv, "ChildRel_%d" % i, c_rel)
@@ -2717,6 +2783,8 @@ func _setup_children_cards_ui() -> void:
 		)
 		btn_spend.custom_minimum_size.y = 54
 		btn_spend.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn_spend.add_theme_font_size_override("font_size", 22)
+		btn_spend.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		if child_spent:
 			btn_spend.disabled = true
 			btn_spend.modulate = Color(0.6, 0.6, 0.6, 0.65)
@@ -2743,6 +2811,9 @@ func _setup_children_cards_ui() -> void:
 		)
 		btn_gift.custom_minimum_size.y = 54
 		btn_gift.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn_gift.add_theme_font_size_override("font_size", 22)
+		btn_gift.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
 		if child_gifted:
 			btn_gift.disabled = true
 			btn_gift.modulate = Color(0.6, 0.6, 0.6, 0.65)
@@ -3872,6 +3943,82 @@ func _show_education_modal() -> void:
 
 	list.add_child(summary_card)
 
+	var is_student: bool = PlayerData.education_level in ["Kindergarten", "Primary School", "Middle School", "High School", "University Student"]
+
+	# Academic Refresher Course / Expired Standing Alert (MANDATORY when grades == 0)
+	if PlayerData.grades == 0 and PlayerData.age >= 3:
+		var alert_card := PanelContainer.new()
+		alert_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#ef4444")))
+		var am := MarginContainer.new()
+		am.add_theme_constant_override("margin_left", 22)
+		am.add_theme_constant_override("margin_right", 22)
+		am.add_theme_constant_override("margin_top", 16)
+		am.add_theme_constant_override("margin_bottom", 16)
+		alert_card.add_child(am)
+
+		var av := VBoxContainer.new()
+		av.add_theme_constant_override("separation", 12)
+		am.add_child(av)
+
+		var atitle := Label.new()
+		atitle.text = "🚨 ACADEMIC RECORD EXPIRED (0% MARKS)"
+		atitle.add_theme_font_size_override("font_size", 28)
+		atitle.add_theme_color_override("font_color", Color("#ef4444"))
+		av.add_child(atitle)
+
+		var adesc := Label.new()
+		adesc.text = "Your academic qualification has completely lapsed due to prolonged neglect. University admissions and formal job applications are locked. YOU MUST COMPLETE AN ACADEMIC REFRESHER COURSE TO RESTORE YOUR STANDING."
+		adesc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		adesc.add_theme_font_size_override("font_size", 23)
+		adesc.add_theme_color_override("font_color", Color("#fca5a5"))
+		av.add_child(adesc)
+
+		var course_cost: int = 0 if (PlayerData.age < 18 or is_student) else 200
+		var cost_str := "Free (Student / Minor)" if course_cost == 0 else "$%s Cash" % _format_number(course_cost)
+		var btn_course := _create_cyber_button("🎓 Take Academic Refresher Course (%s)\nComplete remedial coursework and exams to restore your marks to 75%%!" % cost_str, Color("#ef4444"), func():
+			_start_refresher_course(course_cost)
+		)
+		av.add_child(btn_course)
+
+		list.add_child(alert_card)
+	elif PlayerData.grades < 70 and PlayerData.age >= 6:
+		var improve_cost: int = 0 if (PlayerData.age < 18 or is_student) else 150
+		var cost_str := "Free (Student)" if improve_cost == 0 else "$%s Cash" % _format_number(improve_cost)
+		var btn_improve := _create_cyber_button("📚 Take Academic Improvement Course (%s)\nEnroll in remedial curriculum to restore your marks to at least 75%%!" % cost_str, Color("#f59e0b"), func():
+			_start_refresher_course(improve_cost)
+		)
+		list.add_child(btn_improve)
+
+	# Interactive Educational Minigames Section (Math & Trivia Guessing directly affect grades)
+	if PlayerData.age >= 3:
+		var mg_header := Label.new()
+		mg_header.text = "🎮 EDUCATIONAL MINIGAMES & PRACTICAL EXAMS"
+		mg_header.add_theme_font_size_override("font_size", 28)
+		mg_header.add_theme_color_override("font_color", Color("#38bdf8"))
+		list.add_child(mg_header)
+
+		var mg_desc := Label.new()
+		mg_desc.text = "Participate in educational challenges! Correct answers directly boost your Academic Marks (+5% per answer) and protect against yearly degradation:"
+		mg_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		mg_desc.add_theme_font_size_override("font_size", 22)
+		mg_desc.add_theme_color_override("font_color", Color("#cbd5e1"))
+		list.add_child(mg_desc)
+
+		var has_done_mg_this_year: bool = (PlayerData.last_school_activity_age == PlayerData.age)
+		if has_done_mg_this_year:
+			list.add_child(_create_disabled_cyber_button("📐 Quick Math Challenge\nCompleted for Age %d (Age up to play again next year)" % PlayerData.age, "Annual educational activity completed."))
+			list.add_child(_create_disabled_cyber_button("🧠 Trivia & Knowledge Guessing\nCompleted for Age %d (Age up to play again next year)" % PlayerData.age, "Annual educational activity completed."))
+		else:
+			var btn_math := _create_cyber_button("📐 Quick Math Challenge\nSolve rapid math equations • Correct answers directly boost Grades & Smarts!", Color("#38bdf8"), func():
+				_start_education_minigame("math")
+			)
+			list.add_child(btn_math)
+
+			var btn_trivia := _create_cyber_button("🧠 Trivia & Knowledge Guessing\nAnswer science, history & logic questions • Directly boosts Grades!", Color("#a855f7"), func():
+				_start_education_minigame("trivia")
+			)
+			list.add_child(btn_trivia)
+
 	# Annual Action Gating Banner to prevent status modifier exploits
 	var has_done_school_activity_this_year: bool = (PlayerData.last_school_activity_age == PlayerData.age)
 	if has_done_school_activity_this_year:
@@ -3885,7 +4032,7 @@ func _show_education_modal() -> void:
 		lock_banner.add_child(lm)
 
 		var ll := Label.new()
-		ll.text = "⏳ ANNUAL SCHOOL PARTICIPATION COMPLETED\nYou have already taken a school activity for Age %d.\nTo prevent status modifier exploits, all study options are locked until next year. Advance age (+1 Year) to participate again!" % PlayerData.age
+		ll.text = "⏳ ANNUAL SCHOOL PARTICIPATION COMPLETED\nYou have already taken a school activity for Age %d.\nTo prevent status modifier exploits, study options are locked until next year. Advance age (+1 Year) to participate again!" % PlayerData.age
 		ll.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		ll.add_theme_font_size_override("font_size", 23)
 		ll.add_theme_color_override("font_color", Color("#fbbf24"))
@@ -3893,7 +4040,7 @@ func _show_education_modal() -> void:
 		list.add_child(lock_banner)
 
 	# Interactive Academic Options
-	var is_student: bool = PlayerData.education_level in ["Kindergarten", "Primary School", "Middle School", "High School", "University Student"]
+
 
 	if PlayerData.age < 3:
 		# Early Childhood Development Activities
@@ -4549,6 +4696,353 @@ func _show_education_modal() -> void:
 		list.add_child(lib_card)
 
 	education_modal_overlay.visible = true
+
+
+var education_minigame_overlay: ColorRect = null
+
+const TRIVIA_QUESTIONS: Array[Dictionary] = [
+	{"q": "Which planet in our solar system is known as the 'Red Planet'?", "options": ["Mars", "Venus", "Jupiter", "Saturn"]},
+	{"q": "What is the capital city of Japan?", "options": ["Tokyo", "Kyoto", "Osaka", "Seoul"]},
+	{"q": "What do bees collect from flowering plants to make honey?", "options": ["Nectar", "Sap", "Pollen", "Dew"]},
+	{"q": "How many sides does a geometric hexagon have?", "options": ["6", "5", "8", "7"]},
+	{"q": "What is the chemical formula for water?", "options": ["H2O", "CO2", "NaCl", "O2"]},
+	{"q": "Which gas do plants absorb from the atmosphere for photosynthesis?", "options": ["Carbon Dioxide", "Oxygen", "Nitrogen", "Argon"]},
+	{"q": "What is the freezing point of water in Celsius?", "options": ["0°C", "32°C", "-10°C", "100°C"]},
+	{"q": "What is the largest living mammal on Earth?", "options": ["Blue Whale", "African Elephant", "Giraffe", "Hippopotamus"]},
+	{"q": "Which continent contains the Amazon Rainforest?", "options": ["South America", "Africa", "Asia", "Australia"]},
+	{"q": "Who formulated the law of universal gravitation?", "options": ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Nikola Tesla"]},
+	{"q": "What is the primary currency used in Japan?", "options": ["Yen", "Won", "Euro", "Pound"]},
+	{"q": "What instrument is used to measure earthquakes?", "options": ["Seismograph", "Barometer", "Thermometer", "Altimeter"]},
+	{"q": "How many days are in a standard leap year?", "options": ["366", "365", "364", "360"]},
+	{"q": "What color do you get when mixing Blue and Yellow pigments?", "options": ["Green", "Purple", "Orange", "Brown"]},
+	{"q": "What is the hardest naturally occurring mineral on Earth?", "options": ["Diamond", "Quartz", "Topaz", "Corundum"]},
+	{"q": "Which human internal organ is responsible for pumping blood?", "options": ["Heart", "Lungs", "Liver", "Kidneys"]},
+	{"q": "What is the boiling temperature of water at sea level?", "options": ["100°C", "90°C", "120°C", "80°C"]},
+	{"q": "How many continents are recognized on Earth?", "options": ["7", "5", "6", "8"]},
+	{"q": "Which fundamental particle carries a negative electric charge?", "options": ["Electron", "Proton", "Neutron", "Photon"]},
+	{"q": "What is the opposite (antonym) of the word 'Ancient'?", "options": ["Modern", "Historic", "Antique", "Elderly"]},
+	{"q": "How many millimeters are there in one centimeter?", "options": ["10", "100", "1000", "5"]},
+	{"q": "Which celestial body causes the ocean tides on Earth?", "options": ["The Moon", "The Sun", "Mars", "Jupiter"]},
+	{"q": "What is the square root of 64?", "options": ["8", "6", "7", "9"]},
+	{"q": "Which continent is the Sahara Desert located on?", "options": ["Africa", "Asia", "South America", "Australia"]},
+	{"q": "What is the capital city of France?", "options": ["Paris", "Lyon", "Marseille", "Rome"]}
+]
+
+
+func _generate_math_question() -> Dictionary:
+	var a: int = 0
+	var b: int = 0
+	var ans: int = 0
+	var prompt: String = ""
+
+	if PlayerData.age < 11:
+		var mode := randi() % 3
+		if mode == 0:
+			a = randi_range(4, 25)
+			b = randi_range(3, 20)
+			ans = a + b
+			prompt = "What is %d + %d ?" % [a, b]
+		elif mode == 1:
+			a = randi_range(12, 35)
+			b = randi_range(3, a - 1)
+			ans = a - b
+			prompt = "What is %d - %d ?" % [a, b]
+		else:
+			a = randi_range(2, 9)
+			b = randi_range(2, 6)
+			ans = a * b
+			prompt = "What is %d × %d ?" % [a, b]
+	else:
+		var mode := randi() % 4
+		if mode == 0:
+			a = randi_range(25, 75)
+			b = randi_range(15, 65)
+			ans = a + b
+			prompt = "What is %d + %d ?" % [a, b]
+		elif mode == 1:
+			a = randi_range(45, 99)
+			b = randi_range(12, 40)
+			ans = a - b
+			prompt = "What is %d - %d ?" % [a, b]
+		elif mode == 2:
+			a = randi_range(6, 12)
+			b = randi_range(4, 9)
+			ans = a * b
+			prompt = "What is %d × %d ?" % [a, b]
+		else:
+			b = randi_range(3, 9)
+			var quotient := randi_range(4, 12)
+			a = b * quotient
+			ans = quotient
+			prompt = "What is %d ÷ %d ?" % [a, b]
+
+	var wrong_offsets: Array = [-10, -5, -3, -2, -1, 1, 2, 3, 5, 10]
+	wrong_offsets.shuffle()
+	var options_set: Array[int] = [ans]
+	for off in wrong_offsets:
+		var candidate: int = ans + off
+		if candidate != ans and candidate >= 0 and not (candidate in options_set):
+			options_set.append(candidate)
+		if options_set.size() >= 4:
+			break
+	while options_set.size() < 4:
+		var candidate := ans + randi_range(11, 20)
+		if not (candidate in options_set):
+			options_set.append(candidate)
+
+	options_set.shuffle()
+	var correct_idx := options_set.find(ans)
+	var str_options: Array[String] = []
+	for opt in options_set:
+		str_options.append(str(opt))
+
+	return {
+		"prompt": prompt,
+		"options": str_options,
+		"correct": correct_idx,
+		"correct_answer": str(ans)
+	}
+
+
+func _generate_trivia_question(used_indices: Array = []) -> Dictionary:
+	var available := []
+	for i in range(TRIVIA_QUESTIONS.size()):
+		if not (i in used_indices):
+			available.append(i)
+	if available.is_empty():
+		available.append(randi() % TRIVIA_QUESTIONS.size())
+	var idx: int = int(available.pick_random())
+	used_indices.append(idx)
+	var item: Dictionary = TRIVIA_QUESTIONS[idx]
+	var orig_options: Array = item["options"].duplicate()
+	var correct_text: String = str(orig_options[0])
+	orig_options.shuffle()
+	var correct_idx: int = orig_options.find(correct_text)
+	return {
+		"prompt": str(item["q"]),
+		"options": orig_options,
+		"correct": correct_idx,
+		"correct_answer": correct_text
+	}
+
+
+func _start_refresher_course(cost: int) -> void:
+	if cost > 0:
+		if PlayerData.money >= cost:
+			PlayerData.money -= cost
+		elif PlayerData.bank_savings >= cost:
+			PlayerData.bank_savings -= cost
+		else:
+			PlayerData.loan_balance += cost
+			add_life_event("Academic Refresher Course ($%s) funded via student loan." % _format_number(cost), "finance")
+
+	_start_education_minigame(["math", "trivia"].pick_random(), true)
+
+
+func _start_education_minigame(game_type: String, is_course: bool = false) -> void:
+	if education_minigame_overlay != null and is_instance_valid(education_minigame_overlay):
+		education_minigame_overlay.queue_free()
+
+	if education_modal_overlay != null and is_instance_valid(education_modal_overlay):
+		education_modal_overlay.queue_free()
+		education_modal_overlay = null
+
+	var title_str: String = "📐 QUICK MATH CHALLENGE" if game_type == "math" else ("🧠 TRIVIA & GUESSING" if not is_course else "🎓 ACADEMIC REFRESHER COURSE")
+	var subtitle_str: String = "Answer 3 questions accurately to directly raise your Grades & Smarts!"
+	var border_col: Color = Color("#38bdf8") if game_type == "math" else Color("#a855f7")
+	if is_course:
+		border_col = Color("#10b981")
+
+	var modal := _create_cyber_modal(title_str, subtitle_str, border_col)
+	education_minigame_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var total_questions := 3
+	var state := {
+		"current_q": 0,
+		"score": 0,
+		"used_indices": [] as Array[int]
+	}
+
+	var question_container := VBoxContainer.new()
+	question_container.add_theme_constant_override("separation", 16)
+	list.add_child(question_container)
+
+	var render_step: Callable
+	render_step = func():
+		for child in question_container.get_children():
+			question_container.remove_child(child)
+			child.queue_free()
+
+		var q_data: Dictionary = _generate_math_question() if game_type == "math" else _generate_trivia_question(state["used_indices"])
+
+		var progress_lbl := Label.new()
+		progress_lbl.text = "QUESTION %d OF %d  •  CURRENT SCORE: %d" % [state["current_q"] + 1, total_questions, state["score"]]
+		progress_lbl.add_theme_font_size_override("font_size", 24)
+		progress_lbl.add_theme_color_override("font_color", border_col)
+		question_container.add_child(progress_lbl)
+
+		var q_card := PanelContainer.new()
+		q_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(border_col))
+		var qm := MarginContainer.new()
+		qm.add_theme_constant_override("margin_left", 24)
+		qm.add_theme_constant_override("margin_right", 24)
+		qm.add_theme_constant_override("margin_top", 24)
+		qm.add_theme_constant_override("margin_bottom", 24)
+		q_card.add_child(qm)
+
+		var qv := VBoxContainer.new()
+		qv.add_theme_constant_override("separation", 16)
+		qm.add_child(qv)
+
+		var prompt_lbl := Label.new()
+		prompt_lbl.text = str(q_data.prompt)
+		prompt_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		prompt_lbl.add_theme_font_size_override("font_size", 30)
+		prompt_lbl.add_theme_color_override("font_color", Color("#ffffff"))
+		qv.add_child(prompt_lbl)
+
+		var feedback_lbl := Label.new()
+		feedback_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		feedback_lbl.add_theme_font_size_override("font_size", 24)
+		feedback_lbl.text = ""
+		qv.add_child(feedback_lbl)
+
+		var options_grid := GridContainer.new()
+		options_grid.columns = 2
+		options_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		options_grid.add_theme_constant_override("h_separation", 14)
+		options_grid.add_theme_constant_override("v_separation", 12)
+		qv.add_child(options_grid)
+
+		var next_btn := _create_cyber_button("Next Question ➔" if (state["current_q"] + 1 < total_questions) else "Complete Exam ➔", border_col, func(): pass)
+		next_btn.visible = false
+		qv.add_child(next_btn)
+
+		var option_buttons: Array[Button] = []
+		var opts: Array = q_data.options
+		for idx in range(opts.size()):
+			var opt_text := str(opts[idx])
+			var btn := _create_cyber_button(opt_text, border_col, func(): pass)
+			btn.custom_minimum_size.y = 68
+			btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			btn.add_theme_font_size_override("font_size", 24)
+			btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+			var chosen_idx := idx
+			btn.pressed.connect(func():
+				for b in option_buttons:
+					b.disabled = true
+
+				if chosen_idx == int(q_data.correct):
+					state["score"] = int(state["score"]) + 1
+					feedback_lbl.text = "✅ Correct! (+5% Academic Marks earned)"
+					feedback_lbl.add_theme_color_override("font_color", Color("#34d399"))
+					var win_style := StyleBoxFlat.new()
+					win_style.bg_color = Color("#064e3b")
+					win_style.border_color = Color("#10b981")
+					win_style.set_border_width_all(3)
+					win_style.set_corner_radius_all(8)
+					btn.add_theme_stylebox_override("disabled", win_style)
+					btn.add_theme_color_override("font_color", Color("#6ee7b7"))
+				else:
+					feedback_lbl.text = "❌ Incorrect! The correct answer was: %s" % str(q_data.correct_answer)
+					feedback_lbl.add_theme_color_override("font_color", Color("#f87171"))
+					var err_style := StyleBoxFlat.new()
+					err_style.bg_color = Color("#450a0a")
+					err_style.border_color = Color("#ef4444")
+					err_style.set_border_width_all(3)
+					err_style.set_corner_radius_all(8)
+					btn.add_theme_stylebox_override("disabled", err_style)
+					btn.add_theme_color_override("font_color", Color("#fca5a5"))
+
+					if int(q_data.correct) < option_buttons.size():
+						var correct_btn: Button = option_buttons[int(q_data.correct)]
+						var win_style := StyleBoxFlat.new()
+						win_style.bg_color = Color("#064e3b")
+						win_style.border_color = Color("#10b981")
+						win_style.set_border_width_all(3)
+						win_style.set_corner_radius_all(8)
+						correct_btn.add_theme_stylebox_override("disabled", win_style)
+						correct_btn.add_theme_color_override("font_color", Color("#6ee7b7"))
+
+				next_btn.visible = true
+			)
+
+			options_grid.add_child(btn)
+			option_buttons.append(btn)
+
+		next_btn.pressed.connect(func():
+			state["current_q"] = int(state["current_q"]) + 1
+			if int(state["current_q"]) < total_questions:
+				render_step.call()
+			else:
+				# Show Final Exam Results
+				for child in question_container.get_children():
+					question_container.remove_child(child)
+					child.queue_free()
+
+				var res_card := PanelContainer.new()
+				res_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(border_col))
+				var rm := MarginContainer.new()
+				rm.add_theme_constant_override("margin_left", 24)
+				rm.add_theme_constant_override("margin_right", 24)
+				rm.add_theme_constant_override("margin_top", 24)
+				rm.add_theme_constant_override("margin_bottom", 24)
+				res_card.add_child(rm)
+
+				var rv := VBoxContainer.new()
+				rv.add_theme_constant_override("separation", 16)
+				rm.add_child(rv)
+
+				var sc: int = int(state["score"])
+				var rtitle := Label.new()
+				rtitle.text = "🎉 EXAM COMPLETED! (%d/%d Correct)" % [sc, total_questions]
+				rtitle.add_theme_font_size_override("font_size", 30)
+				rtitle.add_theme_color_override("font_color", border_col)
+				rv.add_child(rtitle)
+
+				var g_boost: int = sc * 5
+				var s_boost: int = mini(3, sc + 1)
+				PlayerData.grades = clamp(PlayerData.grades + g_boost, 0, 100)
+				PlayerData.smarts = mini(100, PlayerData.smarts + s_boost)
+				PlayerData.happiness = mini(100, PlayerData.happiness + sc * 2)
+				PlayerData.last_school_activity_age = PlayerData.age
+
+				if is_course:
+					PlayerData.grades = maxi(75, PlayerData.grades)
+					add_life_event("🎓 REFRESHER COURSE COMPLETED: You passed the curriculum with %d/%d correct! Academic credentials restored to %d%% (%s)." % [sc, total_questions, PlayerData.grades, PlayerData.get_letter_grade()], "education")
+				else:
+					var game_label := "Math Challenge" if game_type == "math" else "Trivia Guessing Challenge"
+					add_life_event("🎓 %s: Completed with %d/%d correct! Academic marks +%d%% (Current: %d%%), Smarts +%d." % [game_label, sc, total_questions, g_boost, PlayerData.grades, s_boost], "education")
+
+				update_ui()
+				SaveManager.save_game()
+
+				var rdesc := Label.new()
+				if is_course:
+					rdesc.text = "Congratulations! Your course certification is complete.\n\n• Academic Marks restored to %d%% (%s)\n• Smarts +%d\n• Official credentials certified for career & university qualification" % [PlayerData.grades, PlayerData.get_letter_grade(), s_boost]
+				else:
+					rdesc.text = "Great effort! Your test results have been registered into your academic transcript:\n\n• Academic Marks: +%d%% (Current: %d%%)\n• Smarts: +%d\n• Annual academic maintenance fulfilled (grades protected from degradation)" % [g_boost, PlayerData.grades, s_boost]
+				rdesc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				rdesc.add_theme_font_size_override("font_size", 24)
+				rdesc.add_theme_color_override("font_color", Color("#cbd5e1"))
+				rv.add_child(rdesc)
+
+				var return_btn := _create_cyber_button("Finish & Return to Academy", border_col, func():
+					if education_minigame_overlay != null and is_instance_valid(education_minigame_overlay):
+						education_minigame_overlay.queue_free()
+						education_minigame_overlay = null
+					_show_education_modal()
+				)
+				rv.add_child(return_btn)
+				question_container.add_child(res_card)
+		)
+
+		question_container.add_child(q_card)
+
+	render_step.call()
+
 
 
 # ==========================================

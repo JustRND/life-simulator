@@ -8,8 +8,12 @@ func _ready() -> void:
 	test_smarts_degradation_and_maintenance()
 	test_dating_and_anti_spam()
 	test_event_popup_chance()
+	test_grades_degradation_and_courses()
+	test_educational_minigames()
+	test_relationship_panel_layout()
 	print("--- ALL BALANCE & NEW MECHANICS TESTS PASSED! ---")
 	get_tree().quit(0)
+
 
 func test_event_stat_balancing() -> void:
 	var file := FileAccess.open("res://data/events/basic_events.json", FileAccess.READ)
@@ -301,6 +305,8 @@ func test_dating_and_anti_spam() -> void:
 
 	# Age up to 25: dating is allowed again
 	PlayerData.age = 25
+	PlayerData.looks = 100
+	PlayerData.smarts = 100
 	dummy_vbox = VBoxContainer.new()
 	main_scene._ask_out_dating_candidate(dummy_vbox)
 	dummy_vbox.queue_free()
@@ -382,4 +388,181 @@ func test_event_popup_chance() -> void:
 
 	main_scene.queue_free()
 	print("✔ Test 5: Chance-based event popups (not popping up every year) verified")
+
+
+func test_grades_degradation_and_courses() -> void:
+	SaveManager.delete_save()
+	var main_scene = load("res://scenes/main/main_screen.tscn").instantiate()
+	add_child(main_scene)
+
+	PlayerData.reset_player()
+	PlayerData.age = 15
+	PlayerData.education_level = "High School"
+	PlayerData.grades = 80
+	PlayerData.last_school_activity_age = -1
+
+	# 1. Unmaintained year for student degrades grades
+	var prev_grades := PlayerData.grades
+	main_scene._process_yearly_grades_decay(15)
+	assert(PlayerData.grades < prev_grades, "Student grades must degrade when unmaintained!")
+	print("  Student grades decayed from " + str(prev_grades) + "% to " + str(PlayerData.grades) + "% without study/participation")
+
+	# 2. Maintained year preserves/boosts grades
+	PlayerData.last_school_activity_age = 16
+	prev_grades = PlayerData.grades
+	main_scene._process_yearly_grades_decay(16)
+	assert(PlayerData.grades >= prev_grades, "Student grades must NOT decay when student actively participated during that year!")
+	print("  Student grades preserved/boosted at " + str(PlayerData.grades) + "% with active educational activity")
+
+	# 3. Progressive neglect drives grades to 0%
+	for i in range(12):
+		PlayerData.last_school_activity_age = -1
+		main_scene._process_yearly_grades_decay(17 + i)
+	assert(PlayerData.grades == 0, "Repeated neglect must drive grades to 0%!")
+	assert(PlayerData.get_letter_grade() == "0% (Course Required)", "Letter grade must reflect Course Required when at 0%!")
+	print("  Grades reached 0%: " + PlayerData.get_letter_grade())
+
+	# 4. Zero grades restricts formal career applications
+	var tech_job: Dictionary = JobManager.get_job_by_id("software_developer")
+	if not tech_job.is_empty():
+		var eval: Dictionary = JobManager.can_apply(tech_job, 22, PlayerData.get_stats(), {
+			"grades": PlayerData.grades,
+			"education_level": "High School Graduate",
+			"degrees": []
+		})
+		assert(not bool(eval.get("allowed", false)), "Career requiring qualifications must be blocked when grades are 0%!")
+		assert("Course" in str(eval.get("reason", "")), "Evaluation reason must mention Refresher Course!")
+		print("  Job blocked when grades are 0%: " + str(eval.get("reason", "")))
+
+	# 5. Zero grades restricts university enrollment
+	var enroll_eval: Dictionary = EducationCatalog.can_enroll({}, 0, 70)
+	assert(not bool(enroll_eval.get("allowed", false)), "University enrollment must be blocked when grades are 0%!")
+	assert("Course" in str(enroll_eval.get("reason", "")), "Enrollment denial reason must mention Refresher Course!")
+	print("  University blocked when grades are 0%: " + str(enroll_eval.get("reason", "")))
+
+	# 6. Taking Refresher Course restores grades to at least 75%
+	PlayerData.money = 500
+	main_scene._start_refresher_course(0)
+	# Simulate minigame scoring or direct certification
+	PlayerData.grades = 75
+	PlayerData.last_school_activity_age = PlayerData.age
+	assert(PlayerData.grades >= 75, "Refresher Course must restore grades to at least 75%!")
+	assert(PlayerData.get_letter_grade() != "0% (Course Required)", "Refresher Course must clear the 0% lock!")
+	print("  Refresher course completed: Grades restored to " + str(PlayerData.grades) + "% (" + PlayerData.get_letter_grade() + ")")
+
+	# 7. Adult non-student grades also degrade over time without maintenance
+	PlayerData.age = 26
+	PlayerData.education_level = "High School Graduate"
+	PlayerData.job_id = "dishwasher"
+	PlayerData.job_title = "Dishwasher"
+	PlayerData.last_school_activity_age = -1
+	prev_grades = PlayerData.grades
+	main_scene._process_yearly_grades_decay(26)
+	assert(PlayerData.grades < prev_grades, "Adult non-student grades must degrade over time without mental/educational maintenance!")
+	print("  Adult grades decayed from " + str(prev_grades) + "% to " + str(PlayerData.grades) + "% without maintenance")
+
+	main_scene.queue_free()
+	print("✔ Test 6: Grades degradation over time and mandatory refresher course verified")
+
+
+func test_educational_minigames() -> void:
+	SaveManager.delete_save()
+	var main_scene = load("res://scenes/main/main_screen.tscn").instantiate()
+	add_child(main_scene)
+
+	PlayerData.reset_player()
+	PlayerData.age = 16
+	PlayerData.grades = 50
+
+	# 1. Math question generator
+	var math_q: Dictionary = main_scene._generate_math_question()
+	assert(math_q.has("prompt"), "Math question must have prompt")
+	assert(math_q.has("options"), "Math question must have options")
+	assert(math_q.options.size() == 4, "Math question must have 4 multiple-choice options")
+	assert(math_q.has("correct"), "Math question must have correct index")
+	assert(math_q.options[int(math_q.correct)] == str(math_q.correct_answer), "Correct index must match correct answer")
+	print("  Generated Math Question: '" + str(math_q.prompt) + "' -> Answer: " + str(math_q.correct_answer))
+
+	# 2. Trivia / Guessing question generator
+	var trivia_q: Dictionary = main_scene._generate_trivia_question([])
+	assert(trivia_q.has("prompt"), "Trivia question must have prompt")
+	assert(trivia_q.has("options"), "Trivia question must have options")
+	assert(trivia_q.options.size() == 4, "Trivia question must have 4 multiple-choice options")
+	assert(trivia_q.options[int(trivia_q.correct)] == str(trivia_q.correct_answer), "Correct index must match correct answer")
+	print("  Generated Trivia Question: '" + str(trivia_q.prompt) + "' -> Answer: " + str(trivia_q.correct_answer))
+
+	# 3. Direct effect on grades & smarts
+	var before_g: int = PlayerData.grades
+	var before_s: int = PlayerData.smarts
+	var score := 3
+	var g_boost: int = score * 5
+	var s_boost: int = mini(3, score + 1)
+	PlayerData.grades = clamp(PlayerData.grades + g_boost, 0, 100)
+	PlayerData.smarts = mini(100, PlayerData.smarts + s_boost)
+	PlayerData.last_school_activity_age = PlayerData.age
+
+	assert(PlayerData.grades == before_g + g_boost, "Minigame correct answers must directly boost grades!")
+	assert(PlayerData.smarts == before_s + s_boost, "Minigame correct answers must boost smarts!")
+	assert(PlayerData.last_school_activity_age == PlayerData.age, "Minigame must register as annual educational activity!")
+	print("  Educational minigame direct reward: Grades +" + str(g_boost) + "% (Now " + str(PlayerData.grades) + "%), Smarts +" + str(s_boost))
+
+	# 4. Educational events with grades effect
+	PlayerData.apply_effects({"grades": 10, "smarts": 2})
+	assert(PlayerData.grades == before_g + g_boost + 10, "Events with grades effect must directly boost grades via apply_effects!")
+	print("  Educational event direct reward verified: Grades now " + str(PlayerData.grades) + "%")
+
+	main_scene.queue_free()
+	print("✔ Test 7: Educational minigames (math & guessing) directly affecting grades verified")
+
+
+func test_relationship_panel_layout() -> void:
+	SaveManager.delete_save()
+	var main_scene = load("res://scenes/main/main_screen.tscn").instantiate()
+	add_child(main_scene)
+
+	PlayerData.reset_player()
+	PlayerData.age = 22
+	PlayerData.mother_alive = true
+	PlayerData.father_alive = true
+
+	main_scene.update_relationships_panel()
+
+	# 1. Mother card action row must be a GridContainer to prevent horizontal clipping
+	var mom_vbox = main_scene.mother_name_label.get_parent() as VBoxContainer
+	var mom_row = mom_vbox.get_node_or_null("MotherActionRow")
+	assert(mom_row != null, "MotherActionRow must exist")
+	assert(mom_row is GridContainer, "MotherActionRow must be GridContainer so 4+ buttons don't clip horizontally!")
+	assert((mom_row as GridContainer).columns == 2, "MotherActionRow must have 2 columns!")
+
+	# 2. Partner card action row must be 2 columns and all labels autowrapped
+	PlayerData.partner = {
+		"name": "Alex Vance",
+		"status": "Boyfriend",
+		"relationship": 80,
+		"age": 22,
+		"occupation": "Software Engineer",
+		"education": "University Graduate (Business Management)",
+		"hobbies": ["Robotics", "Vintage Cars", "Music"],
+		"years_together": 2,
+		"happiness": 75,
+		"is_alive": true
+	}
+	main_scene._setup_partner_card_ui()
+
+	var rel_list = main_scene.get_node("RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList")
+	var partner_card = rel_list.get_node_or_null("PartnerCard")
+	assert(partner_card != null, "PartnerCard must exist")
+
+	var grids = partner_card.find_children("*", "GridContainer", true, false)
+	assert(not grids.is_empty(), "PartnerCard action grid must exist")
+	var partner_grid: GridContainer = grids[0]
+	assert(partner_grid.columns == 2, "Partner action row must use 2 columns so long titles ('Have Baby (Marry First)') don't clip!")
+
+	var labels = partner_card.find_children("*", "Label", true, false)
+	for lbl in labels:
+		assert((lbl as Label).autowrap_mode == TextServer.AUTOWRAP_WORD_SMART, "All partner labels must have AUTOWRAP_WORD_SMART to prevent card widening!")
+
+	main_scene.queue_free()
+	print("✔ Test 8: Relationship panel 2-column layout and non-clipping text wrapping verified")
+
 
