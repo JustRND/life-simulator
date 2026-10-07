@@ -43,6 +43,18 @@ var education_level: String = "None"
 var grades: int = 75
 var has_scholarship: bool = false
 var university_years: int = 0
+var university_name: String = ""
+var university_major: String = ""
+var university_major_title: String = ""
+var university_degree: String = ""
+var university_tuition: int = 12000
+var last_school_activity_age: int = -1
+var last_scholarship_applied_age: int = -1
+var last_ged_attempt_age: int = -1
+var has_gym_membership: bool = false
+var gym_membership_annual_fee: int = 300
+var last_gym_activity_age: int = -1
+var last_meditation_activity_age: int = -1
 
 var job_id: String = ""
 var job_title: String = ""
@@ -103,6 +115,18 @@ func reset_player() -> void:
 	grades = 75
 	has_scholarship = false
 	university_years = 0
+	university_name = ""
+	university_major = ""
+	university_major_title = ""
+	university_degree = ""
+	university_tuition = 12000
+	last_school_activity_age = -1
+	last_scholarship_applied_age = -1
+	last_ged_attempt_age = -1
+	has_gym_membership = false
+	gym_membership_annual_fee = 300
+	last_gym_activity_age = -1
+	last_meditation_activity_age = -1
 
 	job_id = ""
 	job_title = ""
@@ -139,6 +163,41 @@ func get_letter_grade() -> String:
 		return "D"
 	else:
 		return "F"
+
+
+func get_education_display_string() -> String:
+	match education_level:
+		"None":
+			return "None (Early Childhood)" if age < 3 else "No Formal Education"
+		"Kindergarten":
+			return "Kindergarten"
+		"Primary School":
+			return "Primary School (Elementary)"
+		"Middle School":
+			return "Middle School (Junior High)"
+		"High School":
+			return "High School"
+		"High School Dropout":
+			return "High School Dropout (No Diploma)"
+		"High School Graduate":
+			return "High School Graduate (Diploma)"
+		"University Student":
+			var yr_str := "Year %d of 4" % maxi(1, university_years + 1)
+			if university_name != "" and university_major_title != "":
+				return "University Student (%s - %s @ %s)" % [yr_str, university_major_title, university_name]
+			elif university_name != "":
+				return "University Student (%s @ %s)" % [yr_str, university_name]
+			else:
+				return "University Student (%s)" % yr_str
+		"University Graduate":
+			if university_degree != "" and university_name != "":
+				return "%s (%s)" % [university_degree, university_name]
+			elif university_major_title != "":
+				return "Bachelor's Degree in %s" % university_major_title
+			else:
+				return "University Graduate (Bachelor's Degree)"
+		_:
+			return education_level
 
 
 func get_net_worth() -> int:

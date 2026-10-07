@@ -40,6 +40,18 @@ func save_game() -> void:
 		"grades": PlayerData.grades,
 		"has_scholarship": PlayerData.has_scholarship,
 		"university_years": PlayerData.university_years,
+		"university_name": PlayerData.university_name,
+		"university_major": PlayerData.university_major,
+		"university_major_title": PlayerData.university_major_title,
+		"university_degree": PlayerData.university_degree,
+		"university_tuition": PlayerData.university_tuition,
+		"last_school_activity_age": PlayerData.last_school_activity_age,
+		"last_scholarship_applied_age": PlayerData.last_scholarship_applied_age,
+		"last_ged_attempt_age": PlayerData.last_ged_attempt_age,
+		"has_gym_membership": PlayerData.has_gym_membership,
+		"gym_membership_annual_fee": PlayerData.gym_membership_annual_fee,
+		"last_gym_activity_age": PlayerData.last_gym_activity_age,
+		"last_meditation_activity_age": PlayerData.last_meditation_activity_age,
 		"job_id": PlayerData.job_id,
 		"job_title": PlayerData.job_title,
 		"job_company": PlayerData.job_company,
@@ -130,6 +142,18 @@ func load_game() -> bool:
 	PlayerData.grades = int(data.get("grades", 75))
 	PlayerData.has_scholarship = bool(data.get("has_scholarship", false))
 	PlayerData.university_years = int(data.get("university_years", 0))
+	PlayerData.university_name = str(data.get("university_name", ""))
+	PlayerData.university_major = str(data.get("university_major", ""))
+	PlayerData.university_major_title = str(data.get("university_major_title", ""))
+	PlayerData.university_degree = str(data.get("university_degree", ""))
+	PlayerData.university_tuition = int(data.get("university_tuition", 12000))
+	PlayerData.last_school_activity_age = int(data.get("last_school_activity_age", -1))
+	PlayerData.last_scholarship_applied_age = int(data.get("last_scholarship_applied_age", -1))
+	PlayerData.last_ged_attempt_age = int(data.get("last_ged_attempt_age", -1))
+	PlayerData.has_gym_membership = bool(data.get("has_gym_membership", false))
+	PlayerData.gym_membership_annual_fee = int(data.get("gym_membership_annual_fee", 300))
+	PlayerData.last_gym_activity_age = int(data.get("last_gym_activity_age", -1))
+	PlayerData.last_meditation_activity_age = int(data.get("last_meditation_activity_age", -1))
 	PlayerData.karma = int(data.get("karma", 0))
 
 	PlayerData.job_id = str(data.get("job_id", ""))

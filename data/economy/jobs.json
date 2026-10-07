@@ -57,6 +57,18 @@
       }
     },
     {
+      "id": "lemonade_stand",
+      "title": "Neighborhood Lemonade Stand",
+      "category": "entry_odd_jobs",
+      "workplace": "Self-Employed",
+      "salary": 2800,
+      "description": "Squeeze fresh lemons, mix sugar syrup, and sell ice-cold refreshment to neighbors.",
+      "min_age": 8,
+      "requirements": {
+        "min_happiness": 35
+      }
+    },
+    {
       "id": "lawn_mower",
       "title": "Neighborhood Lawn Mower",
       "category": "entry_odd_jobs",
@@ -204,7 +216,24 @@
       "requirements": {
         "min_smarts": 65,
         "min_happiness": 40,
-        "min_grades": 65
+        "min_grades": 65,
+        "min_education": "University Graduate",
+        "required_major": "business"
+      }
+    },
+    {
+      "id": "corp_executive",
+      "title": "Corporate Operations Executive",
+      "category": "retail",
+      "workplace": "Apex Holdings Group",
+      "salary": 115000,
+      "description": "Lead corporate expansion strategy, oversee quarterly balance sheets, and negotiate mergers.",
+      "min_age": 25,
+      "requirements": {
+        "min_smarts": 80,
+        "min_grades": 75,
+        "min_education": "University Graduate",
+        "required_major": "business"
       }
     },
     {
@@ -260,7 +289,8 @@
       "requirements": {
         "min_smarts": 75,
         "min_grades": 80,
-        "min_education": "University Graduate"
+        "min_education": "University Graduate",
+        "required_major": "it"
       }
     },
     {
@@ -274,7 +304,8 @@
       "requirements": {
         "min_smarts": 80,
         "min_grades": 82,
-        "min_education": "University Graduate"
+        "min_education": "University Graduate",
+        "required_major": "it"
       }
     },
     {
@@ -288,7 +319,8 @@
       "requirements": {
         "min_smarts": 88,
         "min_grades": 85,
-        "min_education": "University Graduate"
+        "min_education": "University Graduate",
+        "required_major": "it"
       }
     },
     {
@@ -408,6 +440,7 @@
         "min_smarts": 65,
         "min_grades": 75,
         "min_education": "University Graduate",
+        "required_major": "medicine",
         "min_health": 50
       }
     },
@@ -423,6 +456,7 @@
         "min_smarts": 78,
         "min_grades": 82,
         "min_education": "University Graduate",
+        "required_major": "medicine",
         "min_health": 50
       }
     },
@@ -438,6 +472,7 @@
         "min_smarts": 85,
         "min_grades": 88,
         "min_education": "University Graduate",
+        "required_major": "medicine",
         "min_health": 50
       }
     },
@@ -453,6 +488,7 @@
         "min_smarts": 90,
         "min_grades": 92,
         "min_education": "University Graduate",
+        "required_major": "medicine",
         "min_health": 60
       }
     }

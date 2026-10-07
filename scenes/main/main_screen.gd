@@ -3,6 +3,7 @@ const CreationOptions = preload("res://scripts/core/creation_options.gd")
 const NameCatalog = preload("res://scripts/core/name_catalog.gd")
 const PortraitCatalog = preload("res://scripts/core/portrait_catalog.gd")
 const BirthStoryGenerator = preload("res://scripts/core/birth_story_generator.gd")
+const EducationCatalog = preload("res://scripts/education/education_catalog.gd")
 
 var portrait: TextureRect
 var portrait_key: String = ""
@@ -59,10 +60,19 @@ var current_event_choices: Array = []
 @onready var character_money: Label = $CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FinancesCard/Margin/VBox/CharacterMoney
 @onready var character_karma: Label = $CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FinancesCard/Margin/VBox/CharacterKarma
 
-# Toddler / Infant Panel (Life Stage & History)
+# Toddler / Infant Panel (Life Overview Panel)
 @onready var infant_panel: PanelContainer = $InfantPanel
 @onready var current_stage_label: Label = $InfantPanel/InfantMargin/InfantContent/StatusCard/StatusMargin/StatusBox/CurrentStageLabel
+@onready var current_job_label: Label = get_node_or_null("InfantPanel/InfantMargin/InfantContent/StatusCard/StatusMargin/StatusBox/CurrentJobLabel") as Label
+@onready var current_edu_label: Label = get_node_or_null("InfantPanel/InfantMargin/InfantContent/StatusCard/StatusMargin/StatusBox/CurrentEduLabel") as Label
+@onready var grades_label: Label = get_node_or_null("InfantPanel/InfantMargin/InfantContent/StatusCard/StatusMargin/StatusBox/GradesContainer/GradesLabel") as Label
+@onready var grades_progress_bar: ProgressBar = get_node_or_null("InfantPanel/InfantMargin/InfantContent/StatusCard/StatusMargin/StatusBox/GradesContainer/GradesProgressBar") as ProgressBar
 @onready var history_list: VBoxContainer = $InfantPanel/InfantMargin/InfantContent/HistoryScroll/HistoryList
+@onready var filter_all_btn: Button = get_node_or_null("InfantPanel/InfantMargin/InfantContent/HistoryFilterRow/FilterAllButton") as Button
+@onready var filter_milestones_btn: Button = get_node_or_null("InfantPanel/InfantMargin/InfantContent/HistoryFilterRow/FilterMilestonesButton") as Button
+@onready var filter_unique_btn: Button = get_node_or_null("InfantPanel/InfantMargin/InfantContent/HistoryFilterRow/FilterUniqueButton") as Button
+
+var overview_history_filter: String = "all"
 
 # Activities Modals
 var jobs_modal_overlay: Control = null
@@ -111,6 +121,12 @@ func _ready() -> void:
 	_configure_ui()
 	_connect_runtime_signals()
 
+	# Soft UI taps, including buttons created later by modal panels.
+	if get_node_or_null("ButtonSounds") == null:
+		var sounds := preload("res://scripts/ui/button_sounds.gd").new()
+		sounds.name = "ButtonSounds"
+		add_child(sounds)
+
 	var loaded: bool = SaveManager.load_game()
 
 	if event_overlay != null:
@@ -148,6 +164,13 @@ func _ready() -> void:
 func _connect_runtime_signals() -> void:
 	if avatar_button != null and not avatar_button.pressed.is_connected(_on_avatar_button_pressed):
 		avatar_button.pressed.connect(_on_avatar_button_pressed)
+
+	if filter_all_btn != null and not filter_all_btn.pressed.is_connected(_on_filter_all_pressed):
+		filter_all_btn.pressed.connect(_on_filter_all_pressed)
+	if filter_milestones_btn != null and not filter_milestones_btn.pressed.is_connected(_on_filter_milestones_pressed):
+		filter_milestones_btn.pressed.connect(_on_filter_milestones_pressed)
+	if filter_unique_btn != null and not filter_unique_btn.pressed.is_connected(_on_filter_unique_pressed):
+		filter_unique_btn.pressed.connect(_on_filter_unique_pressed)
 
 
 func _configure_ui() -> void:
@@ -455,46 +478,64 @@ func age_up() -> void:
 			PlayerData.bank_savings += savings_interest
 			add_life_event("Your high-yield bank savings account accrued $%s in annual interest (2.5%% APR)." % _format_number(savings_interest), "finance")
 
-	# 7. Education Lifecycle Progression (Kindergarten @ 3, Primary @ 6, Middle @ 11, High @ 14, Grad @ 18)
+	# 7. Gym Membership Annual Auto-Debit
+	if PlayerData.has_gym_membership:
+		var gym_fee: int = PlayerData.gym_membership_annual_fee
+		if PlayerData.bank_savings >= gym_fee:
+			PlayerData.bank_savings -= gym_fee
+			add_life_event("🏋️ GYM MEMBERSHIP: $%s was auto-debited from your bank account for your annual fitness club membership." % _format_number(gym_fee), "finance")
+		elif PlayerData.money >= gym_fee:
+			PlayerData.money -= gym_fee
+			add_life_event("🏋️ GYM MEMBERSHIP: $%s was paid from your cash account for your annual fitness club membership." % _format_number(gym_fee), "finance")
+		else:
+			PlayerData.has_gym_membership = false
+			PlayerData.happiness = maxi(5, PlayerData.happiness - 4)
+			add_life_event("⚠️ GYM MEMBERSHIP CANCELLED: You lacked sufficient funds ($%s) in your bank account to renew your gym membership. It has been cancelled." % _format_number(gym_fee), "finance")
+
+	# 8. Education Lifecycle Progression (Kindergarten @ 3, Primary @ 6, Middle @ 11, High @ 14, Grad @ 18)
 	if PlayerData.age == 3:
 		PlayerData.education_level = "Kindergarten"
 		PlayerData.grades = 80
-		add_life_event("🧸 You enrolled in Kindergarten! Learning letters, colors, and finger painting.", "education")
+		add_life_event("🧸 You enrolled in Kindergarten! Learning letters, colors, and finger painting.", "milestone")
 	elif PlayerData.age == 6:
 		PlayerData.education_level = "Primary School"
-		add_life_event("🎒 You completed Kindergarten and entered Primary School! Learning math, science, and reading.", "education")
+		add_life_event("🎒 You completed Kindergarten and entered Primary School! Learning math, science, and reading.", "milestone")
 	elif PlayerData.age == 11:
 		PlayerData.education_level = "Middle School"
-		add_life_event("🏫 You completed Primary School and advanced to Middle School! Academic subjects and social dynamics intensify.", "education")
+		add_life_event("🏫 You completed Primary School and advanced to Middle School! Academic subjects and social dynamics intensify.", "milestone")
 	elif PlayerData.age == 14 and PlayerData.education_level != "High School Dropout":
 		PlayerData.education_level = "High School"
-		add_life_event("📘 You entered High School! Your academic marks directly determine future career qualification.", "education")
+		add_life_event("📘 You entered High School! Your academic marks directly determine future career qualification.", "milestone")
 	elif PlayerData.age == 18 and PlayerData.education_level == "High School":
 		PlayerData.education_level = "High School Graduate"
-		add_life_event("🎓 You graduated from High School with a final academic grade of %d%% (%s)!" % [PlayerData.grades, PlayerData.get_letter_grade()], "education")
+		add_life_event("🎓 You graduated from High School with a final academic grade of %d%% (%s)!" % [PlayerData.grades, PlayerData.get_letter_grade()], "milestone")
 	elif PlayerData.education_level == "University Student":
 		PlayerData.university_years += 1
+		var tuition: int = PlayerData.university_tuition if PlayerData.university_tuition > 0 else 12000
+		var uni_title: String = PlayerData.university_name if PlayerData.university_name != "" else "University"
 		if PlayerData.has_scholarship:
-			add_life_event("Your full-ride scholarship paid for your $12,000 university tuition!", "education")
+			add_life_event("Your full-ride scholarship paid for your $%s %s tuition!" % [_format_number(tuition), uni_title], "education")
 		else:
-			var tuition: int = 12000
 			if PlayerData.money >= tuition:
 				PlayerData.money -= tuition
-				add_life_event("You paid your $12,000 university tuition from your pocket cash.", "education")
+				add_life_event("You paid your $%s %s tuition from your pocket cash." % [_format_number(tuition), uni_title], "education")
 			elif PlayerData.bank_savings >= tuition:
 				PlayerData.bank_savings -= tuition
-				add_life_event("Your $12,000 university tuition was deducted from your bank savings.", "education")
+				add_life_event("Your $%s %s tuition was deducted from your bank savings." % [_format_number(tuition), uni_title], "education")
 			else:
 				PlayerData.loan_balance += tuition
-				add_life_event("University tuition of $12,000 was funded via a Student Loan (8% APR).", "finance")
+				add_life_event("%s tuition of $%s was funded via a Student Loan (8%% APR)." % [uni_title, _format_number(tuition)], "finance")
 
 		if PlayerData.university_years >= 4:
 			PlayerData.education_level = "University Graduate"
 			PlayerData.smarts = mini(100, PlayerData.smarts + 12)
 			PlayerData.happiness = mini(100, PlayerData.happiness + 15)
-			add_life_event("🎓 CONGRATULATIONS! You graduated from University with a Bachelor's Degree! Prestigious corporate, medical, and technology careers are now unlocked.", "education")
+			var deg_name: String = PlayerData.university_degree if PlayerData.university_degree != "" else "Bachelor's Degree"
+			var maj_name: String = PlayerData.university_major_title if PlayerData.university_major_title != "" else "Specialized Major"
+			add_life_event("🎓 CONGRATULATIONS! You graduated from %s with a %s in %s! Careers in %s are now unlocked." % [uni_title, deg_name, maj_name, maj_name], "milestone")
 		else:
-			add_life_event("You finished Year %d of 4 at University (Grades: %d%%)." % [PlayerData.university_years, PlayerData.grades], "education")
+			var m_label: String = " (%s)" % PlayerData.university_major_title if PlayerData.university_major_title != "" else ""
+			add_life_event("You finished Year %d of 4 at %s%s (Grades: %d%%)." % [PlayerData.university_years, uni_title, m_label, PlayerData.grades], "education")
 
 	# Grade drift based on smarts
 	if PlayerData.education_level in ["Kindergarten", "Primary School", "Middle School", "High School", "University Student"]:
@@ -1114,6 +1155,118 @@ func _on_back_to_assets_button_pressed() -> void:
 	show_tab("assets")
 
 
+func _is_life_milestone(entry: Dictionary) -> bool:
+	if str(entry.get("kind", "")) == "milestone":
+		return true
+
+	var txt := str(entry.get("text", "")).to_lower()
+	if "born" in txt and ("world" in txt or "parents" in txt or "hospital" in txt or "birth" in txt):
+		return true
+	if "enrolled in kindergarten" in txt:
+		return true
+	if "entered primary school" in txt or "entered middle school" in txt or "entered high school" in txt:
+		return true
+	if "graduated from high school" in txt or "graduated from university" in txt:
+		return true
+	if "diploma earned" in txt:
+		return true
+	if "enrolled at" in txt or "enrolled in university" in txt:
+		return true
+	if "started working as" in txt:
+		return true
+	if "passed away" in txt:
+		return true
+	if "scholarship awarded" in txt:
+		return true
+	if "released from prison" in txt:
+		return true
+	if "diagnosed with" in txt:
+		return true
+	if "cured of" in txt:
+		return true
+
+	return false
+
+
+func _is_routine_event(entry: Dictionary) -> bool:
+	var txt := str(entry.get("text", "")).strip_edges().to_lower()
+	if txt.is_empty():
+		return true
+	if txt.begins_with("you turned ") or txt.begins_with("you aged "):
+		return true
+	if txt.begins_with("you received your annual salary of"):
+		return true
+	if txt.begins_with("you paid your annual basic living"):
+		return true
+	if txt.begins_with("you paid your annual income tax"):
+		return true
+	if "bank loan accrued" in txt:
+		return true
+	if "bank savings account accrued" in txt:
+		return true
+	if "you finished year " in txt and "at university" in txt:
+		return true
+	if "you served another year behind bars" in txt:
+		return true
+	return false
+
+
+func _is_unique_life_event(entry: Dictionary) -> bool:
+	if _is_routine_event(entry):
+		return false
+	if _is_life_milestone(entry):
+		return false
+	return true
+
+
+func _update_history_filter_buttons() -> void:
+	var active_color := Color("#00f0ff")
+	var normal_color := Color("#94a3b8")
+	var active_bg := Color("#0e2f44")
+	var normal_bg := Color("#091122")
+
+	var btns := [
+		{"btn": filter_all_btn, "key": "all", "text": "🌟 All Highlights"},
+		{"btn": filter_milestones_btn, "key": "milestones", "text": "🏆 Life Milestones"},
+		{"btn": filter_unique_btn, "key": "unique", "text": "✨ Unique Events"}
+	]
+
+	for item in btns:
+		var btn: Button = item["btn"]
+		if btn == null:
+			continue
+		var is_selected: bool = (overview_history_filter == item["key"])
+		btn.text = item["text"]
+		var style := StyleBoxFlat.new()
+		style.bg_color = active_bg if is_selected else normal_bg
+		style.border_color = active_color if is_selected else Color("#1e3a5f")
+		style.set_border_width_all(2)
+		style.set_corner_radius_all(6)
+		btn.add_theme_stylebox_override("normal", style)
+		btn.add_theme_stylebox_override("hover", style)
+		btn.add_theme_stylebox_override("pressed", style)
+		btn.add_theme_stylebox_override("focus", style)
+		btn.add_theme_color_override("font_color", Color("#ffffff") if is_selected else normal_color)
+
+
+func _on_filter_all_pressed() -> void:
+	overview_history_filter = "all"
+	_update_history_filter_buttons()
+	update_history_panel()
+
+
+func _on_filter_milestones_pressed() -> void:
+	overview_history_filter = "milestones"
+	_update_history_filter_buttons()
+	update_history_panel()
+
+
+func _on_filter_unique_pressed() -> void:
+	overview_history_filter = "unique"
+	_update_history_filter_buttons()
+	update_history_panel()
+
+
 func update_history_panel() -> void:
 	if history_list == null:
 		return
@@ -1122,14 +1275,27 @@ func update_history_panel() -> void:
 		history_list.remove_child(child)
 		child.queue_free()
 
+	var count := 0
 	for entry in PlayerData.life_log:
-		if not _is_history_event(entry):
+		var is_milestone: bool = _is_life_milestone(entry)
+		var is_unique: bool = _is_unique_life_event(entry)
+
+		if overview_history_filter == "milestones" and not is_milestone:
+			continue
+		elif overview_history_filter == "unique" and not is_unique:
+			continue
+		elif overview_history_filter == "all" and not (is_milestone or is_unique):
 			continue
 
+		count += 1
 		var card := PanelContainer.new()
 		var card_style := StyleBoxFlat.new()
-		card_style.bg_color = Color("#091122")
-		card_style.border_color = Color("#1e3a5f")
+		if is_milestone:
+			card_style.bg_color = Color("#17120a")
+			card_style.border_color = Color("#f59e0b")
+		else:
+			card_style.bg_color = Color("#091122")
+			card_style.border_color = Color("#1e3a5f")
 		card_style.set_border_width_all(2)
 		card_style.set_corner_radius_all(8)
 		card.add_theme_stylebox_override("panel", card_style)
@@ -1145,11 +1311,25 @@ func update_history_panel() -> void:
 		vbox.add_theme_constant_override("separation", 6)
 		margin.add_child(vbox)
 
+		var header_hbox := HBoxContainer.new()
+		vbox.add_child(header_hbox)
+
+		var badge_lbl := Label.new()
+		if is_milestone:
+			badge_lbl.text = "🏆 LIFE MILESTONE"
+			badge_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
+		else:
+			badge_lbl.text = "✨ UNIQUE EVENT"
+			badge_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
+		badge_lbl.add_theme_font_size_override("font_size", 20)
+		badge_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		header_hbox.add_child(badge_lbl)
+
 		var age_lbl := Label.new()
 		age_lbl.text = "AGE %d" % int(entry.get("age", 0))
-		age_lbl.add_theme_font_size_override("font_size", 22)
-		age_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
-		vbox.add_child(age_lbl)
+		age_lbl.add_theme_font_size_override("font_size", 20)
+		age_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
+		header_hbox.add_child(age_lbl)
 
 		var desc_lbl := Label.new()
 		desc_lbl.text = str(entry.get("text", ""))
@@ -1160,22 +1340,18 @@ func update_history_panel() -> void:
 
 		history_list.add_child(card)
 
-	if history_list.get_child_count() == 0:
+	if count == 0:
 		var empty := Label.new()
-		empty.text = "No life events recorded yet.\nYour milestones, achievements, and choices will appear here."
+		if overview_history_filter == "milestones":
+			empty.text = "No life milestones reached yet.\nEnrolling in school, graduating, starting a career, or key achievements will appear here!"
+		elif overview_history_filter == "unique":
+			empty.text = "No unique life events recorded yet.\nRandom occurrences, critical decisions, and special encounters will appear here!"
+		else:
+			empty.text = "No life events recorded yet.\nYour milestones, achievements, and unique choices will appear here."
 		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		empty.add_theme_font_size_override("font_size", 24)
 		empty.add_theme_color_override("font_color", Color("#94a3b8"))
 		history_list.add_child(empty)
-
-
-func _is_history_event(entry: Dictionary) -> bool:
-	var message := str(entry.get("text", "")).strip_edges().to_lower()
-	if message.is_empty():
-		return false
-	if message.begins_with("you turned ") or message.begins_with("you were born in ") or message.begins_with("you aged "):
-		return false
-	return str(entry.get("kind", "event")) == "event" or str(entry.get("kind", "event")) == "milestone"
 
 
 func update_character_panel() -> void:
@@ -1214,12 +1390,51 @@ func update_character_panel() -> void:
 
 
 func update_infant_panel() -> void:
-	var stage_str := "%s %s (Age %d)" % [PlayerData.get_stage_icon(), PlayerData.get_stage_name(), PlayerData.age]
-	if current_stage_label != null:
-		current_stage_label.text = "Life Stage: " + stage_str
 	var infant_title: Label = get_node_or_null("InfantPanel/InfantMargin/InfantContent/InfantHeaderRow/InfantTitle")
 	if infant_title != null:
 		infant_title.text = "%s & LIFE OVERVIEW" % PlayerData.get_stage_name().to_upper()
+
+	# 1. Life Stage: NAME AND AGE
+	if current_stage_label != null:
+		var name_str: String = PlayerData.first_name if PlayerData.first_name != "" else "Character"
+		current_stage_label.text = "👤 %s  •  %s %s (Age %d)" % [name_str, PlayerData.get_stage_icon(), PlayerData.get_stage_name(), PlayerData.age]
+
+	# 4. CURRENT JOB
+	if current_job_label != null:
+		if PlayerData.job_title != "":
+			current_job_label.text = "💼 Current Job: %s at %s ($%s/yr)" % [PlayerData.job_title, PlayerData.job_company, _format_number(PlayerData.job_salary)]
+			current_job_label.add_theme_color_override("font_color", Color("#34d399"))
+		else:
+			current_job_label.text = "💼 Current Job: Unemployed"
+			current_job_label.add_theme_color_override("font_color", Color("#94a3b8"))
+
+	# 5. CURRENT EDUCATION LEVEL
+	if current_edu_label != null:
+		current_edu_label.text = "🎓 Current Education: %s" % PlayerData.get_education_display_string()
+
+	# 6. CURRENT GRADES & GRADES PROGRESS BAR
+	if grades_label != null:
+		if PlayerData.age < 3:
+			grades_label.text = "📊 Academic Readiness: %d%% • Kindergarten begins at Age 3" % PlayerData.grades
+			grades_label.add_theme_color_override("font_color", Color("#38bdf8"))
+		else:
+			var standing: String = "Honor Roll" if PlayerData.grades >= 85 else ("Satisfactory" if PlayerData.grades >= 70 else ("Passing" if PlayerData.grades >= 55 else "Failing"))
+			grades_label.text = "📊 Current Grades: %d%% (%s) • %s" % [PlayerData.grades, PlayerData.get_letter_grade(), standing]
+			var g_color: Color = Color("#10b981") if PlayerData.grades >= 85 else (Color("#38bdf8") if PlayerData.grades >= 70 else (Color("#fbbf24") if PlayerData.grades >= 55 else Color("#ef4444")))
+			grades_label.add_theme_color_override("font_color", g_color)
+
+	if grades_progress_bar != null:
+		grades_progress_bar.value = PlayerData.grades
+		if PlayerData.grades >= 85:
+			_update_stat_bar_color(grades_progress_bar, PlayerData.grades, Color("#10b981"), Color("#059669"))
+		elif PlayerData.grades >= 70:
+			_update_stat_bar_color(grades_progress_bar, PlayerData.grades, Color("#38bdf8"), Color("#0284c7"))
+		elif PlayerData.grades >= 55:
+			_update_stat_bar_color(grades_progress_bar, PlayerData.grades, Color("#f59e0b"), Color("#b45309"))
+		else:
+			_update_stat_bar_color(grades_progress_bar, PlayerData.grades, Color("#ef4444"), Color("#991b1b"))
+
+	_update_history_filter_buttons()
 	update_history_panel()
 
 
@@ -1228,7 +1443,12 @@ func apply_for_job(job_id: String) -> void:
 	if job.is_empty():
 		return
 
-	var eval: Dictionary = JobManager.can_apply(job, PlayerData.age, PlayerData.get_stats(), {"grades": PlayerData.grades, "education_level": PlayerData.education_level})
+	var eval: Dictionary = JobManager.can_apply(job, PlayerData.age, PlayerData.get_stats(), {
+		"grades": PlayerData.grades,
+		"education_level": PlayerData.education_level,
+		"major": PlayerData.university_major,
+		"university_name": PlayerData.university_name
+	})
 	if not bool(eval.get("allowed", false)):
 		return
 
@@ -1241,7 +1461,7 @@ func apply_for_job(job_id: String) -> void:
 		PlayerData.job_title,
 		PlayerData.job_company,
 		_format_number(PlayerData.job_salary)
-	], "job")
+	], "milestone")
 	update_ui()
 	SaveManager.save_game()
 
@@ -1786,16 +2006,10 @@ func _on_doctor_item_pressed() -> void:
 
 func _on_gym_item_pressed() -> void:
 	if PlayerData.age < 13:
-		add_life_event("🏋️ Gym memberships require an age of at least 13.", "activity")
+		add_life_event("🏋️ Gym facilities and athletic clubs require an age of at least 13 (Current age: %d)." % PlayerData.age, "activity")
 		show_tab("timeline")
 		return
-	PlayerData.health = mini(100, PlayerData.health + randi_range(4, 9))
-	PlayerData.looks = mini(100, PlayerData.looks + randi_range(2, 6))
-	PlayerData.happiness = mini(100, PlayerData.happiness + randi_range(8, 14))
-	add_life_event("You crushed an intense workout at the gym. Endorphins are rushing through your veins!", "activity")
-	update_ui()
-	show_tab("timeline")
-	SaveManager.save_game()
+	_show_gym_modal()
 
 
 func _on_lottery_item_pressed() -> void:
@@ -1817,17 +2031,12 @@ func _on_street_hustle_item_pressed() -> void:
 func _on_mind_item_pressed() -> void:
 	if PlayerData.age < 5:
 		if PlayerData.age == 0:
-			add_life_event("🍼 You are an infant! You cannot meditate yet—tap the AGE button to grow up.", "activity")
+			add_life_event("🍼 You are an infant! Infants cannot meditate yet—tap the AGE button to grow up.", "activity")
 		else:
 			add_life_event("🧸 You are a toddler! Toddlers cannot meditate yet—tap the AGE button to grow up.", "activity")
 		show_tab("timeline")
 		return
-	PlayerData.happiness = mini(100, PlayerData.happiness + randi_range(14, 24))
-	PlayerData.smarts = mini(100, PlayerData.smarts + randi_range(1, 4))
-	add_life_event("You engaged in deep mindfulness and meditation. Peace and serenity wash over your mind.", "activity")
-	update_ui()
-	show_tab("timeline")
-	SaveManager.save_game()
+	_show_meditation_modal()
 
 
 func _show_jobs_modal() -> void:
@@ -1853,6 +2062,7 @@ func _show_jobs_modal() -> void:
 	cur_m.add_child(cur_v)
 
 	var cur_title := Label.new()
+	cur_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	cur_title.add_theme_font_size_override("font_size", 24)
 	cur_title.add_theme_color_override("font_color", Color("#38bdf8"))
 
@@ -1978,6 +2188,7 @@ func _show_jobs_modal() -> void:
 
 		var title_lbl := Label.new()
 		title_lbl.text = "%s  •  %s" % [job.get("title", "Job"), job.get("workplace", "Company")]
+		title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		title_lbl.add_theme_font_size_override("font_size", 26)
 		title_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
 		vbox.add_child(title_lbl)
@@ -1985,19 +2196,25 @@ func _show_jobs_modal() -> void:
 		var salary_val: int = int(job.get("salary", 0))
 		var salary_lbl := Label.new()
 		salary_lbl.text = "💰 Salary: $%s / yr   •   Min Age: %d" % [_format_number(salary_val), int(job.get("min_age", 16))]
+		salary_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		salary_lbl.add_theme_font_size_override("font_size", 22)
 		salary_lbl.add_theme_color_override("font_color", Color("#34d399"))
 		vbox.add_child(salary_lbl)
 
 		var reqs: Dictionary = job.get("requirements", {})
-		if reqs.has("min_grades") or reqs.has("min_education"):
-			var req_txt := ""
-			if reqs.has("min_grades"):
-				req_txt += "Min Grades: %d%%  " % int(reqs["min_grades"])
-			if reqs.has("min_education"):
-				req_txt += "Degree: %s" % str(reqs["min_education"])
+		var req_parts: Array = []
+		if reqs.has("min_grades"):
+			req_parts.append("Min Grades: %d%%" % int(reqs["min_grades"]))
+		if reqs.has("min_education"):
+			req_parts.append("Degree: %s" % str(reqs["min_education"]))
+		if reqs.has("required_major"):
+			var m_title := JobManager.get_major_display_name(str(reqs["required_major"]))
+			req_parts.append("Major: %s" % m_title)
+
+		if not req_parts.is_empty():
 			var req_lbl := Label.new()
-			req_lbl.text = "📋 " + req_txt
+			req_lbl.text = "📋 " + " • ".join(req_parts)
+			req_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			req_lbl.add_theme_font_size_override("font_size", 20)
 			req_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
 			vbox.add_child(req_lbl)
@@ -2009,12 +2226,19 @@ func _show_jobs_modal() -> void:
 		desc_lbl.add_theme_color_override("font_color", Color("#e2e8f0"))
 		vbox.add_child(desc_lbl)
 
-		var eval: Dictionary = JobManager.can_apply(job, PlayerData.age, PlayerData.get_stats(), {"grades": PlayerData.grades, "education_level": PlayerData.education_level})
+		var eval: Dictionary = JobManager.can_apply(job, PlayerData.age, PlayerData.get_stats(), {
+			"grades": PlayerData.grades,
+			"education_level": PlayerData.education_level,
+			"major": PlayerData.university_major,
+			"university_name": PlayerData.university_name
+		})
 		var is_qualified: bool = bool(eval.get("allowed", false))
 		var is_current: bool = PlayerData.job_id == str(job.get("id", ""))
 
 		var btn := Button.new()
 		btn.custom_minimum_size.y = 56
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		btn.add_theme_font_size_override("font_size", 22)
 
 		if is_current:
@@ -2087,7 +2311,8 @@ func _show_education_modal() -> void:
 	if PlayerData.age < 3:
 		level_lbl.text = "🏫 Academic Status: Early Childhood (Age %d)" % PlayerData.age
 	else:
-		level_lbl.text = "🏫 Academic Status: %s" % PlayerData.education_level
+		level_lbl.text = "🏫 Academic Status: %s" % PlayerData.get_education_display_string()
+	level_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	level_lbl.add_theme_font_size_override("font_size", 24)
 	level_lbl.add_theme_color_override("font_color", Color("#c7d2fe"))
 	sv.add_child(level_lbl)
@@ -2100,6 +2325,7 @@ func _show_education_modal() -> void:
 	else:
 		grade_lbl.text = "📊 Current Marks / GPA: %d%% (%s)" % [PlayerData.grades, PlayerData.get_letter_grade()]
 		grade_lbl.add_theme_color_override("font_color", grade_color)
+	grade_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	grade_lbl.add_theme_font_size_override("font_size", 24)
 	sv.add_child(grade_lbl)
 
@@ -2107,12 +2333,16 @@ func _show_education_modal() -> void:
 	if PlayerData.has_scholarship:
 		schol_lbl.text = "🏆 University Scholarship: 100% Full-Ride Tuition Waiver Active"
 		schol_lbl.add_theme_color_override("font_color", Color("#34d399"))
+	elif PlayerData.education_level == "University Student":
+		schol_lbl.text = "🏛️ University Tuition: $%s / yr (%s)" % [_format_number(PlayerData.university_tuition), PlayerData.university_name]
+		schol_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
 	elif PlayerData.age < 14:
 		schol_lbl.text = "🏆 University Scholarship: Unlocks in High School (Age 16+)"
 		schol_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
 	else:
-		schol_lbl.text = "🏆 University Scholarship: None (Tuition: $12,000 / yr)"
+		schol_lbl.text = "🏆 University Scholarship: None (Tuition varies by institution)"
 		schol_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
+	schol_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	schol_lbl.add_theme_font_size_override("font_size", 22)
 	sv.add_child(schol_lbl)
 
@@ -2124,6 +2354,26 @@ func _show_education_modal() -> void:
 	sv.add_child(impact_lbl)
 
 	list.add_child(summary_card)
+
+	# Annual Action Gating Banner to prevent status modifier exploits
+	var has_done_school_activity_this_year: bool = (PlayerData.last_school_activity_age == PlayerData.age)
+	if has_done_school_activity_this_year:
+		var lock_banner := PanelContainer.new()
+		lock_banner.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
+		var lm := MarginContainer.new()
+		lm.add_theme_constant_override("margin_left", 18)
+		lm.add_theme_constant_override("margin_right", 18)
+		lm.add_theme_constant_override("margin_top", 12)
+		lm.add_theme_constant_override("margin_bottom", 12)
+		lock_banner.add_child(lm)
+
+		var ll := Label.new()
+		ll.text = "⏳ ANNUAL SCHOOL PARTICIPATION COMPLETED\nYou have already taken a school activity for Age %d.\nTo prevent status modifier exploits, all study options are locked until next year. Advance age (+1 Year) to participate again!" % PlayerData.age
+		ll.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		ll.add_theme_font_size_override("font_size", 20)
+		ll.add_theme_color_override("font_color", Color("#fbbf24"))
+		lm.add_child(ll)
+		list.add_child(lock_banner)
 
 	# Interactive Academic Options
 	var is_student: bool = PlayerData.education_level in ["Kindergarten", "Primary School", "Middle School", "High School", "University Student"]
@@ -2137,112 +2387,158 @@ func _show_education_modal() -> void:
 		infant_tip.add_theme_color_override("font_color", Color("#93c5fd"))
 		list.add_child(infant_tip)
 
-		var btn_books := _create_cyber_button("🧸 Picture Books & Nursery Rhymes\nExplore colorful books and alphabet songs. +4 Smarts, +6 Happiness", Color("#818cf8"), func():
-			PlayerData.smarts = mini(100, PlayerData.smarts + randi_range(3, 5))
-			PlayerData.happiness = mini(100, PlayerData.happiness + randi_range(5, 8))
-			add_life_event("You flipped through colorful picture books and learned letters and animal sounds. (+Smarts, +Happiness)", "education")
-			update_ui()
-			SaveManager.save_game()
-			_show_education_modal()
-		)
-		list.add_child(btn_books)
+		if has_done_school_activity_this_year:
+			list.add_child(_create_disabled_cyber_button("🧸 Picture Books & Nursery Rhymes\nExplore colorful books and alphabet songs. +4 Smarts, +6 Happiness", "Completed for Age %d (Age up to continue next year)" % PlayerData.age))
+			list.add_child(_create_disabled_cyber_button("🧩 Shape Sorting & Building Blocks\nSolve motor puzzles and spatial coordination. +5 Smarts, +4 Happiness", "Completed for Age %d (Age up to continue next year)" % PlayerData.age))
+			list.add_child(_create_disabled_cyber_button("🎨 Finger Painting & Music Play\nExplore vibrant colors and playful sounds. +2 Smarts, +8 Happiness", "Completed for Age %d (Age up to continue next year)" % PlayerData.age))
+		else:
+			var btn_books := _create_cyber_button("🧸 Picture Books & Nursery Rhymes\nExplore colorful books and alphabet songs. +4 Smarts, +6 Happiness", Color("#818cf8"), func():
+				if PlayerData.last_school_activity_age == PlayerData.age:
+					_close_education_modal_and_return_to_main()
+					return
+				PlayerData.last_school_activity_age = PlayerData.age
+				PlayerData.smarts = mini(100, PlayerData.smarts + randi_range(3, 5))
+				PlayerData.happiness = mini(100, PlayerData.happiness + randi_range(5, 8))
+				add_life_event("You flipped through colorful picture books and learned letters and animal sounds. (+Smarts, +Happiness)", "education")
+				update_ui()
+				SaveManager.save_game()
+				_close_education_modal_and_return_to_main()
+			)
+			list.add_child(btn_books)
 
-		var btn_blocks := _create_cyber_button("🧩 Shape Sorting & Building Blocks\nSolve motor puzzles and spatial coordination. +5 Smarts, +4 Happiness", Color("#38bdf8"), func():
-			PlayerData.smarts = mini(100, PlayerData.smarts + randi_range(4, 6))
-			PlayerData.happiness = mini(100, PlayerData.happiness + randi_range(3, 6))
-			add_life_event("You successfully fitted triangular and circular wooden blocks into the sorter! (+Smarts, +Happiness)", "education")
-			update_ui()
-			SaveManager.save_game()
-			_show_education_modal()
-		)
-		list.add_child(btn_blocks)
+			var btn_blocks := _create_cyber_button("🧩 Shape Sorting & Building Blocks\nSolve motor puzzles and spatial coordination. +5 Smarts, +4 Happiness", Color("#38bdf8"), func():
+				if PlayerData.last_school_activity_age == PlayerData.age:
+					_close_education_modal_and_return_to_main()
+					return
+				PlayerData.last_school_activity_age = PlayerData.age
+				PlayerData.smarts = mini(100, PlayerData.smarts + randi_range(4, 6))
+				PlayerData.happiness = mini(100, PlayerData.happiness + randi_range(3, 6))
+				add_life_event("You successfully fitted triangular and circular wooden blocks into the sorter! (+Smarts, +Happiness)", "education")
+				update_ui()
+				SaveManager.save_game()
+				_close_education_modal_and_return_to_main()
+			)
+			list.add_child(btn_blocks)
 
-		var btn_music := _create_cyber_button("🎨 Finger Painting & Music Play\nExplore vibrant colors and playful sounds. +2 Smarts, +8 Happiness", Color("#ec4899"), func():
-			PlayerData.smarts = mini(100, PlayerData.smarts + randi_range(1, 3))
-			PlayerData.happiness = mini(100, PlayerData.happiness + randi_range(7, 10))
-			add_life_event("You gleefully smeared bright finger paint all over paper (and your face)! (+Happiness)", "education")
-			update_ui()
-			SaveManager.save_game()
-			_show_education_modal()
-		)
-		list.add_child(btn_music)
+			var btn_music := _create_cyber_button("🎨 Finger Painting & Music Play\nExplore vibrant colors and playful sounds. +2 Smarts, +8 Happiness", Color("#ec4899"), func():
+				if PlayerData.last_school_activity_age == PlayerData.age:
+					_close_education_modal_and_return_to_main()
+					return
+				PlayerData.last_school_activity_age = PlayerData.age
+				PlayerData.smarts = mini(100, PlayerData.smarts + randi_range(1, 3))
+				PlayerData.happiness = mini(100, PlayerData.happiness + randi_range(7, 10))
+				add_life_event("You gleefully smeared bright finger paint all over paper (and your face)! (+Happiness)", "education")
+				update_ui()
+				SaveManager.save_game()
+				_close_education_modal_and_return_to_main()
+			)
+			list.add_child(btn_music)
 
 	elif is_student:
 		# 1. Study Hard
-		var btn_study := _create_cyber_button("📖 Study Diligently\n+8% Grades, +3 Smarts, -4 Happiness", Color("#818cf8"), func():
-			var g_gain := randi_range(6, 10)
-			var s_gain := randi_range(2, 4)
-			var h_loss := randi_range(3, 5)
-			PlayerData.grades = mini(100, PlayerData.grades + g_gain)
-			PlayerData.smarts = mini(100, PlayerData.smarts + s_gain)
-			PlayerData.happiness = maxi(0, PlayerData.happiness - h_loss)
-			add_life_event("You studied diligently, completing extra credit and reviewing notes. Grades +%d%%, Smarts +%d." % [g_gain, s_gain], "education")
-			update_ui()
-			SaveManager.save_game()
-			_show_education_modal()
-		)
-		list.add_child(btn_study)
+		if has_done_school_activity_this_year:
+			list.add_child(_create_disabled_cyber_button("📖 Study Diligently\n+8% Grades, +3 Smarts, -4 Happiness", "Already studied or engaged in school activities for Age %d (Age up to next year)" % PlayerData.age))
+		else:
+			var btn_study := _create_cyber_button("📖 Study Diligently\n+8% Grades, +3 Smarts, -4 Happiness", Color("#818cf8"), func():
+				if PlayerData.last_school_activity_age == PlayerData.age:
+					_close_education_modal_and_return_to_main()
+					return
+				PlayerData.last_school_activity_age = PlayerData.age
+				var g_gain := randi_range(6, 10)
+				var s_gain := randi_range(2, 4)
+				var h_loss := randi_range(3, 5)
+				PlayerData.grades = mini(100, PlayerData.grades + g_gain)
+				PlayerData.smarts = mini(100, PlayerData.smarts + s_gain)
+				PlayerData.happiness = maxi(0, PlayerData.happiness - h_loss)
+				add_life_event("You studied diligently, completing extra credit and reviewing notes. Grades +%d%%, Smarts +%d." % [g_gain, s_gain], "education")
+				update_ui()
+				SaveManager.save_game()
+				_close_education_modal_and_return_to_main()
+			)
+			list.add_child(btn_study)
 
 		# 2. Slack Off at School
-		var btn_slack := _create_cyber_button("🎮 Slack Off in Class\n-10% Grades, +8 Happiness, -1 Smarts (Risk of Detention)", Color("#f59e0b"), func():
-			var g_loss := randi_range(8, 14)
-			var h_gain := randi_range(6, 11)
-			PlayerData.grades = maxi(0, PlayerData.grades - g_loss)
-			PlayerData.happiness = mini(100, PlayerData.happiness + h_gain)
-			PlayerData.smarts = maxi(0, PlayerData.smarts - 1)
-			if randf() < 0.28:
-				PlayerData.happiness = maxi(5, PlayerData.happiness - 8)
-				add_life_event("🚨 DETENTION: A teacher caught you goofing off during class and assigned after-school detention! Grades -%d%%." % g_loss, "education")
-			else:
-				add_life_event("You slacked off in class, joked around with friends, and skipped homework. Grades -%d%%, Happiness +%d." % [g_loss, h_gain], "education")
-			update_ui()
-			SaveManager.save_game()
-			_show_education_modal()
-		)
-		list.add_child(btn_slack)
+		if has_done_school_activity_this_year:
+			list.add_child(_create_disabled_cyber_button("🎮 Slack Off in Class\n-10% Grades, +8 Happiness, -1 Smarts (Risk of Detention)", "Already participated in school activities for Age %d (Age up to next year)" % PlayerData.age))
+		else:
+			var btn_slack := _create_cyber_button("🎮 Slack Off in Class\n-10% Grades, +8 Happiness, -1 Smarts (Risk of Detention)", Color("#f59e0b"), func():
+				if PlayerData.last_school_activity_age == PlayerData.age:
+					_close_education_modal_and_return_to_main()
+					return
+				PlayerData.last_school_activity_age = PlayerData.age
+				var g_loss := randi_range(8, 14)
+				var h_gain := randi_range(6, 11)
+				PlayerData.grades = maxi(0, PlayerData.grades - g_loss)
+				PlayerData.happiness = mini(100, PlayerData.happiness + h_gain)
+				PlayerData.smarts = maxi(0, PlayerData.smarts - 1)
+				if randf() < 0.28:
+					PlayerData.happiness = maxi(5, PlayerData.happiness - 8)
+					add_life_event("🚨 DETENTION: A teacher caught you goofing off during class and assigned after-school detention! Grades -%d%%." % g_loss, "education")
+				else:
+					add_life_event("You slacked off in class, joked around with friends, and skipped homework. Grades -%d%%, Happiness +%d." % [g_loss, h_gain], "education")
+				update_ui()
+				SaveManager.save_game()
+				_close_education_modal_and_return_to_main()
+			)
+			list.add_child(btn_slack)
 
 		# 3. Bully Someone
-		var btn_bully := _create_cyber_button("😈 Bully a Classmate\n-20 Karma, Risk of Getting Beaten Up or Suspended", Color("#ef4444"), func():
-			var roll := randf()
-			if roll < 0.40:
-				PlayerData.karma -= 20
-				PlayerData.happiness = mini(100, PlayerData.happiness + 4)
-				add_life_event("😈 Cruel Victory: You bullied a classmate and mocked their clothes. They ran away crying. Karma -20.", "education")
-			elif roll < 0.75:
-				PlayerData.karma -= 20
-				PlayerData.health = maxi(5, PlayerData.health - randi_range(8, 15))
-				PlayerData.happiness = maxi(5, PlayerData.happiness - 10)
-				add_life_event("💥 RETALIATION: You tried to bully someone, but they punched you right in the nose! Health -12%, Karma -20.", "education")
-			else:
-				PlayerData.karma -= 25
-				PlayerData.happiness = maxi(5, PlayerData.happiness - 15)
-				if PlayerData.mother_relationship > 0:
-					PlayerData.mother_relationship = maxi(0, PlayerData.mother_relationship - 15)
-				add_life_event("🚨 SUSPENDED: The principal caught you bullying and suspended you for 3 days! Your parents are thoroughly disgusted.", "education")
-			update_ui()
-			SaveManager.save_game()
-			_show_education_modal()
-		)
-		list.add_child(btn_bully)
+		if has_done_school_activity_this_year:
+			list.add_child(_create_disabled_cyber_button("😈 Bully a Classmate\n-20 Karma, Risk of Getting Beaten Up or Suspended", "Already engaged in school conduct for Age %d (Age up to next year)" % PlayerData.age))
+		else:
+			var btn_bully := _create_cyber_button("😈 Bully a Classmate\n-20 Karma, Risk of Getting Beaten Up or Suspended", Color("#ef4444"), func():
+				if PlayerData.last_school_activity_age == PlayerData.age:
+					_close_education_modal_and_return_to_main()
+					return
+				PlayerData.last_school_activity_age = PlayerData.age
+				var roll := randf()
+				if roll < 0.40:
+					PlayerData.karma -= 20
+					PlayerData.happiness = mini(100, PlayerData.happiness + 4)
+					add_life_event("😈 Cruel Victory: You bullied a classmate and mocked their clothes. They ran away crying. Karma -20.", "education")
+				elif roll < 0.75:
+					PlayerData.karma -= 20
+					PlayerData.health = maxi(5, PlayerData.health - randi_range(8, 15))
+					PlayerData.happiness = maxi(5, PlayerData.happiness - 10)
+					add_life_event("💥 RETALIATION: You tried to bully someone, but they punched you right in the nose! Health -12%, Karma -20.", "education")
+				else:
+					PlayerData.karma -= 25
+					PlayerData.happiness = maxi(5, PlayerData.happiness - 15)
+					if PlayerData.mother_relationship > 0:
+						PlayerData.mother_relationship = maxi(0, PlayerData.mother_relationship - 15)
+					add_life_event("🚨 SUSPENDED: The principal caught you bullying and suspended you for 3 days! Your parents are thoroughly disgusted.", "education")
+				update_ui()
+				SaveManager.save_game()
+				_close_education_modal_and_return_to_main()
+			)
+			list.add_child(btn_bully)
 
 		# 4. Lead Group Study
-		var btn_group := _create_cyber_button("👥 Lead Group Study\n+6% Grades, +3 Smarts, +12 Karma, +5 Happiness (Req: 55%+ Grades)", Color("#22c55e"), func():
-			if PlayerData.grades < 55:
-				add_life_event("Low Marks: You need at least 55% academic marks to tutor and lead a study group (Current: %d%%)." % PlayerData.grades, "education")
-				return
-			var g_gain := randi_range(4, 7)
-			var s_gain := randi_range(2, 4)
-			var k_gain := randi_range(10, 15)
-			PlayerData.grades = mini(100, PlayerData.grades + g_gain)
-			PlayerData.smarts = mini(100, PlayerData.smarts + s_gain)
-			PlayerData.karma += k_gain
-			PlayerData.happiness = mini(100, PlayerData.happiness + 6)
-			add_life_event("👥 Group Leadership: You organized an effective peer study group. Everyone's marks improved! Karma +%d, Grades +%d%%." % [k_gain, g_gain], "education")
-			update_ui()
-			SaveManager.save_game()
-			_show_education_modal()
-		)
-		list.add_child(btn_group)
+		if has_done_school_activity_this_year:
+			list.add_child(_create_disabled_cyber_button("👥 Lead Group Study\n+6% Grades, +3 Smarts, +12 Karma, +5 Happiness (Req: 55%+ Grades)", "Already participated in school activities for Age %d (Age up to next year)" % PlayerData.age))
+		else:
+			var btn_group := _create_cyber_button("👥 Lead Group Study\n+6% Grades, +3 Smarts, +12 Karma, +5 Happiness (Req: 55%+ Grades)", Color("#22c55e"), func():
+				if PlayerData.last_school_activity_age == PlayerData.age:
+					_close_education_modal_and_return_to_main()
+					return
+				if PlayerData.grades < 55:
+					add_life_event("Low Marks: You need at least 55% academic marks to tutor and lead a study group (Current: %d%%)." % PlayerData.grades, "education")
+					_close_education_modal_and_return_to_main()
+					return
+				PlayerData.last_school_activity_age = PlayerData.age
+				var g_gain := randi_range(4, 7)
+				var s_gain := randi_range(2, 4)
+				var k_gain := randi_range(10, 15)
+				PlayerData.grades = mini(100, PlayerData.grades + g_gain)
+				PlayerData.smarts = mini(100, PlayerData.smarts + s_gain)
+				PlayerData.karma += k_gain
+				PlayerData.happiness = mini(100, PlayerData.happiness + 6)
+				add_life_event("👥 Group Leadership: You organized an effective peer study group. Everyone's marks improved! Karma +%d, Grades +%d%%." % [k_gain, g_gain], "education")
+				update_ui()
+				SaveManager.save_game()
+				_close_education_modal_and_return_to_main()
+			)
+			list.add_child(btn_group)
 
 		# 5. Drop Out of School (High School only; forbidden for younger)
 		if PlayerData.education_level == "High School":
@@ -2252,69 +2548,263 @@ func _show_education_modal() -> void:
 				add_life_event("🚪 You made the drastic decision to drop out of High School at age %d to enter the real world. University is now out of reach." % PlayerData.age, "education")
 				update_ui()
 				SaveManager.save_game()
-				_show_education_modal()
+				_close_education_modal_and_return_to_main()
 			)
 			list.add_child(btn_dropout)
 		elif PlayerData.education_level in ["Kindergarten", "Primary School", "Middle School"]:
 			var btn_dropout_lock := _create_cyber_button("🚪 Drop Out of School [LOCKED]\nTruancy laws mandate compulsory education. Kindergarten, Primary, and Middle schoolers cannot drop out!", Color("#475569"), func():
 				add_life_event("Compulsory Education: By law, students cannot drop out before High School (Age 14+).", "education")
+				_close_education_modal_and_return_to_main()
 			)
 			list.add_child(btn_dropout_lock)
 
 		# 6. Private Tutor
-		var btn_tutor := _create_cyber_button("👨‍🏫 Hire Academic Tutor ($200)\n+12% Grades, -$200 Cash", Color("#38bdf8"), func():
-			if PlayerData.money >= 200:
-				PlayerData.money -= 200
-				var g_gain := randi_range(10, 15)
-				PlayerData.grades = mini(100, PlayerData.grades + g_gain)
-				add_life_event("You worked with a private academic tutor ($200). Grades improved +%d%%!" % g_gain, "education")
-				update_ui()
-				SaveManager.save_game()
-				_show_education_modal()
-			elif PlayerData.age < 18 and (PlayerData.mother_relationship >= 60 or PlayerData.father_relationship >= 60):
-				var g_gain := randi_range(10, 15)
-				PlayerData.grades = mini(100, PlayerData.grades + g_gain)
-				add_life_event("Your supportive parents happily paid $200 for a private tutor. Grades improved +%d%%!" % g_gain, "education")
-				update_ui()
-				SaveManager.save_game()
-				_show_education_modal()
-			else:
-				add_life_event("You cannot afford a private academic tutor ($200 required).", "education")
-		)
-		list.add_child(btn_tutor)
+		if has_done_school_activity_this_year:
+			list.add_child(_create_disabled_cyber_button("👨‍🏫 Hire Academic Tutor ($200)\n+12% Grades, -$200 Cash", "Already engaged private tutoring or study activities for Age %d (Age up to next year)" % PlayerData.age))
+		else:
+			var btn_tutor := _create_cyber_button("👨‍🏫 Hire Academic Tutor ($200)\n+12% Grades, -$200 Cash", Color("#38bdf8"), func():
+				if PlayerData.last_school_activity_age == PlayerData.age:
+					_close_education_modal_and_return_to_main()
+					return
+				if PlayerData.money >= 200:
+					PlayerData.last_school_activity_age = PlayerData.age
+					PlayerData.money -= 200
+					var g_gain := randi_range(10, 15)
+					PlayerData.grades = mini(100, PlayerData.grades + g_gain)
+					add_life_event("You worked with a private academic tutor ($200). Grades improved +%d%%!" % g_gain, "education")
+					update_ui()
+					SaveManager.save_game()
+					_close_education_modal_and_return_to_main()
+				elif PlayerData.age < 18 and (PlayerData.mother_relationship >= 60 or PlayerData.father_relationship >= 60):
+					PlayerData.last_school_activity_age = PlayerData.age
+					var g_gain := randi_range(10, 15)
+					PlayerData.grades = mini(100, PlayerData.grades + g_gain)
+					add_life_event("Your supportive parents happily paid $200 for a private tutor. Grades improved +%d%%!" % g_gain, "education")
+					update_ui()
+					SaveManager.save_game()
+					_close_education_modal_and_return_to_main()
+				else:
+					add_life_event("You cannot afford a private academic tutor ($200 required).", "education")
+					_close_education_modal_and_return_to_main()
+			)
+			list.add_child(btn_tutor)
 
 	# Apply for Scholarship (High Schoolers Age 16+)
 	if PlayerData.age >= 16 and PlayerData.education_level == "High School" and not PlayerData.has_scholarship:
-		var btn_schol := _create_cyber_button("🏆 Apply for Full-Ride Scholarship\n100% University Tuition Waiver (Req: 82%+ Grades, 65+ Smarts)", Color("#fbbf24"), func():
-			if PlayerData.grades >= 82 and PlayerData.smarts >= 65:
-				PlayerData.has_scholarship = true
-				PlayerData.happiness = mini(100, PlayerData.happiness + 20)
-				PlayerData.karma += 5
-				add_life_event("🏆 SCHOLARSHIP AWARDED! The National Academic Board awarded you a 100% full-ride tuition waiver for university!", "education")
-			else:
-				PlayerData.happiness = maxi(0, PlayerData.happiness - 5)
-				add_life_event("Scholarship Denied: Committee requires at least 82%% academic grades and 65 smarts (Current: %d%% grades, %d smarts)." % [PlayerData.grades, PlayerData.smarts], "education")
-			update_ui()
-			SaveManager.save_game()
-			_show_education_modal()
-		)
-		list.add_child(btn_schol)
+		if PlayerData.last_scholarship_applied_age == PlayerData.age:
+			list.add_child(_create_disabled_cyber_button("🏆 Apply for Full-Ride Scholarship\n100% University Tuition Waiver (Req: 82%+ Grades, 65+ Smarts)", "Scholarship application already submitted for Age %d (Awaiting board review next year)" % PlayerData.age))
+		else:
+			var btn_schol := _create_cyber_button("🏆 Apply for Full-Ride Scholarship\n100% University Tuition Waiver (Req: 82%+ Grades, 65+ Smarts)", Color("#fbbf24"), func():
+				PlayerData.last_scholarship_applied_age = PlayerData.age
+				if PlayerData.grades >= 82 and PlayerData.smarts >= 65:
+					PlayerData.has_scholarship = true
+					PlayerData.happiness = mini(100, PlayerData.happiness + 20)
+					PlayerData.karma += 5
+					add_life_event("🏆 SCHOLARSHIP AWARDED! The National Academic Board awarded you a 100% full-ride tuition waiver for university!", "education")
+				else:
+					PlayerData.happiness = maxi(0, PlayerData.happiness - 5)
+					add_life_event("Scholarship Denied: Committee requires at least 82%% academic grades and 65 smarts (Current: %d%% grades, %d smarts)." % [PlayerData.grades, PlayerData.smarts], "education")
+				update_ui()
+				SaveManager.save_game()
+				_close_education_modal_and_return_to_main()
+			)
+			list.add_child(btn_schol)
 
-	# Enroll in University (High School Graduates)
+	# Enroll in University Institutions (High School Graduates)
 	if PlayerData.age >= 18 and PlayerData.education_level in ["High School", "High School Graduate"]:
-		var tuition_str := "Free (Scholarship)" if PlayerData.has_scholarship else "$12,000 / yr"
-		var btn_uni := _create_cyber_button("🏛️ Enroll in University (%s)\n4-Year Degree Program unlocks elite corporate and medical careers" % tuition_str, Color("#10b981"), func():
-			if PlayerData.grades < 60:
-				add_life_event("University application rejected: Minimum high school GPA of 60% required (Current: %d%%)." % PlayerData.grades, "education")
-				return
-			PlayerData.education_level = "University Student"
+		var uni_header := Label.new()
+		uni_header.text = "🏛️ UNIVERSITY ENROLLMENT & MAJORS"
+		uni_header.add_theme_font_size_override("font_size", 26)
+		uni_header.add_theme_color_override("font_color", Color("#38bdf8"))
+		list.add_child(uni_header)
+
+		var uni_sub := Label.new()
+		uni_sub.text = "Choose an institution and major. Your degree directly dictates career qualification (e.g. IT Major for Tech, Business Management for Store Management)."
+		uni_sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		uni_sub.add_theme_font_size_override("font_size", 20)
+		uni_sub.add_theme_color_override("font_color", Color("#94a3b8"))
+		list.add_child(uni_sub)
+
+		var institutions: Array = EducationCatalog.get_all_institutions()
+		for inst in institutions:
+			if not (inst is Dictionary):
+				continue
+			var col := Color(str(inst.get("theme_color", "#38bdf8")))
+			var card := PanelContainer.new()
+			card.add_theme_stylebox_override("panel", load_style_box_cyber_card(col))
+
+			var m := MarginContainer.new()
+			m.add_theme_constant_override("margin_left", 20)
+			m.add_theme_constant_override("margin_right", 20)
+			m.add_theme_constant_override("margin_top", 14)
+			m.add_theme_constant_override("margin_bottom", 14)
+			card.add_child(m)
+
+			var vb := VBoxContainer.new()
+			vb.add_theme_constant_override("separation", 6)
+			m.add_child(vb)
+
+			var inst_title := Label.new()
+			inst_title.text = "%s  %s" % [str(inst.get("icon", "🏛️")), str(inst.get("name", ""))]
+			inst_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			inst_title.add_theme_font_size_override("font_size", 24)
+			inst_title.add_theme_color_override("font_color", col)
+			vb.add_child(inst_title)
+
+			var inst_tagline := Label.new()
+			inst_tagline.text = str(inst.get("tagline", ""))
+			inst_tagline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			inst_tagline.add_theme_font_size_override("font_size", 20)
+			inst_tagline.add_theme_color_override("font_color", Color("#93c5fd"))
+			vb.add_child(inst_tagline)
+
+			var inst_major := Label.new()
+			inst_major.text = "🎓 Major: %s  •  %s" % [str(inst.get("major_title", "")), str(inst.get("degree_title", ""))]
+			inst_major.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			inst_major.add_theme_font_size_override("font_size", 21)
+			inst_major.add_theme_color_override("font_color", Color("#f8fafc"))
+			vb.add_child(inst_major)
+
+			var inst_careers := Label.new()
+			var c_list: Array = inst.get("unlocked_careers", [])
+			inst_careers.text = "🎯 Unlocks Careers: %s" % ", ".join(c_list)
+			inst_careers.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			inst_careers.add_theme_font_size_override("font_size", 19)
+			inst_careers.add_theme_color_override("font_color", Color("#34d399"))
+			vb.add_child(inst_careers)
+
+			var inst_desc := Label.new()
+			inst_desc.text = str(inst.get("description", ""))
+			inst_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			inst_desc.add_theme_font_size_override("font_size", 19)
+			inst_desc.add_theme_color_override("font_color", Color("#cbd5e1"))
+			vb.add_child(inst_desc)
+
+			var tuition_amount: int = int(inst.get("tuition", 12000))
+			var tuition_text := "Free (Scholarship Active)" if PlayerData.has_scholarship else "$%s / yr" % _format_number(tuition_amount)
+			var req_eval: Dictionary = EducationCatalog.can_enroll(inst, PlayerData.grades, PlayerData.smarts)
+			var is_eligible: bool = bool(req_eval.get("allowed", false))
+
+			if is_eligible:
+				var enroll_btn := _create_cyber_button("🏛️ Enroll in %s (%s)\nReq Met: %d%% GPA & %d Smarts" % [
+					str(inst.get("major_title", "")),
+					tuition_text,
+					int(inst.get("min_grades", 60)),
+					int(inst.get("min_smarts", 50))
+				], col, func():
+					PlayerData.education_level = "University Student"
+					PlayerData.university_name = str(inst.get("name", ""))
+					PlayerData.university_major = str(inst.get("major", ""))
+					PlayerData.university_major_title = str(inst.get("major_title", ""))
+					PlayerData.university_degree = str(inst.get("degree_title", ""))
+					PlayerData.university_tuition = tuition_amount
+					PlayerData.university_years = 0
+					add_life_event("🏛️ You enrolled at %s majoring in %s! Complete 4 years to earn your %s." % [
+						PlayerData.university_name,
+						PlayerData.university_major_title,
+						PlayerData.university_degree
+					], "milestone")
+					update_ui()
+					SaveManager.save_game()
+					_close_education_modal_and_return_to_main()
+				)
+				vb.add_child(enroll_btn)
+			else:
+				var locked_btn := Button.new()
+				locked_btn.custom_minimum_size.y = 54
+				locked_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				locked_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				locked_btn.text = "🔒 LOCKED: " + str(req_eval.get("reason", "Ineligible"))
+				locked_btn.disabled = true
+				var lk_style := StyleBoxFlat.new()
+				lk_style.bg_color = Color("#181f2f")
+				lk_style.border_color = Color("#334155")
+				lk_style.set_border_width_all(2)
+				lk_style.set_corner_radius_all(6)
+				locked_btn.add_theme_stylebox_override("disabled", lk_style)
+				locked_btn.add_theme_color_override("font_color", Color("#94a3b8"))
+				locked_btn.add_theme_font_size_override("font_size", 20)
+				vb.add_child(locked_btn)
+
+			list.add_child(card)
+
+	# Active University Student Status Card
+	if PlayerData.education_level == "University Student":
+		var uni_active := PanelContainer.new()
+		uni_active.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#00f0ff")))
+		var um := MarginContainer.new()
+		um.add_theme_constant_override("margin_left", 20)
+		um.add_theme_constant_override("margin_right", 20)
+		um.add_theme_constant_override("margin_top", 14)
+		um.add_theme_constant_override("margin_bottom", 14)
+		uni_active.add_child(um)
+
+		var uv := VBoxContainer.new()
+		uv.add_theme_constant_override("separation", 8)
+		um.add_child(uv)
+
+		var u_title := Label.new()
+		u_title.text = "🏛️ ACTIVE UNIVERSITY ENROLLMENT"
+		u_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		u_title.add_theme_font_size_override("font_size", 24)
+		u_title.add_theme_color_override("font_color", Color("#00f0ff"))
+		uv.add_child(u_title)
+
+		var u_inst := Label.new()
+		u_inst.text = "Institution: %s\nMajor: %s   •   Degree in Progress: %s\nProgress: Year %d of 4 completed" % [
+			PlayerData.university_name,
+			PlayerData.university_major_title,
+			PlayerData.university_degree,
+			PlayerData.university_years
+		]
+		u_inst.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		u_inst.add_theme_font_size_override("font_size", 21)
+		u_inst.add_theme_color_override("font_color", Color("#f8fafc"))
+		uv.add_child(u_inst)
+
+		var t_info := Label.new()
+		var t_cost: int = PlayerData.university_tuition if PlayerData.university_tuition > 0 else 12000
+		t_info.text = "Annual Tuition: Free (Scholarship Active)" if PlayerData.has_scholarship else "Annual Tuition: $%s / yr" % _format_number(t_cost)
+		t_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		t_info.add_theme_font_size_override("font_size", 20)
+		t_info.add_theme_color_override("font_color", Color("#34d399") if PlayerData.has_scholarship else Color("#fbbf24"))
+		uv.add_child(t_info)
+
+		if has_done_school_activity_this_year:
+			uv.add_child(_create_disabled_cyber_button("📖 Intensive Major Coursework Study\nHit the library and master course exams. Grades +2-4%, Smarts +2-4", "Completed for Age %d (Age up to study again next year)" % PlayerData.age))
+		else:
+			var btn_study_uni := _create_cyber_button("📖 Intensive Major Coursework Study\nHit the library and master course exams. Grades +2-4%, Smarts +2-4", Color("#38bdf8"), func():
+				if PlayerData.last_school_activity_age == PlayerData.age:
+					_close_education_modal_and_return_to_main()
+					return
+				PlayerData.last_school_activity_age = PlayerData.age
+				var g_gain := randi_range(2, 4)
+				var s_gain := randi_range(2, 4)
+				PlayerData.grades = mini(100, PlayerData.grades + g_gain)
+				PlayerData.smarts = mini(100, PlayerData.smarts + s_gain)
+				PlayerData.happiness = maxi(5, PlayerData.happiness - 3)
+				add_life_event("You studied late into the night preparing for %s midterms. Grades +%d%%, Smarts +%d." % [PlayerData.university_major_title, g_gain, s_gain], "education")
+				update_ui()
+				SaveManager.save_game()
+				_close_education_modal_and_return_to_main()
+			)
+			uv.add_child(btn_study_uni)
+
+		var btn_drop_uni := _create_cyber_button("🚪 Drop Out of University\nAbandon your degree program and enter the workforce.", Color("#ef4444"), func():
+			PlayerData.education_level = "High School Graduate"
+			add_life_event("You dropped out of %s. You forfeited your degree in %s." % [PlayerData.university_name, PlayerData.university_major_title], "education")
 			PlayerData.university_years = 0
-			add_life_event("🏛️ You enrolled at the State University! Complete 4 years of study to obtain your Bachelor's Degree.", "education")
+			PlayerData.university_name = ""
+			PlayerData.university_major = ""
+			PlayerData.university_major_title = ""
+			PlayerData.university_degree = ""
 			update_ui()
 			SaveManager.save_game()
-			_show_education_modal()
+			_close_education_modal_and_return_to_main()
 		)
-		list.add_child(btn_uni)
+		uv.add_child(btn_drop_uni)
+
+		list.add_child(uni_active)
 
 	# Dropout Overview Card & GED option
 	if PlayerData.education_level == "High School Dropout":
@@ -2334,24 +2824,29 @@ func _show_education_modal() -> void:
 		dm.add_child(dl)
 		list.add_child(drop_card)
 
-		var btn_ged := _create_cyber_button("📜 Study & Sit for GED Equivalency ($500)\nHigh school equivalency credential restores university admission (Req: 60+ Smarts)", Color("#38bdf8"), func():
-			if PlayerData.money < 500:
-				add_life_event("You cannot afford the $500 GED exam registration fees.", "education")
-				return
-			PlayerData.money -= 500
-			if PlayerData.smarts >= 60:
-				PlayerData.education_level = "High School Graduate"
-				PlayerData.grades = 75
-				PlayerData.happiness = mini(100, PlayerData.happiness + 20)
-				add_life_event("🎉 DIPLOMA EARNED! You passed the GED examinations! You are now a certified High School Graduate.", "education")
-			else:
-				PlayerData.happiness = maxi(5, PlayerData.happiness - 10)
-				add_life_event("GED Failed: You scored below passing grade. Boost your Smarts before retaking.", "education")
-			update_ui()
-			SaveManager.save_game()
-			_show_education_modal()
-		)
-		list.add_child(btn_ged)
+		if PlayerData.last_ged_attempt_age == PlayerData.age:
+			list.add_child(_create_disabled_cyber_button("📜 Study & Sit for GED Equivalency ($500)\nHigh school equivalency credential restores university admission (Req: 60+ Smarts)", "Already sat for GED examination for Age %d (Retakes available next year)" % PlayerData.age))
+		else:
+			var btn_ged := _create_cyber_button("📜 Study & Sit for GED Equivalency ($500)\nHigh school equivalency credential restores university admission (Req: 60+ Smarts)", Color("#38bdf8"), func():
+				if PlayerData.money < 500:
+					add_life_event("You cannot afford the $500 GED exam registration fees.", "education")
+					_close_education_modal_and_return_to_main()
+					return
+				PlayerData.last_ged_attempt_age = PlayerData.age
+				PlayerData.money -= 500
+				if PlayerData.smarts >= 60:
+					PlayerData.education_level = "High School Graduate"
+					PlayerData.grades = 75
+					PlayerData.happiness = mini(100, PlayerData.happiness + 20)
+					add_life_event("🎉 DIPLOMA EARNED! You passed the GED examinations! You are now a certified High School Graduate.", "education")
+				else:
+					PlayerData.happiness = maxi(5, PlayerData.happiness - 10)
+					add_life_event("GED Failed: You scored below passing grade. Boost your Smarts before retaking.", "education")
+				update_ui()
+				SaveManager.save_game()
+				_close_education_modal_and_return_to_main()
+			)
+			list.add_child(btn_ged)
 
 	# University Graduate Honors Card
 	if PlayerData.education_level == "University Graduate":
@@ -2363,12 +2858,33 @@ func _show_education_modal() -> void:
 		gm.add_theme_constant_override("margin_top", 14)
 		gm.add_theme_constant_override("margin_bottom", 14)
 		grad_card.add_child(gm)
+
+		var gv := VBoxContainer.new()
+		gv.add_theme_constant_override("separation", 6)
+		gm.add_child(gv)
+
 		var gl := Label.new()
-		gl.text = "🎓 UNIVERSITY ALUMNUS: You hold a Bachelor's Degree! Prestigious medical, tech, and corporate careers are fully unlocked."
+		gl.text = "🎓 UNIVERSITY ALUMNUS - %s" % (PlayerData.university_name.to_upper() if PlayerData.university_name != "" else "ALUMNUS")
 		gl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		gl.add_theme_font_size_override("font_size", 21)
-		gl.add_theme_color_override("font_color", Color("#a7f3d0"))
-		gm.add_child(gl)
+		gl.add_theme_font_size_override("font_size", 24)
+		gl.add_theme_color_override("font_color", Color("#34d399"))
+		gv.add_child(gl)
+
+		var g_sub := Label.new()
+		var d_str: String = PlayerData.university_degree if PlayerData.university_degree != "" else "Bachelor's Degree"
+		var m_str: String = PlayerData.university_major_title if PlayerData.university_major_title != "" else "Specialized Major"
+		g_sub.text = "%s in %s\nFinal Academic Marks: %d%% (%s)\nCareers requiring %s are fully unlocked!" % [
+			d_str,
+			m_str,
+			PlayerData.grades,
+			PlayerData.get_letter_grade(),
+			m_str
+		]
+		g_sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		g_sub.add_theme_font_size_override("font_size", 21)
+		g_sub.add_theme_color_override("font_color", Color("#a7f3d0"))
+		gv.add_child(g_sub)
+
 		list.add_child(grad_card)
 
 	education_modal_overlay.visible = true
@@ -2382,6 +2898,8 @@ var doctor_modal_overlay: ColorRect = null
 var crime_modal_overlay: ColorRect = null
 var casino_modal_overlay: ColorRect = null
 var death_screen_overlay: ColorRect = null
+var gym_modal_overlay: ColorRect = null
+var meditation_modal_overlay: ColorRect = null
 
 
 func _create_cyber_modal(title_text: String, subtitle_text: String, border_color: Color) -> Dictionary:
@@ -2469,12 +2987,23 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	main_vbox.add_child(scroll)
+
+	var scroll_margin := MarginContainer.new()
+	scroll_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll_margin.add_theme_constant_override("margin_left", 4)
+	scroll_margin.add_theme_constant_override("margin_right", 28)
+	scroll_margin.add_theme_constant_override("margin_top", 4)
+	scroll_margin.add_theme_constant_override("margin_bottom", 24)
+	scroll.add_child(scroll_margin)
 
 	var content_list := VBoxContainer.new()
 	content_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content_list.add_theme_constant_override("separation", 14)
-	scroll.add_child(content_list)
+	scroll_margin.add_child(content_list)
 
 	return {
 		"overlay": overlay,
@@ -2515,6 +3044,521 @@ func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callabl
 
 	btn.pressed.connect(on_click)
 	return btn
+
+
+func _create_disabled_cyber_button(btn_text: String, reason: String) -> Button:
+	var btn := Button.new()
+	btn.text = "%s\n🔒 %s" % [btn_text, reason]
+	btn.custom_minimum_size.y = 86
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	btn.add_theme_font_size_override("font_size", 20)
+	btn.disabled = true
+	var lock_style := StyleBoxFlat.new()
+	lock_style.bg_color = Color("#0f172a")
+	lock_style.border_color = Color("#334155")
+	lock_style.set_border_width_all(2)
+	lock_style.set_corner_radius_all(8)
+	lock_style.content_margin_left = 20
+	lock_style.content_margin_right = 20
+	lock_style.content_margin_top = 12
+	lock_style.content_margin_bottom = 12
+	btn.add_theme_stylebox_override("disabled", lock_style)
+	btn.add_theme_color_override("font_color", Color("#64748b"))
+	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	return btn
+
+
+func _close_education_modal_and_return_to_main() -> void:
+	if education_modal_overlay != null and is_instance_valid(education_modal_overlay):
+		education_modal_overlay.queue_free()
+		education_modal_overlay = null
+	show_tab("timeline")
+
+
+func _close_gym_modal_and_return_to_main() -> void:
+	if gym_modal_overlay != null and is_instance_valid(gym_modal_overlay):
+		gym_modal_overlay.queue_free()
+		gym_modal_overlay = null
+	show_tab("timeline")
+
+
+func _close_meditation_modal_and_return_to_main() -> void:
+	if meditation_modal_overlay != null and is_instance_valid(meditation_modal_overlay):
+		meditation_modal_overlay.queue_free()
+		meditation_modal_overlay = null
+	show_tab("timeline")
+
+
+func _purchase_gym_membership() -> bool:
+	var fee: int = PlayerData.gym_membership_annual_fee
+	if PlayerData.bank_savings >= fee:
+		PlayerData.bank_savings -= fee
+	elif PlayerData.money >= fee:
+		PlayerData.money -= fee
+	else:
+		add_life_event("❌ You need at least $%d to activate a Gym Membership." % fee, "finance")
+		_close_gym_modal_and_return_to_main()
+		return false
+	PlayerData.has_gym_membership = true
+	add_life_event("🏋️ Gym Membership ACTIVATED! ($%d/yr auto-debited annually). All gym workouts, classes, and athletic facilities are now 100%% FREE!" % fee, "activity")
+	update_ui()
+	SaveManager.save_game()
+	_close_gym_modal_and_return_to_main()
+	return true
+
+
+func _cancel_gym_membership() -> void:
+	PlayerData.has_gym_membership = false
+	add_life_event("🚫 Gym Membership CANCELLED. You will no longer be billed annually, and gym workouts will now require day-pass fees.", "activity")
+	update_ui()
+	SaveManager.save_game()
+	_close_gym_modal_and_return_to_main()
+
+
+func _execute_gym_workout(w: Dictionary) -> bool:
+	if PlayerData.last_gym_activity_age == PlayerData.age:
+		_close_gym_modal_and_return_to_main()
+		return false
+	var effective_fee: int = 0 if PlayerData.has_gym_membership else int(w["cost"] if w.has("cost") else w.get("fee", 0))
+	if effective_fee > 0 and PlayerData.money < effective_fee:
+		add_life_event("You cannot afford the $%d day-pass fee for %s." % [effective_fee, str(w.get("name", w.get("title", "Workout")))], "finance")
+		_close_gym_modal_and_return_to_main()
+		return false
+	if effective_fee > 0:
+		PlayerData.money -= effective_fee
+	PlayerData.last_gym_activity_age = PlayerData.age
+	var h_gain: int = int(w.get("health", 0))
+	if h_gain == 0 and w.has("health_min"):
+		h_gain = randi_range(int(w["health_min"]), int(w["health_max"]))
+	var l_gain: int = int(w.get("looks", 0))
+	if l_gain == 0 and w.has("looks_min"):
+		l_gain = randi_range(int(w["looks_min"]), int(w["looks_max"]))
+	var hap_gain: int = int(w.get("happiness", 0))
+	if hap_gain == 0 and w.has("hap_min"):
+		hap_gain = randi_range(int(w["hap_min"]), int(w["hap_max"]))
+	PlayerData.health = mini(100, PlayerData.health + h_gain)
+	PlayerData.looks = mini(100, PlayerData.looks + l_gain)
+	PlayerData.happiness = mini(100, PlayerData.happiness + hap_gain)
+	var w_title: String = str(w.get("name", w.get("title", "Workout")))
+	var w_msg: String = str(w.get("msg", "completed your training session."))
+	if PlayerData.has_gym_membership:
+		add_life_event("🏋️ [MEMBER PASS - FREE] You visited the gym for %s and %s (Health +%d, Looks +%d, Happiness +%d)." % [w_title, w_msg, h_gain, l_gain, hap_gain], "activity")
+	else:
+		add_life_event("🏋️ You paid a $%d day pass for %s and %s (Health +%d, Looks +%d, Happiness +%d)." % [effective_fee, w_title, w_msg, h_gain, l_gain, hap_gain], "activity")
+	update_ui()
+	SaveManager.save_game()
+	_close_gym_modal_and_return_to_main()
+	return true
+
+
+func _execute_meditation(p: Dictionary) -> bool:
+	if PlayerData.last_meditation_activity_age == PlayerData.age:
+		_close_meditation_modal_and_return_to_main()
+		return false
+	var fee_val: int = int(p.get("cost", p.get("fee", 0)))
+	if fee_val > 0 and PlayerData.money < fee_val:
+		add_life_event("You cannot afford the $%d fee for %s." % [fee_val, str(p.get("name", p.get("title", "Meditation")))], "finance")
+		_close_meditation_modal_and_return_to_main()
+		return false
+	if fee_val > 0:
+		PlayerData.money -= fee_val
+	PlayerData.last_meditation_activity_age = PlayerData.age
+	var hap_gain: int = int(p.get("happiness", 0))
+	if hap_gain == 0 and p.has("hap_min"):
+		hap_gain = randi_range(int(p["hap_min"]), int(p["hap_max"]))
+	var s_gain: int = int(p.get("smarts", 0))
+	if s_gain == 0 and p.has("smarts_min"):
+		s_gain = randi_range(int(p["smarts_min"]), int(p["smarts_max"]))
+	var h_gain: int = int(p.get("health", 0))
+	if h_gain == 0 and p.has("health_min"):
+		h_gain = randi_range(int(p["health_min"]), int(p["health_max"]))
+	var l_gain: int = int(p.get("looks", 0))
+	if l_gain == 0 and p.has("looks_min"):
+		l_gain = randi_range(int(p["looks_min"]), int(p["looks_max"]))
+	var k_gain: int = int(p.get("karma", 0))
+	if k_gain == 0 and p.has("karma_min"):
+		k_gain = randi_range(int(p["karma_min"]), int(p["karma_max"]))
+	PlayerData.happiness = mini(100, PlayerData.happiness + hap_gain)
+	PlayerData.smarts = mini(100, PlayerData.smarts + s_gain)
+	if h_gain > 0:
+		PlayerData.health = mini(100, PlayerData.health + h_gain)
+	if l_gain > 0:
+		PlayerData.looks = mini(100, PlayerData.looks + l_gain)
+	PlayerData.karma += k_gain
+	var p_title: String = str(p.get("name", p.get("title", "Meditation")))
+	if fee_val == 0:
+		add_life_event("🧘 You engaged in %s. Serenity and peace wash over your mind. Happiness +%d, Karma +%d." % [p_title, hap_gain, k_gain], "activity")
+	else:
+		add_life_event("🧘 You attended %s ($%d). Deep tranquility and spiritual rejuvenation achieved! Happiness +%d, Karma +%d." % [p_title, fee_val, hap_gain, k_gain], "activity")
+	update_ui()
+	SaveManager.save_game()
+	_close_meditation_modal_and_return_to_main()
+	return true
+
+
+func _show_gym_modal() -> void:
+	if gym_modal_overlay != null and is_instance_valid(gym_modal_overlay):
+		gym_modal_overlay.queue_free()
+
+	var modal := _create_cyber_modal("🏋️ TITAN CYBER GYM & FITNESS", "Strength Training, Athletics, Aquatics & Annual Memberships", Color("#10b981"))
+	gym_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	# 1. Physical Fitness & Health Summary Card
+	var summary_card := PanelContainer.new()
+	summary_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#10b981")))
+	var sm := MarginContainer.new()
+	sm.add_theme_constant_override("margin_left", 20)
+	sm.add_theme_constant_override("margin_right", 20)
+	sm.add_theme_constant_override("margin_top", 16)
+	sm.add_theme_constant_override("margin_bottom", 16)
+	summary_card.add_child(sm)
+
+	var sv := VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 8)
+	sm.add_child(sv)
+
+	var stat_title := Label.new()
+	stat_title.text = "💪 PHYSICAL PROFILE & HEALTH VITALS"
+	stat_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	stat_title.add_theme_font_size_override("font_size", 24)
+	stat_title.add_theme_color_override("font_color", Color("#34d399"))
+	sv.add_child(stat_title)
+
+	var vitals_lbl := Label.new()
+	vitals_lbl.text = "❤️ Health: %d%%   •   ✨ Looks: %d%%   •   😊 Happiness: %d%%" % [
+		PlayerData.health,
+		PlayerData.looks,
+		PlayerData.happiness
+	]
+	vitals_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vitals_lbl.add_theme_font_size_override("font_size", 22)
+	vitals_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+	sv.add_child(vitals_lbl)
+
+	var bank_lbl := Label.new()
+	bank_lbl.text = "💰 Bank Savings: $%d   •   💵 Cash in Hand: $%d" % [
+		PlayerData.bank_savings,
+		PlayerData.money
+	]
+	bank_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	bank_lbl.add_theme_font_size_override("font_size", 20)
+	bank_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
+	sv.add_child(bank_lbl)
+
+	list.add_child(summary_card)
+
+	# 2. Gym Membership Card
+	var mem_card := PanelContainer.new()
+	var mem_border := Color("#38bdf8") if PlayerData.has_gym_membership else Color("#f59e0b")
+	mem_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(mem_border))
+	var mm := MarginContainer.new()
+	mm.add_theme_constant_override("margin_left", 20)
+	mm.add_theme_constant_override("margin_right", 20)
+	mm.add_theme_constant_override("margin_top", 16)
+	mm.add_theme_constant_override("margin_bottom", 16)
+	mem_card.add_child(mm)
+
+	var mv := VBoxContainer.new()
+	mv.add_theme_constant_override("separation", 10)
+	mm.add_child(mv)
+
+	var mem_title := Label.new()
+	mem_title.text = "💳 ALL-INCLUSIVE ANNUAL GYM MEMBERSHIP"
+	mem_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	mem_title.add_theme_font_size_override("font_size", 24)
+	mem_title.add_theme_color_override("font_color", Color("#38bdf8"))
+	mv.add_child(mem_title)
+
+	var mem_desc := Label.new()
+	if PlayerData.has_gym_membership:
+		mem_desc.text = "STATUS: ACTIVE MEMBER ✅
+Annual Fee: $%d/year (automatically debited from your bank account every year).
+PERK: ALL gym visits, classes, weight rooms, and athletic tracks are 100%% FREE!" % PlayerData.gym_membership_annual_fee
+		mem_desc.add_theme_color_override("font_color", Color("#34d399"))
+	else:
+		mem_desc.text = "STATUS: NON-MEMBER ❌
+Annual Fee: $%d/year (debited directly from your bank account yearly).
+BENEFIT: Unlocks 100%% FREE unlimited access to all workouts, swimming laps, spin classes, and boxing. Never pay individual day passes again!" % PlayerData.gym_membership_annual_fee
+		mem_desc.add_theme_color_override("font_color", Color("#e2e8f0"))
+	mem_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	mem_desc.add_theme_font_size_override("font_size", 20)
+	mv.add_child(mem_desc)
+
+	if not PlayerData.has_gym_membership:
+		var buy_btn := _create_cyber_button("💳 ACTIVATE GYM MEMBERSHIP ($300/yr Auto-Debit)
+Start enjoying 100% free visits across all facilities", Color("#10b981"), func():
+			_purchase_gym_membership()
+		)
+		mv.add_child(buy_btn)
+	else:
+		var cancel_btn := _create_cyber_button("❌ CANCEL GYM MEMBERSHIP
+Stop annual auto-debit payments (Visits will revert to standard day-pass fees)", Color("#ef4444"), func():
+			_cancel_gym_membership()
+		)
+		mv.add_child(cancel_btn)
+
+	list.add_child(mem_card)
+
+	# 3. Annual Workout Anti-Spam Gating Banner
+	var has_worked_out_this_year: bool = (PlayerData.last_gym_activity_age == PlayerData.age)
+	if has_worked_out_this_year:
+		var lock_banner := PanelContainer.new()
+		lock_banner.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
+		var lm := MarginContainer.new()
+		lm.add_theme_constant_override("margin_left", 18)
+		lm.add_theme_constant_override("margin_right", 18)
+		lm.add_theme_constant_override("margin_top", 12)
+		lm.add_theme_constant_override("margin_bottom", 12)
+		lock_banner.add_child(lm)
+
+		var ll := Label.new()
+		ll.text = "⏳ ANNUAL WORKOUT COMPLETED
+You have already pushed your limits at the gym for Age %d.
+To avoid muscle strain and exploit prevention, training options are locked until next year. Advance age (+1 Year) to train again!" % PlayerData.age
+		ll.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		ll.add_theme_font_size_override("font_size", 20)
+		ll.add_theme_color_override("font_color", Color("#fbbf24"))
+		lm.add_child(ll)
+		list.add_child(lock_banner)
+
+	# 4. Workout Options
+	var workouts: Array = [
+		{
+			"title": "🏋️ Heavy Weight Training",
+			"fee": 40,
+			"health_min": 7, "health_max": 10,
+			"looks_min": 6, "looks_max": 9,
+			"hap_min": 4, "hap_max": 6,
+			"desc": "Intense barbell squats, deadlifts, and bench presses. Builds substantial muscle and physical strength.",
+			"msg": "pushed maximum reps on deadlifts and bench presses.",
+			"color": Color("#34d399")
+		},
+		{
+			"title": "🏃 Track Day & Sprint Intervals",
+			"fee": 25,
+			"health_min": 6, "health_max": 9,
+			"looks_min": 4, "looks_max": 7,
+			"hap_min": 5, "hap_max": 8,
+			"desc": "High-octane sprint intervals, hurdles, and endurance laps on the Olympic synthetic track.",
+			"msg": "burned rubber doing 400m sprint intervals on the track.",
+			"color": Color("#38bdf8")
+		},
+		{
+			"title": "🚴 HIIT Spin & Cardio Blast",
+			"fee": 30,
+			"health_min": 7, "health_max": 9,
+			"looks_min": 5, "looks_max": 8,
+			"hap_min": 6, "hap_max": 9,
+			"desc": "High-intensity interval rhythm cycling class with motivating neon lights and pumping techno beats.",
+			"msg": "sweated through an intense 45-minute HIIT spin blast.",
+			"color": Color("#a855f7")
+		},
+		{
+			"title": "🏊 Olympic Swimming & Laps",
+			"fee": 50,
+			"health_min": 8, "health_max": 11,
+			"looks_min": 5, "looks_max": 7,
+			"hap_min": 6, "hap_max": 8,
+			"desc": "Low-impact, full-body cardiovascular workout swimming continuous freestyle laps in the heated pool.",
+			"msg": "swam 40 continuous freestyle laps in the Olympic pool.",
+			"color": Color("#06b6d4")
+		},
+		{
+			"title": "🥊 Combat Boxing & Sparring",
+			"fee": 60,
+			"health_min": 8, "health_max": 12,
+			"looks_min": 5, "looks_max": 8,
+			"hap_min": 5, "hap_max": 8,
+			"desc": "Heavy bag combos, speed bag agility, and controlled sparring with veteran pugilists.",
+			"msg": "sharpened footwork and landed crisp combos in boxing sparring.",
+			"color": Color("#f43f5e")
+		},
+		{
+			"title": "💎 Elite VIP Personal Trainer",
+			"fee": 120,
+			"health_min": 11, "health_max": 15,
+			"looks_min": 8, "looks_max": 12,
+			"hap_min": 7, "hap_max": 10,
+			"desc": "1-on-1 private conditioning, biomechanical analysis, and targeted aesthetic hypertrophy routine.",
+			"msg": "trained with an elite master coach on a bespoke conditioning routine.",
+			"color": Color("#eab308")
+		}
+	]
+
+	for w in workouts:
+		var fee_val: int = int(w["fee"])
+		var price_str: String = "100% FREE (Membership Active)" if PlayerData.has_gym_membership else "$%d Day Pass" % fee_val
+		var w_text: String = "%s (%s)
+%s" % [str(w["title"]), price_str, str(w["desc"])]
+
+		if has_worked_out_this_year:
+			list.add_child(_create_disabled_cyber_button(w_text, "Completed for Age %d (Age up to workout next year)" % PlayerData.age))
+		else:
+			var btn := _create_cyber_button(w_text, w["color"], func():
+				_execute_gym_workout(w)
+			)
+			list.add_child(btn)
+
+	gym_modal_overlay.visible = true
+
+
+func _show_meditation_modal() -> void:
+	if meditation_modal_overlay != null and is_instance_valid(meditation_modal_overlay):
+		meditation_modal_overlay.queue_free()
+
+	var modal := _create_cyber_modal("🧘 NIRVANA MINDFULNESS & MEDITATION", "Breathwork, Yoga, Acoustic Sound Baths & Spiritual Healing", Color("#a855f7"))
+	meditation_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	# 1. Mental Wellness & Inner Peace Summary Card
+	var summary_card := PanelContainer.new()
+	summary_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#a855f7")))
+	var sm := MarginContainer.new()
+	sm.add_theme_constant_override("margin_left", 20)
+	sm.add_theme_constant_override("margin_right", 20)
+	sm.add_theme_constant_override("margin_top", 16)
+	sm.add_theme_constant_override("margin_bottom", 16)
+	summary_card.add_child(sm)
+
+	var sv := VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 8)
+	sm.add_child(sv)
+
+	var stat_title := Label.new()
+	stat_title.text = "🧘 MENTAL WELLNESS & SPIRITUAL ALIGNMENT"
+	stat_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	stat_title.add_theme_font_size_override("font_size", 24)
+	stat_title.add_theme_color_override("font_color", Color("#c084fc"))
+	sv.add_child(stat_title)
+
+	var mood_desc := "Serene & Blissful" if PlayerData.happiness >= 80 else ("Content" if PlayerData.happiness >= 60 else ("Stressed" if PlayerData.happiness >= 40 else "Depressed & Exhausted"))
+	var vitals_lbl := Label.new()
+	vitals_lbl.text = "😊 Happiness: %d%% (%s)   •   🧠 Smarts: %d%%   •   ☯ Karma: %d" % [
+		PlayerData.happiness,
+		mood_desc,
+		PlayerData.smarts,
+		PlayerData.karma
+	]
+	vitals_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vitals_lbl.add_theme_font_size_override("font_size", 22)
+	vitals_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+	sv.add_child(vitals_lbl)
+
+	var benefit_lbl := Label.new()
+	benefit_lbl.text = "Mindfulness Impact: Regular meditation cleanses mental fatigue, sharpens focus, reduces existential anxiety, and harmonizes positive karma. Advanced spiritual retreats grant major karmic redemption."
+	benefit_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	benefit_lbl.add_theme_font_size_override("font_size", 20)
+	benefit_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+	sv.add_child(benefit_lbl)
+
+	list.add_child(summary_card)
+
+	# 2. Annual Meditation Anti-Spam Gating Banner
+	var has_meditated_this_year: bool = (PlayerData.last_meditation_activity_age == PlayerData.age)
+	if has_meditated_this_year:
+		var lock_banner := PanelContainer.new()
+		lock_banner.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
+		var lm := MarginContainer.new()
+		lm.add_theme_constant_override("margin_left", 18)
+		lm.add_theme_constant_override("margin_right", 18)
+		lm.add_theme_constant_override("margin_top", 12)
+		lm.add_theme_constant_override("margin_bottom", 12)
+		lock_banner.add_child(lm)
+
+		var ll := Label.new()
+		ll.text = "⏳ ANNUAL MINDFULNESS SESSION COMPLETED
+You have already completed your meditation session for Age %d.
+To prevent status modifier exploits, mindfulness options are locked until next year. Advance age (+1 Year) to meditate again!" % PlayerData.age
+		ll.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		ll.add_theme_font_size_override("font_size", 20)
+		ll.add_theme_color_override("font_color", Color("#fbbf24"))
+		lm.add_child(ll)
+		list.add_child(lock_banner)
+
+	# 3. Meditation Options
+	var practices: Array = [
+		{
+			"title": "🍃 Zen Breathwork & Vipassana (Free)",
+			"fee": 0,
+			"min_age": 5,
+			"hap_min": 10, "hap_max": 14,
+			"smarts_min": 1, "smarts_max": 2,
+			"health_min": 0, "health_max": 0,
+			"looks_min": 0, "looks_max": 0,
+			"karma_min": 2, "karma_max": 3,
+			"desc": "Sit quietly in lotus posture, focus on diaphragmatic breathing, and ground your awareness in the present moment.",
+			"color": Color("#34d399")
+		},
+		{
+			"title": "🧘 Vinyasa Flow Yoga Class ($25)",
+			"fee": 25,
+			"min_age": 5,
+			"hap_min": 14, "hap_max": 18,
+			"smarts_min": 1, "smarts_max": 2,
+			"health_min": 3, "health_max": 5,
+			"looks_min": 3, "looks_max": 4,
+			"karma_min": 2, "karma_max": 4,
+			"desc": "An energizing flow of warrior postures, spinal stretches, and mindful deep breathing led by a certified yogi.",
+			"color": Color("#38bdf8")
+		},
+		{
+			"title": "🔔 Tibetan Singing Bowls & Sound Bath ($50)",
+			"fee": 50,
+			"min_age": 5,
+			"hap_min": 18, "hap_max": 24,
+			"smarts_min": 3, "smarts_max": 5,
+			"health_min": 1, "health_max": 3,
+			"looks_min": 0, "looks_max": 0,
+			"karma_min": 4, "karma_max": 6,
+			"desc": "Harmonic vibrational acoustic therapy with hammered bronze bowls and quartz gongs to calm your central nervous system.",
+			"color": Color("#f59e0b")
+		},
+		{
+			"title": "✨ Spiritual Healing & Chakra Alignment ($90)",
+			"fee": 90,
+			"min_age": 10,
+			"hap_min": 24, "hap_max": 30,
+			"smarts_min": 2, "smarts_max": 3,
+			"health_min": 2, "health_max": 4,
+			"looks_min": 0, "looks_max": 0,
+			"karma_min": 10, "karma_max": 14,
+			"desc": "Realign your bio-energetic chakras, cleanse residual emotional trauma, and restore karmic purity with an ordained spiritual master.",
+			"color": Color("#ec4899")
+		},
+		{
+			"title": "🌌 Transcendental Sanctuary Retreat ($180)",
+			"fee": 180,
+			"min_age": 14,
+			"hap_min": 32, "hap_max": 42,
+			"smarts_min": 4, "smarts_max": 6,
+			"health_min": 4, "health_max": 6,
+			"looks_min": 2, "looks_max": 4,
+			"karma_min": 16, "karma_max": 20,
+			"desc": "An immersive all-day luxury digital detox retreat with botanical tea ceremonies, sensory rest, and profound guided enlightenment.",
+			"color": Color("#a855f7")
+		}
+	]
+
+	for p in practices:
+		var fee_val: int = int(p["fee"])
+		var fee_text: String = "Free" if fee_val == 0 else "$%d Cash" % fee_val
+		var p_text: String = "%s (%s)
+%s" % [str(p["title"]), fee_text, str(p["desc"])]
+		var min_age_req: int = int(p["min_age"])
+
+		if PlayerData.age < min_age_req:
+			list.add_child(_create_disabled_cyber_button(p_text, "Requires Age %d+ (Current: %d)" % [min_age_req, PlayerData.age]))
+		elif has_meditated_this_year:
+			list.add_child(_create_disabled_cyber_button(p_text, "Completed for Age %d (Age up to meditate next year)" % PlayerData.age))
+		else:
+			var btn := _create_cyber_button(p_text, p["color"], func():
+				_execute_meditation(p)
+			)
+			list.add_child(btn)
+
+	meditation_modal_overlay.visible = true
 
 
 # --- 1. DOCTOR MODAL ---
@@ -3461,6 +4505,12 @@ func _configure_age_art() -> void:
 	age_button.add_child(artwork)
 	artwork.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
+	# Additive Age-only splash; the existing artwork tweens stay unchanged.
+	if age_button.get_node_or_null("AgePixelBurst") == null:
+		var splash := preload("res://scripts/ui/age_pixel_burst.gd").new()
+		splash.name = "AgePixelBurst"
+		age_button.add_child(splash)
+
 	# Micro-interactions for tactile responsiveness
 	if not age_button.mouse_entered.is_connected(_on_age_btn_hover):
 		age_button.mouse_entered.connect(_on_age_btn_hover)
@@ -3565,6 +4615,18 @@ func _configure_stat_bars() -> void:
 		if label != null:
 			label.add_theme_color_override("font_color", entry["label_color"])
 			label.add_theme_font_size_override("font_size", 22)
+
+	if grades_progress_bar != null:
+		grades_progress_bar.custom_minimum_size.y = 26
+		grades_progress_bar.show_percentage = true
+		grades_progress_bar.add_theme_font_size_override("font_size", 18)
+		grades_progress_bar.add_theme_color_override("font_color", Color("#ffffff"))
+		grades_progress_bar.add_theme_color_override("font_outline_color", Color("#000000"))
+		grades_progress_bar.add_theme_constant_override("outline_size", 4)
+		grades_progress_bar.add_theme_stylebox_override("background", track_style)
+		var fill_style := StyleBoxTexture.new()
+		fill_style.texture = _create_stat_gradient_texture(Color("#10b981"), Color("#047857"))
+		grades_progress_bar.add_theme_stylebox_override("fill", fill_style)
 
 
 func _update_stat_bar_color(bar: ProgressBar, value: int, col_left: Color, col_right: Color) -> void:

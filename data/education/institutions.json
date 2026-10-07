@@ -1,0 +1,95 @@
+[
+  {
+    "id": "uni_pixel_state",
+    "name": "University of Pixel State",
+    "icon": "🏛️",
+    "tagline": "School of Business & Enterprise",
+    "major": "business",
+    "major_title": "Business Management",
+    "degree_title": "Bachelor of Business Administration (B.B.A.)",
+    "description": "Prestigious state academy renowned for executive management, enterprise leadership, and commerce.",
+    "tuition": 12000,
+    "min_grades": 60,
+    "min_smarts": 50,
+    "theme_color": "#f59e0b",
+    "unlocked_careers": [
+      "Retail Store Manager",
+      "Corporate Operations Executive"
+    ]
+  },
+  {
+    "id": "uni_pixnology",
+    "name": "University of Central Pixnology",
+    "icon": "💻",
+    "tagline": "Institute of Computing & Cyber Defense",
+    "major": "it",
+    "major_title": "Cyber Security & IT",
+    "degree_title": "Bachelor of Science in Cyber Security & IT",
+    "description": "Cutting-edge polytechnic university specializing in full-stack software development, cybersecurity, and cloud architecture.",
+    "tuition": 14000,
+    "min_grades": 65,
+    "min_smarts": 60,
+    "theme_color": "#00f0ff",
+    "unlocked_careers": [
+      "Full-Stack Software Engineer",
+      "Cybersecurity Analyst",
+      "Principal Cloud Architect"
+    ]
+  },
+  {
+    "id": "uni_metro_med",
+    "name": "Metropolitan Medical University",
+    "icon": "🩺",
+    "tagline": "College of Clinical Medicine & Surgery",
+    "major": "medicine",
+    "major_title": "Pre-Med & Healthcare Sciences",
+    "degree_title": "Bachelor of Clinical Medicine & Healthcare (B.M.Sc.)",
+    "description": "World-class medical research academy training clinical nurses, resident physicians, attending doctors, and trauma surgeons.",
+    "tuition": 16000,
+    "min_grades": 70,
+    "min_smarts": 65,
+    "theme_color": "#f43f5e",
+    "unlocked_careers": [
+      "Registered Clinical Nurse",
+      "Resident Physician Doctor",
+      "Attending Medical Doctor",
+      "Chief Surgeon Doctor"
+    ]
+  },
+  {
+    "id": "uni_poly_tech",
+    "name": "Pixel Polytechnic Institute",
+    "icon": "⚙️",
+    "tagline": "School of Applied Engineering & Robotics",
+    "major": "engineering",
+    "major_title": "Mechanical & Electrical Engineering",
+    "degree_title": "Bachelor of Science in Engineering (B.S.E.)",
+    "description": "Rigorous engineering institution focused on electrical distribution, automated robotics, and mechanical infrastructure.",
+    "tuition": 13000,
+    "min_grades": 65,
+    "min_smarts": 60,
+    "theme_color": "#a855f7",
+    "unlocked_careers": [
+      "Licensed Journeyman Electrician",
+      "Lead Systems Engineer"
+    ]
+  },
+  {
+    "id": "uni_pixel_arts",
+    "name": "Pixel Academy of Digital Arts",
+    "icon": "🎨",
+    "tagline": "Conservatory of Visual Arts & Interactive Media",
+    "major": "arts",
+    "major_title": "Digital Arts & Interactive Media",
+    "degree_title": "Bachelor of Fine Arts in Digital Media (B.F.A.)",
+    "description": "Vibrant design institute cultivating artistic innovators in visual design, creative direction, and digital media production.",
+    "tuition": 11000,
+    "min_grades": 55,
+    "min_smarts": 45,
+    "theme_color": "#ec4899",
+    "unlocked_careers": [
+      "Creative Lead & Media Director",
+      "Digital Art Specialist"
+    ]
+  }
+]

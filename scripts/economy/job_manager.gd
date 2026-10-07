@@ -93,6 +93,26 @@ func can_apply(job: Dictionary, age: int, stats: Dictionary, education_data: Dic
 				"reason": "Requires High School Diploma (Current: %s)." % current_edu
 			}
 
+	# University Major Requirement Check
+	if reqs.has("required_major"):
+		var req_major: String = str(reqs["required_major"]).to_lower()
+		var current_major: String = str(education_data.get("major", "")).to_lower()
+		var current_edu: String = str(education_data.get("education_level", "None"))
+		var req_name := get_major_display_name(req_major)
+		var current_name := get_major_display_name(current_major) if current_major != "" else "No Major"
+
+		if current_edu != "University Graduate":
+			return {
+				"allowed": false,
+				"reason": "Requires University Degree in %s (Current: %s)." % [req_name, current_edu]
+			}
+
+		if current_major != req_major:
+			return {
+				"allowed": false,
+				"reason": "Requires %s Major (Your Major: %s)." % [req_name, current_name]
+			}
+
 	if reqs.has("min_health") and int(stats.get("health", 0)) < int(reqs["min_health"]):
 		return {"allowed": false, "reason": "Requires at least %d Health." % int(reqs["min_health"])}
 	if reqs.has("min_smarts") and int(stats.get("smarts", 0)) < int(reqs["min_smarts"]):
@@ -107,3 +127,19 @@ func can_apply(job: Dictionary, age: int, stats: Dictionary, education_data: Dic
 		return {"allowed": false, "reason": "Requires underworld reputation (Karma <= %d)." % int(reqs["max_karma"])}
 
 	return {"allowed": true, "reason": "Qualified"}
+
+
+func get_major_display_name(major_id: String) -> String:
+	match major_id.to_lower():
+		"business":
+			return "Business Management"
+		"it":
+			return "Cyber Security & IT"
+		"medicine":
+			return "Pre-Med & Healthcare Sciences"
+		"engineering":
+			return "Mechanical & Electrical Engineering"
+		"arts":
+			return "Digital Arts & Interactive Media"
+		_:
+			return major_id.capitalize()
