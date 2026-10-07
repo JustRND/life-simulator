@@ -519,6 +519,34 @@ func test_educational_minigames() -> void:
 	assert(PlayerData.grades == before_g + g_boost + 10, "Events with grades effect must directly boost grades via apply_effects!")
 	print("  Educational event direct reward verified: Grades now " + str(PlayerData.grades) + "%")
 
+	# 5. Full minigame interaction: start minigame, answer question 1, click Next, answer question 2, click Next, answer question 3, complete exam
+	main_scene._start_education_minigame("trivia", true)
+	assert(main_scene.education_minigame_overlay != null, "Minigame overlay must exist")
+	for q_round in range(3):
+		var buttons: Array = main_scene.education_minigame_overlay.find_children("*", "Button", true, false)
+		var opt_btn: Button = null
+		for b in buttons:
+			if not ("Next" in b.text or "Complete" in b.text or "Finish" in b.text or "✕" in b.text):
+				opt_btn = b
+				break
+		assert(opt_btn != null, "Must find an option button in round %d" % q_round)
+		opt_btn.emit_signal("pressed")
+
+		buttons = main_scene.education_minigame_overlay.find_children("*", "Button", true, false)
+		var next_btn: Button = null
+		for b in buttons:
+			if "Next" in b.text or "Complete" in b.text:
+				next_btn = b
+				break
+		assert(next_btn != null, "Must find next/complete button in round %d" % q_round)
+		print("Round %d: clicking %s" % [q_round + 1, next_btn.text])
+		next_btn.emit_signal("pressed")
+
+	print("  Minigame all 3 rounds completed successfully via button signals")
+	if main_scene.education_minigame_overlay != null and is_instance_valid(main_scene.education_minigame_overlay):
+		main_scene.education_minigame_overlay.queue_free()
+		main_scene.education_minigame_overlay = null
+
 	main_scene.queue_free()
 	print("✔ Test 7: Educational minigames (math & guessing) directly affecting grades verified")
 

@@ -6301,6 +6301,7 @@ func _show_education_modal() -> void:
 
 
 var education_minigame_overlay: ColorRect = null
+var education_minigame_state: Dictionary = {}
 
 const TRIVIA_QUESTIONS: Array[Dictionary] = [
 	{"q": "Which planet in our solar system is known as the 'Red Planet'?", "options": ["Mars", "Venus", "Jupiter", "Saturn"]},
@@ -6459,191 +6460,225 @@ func _start_education_minigame(game_type: String, is_course: bool = false) -> vo
 	education_minigame_overlay = modal.overlay
 	var list: VBoxContainer = modal.list
 
-	var total_questions := 3
-	var state := {
-		"current_q": 0,
-		"score": 0,
-		"used_indices": [] as Array[int]
-	}
-
 	var question_container := VBoxContainer.new()
 	question_container.add_theme_constant_override("separation", 16)
 	list.add_child(question_container)
 
-	var render_step: Callable
-	render_step = func():
-		for child in question_container.get_children():
-			question_container.remove_child(child)
-			child.queue_free()
+	education_minigame_state = {
+		"game_type": game_type,
+		"is_course": is_course,
+		"current_q": 0,
+		"total_questions": 3,
+		"score": 0,
+		"used_indices": [] as Array[int],
+		"border_col": border_col,
+		"question_container": question_container
+	}
 
-		var q_data: Dictionary = _generate_math_question() if game_type == "math" else _generate_trivia_question(state["used_indices"])
+	_render_education_minigame_step()
 
-		var progress_lbl := Label.new()
-		progress_lbl.text = "QUESTION %d OF %d  •  CURRENT SCORE: %d" % [state["current_q"] + 1, total_questions, state["score"]]
-		progress_lbl.add_theme_font_size_override("font_size", 24)
-		progress_lbl.add_theme_color_override("font_color", border_col)
-		question_container.add_child(progress_lbl)
 
-		var q_card := PanelContainer.new()
-		q_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(border_col))
-		var qm := MarginContainer.new()
-		qm.add_theme_constant_override("margin_left", 24)
-		qm.add_theme_constant_override("margin_right", 24)
-		qm.add_theme_constant_override("margin_top", 24)
-		qm.add_theme_constant_override("margin_bottom", 24)
-		q_card.add_child(qm)
+func _render_education_minigame_step() -> void:
+	var qc: VBoxContainer = education_minigame_state.get("question_container", null)
+	if qc == null or not is_instance_valid(qc):
+		return
 
-		var qv := VBoxContainer.new()
-		qv.add_theme_constant_override("separation", 16)
-		qm.add_child(qv)
+	for child in qc.get_children():
+		qc.remove_child(child)
+		child.queue_free()
 
-		var prompt_lbl := Label.new()
-		prompt_lbl.text = str(q_data.prompt)
-		prompt_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		prompt_lbl.add_theme_font_size_override("font_size", 30)
-		prompt_lbl.add_theme_color_override("font_color", Color("#ffffff"))
-		qv.add_child(prompt_lbl)
+	var game_type: String = str(education_minigame_state.get("game_type", "trivia"))
+	var border_col: Color = education_minigame_state.get("border_col", Color("#38bdf8"))
+	var current_q: int = int(education_minigame_state.get("current_q", 0))
+	var total_questions: int = int(education_minigame_state.get("total_questions", 3))
+	var score: int = int(education_minigame_state.get("score", 0))
+	var used_indices: Array = education_minigame_state.get("used_indices", [])
 
-		var feedback_lbl := Label.new()
-		feedback_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		feedback_lbl.add_theme_font_size_override("font_size", 24)
-		feedback_lbl.text = ""
-		qv.add_child(feedback_lbl)
+	var q_data: Dictionary = _generate_math_question() if game_type == "math" else _generate_trivia_question(used_indices)
 
-		var options_grid := GridContainer.new()
-		options_grid.columns = 2
-		options_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		options_grid.add_theme_constant_override("h_separation", 14)
-		options_grid.add_theme_constant_override("v_separation", 12)
-		qv.add_child(options_grid)
+	var progress_lbl := Label.new()
+	progress_lbl.text = "QUESTION %d OF %d  •  CURRENT SCORE: %d" % [current_q + 1, total_questions, score]
+	progress_lbl.add_theme_font_size_override("font_size", 24)
+	progress_lbl.add_theme_color_override("font_color", border_col)
+	qc.add_child(progress_lbl)
 
-		var next_btn := _create_cyber_button("Next Question ➔" if (state["current_q"] + 1 < total_questions) else "Complete Exam ➔", border_col, func(): pass)
-		next_btn.visible = false
-		qv.add_child(next_btn)
+	var q_card := PanelContainer.new()
+	q_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(border_col))
+	var qm := MarginContainer.new()
+	qm.add_theme_constant_override("margin_left", 24)
+	qm.add_theme_constant_override("margin_right", 24)
+	qm.add_theme_constant_override("margin_top", 24)
+	qm.add_theme_constant_override("margin_bottom", 24)
+	q_card.add_child(qm)
 
-		var option_buttons: Array[Button] = []
-		var opts: Array = q_data.options
-		for idx in range(opts.size()):
-			var opt_text := str(opts[idx])
-			var btn := _create_cyber_button(opt_text, border_col, func(): pass)
-			btn.custom_minimum_size.y = 68
-			btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			btn.add_theme_font_size_override("font_size", 24)
-			btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var qv := VBoxContainer.new()
+	qv.add_theme_constant_override("separation", 16)
+	qm.add_child(qv)
 
-			var chosen_idx := idx
-			btn.pressed.connect(func():
-				for b in option_buttons:
-					b.disabled = true
+	var prompt_lbl := Label.new()
+	prompt_lbl.text = str(q_data.prompt)
+	prompt_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	prompt_lbl.add_theme_font_size_override("font_size", 30)
+	prompt_lbl.add_theme_color_override("font_color", Color("#ffffff"))
+	qv.add_child(prompt_lbl)
 
-				if chosen_idx == int(q_data.correct):
-					state["score"] = int(state["score"]) + 1
-					feedback_lbl.text = "✅ Correct! (+5% Academic Marks earned)"
-					feedback_lbl.add_theme_color_override("font_color", Color("#34d399"))
+	var feedback_lbl := Label.new()
+	feedback_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	feedback_lbl.add_theme_font_size_override("font_size", 24)
+	feedback_lbl.text = ""
+	qv.add_child(feedback_lbl)
+
+	var options_grid := GridContainer.new()
+	options_grid.columns = 2
+	options_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	options_grid.add_theme_constant_override("h_separation", 14)
+	options_grid.add_theme_constant_override("v_separation", 12)
+	qv.add_child(options_grid)
+
+	var is_last_q := (current_q + 1 >= total_questions)
+	var next_btn_text := "Complete Exam ➔" if is_last_q else "Next Question ➔"
+	var next_btn := _create_cyber_button(next_btn_text, border_col, func():
+		_advance_education_minigame()
+	)
+	next_btn.visible = false
+	qv.add_child(next_btn)
+
+	var option_buttons: Array[Button] = []
+	var opts: Array = q_data.options
+	for idx in range(opts.size()):
+		var opt_text := str(opts[idx])
+		var btn := _create_cyber_button(opt_text, border_col, func(): pass)
+		btn.custom_minimum_size.y = 68
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.add_theme_font_size_override("font_size", 24)
+		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+		var chosen_idx := idx
+		btn.pressed.connect(func():
+			for b in option_buttons:
+				b.disabled = true
+
+			if chosen_idx == int(q_data.correct):
+				education_minigame_state["score"] = int(education_minigame_state["score"]) + 1
+				feedback_lbl.text = "✅ Correct! (+5% Academic Marks earned)"
+				feedback_lbl.add_theme_color_override("font_color", Color("#34d399"))
+				var win_style := StyleBoxFlat.new()
+				win_style.bg_color = Color("#064e3b")
+				win_style.border_color = Color("#10b981")
+				win_style.set_border_width_all(3)
+				win_style.set_corner_radius_all(8)
+				btn.add_theme_stylebox_override("disabled", win_style)
+				btn.add_theme_color_override("font_color", Color("#6ee7b7"))
+			else:
+				feedback_lbl.text = "❌ Incorrect! The correct answer was: %s" % str(q_data.correct_answer)
+				feedback_lbl.add_theme_color_override("font_color", Color("#f87171"))
+				var err_style := StyleBoxFlat.new()
+				err_style.bg_color = Color("#450a0a")
+				err_style.border_color = Color("#ef4444")
+				err_style.set_border_width_all(3)
+				err_style.set_corner_radius_all(8)
+				btn.add_theme_stylebox_override("disabled", err_style)
+				btn.add_theme_color_override("font_color", Color("#fca5a5"))
+
+				if int(q_data.correct) < option_buttons.size():
+					var correct_btn: Button = option_buttons[int(q_data.correct)]
 					var win_style := StyleBoxFlat.new()
 					win_style.bg_color = Color("#064e3b")
 					win_style.border_color = Color("#10b981")
 					win_style.set_border_width_all(3)
 					win_style.set_corner_radius_all(8)
-					btn.add_theme_stylebox_override("disabled", win_style)
-					btn.add_theme_color_override("font_color", Color("#6ee7b7"))
-				else:
-					feedback_lbl.text = "❌ Incorrect! The correct answer was: %s" % str(q_data.correct_answer)
-					feedback_lbl.add_theme_color_override("font_color", Color("#f87171"))
-					var err_style := StyleBoxFlat.new()
-					err_style.bg_color = Color("#450a0a")
-					err_style.border_color = Color("#ef4444")
-					err_style.set_border_width_all(3)
-					err_style.set_corner_radius_all(8)
-					btn.add_theme_stylebox_override("disabled", err_style)
-					btn.add_theme_color_override("font_color", Color("#fca5a5"))
+					correct_btn.add_theme_stylebox_override("disabled", win_style)
+					correct_btn.add_theme_color_override("font_color", Color("#6ee7b7"))
 
-					if int(q_data.correct) < option_buttons.size():
-						var correct_btn: Button = option_buttons[int(q_data.correct)]
-						var win_style := StyleBoxFlat.new()
-						win_style.bg_color = Color("#064e3b")
-						win_style.border_color = Color("#10b981")
-						win_style.set_border_width_all(3)
-						win_style.set_corner_radius_all(8)
-						correct_btn.add_theme_stylebox_override("disabled", win_style)
-						correct_btn.add_theme_color_override("font_color", Color("#6ee7b7"))
-
-				next_btn.visible = true
-			)
-
-			options_grid.add_child(btn)
-			option_buttons.append(btn)
-
-		next_btn.pressed.connect(func():
-			state["current_q"] = int(state["current_q"]) + 1
-			if int(state["current_q"]) < total_questions:
-				render_step.call()
-			else:
-				# Show Final Exam Results
-				for child in question_container.get_children():
-					question_container.remove_child(child)
-					child.queue_free()
-
-				var res_card := PanelContainer.new()
-				res_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(border_col))
-				var rm := MarginContainer.new()
-				rm.add_theme_constant_override("margin_left", 24)
-				rm.add_theme_constant_override("margin_right", 24)
-				rm.add_theme_constant_override("margin_top", 24)
-				rm.add_theme_constant_override("margin_bottom", 24)
-				res_card.add_child(rm)
-
-				var rv := VBoxContainer.new()
-				rv.add_theme_constant_override("separation", 16)
-				rm.add_child(rv)
-
-				var sc: int = int(state["score"])
-				var rtitle := Label.new()
-				rtitle.text = "🎉 EXAM COMPLETED! (%d/%d Correct)" % [sc, total_questions]
-				rtitle.add_theme_font_size_override("font_size", 30)
-				rtitle.add_theme_color_override("font_color", border_col)
-				rv.add_child(rtitle)
-
-				var g_boost: int = sc * 5
-				var s_boost: int = mini(3, sc + 1)
-				PlayerData.grades = clamp(PlayerData.grades + g_boost, 0, 100)
-				PlayerData.smarts = mini(100, PlayerData.smarts + s_boost)
-				PlayerData.happiness = mini(100, PlayerData.happiness + sc * 2)
-				PlayerData.last_school_activity_age = PlayerData.age
-
-				if is_course:
-					PlayerData.grades = maxi(75, PlayerData.grades)
-					add_life_event("🎓 REFRESHER COURSE COMPLETED: You passed the curriculum with %d/%d correct! Academic credentials restored to %d%% (%s)." % [sc, total_questions, PlayerData.grades, PlayerData.get_letter_grade()], "education")
-				else:
-					var game_label := "Math Challenge" if game_type == "math" else "Trivia Guessing Challenge"
-					add_life_event("🎓 %s: Completed with %d/%d correct! Academic marks +%d%% (Current: %d%%), Smarts +%d." % [game_label, sc, total_questions, g_boost, PlayerData.grades, s_boost], "education")
-
-				update_ui()
-				SaveManager.save_game()
-
-				var rdesc := Label.new()
-				if is_course:
-					rdesc.text = "Congratulations! Your course certification is complete.\n\n• Academic Marks restored to %d%% (%s)\n• Smarts +%d\n• Official credentials certified for career & university qualification" % [PlayerData.grades, PlayerData.get_letter_grade(), s_boost]
-				else:
-					rdesc.text = "Great effort! Your test results have been registered into your academic transcript:\n\n• Academic Marks: +%d%% (Current: %d%%)\n• Smarts: +%d\n• Annual academic maintenance fulfilled (grades protected from degradation)" % [g_boost, PlayerData.grades, s_boost]
-				rdesc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-				rdesc.add_theme_font_size_override("font_size", 24)
-				rdesc.add_theme_color_override("font_color", Color("#cbd5e1"))
-				rv.add_child(rdesc)
-
-				var return_btn := _create_cyber_button("Finish & Return to Academy", border_col, func():
-					if education_minigame_overlay != null and is_instance_valid(education_minigame_overlay):
-						education_minigame_overlay.queue_free()
-						education_minigame_overlay = null
-					_show_education_modal()
-				)
-				rv.add_child(return_btn)
-				question_container.add_child(res_card)
+			next_btn.visible = true
 		)
 
-		question_container.add_child(q_card)
+		options_grid.add_child(btn)
+		option_buttons.append(btn)
 
-	render_step.call()
+	qc.add_child(q_card)
+
+
+func _advance_education_minigame() -> void:
+	var current_q: int = int(education_minigame_state.get("current_q", 0)) + 1
+	education_minigame_state["current_q"] = current_q
+	var total_questions: int = int(education_minigame_state.get("total_questions", 3))
+
+	if current_q < total_questions:
+		_render_education_minigame_step()
+	else:
+		_show_education_minigame_results()
+
+
+func _show_education_minigame_results() -> void:
+	var qc: VBoxContainer = education_minigame_state.get("question_container", null)
+	if qc == null or not is_instance_valid(qc):
+		return
+
+	for child in qc.get_children():
+		qc.remove_child(child)
+		child.queue_free()
+
+	var border_col: Color = education_minigame_state.get("border_col", Color("#10b981"))
+	var sc: int = int(education_minigame_state.get("score", 0))
+	var total_questions: int = int(education_minigame_state.get("total_questions", 3))
+	var is_course: bool = bool(education_minigame_state.get("is_course", false))
+	var game_type: String = str(education_minigame_state.get("game_type", "trivia"))
+
+	var res_card := PanelContainer.new()
+	res_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(border_col))
+	var rm := MarginContainer.new()
+	rm.add_theme_constant_override("margin_left", 24)
+	rm.add_theme_constant_override("margin_right", 24)
+	rm.add_theme_constant_override("margin_top", 24)
+	rm.add_theme_constant_override("margin_bottom", 24)
+	res_card.add_child(rm)
+
+	var rv := VBoxContainer.new()
+	rv.add_theme_constant_override("separation", 16)
+	rm.add_child(rv)
+
+	var rtitle := Label.new()
+	rtitle.text = "🎉 EXAM COMPLETED! (%d/%d Correct)" % [sc, total_questions]
+	rtitle.add_theme_font_size_override("font_size", 30)
+	rtitle.add_theme_color_override("font_color", border_col)
+	rv.add_child(rtitle)
+
+	var g_boost: int = sc * 5
+	var s_boost: int = mini(3, sc + 1)
+	PlayerData.grades = clamp(PlayerData.grades + g_boost, 0, 100)
+	PlayerData.smarts = mini(100, PlayerData.smarts + s_boost)
+	PlayerData.happiness = mini(100, PlayerData.happiness + sc * 2)
+	PlayerData.last_school_activity_age = PlayerData.age
+
+	if is_course:
+		PlayerData.grades = maxi(75, PlayerData.grades)
+		add_life_event("🎓 REFRESHER COURSE COMPLETED: You passed the curriculum with %d/%d correct! Academic credentials restored to %d%% (%s)." % [sc, total_questions, PlayerData.grades, PlayerData.get_letter_grade()], "education")
+	else:
+		var game_label := "Math Challenge" if game_type == "math" else "Trivia Guessing Challenge"
+		add_life_event("🎓 %s: Completed with %d/%d correct! Academic marks +%d%% (Current: %d%%), Smarts +%d." % [game_label, sc, total_questions, g_boost, PlayerData.grades, s_boost], "education")
+
+	update_ui()
+	SaveManager.save_game()
+
+	var rdesc := Label.new()
+	if is_course:
+		rdesc.text = "Congratulations! Your course certification is complete.\n\n• Academic Marks restored to %d%% (%s)\n• Smarts +%d\n• Official credentials certified for career & university qualification" % [PlayerData.grades, PlayerData.get_letter_grade(), s_boost]
+	else:
+		rdesc.text = "Great effort! Your test results have been registered into your academic transcript:\n\n• Academic Marks: +%d%% (Current: %d%%)\n• Smarts: +%d\n• Annual academic maintenance fulfilled (grades protected from degradation)" % [g_boost, PlayerData.grades, s_boost]
+	rdesc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	rdesc.add_theme_font_size_override("font_size", 24)
+	rdesc.add_theme_color_override("font_color", Color("#cbd5e1"))
+	rv.add_child(rdesc)
+
+	var return_btn := _create_cyber_button("Finish & Return to Academy", border_col, func():
+		if education_minigame_overlay != null and is_instance_valid(education_minigame_overlay):
+			education_minigame_overlay.queue_free()
+			education_minigame_overlay = null
+		_show_education_modal()
+	)
+	rv.add_child(return_btn)
+	qc.add_child(res_card)
 
 
 
@@ -6769,6 +6804,10 @@ func _apply_translucent_scrollbars_recursive(node: Node) -> void:
 		_apply_translucent_scrollbar_to_node(node as Control)
 	for child in node.get_children():
 		_apply_translucent_scrollbars_recursive(child)
+
+
+func _create_activity_modal_base(title_text: String, subtitle_text: String = "", border_color: Color = Color("#38bdf8")) -> Dictionary:
+	return _create_cyber_modal(title_text, subtitle_text, border_color)
 
 
 func _create_cyber_modal(title_text: String, subtitle_text: String, border_color: Color) -> Dictionary:
