@@ -1309,7 +1309,6 @@ theme_override_font_sizes/font_size = 22
 text = "Relationship: Good"
 autowrap_mode = 3
 
-
 [node name="ActivitiesPanel" type="PanelContainer" parent="." unique_id=1478149788]
 visible = false
 layout_mode = 1
@@ -1386,6 +1385,48 @@ theme_override_styles/normal = SubResource("card_button_normal")
 theme_override_styles/pressed = SubResource("card_button_pressed")
 theme_override_styles/hover = SubResource("card_button_hover")
 text = "💼  Careers & Jobs"
+alignment = 0
+
+[node name="FreelanceActItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=1870605995]
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = SubResource("card_button_normal")
+theme_override_styles/pressed = SubResource("card_button_pressed")
+theme_override_styles/hover = SubResource("card_button_hover")
+text = "💻  Freelance Marketplace"
+alignment = 0
+
+[node name="LicensingActItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=1870605996]
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = SubResource("card_button_normal")
+theme_override_styles/pressed = SubResource("card_button_pressed")
+theme_override_styles/hover = SubResource("card_button_hover")
+text = "📜  Licensing & Certifications"
+alignment = 0
+
+[node name="BusinessActItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=1870605997]
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = SubResource("card_button_normal")
+theme_override_styles/pressed = SubResource("card_button_pressed")
+theme_override_styles/hover = SubResource("card_button_hover")
+text = "🏢  Business & Enterprises"
 alignment = 0
 
 [node name="DoctorItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=363342909]
@@ -2048,6 +2089,9 @@ horizontal_alignment = 1
 [connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActHeaderRow/CloseActButton" to="." method="_on_close_panel_button_pressed"]
 [connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/EducationActItem" to="." method="_on_education_item_pressed"]
 [connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/JobsActItem" to="." method="_on_jobs_item_pressed"]
+[connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/FreelanceActItem" to="." method="_on_freelance_item_pressed"]
+[connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/LicensingActItem" to="." method="_on_licensing_item_pressed"]
+[connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/BusinessActItem" to="." method="_on_business_item_pressed"]
 [connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/DoctorItem" to="." method="_on_doctor_item_pressed"]
 [connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/GymItem" to="." method="_on_gym_item_pressed"]
 [connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/LotteryItem" to="." method="_on_lottery_item_pressed"]

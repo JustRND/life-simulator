@@ -9,6 +9,9 @@ const RelationshipExtras = preload("res://scripts/core/relationship_extras.gd")
 const CareerProgression = preload("res://scripts/economy/career_progression.gd")
 const UndergroundProgression = preload("res://scripts/economy/underground_progression.gd")
 const AssetCatalog = preload("res://scripts/economy/asset_catalog.gd")
+const LicenseManager = preload("res://scripts/economy/license_manager.gd")
+const FreelanceManager = preload("res://scripts/economy/freelance_manager.gd")
+const BusinessManager = preload("res://scripts/economy/business_manager.gd")
 
 
 var portrait: TextureRect
@@ -88,6 +91,9 @@ var overview_history_filter: String = "all"
 
 # Activities Modals
 var jobs_modal_overlay: Control = null
+var freelance_modal_overlay: Control = null
+var licensing_modal_overlay: Control = null
+var business_modal_overlay: Control = null
 var education_modal_overlay: Control = null
 
 # Assets Panel
@@ -544,6 +550,15 @@ func age_up() -> void:
 	var asset_logs := AssetCatalog.process_yearly_assets(PlayerData)
 	for log_msg in asset_logs:
 		add_life_event(log_msg, "finance")
+
+	# 7c. Asset Disaster Events (Earthquakes, Wildfires, Lawsuits, Syndicate Thefts)
+	_check_asset_disaster_event()
+
+	# 7d. Freelance Annual Project Gigs
+	_process_yearly_freelance_projects()
+
+	# 7e. Commercial Business Yearly Financial Simulation
+	_process_yearly_business_operations()
 
 	# 8. Education Lifecycle Progression (Kindergarten @ 3, Primary @ 6, Middle @ 11, High @ 14, Grad @ 18)
 	if PlayerData.age == 3:
@@ -1836,6 +1851,14 @@ func _render_assets_list() -> void:
 	btn_props.add_theme_font_size_override("font_size", 22)
 	sgrid.add_child(btn_props)
 
+	# Dealership Button 4: Commercial Businesses & Enterprise Founders
+	var btn_biz := _create_cyber_button("🏢 Cyber Enterprises (Business Acquisitions & Startups)", Color("#f59e0b"), func():
+		_show_business_modal()
+	)
+	btn_biz.custom_minimum_size.y = 56
+	btn_biz.add_theme_font_size_override("font_size", 22)
+	sgrid.add_child(btn_biz)
+
 	assets_list.add_child(store_card)
 
 	# 2. Owned Vehicles Section (Cars & Motorcycles)
@@ -1843,6 +1866,9 @@ func _render_assets_list() -> void:
 
 	# 3. Owned Real Estate Section (Properties)
 	_render_owned_assets_section("🏠 OWNED REAL ESTATE & PROPERTIES", [AssetCatalog.CATEGORY_PROPERTIES], Color("#10b981"))
+
+	# 4. Owned Commercial Enterprises (Businesses)
+	_render_owned_businesses_section()
 
 
 func _render_owned_assets_section(title_text: String, categories: Array, theme_color: Color) -> void:
@@ -3928,6 +3954,30 @@ func _on_jobs_item_pressed() -> void:
 	_show_jobs_modal()
 
 
+func _on_freelance_item_pressed() -> void:
+	if PlayerData.age < 18:
+		add_life_event("💻 Freelance client marketplaces require you to be an adult (Age 18+). Current age: %d." % PlayerData.age, "activity")
+		show_tab("timeline")
+		return
+	_show_freelance_modal()
+
+
+func _on_licensing_item_pressed() -> void:
+	if PlayerData.age < 16:
+		add_life_event("📜 State licensing boards require applicants to be at least 16 years of age (Current age: %d)." % PlayerData.age, "activity")
+		show_tab("timeline")
+		return
+	_show_licensing_modal()
+
+
+func _on_business_item_pressed() -> void:
+	if PlayerData.age < 18:
+		add_life_event("🏢 Commercial business incorporation requires legal majority (Age 18+). Current age: %d." % PlayerData.age, "activity")
+		show_tab("timeline")
+		return
+	_show_business_modal()
+
+
 func _on_education_item_pressed() -> void:
 	_show_education_modal()
 
@@ -4304,6 +4354,1127 @@ func _show_jobs_modal() -> void:
 	jobs_modal_overlay.visible = true
 
 
+func _show_simple_popup(title_text: String, msg_text: String, border_color: Color = Color("#00f0ff")) -> void:
+	var m: Dictionary = _create_cyber_modal(title_text, "", border_color)
+	var lbl := Label.new()
+	lbl.text = msg_text
+	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl.add_theme_font_size_override("font_size", 22)
+	lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+	var list_node: VBoxContainer = m.get("list")
+	list_node.add_child(lbl)
+	var ov: Control = m.get("overlay")
+	var close_btn := _create_cyber_button("Dismiss", border_color, func():
+		if is_instance_valid(ov):
+			ov.queue_free()
+	)
+	list_node.add_child(close_btn)
+	ov.visible = true
+
+
+# -----------------------------------------------------------------------------
+# LICENSING & STATE CERTIFICATIONS SYSTEM
+# -----------------------------------------------------------------------------
+func _show_licensing_modal() -> void:
+	if licensing_modal_overlay != null and is_instance_valid(licensing_modal_overlay):
+		licensing_modal_overlay.queue_free()
+
+	var modal := _create_cyber_modal("📜 LICENSING & STATE CERTIFICATIONS", "State Boards, Trade Qualifications & Professional Permits", Color("#06b6d4"))
+	licensing_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	# Summary Card
+	var info_card := PanelContainer.new()
+	info_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#06b6d4")))
+	var im := MarginContainer.new()
+	im.add_theme_constant_override("margin_left", 20)
+	im.add_theme_constant_override("margin_right", 20)
+	im.add_theme_constant_override("margin_top", 16)
+	im.add_theme_constant_override("margin_bottom", 16)
+	info_card.add_child(im)
+
+	var iv := VBoxContainer.new()
+	iv.add_theme_constant_override("separation", 8)
+	im.add_child(iv)
+
+	var ih := Label.new()
+	ih.text = "🏛️ OFFICIAL STATE LICENSING BUREAU"
+	ih.add_theme_font_size_override("font_size", 26)
+	ih.add_theme_color_override("font_color", Color("#22d3ee"))
+	iv.add_child(ih)
+
+	var idesc := Label.new()
+	idesc.text = "State licenses certify vehicle operation and authorize specialized freelance occupations. Taking a state board qualification exam requires paying official examination fees.\n\nAvailable Funds: $%s Cash  •  $%s Bank Savings" % [_format_number(PlayerData.money), _format_number(PlayerData.bank_savings)]
+	idesc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	idesc.add_theme_font_size_override("font_size", 22)
+	idesc.add_theme_color_override("font_color", Color("#cbd5e1"))
+	iv.add_child(idesc)
+	list.add_child(info_card)
+
+	var all_lics := LicenseManager.get_all_licenses()
+	for lic in all_lics:
+		var lic_id: String = str(lic["id"])
+		var lic_name: String = str(lic["name"])
+		var lic_icon: String = str(lic["icon"])
+		var fee: int = int(lic["fee"])
+		var min_age: int = int(lic["min_age"])
+		var unlocked: String = str(lic["unlocked_feature"])
+		var desc: String = str(lic["description"])
+
+		var card := PanelContainer.new()
+		var is_certified: bool = PlayerData.has_license(lic_id)
+		var theme_col: Color = Color("#10b981") if is_certified else Color("#0891b2")
+		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(theme_col))
+
+		var cm := MarginContainer.new()
+		cm.add_theme_constant_override("margin_left", 20)
+		cm.add_theme_constant_override("margin_right", 20)
+		cm.add_theme_constant_override("margin_top", 16)
+		cm.add_theme_constant_override("margin_bottom", 16)
+		card.add_child(cm)
+
+		var cv := VBoxContainer.new()
+		cv.add_theme_constant_override("separation", 10)
+		cm.add_child(cv)
+
+		var header_row := HBoxContainer.new()
+		var title_lbl := Label.new()
+		title_lbl.text = "%s %s" % [lic_icon, lic_name]
+		title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		title_lbl.add_theme_font_size_override("font_size", 24)
+		title_lbl.add_theme_color_override("font_color", Color("#ffffff"))
+		header_row.add_child(title_lbl)
+
+		var fee_lbl := Label.new()
+		fee_lbl.text = "$%s Fee" % _format_number(fee)
+		fee_lbl.add_theme_font_size_override("font_size", 24)
+		fee_lbl.add_theme_color_override("font_color", Color("#34d399") if is_certified else Color("#38bdf8"))
+		header_row.add_child(fee_lbl)
+		cv.add_child(header_row)
+
+		var meta_lbl := Label.new()
+		meta_lbl.text = "Min Age: %d+  •  Authorizes: %s" % [min_age, unlocked]
+		meta_lbl.add_theme_font_size_override("font_size", 21)
+		meta_lbl.add_theme_color_override("font_color", Color("#a5f3fc"))
+		cv.add_child(meta_lbl)
+
+		var desc_lbl := Label.new()
+		desc_lbl.text = desc
+		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc_lbl.add_theme_font_size_override("font_size", 21)
+		desc_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+		cv.add_child(desc_lbl)
+
+		if is_certified:
+			var cert_btn := Button.new()
+			cert_btn.custom_minimum_size.y = 52
+			cert_btn.disabled = true
+			cert_btn.text = "✓ CERTIFIED & ACTIVE"
+			var sb := StyleBoxFlat.new()
+			sb.bg_color = Color("#064e3b")
+			sb.border_color = Color("#10b981")
+			sb.set_border_width_all(2)
+			sb.set_corner_radius_all(6)
+			cert_btn.add_theme_stylebox_override("normal", sb)
+			cert_btn.add_theme_stylebox_override("disabled", sb)
+			cert_btn.add_theme_color_override("font_color", Color("#6ee7b7"))
+			cert_btn.add_theme_color_override("font_disabled_color", Color("#6ee7b7"))
+			cert_btn.add_theme_font_size_override("font_size", 22)
+			cv.add_child(cert_btn)
+		else:
+			var eval := LicenseManager.can_take_license(lic_id)
+			if bool(eval.get("allowed", false)):
+				var btn_take := _create_cyber_button("📜 Pay $%s & Take Qualification Exam" % _format_number(fee), Color("#06b6d4"), func():
+					var res := LicenseManager.take_license(lic_id)
+					if bool(res.get("allowed", false)):
+						add_life_event(str(res.get("message", "License acquired!")), "milestone")
+						update_ui()
+						SaveManager.save_game()
+						_show_licensing_modal()
+					else:
+						add_life_event(str(res.get("reason", "Could not take exam.")), "activity")
+				)
+				btn_take.custom_minimum_size.y = 52
+				btn_take.add_theme_font_size_override("font_size", 22)
+				cv.add_child(btn_take)
+			else:
+				var lk_btn := _create_disabled_cyber_button("🔒 %s" % str(eval.get("reason", "Ineligible")), str(eval.get("reason", "")))
+				lk_btn.custom_minimum_size.y = 52
+				lk_btn.add_theme_font_size_override("font_size", 20)
+				cv.add_child(lk_btn)
+
+		list.add_child(card)
+
+	licensing_modal_overlay.visible = true
+
+
+# -----------------------------------------------------------------------------
+# FREELANCE MARKETPLACE SYSTEM
+# -----------------------------------------------------------------------------
+func _show_freelance_modal() -> void:
+	if freelance_modal_overlay != null and is_instance_valid(freelance_modal_overlay):
+		freelance_modal_overlay.queue_free()
+
+	var modal := _create_cyber_modal("💻 FREELANCE MARKETPLACE", "12 Certified Freelance Occupations • Dynamic Project Income • Client Contracts", Color("#a855f7"))
+	freelance_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	# Marketplace Overview Card
+	var info_card := PanelContainer.new()
+	info_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#a855f7")))
+	var im := MarginContainer.new()
+	im.add_theme_constant_override("margin_left", 20)
+	im.add_theme_constant_override("margin_right", 20)
+	im.add_theme_constant_override("margin_top", 16)
+	im.add_theme_constant_override("margin_bottom", 16)
+	info_card.add_child(im)
+
+	var iv := VBoxContainer.new()
+	iv.add_theme_constant_override("separation", 8)
+	im.add_child(iv)
+
+	var ih := Label.new()
+	ih.text = "🌐 FREELANCE CLIENT CONTRACT HUB"
+	ih.add_theme_font_size_override("font_size", 26)
+	ih.add_theme_color_override("font_color", Color("#c084fc"))
+	iv.add_child(ih)
+
+	var idesc := Label.new()
+	idesc.text = "Freelance occupations do not pay fixed annual salaries. Instead, income is generated per client project. Once registered, client contract requests arrive automatically each year during aging, or you can actively pitch for gigs right now!"
+	idesc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	idesc.add_theme_font_size_override("font_size", 22)
+	idesc.add_theme_color_override("font_color", Color("#cbd5e1"))
+	iv.add_child(idesc)
+	list.add_child(info_card)
+
+	var all_jobs := FreelanceManager.get_all_jobs()
+	for job in all_jobs:
+		var j_id: String = str(job["id"])
+		var j_title: String = str(job["title"])
+		var j_icon: String = str(job["icon"])
+		var req_lic: String = str(job["required_license"])
+		var lic_title: String = str(job["license_title"])
+		var min_pay: int = int(job["min_pay"])
+		var max_pay: int = int(job["max_pay"])
+		var desc: String = str(job["description"])
+
+		var is_registered: bool = PlayerData.active_freelance_jobs.has(j_id)
+		var has_license: bool = PlayerData.has_license(req_lic)
+
+		var card := PanelContainer.new()
+		var border_col: Color = Color("#10b981") if is_registered else (Color("#8b5cf6") if has_license else Color("#475569"))
+		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(border_col))
+
+		var cm := MarginContainer.new()
+		cm.add_theme_constant_override("margin_left", 20)
+		cm.add_theme_constant_override("margin_right", 20)
+		cm.add_theme_constant_override("margin_top", 16)
+		cm.add_theme_constant_override("margin_bottom", 16)
+		card.add_child(cm)
+
+		var cv := VBoxContainer.new()
+		cv.add_theme_constant_override("separation", 10)
+		cm.add_child(cv)
+
+		var top_row := HBoxContainer.new()
+		var title_lbl := Label.new()
+		title_lbl.text = "%s %s" % [j_icon, j_title]
+		title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		title_lbl.add_theme_font_size_override("font_size", 24)
+		title_lbl.add_theme_color_override("font_color", Color("#ffffff"))
+		top_row.add_child(title_lbl)
+
+		var pay_lbl := Label.new()
+		pay_lbl.text = "$%s - $%s / Project" % [_format_number(min_pay), _format_number(max_pay)]
+		pay_lbl.add_theme_font_size_override("font_size", 22)
+		pay_lbl.add_theme_color_override("font_color", Color("#34d399"))
+		top_row.add_child(pay_lbl)
+		cv.add_child(top_row)
+
+		var lic_lbl := Label.new()
+		lic_lbl.text = "Required Credential: %s (%s)" % [lic_title, "✓ Certified" if has_license else "❌ Not Certified"]
+		lic_lbl.add_theme_font_size_override("font_size", 21)
+		lic_lbl.add_theme_color_override("font_color", Color("#a7f3d0") if has_license else Color("#fca5a5"))
+		cv.add_child(lic_lbl)
+
+		var desc_lbl := Label.new()
+		desc_lbl.text = desc
+		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc_lbl.add_theme_font_size_override("font_size", 21)
+		desc_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+		cv.add_child(desc_lbl)
+
+		if is_registered:
+			var reg_info := Label.new()
+			reg_info.text = "✓ Client Roster Active: Projects will automatically offer contracts annually."
+			reg_info.add_theme_font_size_override("font_size", 21)
+			reg_info.add_theme_color_override("font_color", Color("#34d399"))
+			cv.add_child(reg_info)
+
+			var btn_row := HBoxContainer.new()
+			btn_row.add_theme_constant_override("separation", 12)
+
+			var can_pitch: bool = int(PlayerData.last_freelance_pitch_age.get(j_id, -1)) != PlayerData.age
+			if can_pitch:
+				var pitch_btn := _create_cyber_button("🚀 Pitch Client Gigs Now", Color("#a855f7"), func():
+					var res := FreelanceManager.pitch_gig(j_id)
+					if bool(res.get("success", false)):
+						var proj: Dictionary = res.get("project", {})
+						_show_simple_popup("💼 CONTRACT COMPLETED!", "Client: %s\nProject: %s\n\n%s\n\nPayment Earned: $%s credited to your funds!" % [
+							str(proj.get("client", "Client")),
+							str(proj.get("title", "Project")),
+							str(proj.get("scope", "")),
+							_format_number(int(res.get("pay", 0)))
+						], Color("#10b981"))
+						update_ui()
+						SaveManager.save_game()
+						_show_freelance_modal()
+					else:
+						add_life_event(str(res.get("message", "Pitch unsuccessful.")), "activity")
+				)
+				pitch_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				pitch_btn.custom_minimum_size.y = 52
+				pitch_btn.add_theme_font_size_override("font_size", 21)
+				btn_row.add_child(pitch_btn)
+			else:
+				var done_pitch := _create_disabled_cyber_button("✓ Pitched for Age %d" % PlayerData.age, "Annual pitch quota reached.")
+				done_pitch.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				done_pitch.custom_minimum_size.y = 52
+				done_pitch.add_theme_font_size_override("font_size", 20)
+				btn_row.add_child(done_pitch)
+
+			var pause_btn := _create_cyber_button("⏸️ Pause Roster", Color("#ef4444"), func():
+				FreelanceManager.unregister_job(j_id)
+				update_ui()
+				SaveManager.save_game()
+				_show_freelance_modal()
+			)
+			pause_btn.custom_minimum_size.y = 52
+			pause_btn.add_theme_font_size_override("font_size", 21)
+			btn_row.add_child(pause_btn)
+
+			cv.add_child(btn_row)
+		elif has_license:
+			var reg_btn := _create_cyber_button("💼 Register & Open Client Roster", Color("#06b6d4"), func():
+				var res := FreelanceManager.register_job(j_id)
+				if bool(res.get("allowed", false)):
+					update_ui()
+					SaveManager.save_game()
+					_show_freelance_modal()
+			)
+			reg_btn.custom_minimum_size.y = 52
+			reg_btn.add_theme_font_size_override("font_size", 22)
+			cv.add_child(reg_btn)
+		else:
+			var lk_btn := _create_disabled_cyber_button("🔒 Requires %s" % lic_title, "You must take the qualification exam in the Licensing Panel first.")
+			lk_btn.custom_minimum_size.y = 52
+			lk_btn.add_theme_font_size_override("font_size", 20)
+			cv.add_child(lk_btn)
+
+		list.add_child(card)
+
+	freelance_modal_overlay.visible = true
+
+
+# -----------------------------------------------------------------------------
+# COMMERCIAL BUSINESSES & ENTERPRISE SYSTEM
+# -----------------------------------------------------------------------------
+func _show_business_modal(initial_tab: String = "", selected_uid: String = "") -> void:
+	if business_modal_overlay != null and is_instance_valid(business_modal_overlay):
+		business_modal_overlay.queue_free()
+
+	var modal := _create_cyber_modal("🏢 ENTERPRISES & COMMERCIAL VENTURES", "Found Companies, Manage Corporate Financials, Pay Taxes & Scale Ventures", Color("#f59e0b"))
+	business_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var tab: String = initial_tab
+	if tab == "":
+		tab = "enterprises" if PlayerData.owned_businesses.size() > 0 else "incorporate"
+
+	# Top Tab Bar
+	var tab_bar := HBoxContainer.new()
+	tab_bar.add_theme_constant_override("separation", 10)
+
+	var btn_tab_ent := _create_cyber_button("📊 My Enterprises (%d)" % PlayerData.owned_businesses.size(), Color("#f59e0b") if tab == "enterprises" else Color("#475569"), func():
+		_show_business_modal("enterprises", selected_uid)
+	)
+	btn_tab_ent.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_tab_ent.custom_minimum_size.y = 50
+	btn_tab_ent.add_theme_font_size_override("font_size", 21)
+	tab_bar.add_child(btn_tab_ent)
+
+	var btn_tab_inc := _create_cyber_button("🚀 Incorporate (16 Types)", Color("#f59e0b") if tab == "incorporate" else Color("#475569"), func():
+		_show_business_modal("incorporate", selected_uid)
+	)
+	btn_tab_inc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_tab_inc.custom_minimum_size.y = 50
+	btn_tab_inc.add_theme_font_size_override("font_size", 21)
+	tab_bar.add_child(btn_tab_inc)
+
+	if not PlayerData.owned_businesses.is_empty():
+		var btn_tab_fin := _create_cyber_button("💰 Corporate Financials & Loans", Color("#f59e0b") if tab == "financials" else Color("#475569"), func():
+			_show_business_modal("financials", selected_uid)
+		)
+		btn_tab_fin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn_tab_fin.custom_minimum_size.y = 50
+		btn_tab_fin.add_theme_font_size_override("font_size", 21)
+		tab_bar.add_child(btn_tab_fin)
+
+	list.add_child(tab_bar)
+
+	# Content based on tab
+	match tab:
+		"enterprises":
+			_render_business_tab_enterprises(list)
+		"incorporate":
+			_render_business_tab_incorporate(list)
+		"financials":
+			_render_business_tab_financials(list, selected_uid)
+
+	business_modal_overlay.visible = true
+
+
+func _render_business_tab_enterprises(list: VBoxContainer) -> void:
+	if PlayerData.owned_businesses.is_empty():
+		var empty_card := PanelContainer.new()
+		empty_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#475569")))
+		var em := MarginContainer.new()
+		em.add_theme_constant_override("margin_left", 24)
+		em.add_theme_constant_override("margin_right", 24)
+		em.add_theme_constant_override("margin_top", 20)
+		em.add_theme_constant_override("margin_bottom", 20)
+		empty_card.add_child(em)
+
+		var ev := VBoxContainer.new()
+		ev.add_theme_constant_override("separation", 10)
+		em.add_child(ev)
+
+		var etitle := Label.new()
+		etitle.text = "🏢 No Commercial Enterprises Owned Yet"
+		etitle.add_theme_font_size_override("font_size", 24)
+		etitle.add_theme_color_override("font_color", Color("#fbbf24"))
+		ev.add_child(etitle)
+
+		var edesc := Label.new()
+		edesc.text = "You do not own any operating commercial companies. Complete the corresponding 4-year degree at university, then explore available business types in the 'Incorporate (16 Types)' tab!"
+		edesc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		edesc.add_theme_font_size_override("font_size", 21)
+		edesc.add_theme_color_override("font_color", Color("#cbd5e1"))
+		ev.add_child(edesc)
+
+		var goto_inc := _create_cyber_button("🚀 Explore 16 Business Incorporation Opportunities", Color("#f59e0b"), func():
+			_show_business_modal("incorporate")
+		)
+		goto_inc.custom_minimum_size.y = 54
+		goto_inc.add_theme_font_size_override("font_size", 22)
+		ev.add_child(goto_inc)
+
+		list.add_child(empty_card)
+		return
+
+	# Portfolio Header
+	var total_val := BusinessManager.get_total_business_valuation()
+	var hdr := Label.new()
+	hdr.text = "🏢 COMMERCIAL PORTFOLIO (%d Enterprises • Combined Valuation: $%s)" % [
+		PlayerData.owned_businesses.size(),
+		_format_number(total_val)
+	]
+	hdr.add_theme_font_size_override("font_size", 24)
+	hdr.add_theme_color_override("font_color", Color("#fbbf24"))
+	list.add_child(hdr)
+
+	for b in PlayerData.owned_businesses:
+		var uid: String = str(b.get("uid", ""))
+		var b_name: String = str(b.get("name", "Enterprise"))
+		var b_icon: String = str(b.get("icon", "🏢"))
+		var val: int = int(b.get("valuation", 0))
+		var treasury: int = int(b.get("treasury", 0))
+		var employees: int = int(b.get("employees", 4))
+		var marketing: int = int(b.get("marketing_budget", 5000))
+		var rev: int = int(b.get("annual_revenue", 0))
+		var net_p: int = int(b.get("net_profit", 0))
+		var unpaid_tax: int = int(b.get("unpaid_taxes", 0))
+		var loan_bal: int = int(b.get("loan_balance", 0))
+
+		var card := PanelContainer.new()
+		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
+		var cm := MarginContainer.new()
+		cm.add_theme_constant_override("margin_left", 20)
+		cm.add_theme_constant_override("margin_right", 20)
+		cm.add_theme_constant_override("margin_top", 16)
+		cm.add_theme_constant_override("margin_bottom", 16)
+		card.add_child(cm)
+
+		var cv := VBoxContainer.new()
+		cv.add_theme_constant_override("separation", 10)
+		cm.add_child(cv)
+
+		var top_row := HBoxContainer.new()
+		var title_lbl := Label.new()
+		title_lbl.text = "%s %s" % [b_icon, b_name]
+		title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		title_lbl.add_theme_font_size_override("font_size", 26)
+		title_lbl.add_theme_color_override("font_color", Color("#ffffff"))
+		top_row.add_child(title_lbl)
+
+		var val_lbl := Label.new()
+		val_lbl.text = "Valuation: $%s" % _format_number(val)
+		val_lbl.add_theme_font_size_override("font_size", 24)
+		val_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
+		top_row.add_child(val_lbl)
+		cv.add_child(top_row)
+
+		var stats_lbl := Label.new()
+		var p_str := ("+$%s" % _format_number(net_p)) if net_p >= 0 else ("-$%s" % _format_number(abs(net_p)))
+		stats_lbl.text = "💰 Treasury: $%s  •  👥 Staff: %d  •  📢 Marketing: $%s/yr\n📊 Last Revenue: $%s  •  Net Profit: %s  •  Taxes Due: $%s  •  Bank Loan: $%s" % [
+			_format_number(treasury),
+			employees,
+			_format_number(marketing),
+			_format_number(rev),
+			p_str,
+			_format_number(unpaid_tax),
+			_format_number(loan_bal)
+		]
+		stats_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		stats_lbl.add_theme_font_size_override("font_size", 21)
+		stats_lbl.add_theme_color_override("font_color", Color("#e2e8f0"))
+		cv.add_child(stats_lbl)
+
+		var actions_row := HBoxContainer.new()
+		actions_row.add_theme_constant_override("separation", 10)
+
+		var btn_fin := _create_cyber_button("💰 Open Financials & Loans", Color("#f59e0b"), func():
+			_show_business_modal("financials", uid)
+		)
+		btn_fin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn_fin.custom_minimum_size.y = 50
+		btn_fin.add_theme_font_size_override("font_size", 21)
+		actions_row.add_child(btn_fin)
+
+		var btn_hire := _create_cyber_button("👥 + Hire Staff", Color("#06b6d4"), func():
+			var r: Dictionary = BusinessManager.adjust_staff(b, 1)
+			add_life_event(str(r.get("message", "Staff hired.")), "activity")
+			update_ui()
+			SaveManager.save_game()
+			_show_business_modal("enterprises", uid)
+		)
+		btn_hire.custom_minimum_size.y = 50
+		btn_hire.add_theme_font_size_override("font_size", 20)
+		actions_row.add_child(btn_hire)
+
+		var btn_sell := _create_cyber_button("🏷️ Sell / Exit", Color("#ef4444"), func():
+			var r: Dictionary = BusinessManager.liquidate_business(uid)
+			_show_simple_popup("💼 ENTERPRISE LIQUIDATION", str(r.get("message", "Business sold.")), Color("#10b981"))
+			update_ui()
+			SaveManager.save_game()
+			_show_business_modal("enterprises")
+		)
+		btn_sell.custom_minimum_size.y = 50
+		btn_sell.add_theme_font_size_override("font_size", 20)
+		actions_row.add_child(btn_sell)
+
+		cv.add_child(actions_row)
+		list.add_child(card)
+
+
+func _render_business_tab_incorporate(list: VBoxContainer) -> void:
+	var info_card := PanelContainer.new()
+	info_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
+	var im := MarginContainer.new()
+	im.add_theme_constant_override("margin_left", 20)
+	im.add_theme_constant_override("margin_right", 20)
+	im.add_theme_constant_override("margin_top", 16)
+	im.add_theme_constant_override("margin_bottom", 16)
+	info_card.add_child(im)
+
+	var iv := VBoxContainer.new()
+	iv.add_theme_constant_override("separation", 8)
+	im.add_child(iv)
+
+	var ih := Label.new()
+	ih.text = "🏛️ 16 COMMERCIAL ENTERPRISE OPPORTUNITIES"
+	ih.add_theme_font_size_override("font_size", 26)
+	ih.add_theme_color_override("font_color", Color("#fbbf24"))
+	iv.add_child(ih)
+
+	var idesc := Label.new()
+	idesc.text = "Founding a commercial enterprise requires completing a 4-year Bachelor's Degree in that specialized field at university. Startup capital initializes operations, storefronts, and working treasury.\n\nAvailable Funds: $%s Cash  •  $%s Bank" % [
+		_format_number(PlayerData.money),
+		_format_number(PlayerData.bank_savings)
+	]
+	idesc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	idesc.add_theme_font_size_override("font_size", 22)
+	idesc.add_theme_color_override("font_color", Color("#cbd5e1"))
+	iv.add_child(idesc)
+	list.add_child(info_card)
+
+	var all_types := BusinessManager.get_all_business_types()
+	for b_def in all_types:
+		var b_id: String = str(b_def["id"])
+		var b_name: String = str(b_def["name"])
+		var b_icon: String = str(b_def["icon"])
+		var req_maj: String = str(b_def["required_major"])
+		var deg_title: String = str(b_def["required_degree_title"])
+		var cost: int = int(b_def["startup_cost"])
+		var rev_min: int = int(b_def["base_revenue_min"])
+		var rev_max: int = int(b_def["base_revenue_max"])
+		var opex: int = int(b_def["base_opex"])
+		var desc: String = str(b_def["description"])
+
+		var has_degree: bool = BusinessManager.player_has_required_degree(req_maj)
+
+		var card := PanelContainer.new()
+		var border_col: Color = Color("#f59e0b") if has_degree else Color("#475569")
+		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(border_col))
+
+		var cm := MarginContainer.new()
+		cm.add_theme_constant_override("margin_left", 20)
+		cm.add_theme_constant_override("margin_right", 20)
+		cm.add_theme_constant_override("margin_top", 16)
+		cm.add_theme_constant_override("margin_bottom", 16)
+		card.add_child(cm)
+
+		var cv := VBoxContainer.new()
+		cv.add_theme_constant_override("separation", 10)
+		cm.add_child(cv)
+
+		var top_row := HBoxContainer.new()
+		var title_lbl := Label.new()
+		title_lbl.text = "%s %s" % [b_icon, b_name]
+		title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		title_lbl.add_theme_font_size_override("font_size", 24)
+		title_lbl.add_theme_color_override("font_color", Color("#ffffff"))
+		top_row.add_child(title_lbl)
+
+		var cost_lbl := Label.new()
+		cost_lbl.text = "$%s Capital" % _format_number(cost)
+		cost_lbl.add_theme_font_size_override("font_size", 24)
+		cost_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
+		top_row.add_child(cost_lbl)
+		cv.add_child(top_row)
+
+		var deg_lbl := Label.new()
+		deg_lbl.text = "Required Degree: Bachelor of %s (%s)" % [deg_title, "✓ Completed" if has_degree else "❌ Degree Missing"]
+		deg_lbl.add_theme_font_size_override("font_size", 21)
+		deg_lbl.add_theme_color_override("font_color", Color("#a7f3d0") if has_degree else Color("#fca5a5"))
+		cv.add_child(deg_lbl)
+
+		var proj_lbl := Label.new()
+		proj_lbl.text = "Projected Revenue: $%s - $%s/yr  •  Base OpEx: $%s/yr" % [_format_number(rev_min), _format_number(rev_max), _format_number(opex)]
+		proj_lbl.add_theme_font_size_override("font_size", 21)
+		proj_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
+		cv.add_child(proj_lbl)
+
+		var desc_lbl := Label.new()
+		desc_lbl.text = desc
+		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc_lbl.add_theme_font_size_override("font_size", 21)
+		desc_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+		cv.add_child(desc_lbl)
+
+		if has_degree:
+			var total_funds: int = PlayerData.money + PlayerData.bank_savings
+			if total_funds >= cost:
+				var btn_found := _create_cyber_button("🚀 Incorporate %s for $%s" % [b_name, _format_number(cost)], Color("#f59e0b"), func():
+					var res := BusinessManager.found_business(b_id)
+					if bool(res.get("allowed", false)):
+						var b_data: Dictionary = res.get("business", {})
+						_show_simple_popup("🚀 ENTERPRISE INCORPORATED", "Congratulations! '%s' has been registered and certified. Business treasury seeded with $10,000 working capital." % b_name, Color("#10b981"))
+						update_ui()
+						SaveManager.save_game()
+						_show_business_modal("financials", str(b_data.get("uid", "")))
+					else:
+						add_life_event(str(res.get("reason", "Could not incorporate.")), "activity")
+				)
+				btn_found.custom_minimum_size.y = 52
+				btn_found.add_theme_font_size_override("font_size", 22)
+				cv.add_child(btn_found)
+			else:
+				var lk_funds := _create_disabled_cyber_button("🔒 Insufficient Funds ($%s Required • You have $%s)" % [_format_number(cost), _format_number(total_funds)], "Deposit or save more cash to meet startup incorporation requirements.")
+				lk_funds.custom_minimum_size.y = 52
+				lk_funds.add_theme_font_size_override("font_size", 20)
+				cv.add_child(lk_funds)
+		else:
+			var lk_deg := _create_disabled_cyber_button("🔒 Requires Degree: Bachelor in %s" % deg_title, "You must complete a full 4-year degree at university first.")
+			lk_deg.custom_minimum_size.y = 52
+			lk_deg.add_theme_font_size_override("font_size", 20)
+			cv.add_child(lk_deg)
+
+		list.add_child(card)
+
+
+func _render_business_tab_financials(list: VBoxContainer, selected_uid: String) -> void:
+	if PlayerData.owned_businesses.is_empty():
+		_render_business_tab_enterprises(list)
+		return
+
+	# Find targeted enterprise
+	var target_biz: Dictionary = {}
+	if selected_uid != "":
+		for b in PlayerData.owned_businesses:
+			if str(b.get("uid", "")) == selected_uid:
+				target_biz = b
+				break
+	if target_biz.is_empty():
+		target_biz = PlayerData.owned_businesses[0]
+
+	var cur_uid: String = str(target_biz.get("uid", ""))
+	var b_name: String = str(target_biz.get("name", "Enterprise"))
+	var b_icon: String = str(target_biz.get("icon", "🏢"))
+
+	# Multi-business selector
+	if PlayerData.owned_businesses.size() > 1:
+		var sel_row := HBoxContainer.new()
+		sel_row.add_theme_constant_override("separation", 8)
+		for ob in PlayerData.owned_businesses:
+			var ob_uid: String = str(ob.get("uid", ""))
+			var ob_name: String = str(ob.get("name", "Business"))
+			var is_curr: bool = (ob_uid == cur_uid)
+			var b_btn := _create_cyber_button(ob_name, Color("#f59e0b") if is_curr else Color("#334155"), func():
+				_show_business_modal("financials", ob_uid)
+			)
+			b_btn.custom_minimum_size.y = 44
+			b_btn.add_theme_font_size_override("font_size", 19)
+			sel_row.add_child(b_btn)
+		list.add_child(sel_row)
+
+	# Entity Separation Banner
+	var sep_card := PanelContainer.new()
+	sep_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#0284c7")))
+	var sm := MarginContainer.new()
+	sm.add_theme_constant_override("margin_left", 20)
+	sm.add_theme_constant_override("margin_right", 20)
+	sm.add_theme_constant_override("margin_top", 14)
+	sm.add_theme_constant_override("margin_bottom", 14)
+	sep_card.add_child(sm)
+
+	var sv := VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 6)
+	sm.add_child(sv)
+
+	var stitle := Label.new()
+	stitle.text = "🏛️ STRICT CORPORATE ENTITY SEPARATION"
+	stitle.add_theme_font_size_override("font_size", 24)
+	stitle.add_theme_color_override("font_color", Color("#38bdf8"))
+	sv.add_child(stitle)
+
+	var sdesc := Label.new()
+	sdesc.text = "%s operates with an independent corporate bank treasury and balance sheet, completely separated from your personal cash wallet ($%s) and bank savings ($%s)." % [
+		b_name,
+		_format_number(PlayerData.money),
+		_format_number(PlayerData.bank_savings)
+	]
+	sdesc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	sdesc.add_theme_font_size_override("font_size", 21)
+	sdesc.add_theme_color_override("font_color", Color("#e0f2fe"))
+	sv.add_child(sdesc)
+	list.add_child(sep_card)
+
+	# 1. Financial Statement Card
+	var fin_card := PanelContainer.new()
+	fin_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
+	var fm := MarginContainer.new()
+	fm.add_theme_constant_override("margin_left", 20)
+	fm.add_theme_constant_override("margin_right", 20)
+	fm.add_theme_constant_override("margin_top", 16)
+	fm.add_theme_constant_override("margin_bottom", 16)
+	fin_card.add_child(fm)
+
+	var fv := VBoxContainer.new()
+	fv.add_theme_constant_override("separation", 10)
+	fm.add_child(fv)
+
+	var f_title := Label.new()
+	f_title.text = "%s %s — CORPORATE BALANCE SHEET" % [b_icon, b_name]
+	f_title.add_theme_font_size_override("font_size", 26)
+	f_title.add_theme_color_override("font_color", Color("#ffffff"))
+	fv.add_child(f_title)
+
+	var treasury: int = int(target_biz.get("treasury", 0))
+	var val: int = int(target_biz.get("valuation", 0))
+	var rev: int = int(target_biz.get("annual_revenue", 0))
+	var opex: int = int(target_biz.get("annual_opex", 0))
+	var net_p: int = int(target_biz.get("net_profit", 0))
+	var p_str := ("+$%s" % _format_number(net_p)) if net_p >= 0 else ("-$%s" % _format_number(abs(net_p)))
+
+	var f_body := Label.new()
+	f_body.text = "• Corporate Treasury (Business Cash): $%s\n• Enterprise Market Valuation: $%s\n• Annual Gross Revenue: $%s\n• Annual Operating Expenses (OpEx): $%s\n• Net Operating Profit / Loss: %s" % [
+		_format_number(treasury),
+		_format_number(val),
+		_format_number(rev),
+		_format_number(opex),
+		p_str
+	]
+	f_body.add_theme_font_size_override("font_size", 22)
+	f_body.add_theme_color_override("font_color", Color("#fef08a"))
+	fv.add_child(f_body)
+	list.add_child(fin_card)
+
+	# 2. Corporate Tax Payment Section
+	var tax_card := PanelContainer.new()
+	var unpaid_tax: int = int(target_biz.get("unpaid_taxes", 0))
+	tax_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#ef4444") if unpaid_tax > 0 else Color("#10b981")))
+	var tm := MarginContainer.new()
+	tm.add_theme_constant_override("margin_left", 20)
+	tm.add_theme_constant_override("margin_right", 20)
+	tm.add_theme_constant_override("margin_top", 16)
+	tm.add_theme_constant_override("margin_bottom", 16)
+	tax_card.add_child(tm)
+
+	var tv := VBoxContainer.new()
+	tv.add_theme_constant_override("separation", 10)
+	tm.add_child(tv)
+
+	var t_title := Label.new()
+	t_title.text = "🏛️ CORPORATE TAX COMPLIANCE SECTION"
+	t_title.add_theme_font_size_override("font_size", 25)
+	t_title.add_theme_color_override("font_color", Color("#ffffff"))
+	tv.add_child(t_title)
+
+	var t_desc := Label.new()
+	t_desc.text = "Corporate Tax Rate: 20%% on positive net operating profits.\nUnpaid Corporate Taxes: $%s (Last Filing: Age %d)" % [
+		_format_number(unpaid_tax),
+		int(target_biz.get("last_tax_paid_year", PlayerData.age))
+	]
+	t_desc.add_theme_font_size_override("font_size", 22)
+	t_desc.add_theme_color_override("font_color", Color("#fca5a5") if unpaid_tax > 0 else Color("#86efac"))
+	tv.add_child(t_desc)
+
+	if unpaid_tax > 0:
+		var btn_pay_tax := _create_cyber_button("🏛️ Pay Corporate Taxes ($%s)" % _format_number(unpaid_tax), Color("#10b981"), func():
+			var r: Dictionary = BusinessManager.pay_business_taxes(target_biz)
+			if bool(r.get("success", false)):
+				_show_simple_popup("🏛️ CORPORATE TAXES PAID", str(r.get("message", "Taxes paid.")), Color("#10b981"))
+				update_ui()
+				SaveManager.save_game()
+				_show_business_modal("financials", cur_uid)
+			else:
+				add_life_event(str(r.get("message", "Could not pay taxes.")), "finance")
+		)
+		btn_pay_tax.custom_minimum_size.y = 52
+		btn_pay_tax.add_theme_font_size_override("font_size", 22)
+		tv.add_child(btn_pay_tax)
+	else:
+		var paid_lbl := Label.new()
+		paid_lbl.text = "✓ All corporate taxes are fully paid and in compliance."
+		paid_lbl.add_theme_font_size_override("font_size", 21)
+		paid_lbl.add_theme_color_override("font_color", Color("#86efac"))
+		tv.add_child(paid_lbl)
+
+	list.add_child(tax_card)
+
+	# 3. Commercial Loans & Bank Credit Section
+	var loan_card := PanelContainer.new()
+	loan_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#8b5cf6")))
+	var lm := MarginContainer.new()
+	lm.add_theme_constant_override("margin_left", 20)
+	lm.add_theme_constant_override("margin_right", 20)
+	lm.add_theme_constant_override("margin_top", 16)
+	lm.add_theme_constant_override("margin_bottom", 16)
+	loan_card.add_child(lm)
+
+	var lv := VBoxContainer.new()
+	lv.add_theme_constant_override("separation", 10)
+	lm.add_child(lv)
+
+	var l_title := Label.new()
+	l_title.text = "🏦 COMMERCIAL LOANS & CREDIT FACILITY SECTION"
+	l_title.add_theme_font_size_override("font_size", 25)
+	l_title.add_theme_color_override("font_color", Color("#ffffff"))
+	lv.add_child(l_title)
+
+	var cur_loan: int = int(target_biz.get("loan_balance", 0))
+	var l_desc := Label.new()
+	l_desc.text = "Active Commercial Loan Balance: $%s  •  Interest Rate: 7.5%% APR\nDisbursed loans are directly deposited into the business corporate treasury." % _format_number(cur_loan)
+	l_desc.add_theme_font_size_override("font_size", 22)
+	l_desc.add_theme_color_override("font_color", Color("#ddd6fe"))
+	lv.add_child(l_desc)
+
+	# Borrow Row
+	var borrow_row := HBoxContainer.new()
+	borrow_row.add_theme_constant_override("separation", 10)
+
+	var btn_b25 := _create_cyber_button("🏦 Borrow $25,000", Color("#8b5cf6"), func():
+		var r: Dictionary = BusinessManager.take_business_loan(target_biz, 25000)
+		if bool(r.get("success", false)):
+			update_ui()
+			SaveManager.save_game()
+			_show_business_modal("financials", cur_uid)
+		else:
+			add_life_event(str(r.get("message", "Loan declined.")), "finance")
+	)
+	btn_b25.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_b25.custom_minimum_size.y = 50
+	btn_b25.add_theme_font_size_override("font_size", 20)
+	borrow_row.add_child(btn_b25)
+
+	var btn_b100 := _create_cyber_button("🏦 Borrow $100,000", Color("#8b5cf6"), func():
+		var r: Dictionary = BusinessManager.take_business_loan(target_biz, 100000)
+		if bool(r.get("success", false)):
+			update_ui()
+			SaveManager.save_game()
+			_show_business_modal("financials", cur_uid)
+		else:
+			add_life_event(str(r.get("message", "Loan declined.")), "finance")
+	)
+	btn_b100.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_b100.custom_minimum_size.y = 50
+	btn_b100.add_theme_font_size_override("font_size", 20)
+	borrow_row.add_child(btn_b100)
+
+	var btn_b500 := _create_cyber_button("🏦 Borrow $500,000", Color("#8b5cf6"), func():
+		var r: Dictionary = BusinessManager.take_business_loan(target_biz, 500000)
+		if bool(r.get("success", false)):
+			update_ui()
+			SaveManager.save_game()
+			_show_business_modal("financials", cur_uid)
+		else:
+			add_life_event(str(r.get("message", "Loan declined.")), "finance")
+	)
+	btn_b500.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_b500.custom_minimum_size.y = 50
+	btn_b500.add_theme_font_size_override("font_size", 20)
+	borrow_row.add_child(btn_b500)
+
+	lv.add_child(borrow_row)
+
+	# Repay Row
+	if cur_loan > 0:
+		var repay_row := HBoxContainer.new()
+		repay_row.add_theme_constant_override("separation", 10)
+
+		var btn_rep10 := _create_cyber_button("💳 Repay $10,000 Principal", Color("#10b981"), func():
+			var r: Dictionary = BusinessManager.repay_business_loan(target_biz, 10000)
+			if bool(r.get("success", false)):
+				update_ui()
+				SaveManager.save_game()
+				_show_business_modal("financials", cur_uid)
+			else:
+				add_life_event(str(r.get("message", "Repayment failed.")), "finance")
+		)
+		btn_rep10.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn_rep10.custom_minimum_size.y = 50
+		btn_rep10.add_theme_font_size_override("font_size", 20)
+		repay_row.add_child(btn_rep10)
+
+		var btn_rep_all := _create_cyber_button("💳 Repay Full Balance ($%s)" % _format_number(cur_loan), Color("#10b981"), func():
+			var r: Dictionary = BusinessManager.repay_business_loan(target_biz, cur_loan)
+			if bool(r.get("success", false)):
+				update_ui()
+				SaveManager.save_game()
+				_show_business_modal("financials", cur_uid)
+			else:
+				add_life_event(str(r.get("message", "Repayment failed.")), "finance")
+		)
+		btn_rep_all.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn_rep_all.custom_minimum_size.y = 50
+		btn_rep_all.add_theme_font_size_override("font_size", 20)
+		repay_row.add_child(btn_rep_all)
+
+		lv.add_child(repay_row)
+
+	list.add_child(loan_card)
+
+	# 4. Owner Capital Transfers & Dividends Section
+	var equity_card := PanelContainer.new()
+	equity_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#059669")))
+	var em := MarginContainer.new()
+	em.add_theme_constant_override("margin_left", 20)
+	em.add_theme_constant_override("margin_right", 20)
+	em.add_theme_constant_override("margin_top", 16)
+	em.add_theme_constant_override("margin_bottom", 16)
+	equity_card.add_child(em)
+
+	var ev := VBoxContainer.new()
+	ev.add_theme_constant_override("separation", 10)
+	em.add_child(ev)
+
+	var e_title := Label.new()
+	e_title.text = "💵 CAPITAL TRANSFERS & OWNER DIVIDENDS"
+	e_title.add_theme_font_size_override("font_size", 25)
+	e_title.add_theme_color_override("font_color", Color("#ffffff"))
+	ev.add_child(e_title)
+
+	var e_desc := Label.new()
+	e_desc.text = "Transfer liquidity between your personal funds and corporate treasury."
+	e_desc.add_theme_font_size_override("font_size", 21)
+	e_desc.add_theme_color_override("font_color", Color("#a7f3d0"))
+	ev.add_child(e_desc)
+
+	var eq_row := HBoxContainer.new()
+	eq_row.add_theme_constant_override("separation", 10)
+
+	var btn_div := _create_cyber_button("💰 Withdraw $10,000 Dividend (Treasury -> Cash)", Color("#10b981"), func():
+		var r: Dictionary = BusinessManager.withdraw_owner_dividend(target_biz, 10000)
+		if bool(r.get("success", false)):
+			update_ui()
+			SaveManager.save_game()
+			_show_business_modal("financials", cur_uid)
+		else:
+			add_life_event(str(r.get("message", "Withdrawal failed.")), "finance")
+	)
+	btn_div.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_div.custom_minimum_size.y = 50
+	btn_div.add_theme_font_size_override("font_size", 20)
+	eq_row.add_child(btn_div)
+
+	var btn_inj := _create_cyber_button("💵 Inject $10,000 Capital (Cash -> Treasury)", Color("#0284c7"), func():
+		var r: Dictionary = BusinessManager.deposit_owner_capital(target_biz, 10000)
+		if bool(r.get("success", false)):
+			update_ui()
+			SaveManager.save_game()
+			_show_business_modal("financials", cur_uid)
+		else:
+			add_life_event(str(r.get("message", "Injection failed.")), "finance")
+	)
+	btn_inj.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_inj.custom_minimum_size.y = 50
+	btn_inj.add_theme_font_size_override("font_size", 20)
+	eq_row.add_child(btn_inj)
+
+	ev.add_child(eq_row)
+	list.add_child(equity_card)
+
+
+# -----------------------------------------------------------------------------
+# ASSET PANEL OWNED BUSINESSES SECTION
+# -----------------------------------------------------------------------------
+func _render_owned_businesses_section() -> void:
+	if PlayerData.owned_businesses.is_empty():
+		return
+
+	var section_card := PanelContainer.new()
+	section_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
+	var sm := MarginContainer.new()
+	sm.add_theme_constant_override("margin_left", 20)
+	sm.add_theme_constant_override("margin_right", 20)
+	sm.add_theme_constant_override("margin_top", 18)
+	sm.add_theme_constant_override("margin_bottom", 18)
+	section_card.add_child(sm)
+
+	var sv := VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 14)
+	sm.add_child(sv)
+
+	var stitle := Label.new()
+	stitle.text = "🏢 OWNED COMMERCIAL ENTERPRISES (%d)" % PlayerData.owned_businesses.size()
+	stitle.add_theme_font_size_override("font_size", 24)
+	stitle.add_theme_color_override("font_color", Color("#fbbf24"))
+	sv.add_child(stitle)
+
+	for b in PlayerData.owned_businesses:
+		var card := PanelContainer.new()
+		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#d97706")))
+		var cm := MarginContainer.new()
+		cm.add_theme_constant_override("margin_left", 16)
+		cm.add_theme_constant_override("margin_right", 16)
+		cm.add_theme_constant_override("margin_top", 14)
+		cm.add_theme_constant_override("margin_bottom", 14)
+		card.add_child(cm)
+
+		var cv := VBoxContainer.new()
+		cv.add_theme_constant_override("separation", 8)
+		cm.add_child(cv)
+
+		var name_lbl := Label.new()
+		name_lbl.text = "%s %s" % [str(b.get("icon", "🏢")), str(b.get("name", "Business"))]
+		name_lbl.add_theme_font_size_override("font_size", 24)
+		name_lbl.add_theme_color_override("font_color", Color("#ffffff"))
+		cv.add_child(name_lbl)
+
+		var val_lbl := Label.new()
+		val_lbl.text = "Valuation: $%s  •  Treasury: $%s  •  Staff: %d" % [
+			_format_number(int(b.get("valuation", 0))),
+			_format_number(int(b.get("treasury", 0))),
+			int(b.get("employees", 4))
+		]
+		val_lbl.add_theme_font_size_override("font_size", 20)
+		val_lbl.add_theme_color_override("font_color", Color("#fde68a"))
+		cv.add_child(val_lbl)
+
+		var btn_manage := _create_cyber_button("💰 Open Financials & Operations", Color("#f59e0b"), func():
+			_show_business_modal("financials", str(b.get("uid", "")))
+		)
+		btn_manage.custom_minimum_size.y = 48
+		btn_manage.add_theme_font_size_override("font_size", 20)
+		cv.add_child(btn_manage)
+
+		sv.add_child(card)
+
+	assets_list.add_child(section_card)
+
+
+# -----------------------------------------------------------------------------
+# YEARLY AGING EVENT HELPERS (DISASTERS, FREELANCE, BUSINESSES)
+# -----------------------------------------------------------------------------
+func _check_asset_disaster_event() -> void:
+	if PlayerData.owned_assets.is_empty():
+		return
+
+	var disaster_chance: float = 0.015
+	if PlayerData.karma < 25:
+		disaster_chance = 0.035
+
+	if randf() > disaster_chance:
+		return
+
+	var count: int = PlayerData.owned_assets.size()
+	var disasters := [
+		{
+			"title": "🌋 Catastrophic Regional Earthquake",
+			"msg": "A devastating 7.8 magnitude earthquake leveled the metro district! Your residences collapsed into rubble and garage foundations caved in. All %d of your titled properties and vehicle assets have been completely destroyed!" % count
+		},
+		{
+			"title": "🔥 Uncontrolled Urban Wildfire",
+			"msg": "An uncontrollable industrial mega-fire swept through the hillside district. Despite automated sprinkler systems, raging flames destroyed all %d of your vehicles and properties!" % count
+		},
+		{
+			"title": "⚖️ High-Court Lawsuit & Asset Forfeiture",
+			"msg": "A crushing corporate liability verdict and civil lawsuit judgment ruled against you! Court bailiffs and federal marshals seized all %d of your titled real estate and vehicle assets for liquidation!" % count
+		},
+		{
+			"title": "🏴‍☠️ Syndicate Organized Grand Heist",
+			"msg": "An elite cyber criminal syndicate breached municipal title databases and executed an armed raid! All %d of your registered vehicles and deeded real estate holdings were stolen, title-wiped, and lost!" % count
+		}
+	]
+
+	var disaster: Dictionary = disasters.pick_random()
+	PlayerData.owned_assets.clear()
+	PlayerData.happiness = maxi(5, PlayerData.happiness - 30)
+	add_life_event("🚨 %s: %s" % [disaster["title"], disaster["msg"]], "disaster")
+	_show_simple_popup("🚨 CATASTROPHIC ASSET LOSS", "%s\n\n%s" % [disaster["title"], disaster["msg"]], Color("#ef4444"))
+
+
+func _process_yearly_freelance_projects() -> void:
+	if PlayerData.active_freelance_jobs.is_empty():
+		return
+
+	var completed: Array[Dictionary] = FreelanceManager.generate_yearly_random_projects()
+	for item in completed:
+		var proj: Dictionary = item.get("project", {})
+		var res: Dictionary = item.get("result", {})
+		add_life_event("💼 FREELANCE PROJECT: Completed '%s' for %s (Earned $%s)." % [
+			str(proj.get("title", "Project")),
+			str(proj.get("client", "Client")),
+			_format_number(int(res.get("pay", 0)))
+		], "finance")
+
+
+func _process_yearly_business_operations() -> void:
+	if PlayerData.owned_businesses.is_empty():
+		return
+
+	var results: Array[Dictionary] = BusinessManager.simulate_yearly_businesses()
+	for r in results:
+		var profit_str: String = ("+$%s" % _format_number(int(r["net_profit"]))) if int(r["net_profit"]) >= 0 else ("-$%s" % _format_number(abs(int(r["net_profit"]))))
+		add_life_event("🏢 %s Year-End Audit: Revenue: $%s | Net Profit: %s | Corporate Tax Accrued: $%s." % [
+			str(r.get("name", "Business")),
+			_format_number(int(r.get("revenue", 0))),
+			profit_str,
+			_format_number(int(r.get("tax_accrued", 0)))
+		], "finance")
+
+
 func _show_education_modal() -> void:
 	if education_modal_overlay != null and is_instance_valid(education_modal_overlay):
 		education_modal_overlay.queue_free()
@@ -4404,8 +5575,8 @@ func _show_education_modal() -> void:
 		adesc.add_theme_color_override("font_color", Color("#fca5a5"))
 		av.add_child(adesc)
 
-		var course_cost: int = 0 if (PlayerData.age < 18 or is_student) else 200
-		var cost_str := "Free (Student / Minor)" if course_cost == 0 else "$%s Cash" % _format_number(course_cost)
+		var course_cost: int = 500 if (PlayerData.age < 18 or is_student) else 1200
+		var cost_str := "$%s Tuition" % _format_number(course_cost)
 		var btn_course := _create_cyber_button("🎓 Take Academic Refresher Course (%s)\nComplete remedial coursework and exams to restore your marks to 75%%!" % cost_str, Color("#ef4444"), func():
 			_start_refresher_course(course_cost)
 		)
@@ -4413,8 +5584,8 @@ func _show_education_modal() -> void:
 
 		list.add_child(alert_card)
 	elif PlayerData.grades < 70 and PlayerData.age >= 6:
-		var improve_cost: int = 0 if (PlayerData.age < 18 or is_student) else 150
-		var cost_str := "Free (Student)" if improve_cost == 0 else "$%s Cash" % _format_number(improve_cost)
+		var improve_cost: int = 250 if (PlayerData.age < 18 or is_student) else 600
+		var cost_str := "$%s Tuition" % _format_number(improve_cost)
 		var btn_improve := _create_cyber_button("📚 Take Academic Improvement Course (%s)\nEnroll in remedial curriculum to restore your marks to at least 75%%!" % cost_str, Color("#f59e0b"), func():
 			_start_refresher_course(improve_cost)
 		)
@@ -7408,7 +8579,7 @@ func _execute_inheritance_takeover(child: Dictionary, overlay_to_free: Control) 
 		final_amount = maxi(250, net_worth - 5000)
 		inheritance_msg = "⚖️ Probate Legal Settlement: Estate filing and attorney fees cost $5,000. $%s was secured." % _format_number(final_amount)
 
-	PlayerData.takeover_as_child(child, final_amount)
+	PlayerData.takeover_as_child(child, final_amount, PlayerData.owned_assets)
 	PlayerData.add_life_log_entry(inheritance_msg, "finance")
 
 	current_event = null

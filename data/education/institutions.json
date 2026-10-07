@@ -91,5 +91,239 @@
       "Creative Lead & Media Director",
       "Digital Art Specialist"
     ]
+  },
+  {
+    "id": "uni_culinary_food",
+    "name": "Metropolitan Culinary Academy & Food Sciences",
+    "icon": "☕",
+    "tagline": "College of Gastronomy & Food Chemistry",
+    "major": "food_science",
+    "major_title": "Food Science & Culinary Arts",
+    "degree_title": "Bachelor of Science in Food Science & Culinary Arts",
+    "description": "Distinguished academy specializing in food microbiology, roastery management, and commercial culinary operations.",
+    "tuition": 11500,
+    "min_grades": 55,
+    "min_smarts": 50,
+    "theme_color": "#f97316",
+    "unlocked_careers": [
+      "Master Food Scientist",
+      "Executive Pastry Chef"
+    ]
+  },
+  {
+    "id": "uni_logistics_ops",
+    "name": "Pacific Maritime & Global Logistics University",
+    "icon": "📦",
+    "tagline": "Institute of Global Freight & Supply Chain",
+    "major": "logistics",
+    "major_title": "Global Logistics & Supply Chain",
+    "degree_title": "Bachelor of Science in Global Logistics & Supply Chain",
+    "description": "World leader in containerized distribution, multi-modal transport algorithms, and automated warehousing.",
+    "tuition": 12500,
+    "min_grades": 60,
+    "min_smarts": 55,
+    "theme_color": "#06b6d4",
+    "unlocked_careers": [
+      "Logistics Director",
+      "Supply Chain Coordinator"
+    ]
+  },
+  {
+    "id": "uni_vogue_fashion",
+    "name": "Neo-Vogue Institute of Fashion & Apparel",
+    "icon": "👗",
+    "tagline": "Academy of Haute Couture & Textile Engineering",
+    "major": "fashion",
+    "major_title": "Fashion & Apparel Design",
+    "degree_title": "Bachelor of Fine Arts in Fashion & Apparel Design",
+    "description": "Elite international fashion school teaching runway couture, digital fabric synthesis, and apparel brand management.",
+    "tuition": 13500,
+    "min_grades": 58,
+    "min_smarts": 50,
+    "theme_color": "#f43f5e",
+    "unlocked_careers": [
+      "Haute Couture Designer",
+      "Fashion House Director"
+    ]
+  },
+  {
+    "id": "uni_lexington_law",
+    "name": "Lexington College of Law & Jurisprudence",
+    "icon": "⚖️",
+    "tagline": "Faculty of Corporate Law & Litigative Advocacy",
+    "major": "law",
+    "major_title": "Legal Studies & Jurisprudence",
+    "degree_title": "Bachelor of Arts in Legal Studies & Jurisprudence",
+    "description": "Prestigious law school preparing advocates in constitutional rights, corporate litigation, and contract arbitration.",
+    "tuition": 15500,
+    "min_grades": 72,
+    "min_smarts": 68,
+    "theme_color": "#eab308",
+    "unlocked_careers": [
+      "Corporate Attorney",
+      "Senior Litigator"
+    ]
+  },
+  {
+    "id": "uni_pixel_graphics",
+    "name": "Pixel Academy of Graphic Design",
+    "icon": "🎨",
+    "tagline": "School of Visual Communication & Cyber UI",
+    "major": "graphic_design",
+    "major_title": "Graphic Design & Visual Communication",
+    "degree_title": "Bachelor of Fine Arts in Graphic Design & Visual Communication",
+    "description": "Pioneering creative school focused on dynamic visual identity, typography, corporate branding, and UI/UX.",
+    "tuition": 12000,
+    "min_grades": 58,
+    "min_smarts": 52,
+    "theme_color": "#8b5cf6",
+    "unlocked_careers": [
+      "Principal Brand Designer",
+      "Creative Director"
+    ]
+  },
+  {
+    "id": "uni_cpa_accounting",
+    "name": "Pixel Institute of Certified Public Accounting",
+    "icon": "📊",
+    "tagline": "School of Forensic Audit & Corporate Taxation",
+    "major": "accounting",
+    "major_title": "Accounting & Forensic Audit",
+    "degree_title": "Bachelor of Science in Accounting & Forensic Audit",
+    "description": "Premier accounting institution recognized for rigorous financial modeling, tax law, and forensic balance sheet auditing.",
+    "tuition": 13000,
+    "min_grades": 65,
+    "min_smarts": 60,
+    "theme_color": "#10b981",
+    "unlocked_careers": [
+      "Certified Public Accountant",
+      "Forensic Audit Director"
+    ]
+  },
+  {
+    "id": "uni_metropolis_arch",
+    "name": "Metropolis Faculty of Architecture & Urban Design",
+    "icon": "📐",
+    "tagline": "Center for Structural Engineering & Sky-Rise Planning",
+    "major": "architecture",
+    "major_title": "Architecture & Urban Planning",
+    "degree_title": "Bachelor of Science in Architecture & Urban Planning",
+    "description": "Renowned architectural faculty designing sustainable megastructures, cyber towers, and modern civic urban spaces.",
+    "tuition": 14500,
+    "min_grades": 68,
+    "min_smarts": 64,
+    "theme_color": "#3b82f6",
+    "unlocked_careers": [
+      "Licensed Principal Architect",
+      "Chief Urban Planner"
+    ]
+  },
+  {
+    "id": "uni_gensys_biotech",
+    "name": "GenSys Institute of Biotechnology & Genomics",
+    "icon": "🧬",
+    "tagline": "Center for Molecular Synthesis & Gene Therapy",
+    "major": "biotech",
+    "major_title": "Biotechnology & Genetics",
+    "degree_title": "Bachelor of Science in Biotechnology & Genetics",
+    "description": "Leading research university engineering targeted molecular medicines, bio-reactors, and synthetic genetics.",
+    "tuition": 16500,
+    "min_grades": 70,
+    "min_smarts": 68,
+    "theme_color": "#14b8a6",
+    "unlocked_careers": [
+      "Senior Biotechnologist",
+      "Genomics Research Scientist"
+    ]
+  },
+  {
+    "id": "uni_wallst_finance",
+    "name": "Pixel Wall Street Academy of Finance",
+    "icon": "📈",
+    "tagline": "School of Investment Banking & Asset Management",
+    "major": "finance",
+    "major_title": "Finance & Investment Banking",
+    "degree_title": "Bachelor of Science in Finance & Investment Banking",
+    "description": "High-octane finance school training algorithmic trading quants, portfolio managers, and private equity partners.",
+    "tuition": 15000,
+    "min_grades": 68,
+    "min_smarts": 65,
+    "theme_color": "#fbbf24",
+    "unlocked_careers": [
+      "Investment Banking Vice President",
+      "Hedge Fund Portfolio Manager"
+    ]
+  },
+  {
+    "id": "uni_cybersound_music",
+    "name": "CyberSound Conservatory of Audio & Production",
+    "icon": "🎙️",
+    "tagline": "School of Acoustic Engineering & Sound Design",
+    "major": "music",
+    "major_title": "Sound Engineering & Music Production",
+    "degree_title": "Bachelor of Fine Arts in Sound Engineering & Music Production",
+    "description": "State-of-the-art acoustic facility teaching analog mastering, multi-track mixing, and interactive game audio.",
+    "tuition": 12500,
+    "min_grades": 55,
+    "min_smarts": 50,
+    "theme_color": "#a855f7",
+    "unlocked_careers": [
+      "Master Audio Producer",
+      "Acoustics Engineer"
+    ]
+  },
+  {
+    "id": "uni_gaia_environmental",
+    "name": "Gaia Institute of Environmental Sciences",
+    "icon": "⚡",
+    "tagline": "Faculty of Clean Energy & Climate Engineering",
+    "major": "environmental",
+    "major_title": "Environmental & Renewable Energy Science",
+    "degree_title": "Bachelor of Science in Environmental & Renewable Energy Science",
+    "description": "Pioneering green sciences university innovating photovoltaic networks, micro-grids, and climate resilience.",
+    "tuition": 13000,
+    "min_grades": 62,
+    "min_smarts": 58,
+    "theme_color": "#22c55e",
+    "unlocked_careers": [
+      "Clean Energy Consultant",
+      "Environmental Project Director"
+    ]
+  },
+  {
+    "id": "uni_dental_surgery",
+    "name": "Metropolitan Dental Academy & Oral Surgery",
+    "icon": "🦷",
+    "tagline": "College of Maxillofacial Surgery & Orthodontics",
+    "major": "dentistry",
+    "major_title": "Dental Surgery & Oral Health",
+    "degree_title": "Bachelor of Science in Dental Surgery & Oral Health",
+    "description": "Top dental research institution educating general dentists, orthodontists, and oral maxillofacial reconstructive surgeons.",
+    "tuition": 17000,
+    "min_grades": 72,
+    "min_smarts": 70,
+    "theme_color": "#0ea5e9",
+    "unlocked_careers": [
+      "General Dental Practitioner",
+      "Maxillofacial Orthodontic Surgeon"
+    ]
+  },
+  {
+    "id": "uni_pixel_film",
+    "name": "Hollywood Pixel Institute of Film & Broadcast Media",
+    "icon": "🎬",
+    "tagline": "Academy of Motion Picture Arts & Directing",
+    "major": "film",
+    "major_title": "Film, Cinematography & Media Production",
+    "degree_title": "Bachelor of Fine Arts in Film, Cinematography & Media Production",
+    "description": "Iconic cinema school cultivating film directors, 8K cinematographers, and studio broadcast executives.",
+    "tuition": 13000,
+    "min_grades": 58,
+    "min_smarts": 52,
+    "theme_color": "#e11d48",
+    "unlocked_careers": [
+      "Film & Commercial Director",
+      "Lead Cinematographer"
+    ]
   }
 ]

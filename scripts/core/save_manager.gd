@@ -50,6 +50,11 @@ func save_game() -> void:
 		"university_degree": PlayerData.university_degree,
 		"university_tuition": PlayerData.university_tuition,
 		"degrees": PlayerData.degrees,
+		"licenses": PlayerData.licenses,
+		"active_freelance_jobs": PlayerData.active_freelance_jobs,
+		"freelance_reputation": PlayerData.freelance_reputation,
+		"owned_businesses": PlayerData.owned_businesses,
+		"last_freelance_pitch_age": PlayerData.last_freelance_pitch_age,
 		"last_school_activity_age": PlayerData.last_school_activity_age,
 		"last_scholarship_applied_age": PlayerData.last_scholarship_applied_age,
 		"last_ged_attempt_age": PlayerData.last_ged_attempt_age,
@@ -196,6 +201,11 @@ func load_game() -> bool:
 	PlayerData.university_degree = str(data.get("university_degree", ""))
 	PlayerData.university_tuition = int(data.get("university_tuition", 12000))
 	PlayerData.degrees = Array(data.get("degrees", []))
+	PlayerData.licenses = Array(data.get("licenses", []))
+	PlayerData.active_freelance_jobs = Array(data.get("active_freelance_jobs", []))
+	PlayerData.freelance_reputation = Dictionary(data.get("freelance_reputation", {}))
+	PlayerData.owned_businesses = Array(data.get("owned_businesses", []))
+	PlayerData.last_freelance_pitch_age = Dictionary(data.get("last_freelance_pitch_age", {}))
 	PlayerData.last_school_activity_age = int(data.get("last_school_activity_age", -1))
 	PlayerData.last_scholarship_applied_age = int(data.get("last_scholarship_applied_age", -1))
 	PlayerData.last_ged_attempt_age = int(data.get("last_ged_attempt_age", -1))

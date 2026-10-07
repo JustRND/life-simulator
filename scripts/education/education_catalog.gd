@@ -9,6 +9,11 @@ static var _institutions_by_major: Dictionary = {}
 static var _loaded: bool = false
 
 
+static func reload() -> void:
+	_loaded = false
+	_ensure_loaded()
+
+
 static func _ensure_loaded() -> void:
 	if _loaded and not _institutions.is_empty():
 		return

@@ -1,0 +1,207 @@
+class_name LicenseManager
+extends RefCounted
+
+const LICENSES: Array[Dictionary] = [
+	{
+		"id": "license_motorcycle",
+		"name": "Motorcycle Operator License (Class M)",
+		"icon": "🏍️",
+		"fee": 350,
+		"min_age": 16,
+		"unlocked_feature": "Motorcycle Riding",
+		"description": "Standard state road qualification permitting the legal operation of motorcycles, scooters, and high-powered sportbikes."
+	},
+	{
+		"id": "license_car",
+		"name": "Passenger Driver's License (Class C)",
+		"icon": "🚗",
+		"fee": 450,
+		"min_age": 16,
+		"unlocked_feature": "Car Driving",
+		"description": "Certified driver's license permitting the legal operation of passenger automobiles, coupes, and utility pickup trucks."
+	},
+	{
+		"id": "license_photographer",
+		"name": "Commercial Photographer License",
+		"icon": "📷",
+		"fee": 750,
+		"min_age": 18,
+		"unlocked_feature": "Freelance Commercial Photographer",
+		"job_id": "freelance_photographer",
+		"description": "State commercial photography permit granting legal rights for client portraiture, commercial sets, and editorial publishing."
+	},
+	{
+		"id": "license_drone",
+		"name": "Commercial Remote Drone Pilot License",
+		"icon": "🛸",
+		"fee": 850,
+		"min_age": 18,
+		"unlocked_feature": "Freelance Aerial Drone Surveyor",
+		"job_id": "freelance_drone_surveyor",
+		"description": "Civil aviation authority certification for high-resolution aerial mapping, infrastructure inspection, and cinema drone piloting."
+	},
+	{
+		"id": "license_pi",
+		"name": "Private Investigator License",
+		"icon": "🕵️",
+		"fee": 1200,
+		"min_age": 21,
+		"unlocked_feature": "Freelance Private Investigator",
+		"job_id": "freelance_pi",
+		"description": "Department of Licensing detective credential permitting covert surveillance, missing person skips, and corporate counter-espionage."
+	},
+	{
+		"id": "license_electrician",
+		"name": "Certified Journeyman Electrician License",
+		"icon": "⚡",
+		"fee": 950,
+		"min_age": 18,
+		"unlocked_feature": "Freelance Master Electrician",
+		"job_id": "freelance_electrician",
+		"description": "Board-certified electrical contractor license authorizing residential and industrial high-voltage wiring and solar microgrids."
+	},
+	{
+		"id": "license_plumber",
+		"name": "Master Plumbing & Gasfitter License",
+		"icon": "🔧",
+		"fee": 900,
+		"min_age": 18,
+		"unlocked_feature": "Freelance Master Plumber",
+		"job_id": "freelance_plumber",
+		"description": "Licensed tradesman certification authorizing commercial piping, high-pressure gas lines, and municipal sewer retrofits."
+	},
+	{
+		"id": "license_appraiser",
+		"name": "Certified Real Estate Appraiser License",
+		"icon": "🏢",
+		"fee": 1100,
+		"min_age": 18,
+		"unlocked_feature": "Freelance Real Estate Appraiser",
+		"job_id": "freelance_appraiser",
+		"description": "National appraisal foundation credential authorizing legal property valuation, commercial lease audits, and mortgage appraisals."
+	},
+	{
+		"id": "license_fitness",
+		"name": "Certified Personal Fitness Trainer License",
+		"icon": "💪",
+		"fee": 650,
+		"min_age": 18,
+		"unlocked_feature": "Freelance Personal Fitness Trainer",
+		"job_id": "freelance_fitness_trainer",
+		"description": "Accredited athletic training certification authorizing one-on-one conditioning, strength programming, and corporate wellness coaching."
+	},
+	{
+		"id": "license_tattoo",
+		"name": "Professional Tattoo & Body Art License",
+		"icon": "🖋️",
+		"fee": 800,
+		"min_age": 18,
+		"unlocked_feature": "Freelance Tattoo & Body Artist",
+		"job_id": "freelance_tattoo_artist",
+		"description": "Department of Health certification for sterile dermal needlework, custom cyber-ink tattoo artistry, and body modification."
+	},
+	{
+		"id": "license_cyber",
+		"name": "Certified Ethical Hacker & Pen-Tester License",
+		"icon": "🛡️",
+		"fee": 1500,
+		"min_age": 18,
+		"unlocked_feature": "Freelance Cyber Security Pen-Tester",
+		"job_id": "freelance_cyber_pentester",
+		"description": "Accredited cyber security certification permitting defensive white-hat network penetration tests and security vulnerability audits."
+	},
+	{
+		"id": "license_interpreter",
+		"name": "Certified Legal Court Interpreter License",
+		"icon": "🗣️",
+		"fee": 700,
+		"min_age": 18,
+		"unlocked_feature": "Freelance Legal Court Interpreter",
+		"job_id": "freelance_court_interpreter",
+		"description": "Judicial qualification allowing sworn simultaneous translation and testimony interpretation in civil and federal courtrooms."
+	},
+	{
+		"id": "license_bookkeeper",
+		"name": "Certified Public Bookkeeper License",
+		"icon": "📚",
+		"fee": 950,
+		"min_age": 18,
+		"unlocked_feature": "Freelance Certified Bookkeeper",
+		"job_id": "freelance_bookkeeper",
+		"description": "National accounting board certification for corporate ledger balancing, accounts payable reconciliation, and tax documentation."
+	},
+	{
+		"id": "license_mixologist",
+		"name": "Professional Mixologist & Spirits License",
+		"icon": "🍸",
+		"fee": 500,
+		"min_age": 21,
+		"unlocked_feature": "Freelance Event Mixologist",
+		"job_id": "freelance_mixologist",
+		"description": "Beverage control commission certification allowing high-end cocktail craft, mixology catering, and private event bar service."
+	}
+]
+
+
+static func get_all_licenses() -> Array[Dictionary]:
+	return LICENSES
+
+
+static func get_license_by_id(id: String) -> Dictionary:
+	for lic in LICENSES:
+		if str(lic.get("id", "")) == id:
+			return lic
+	return {}
+
+
+static func can_take_license(license_id: String) -> Dictionary:
+	var lic := get_license_by_id(license_id)
+	if lic.is_empty():
+		return {"allowed": false, "reason": "License not found."}
+
+	if PlayerData.has_license(license_id):
+		return {"allowed": false, "reason": "You already hold this certified license!"}
+
+	var min_age: int = int(lic.get("min_age", 18))
+	if PlayerData.age < min_age:
+		return {"allowed": false, "reason": "Age Restricted: Must be at least Age %d (Current Age: %d)." % [min_age, PlayerData.age]}
+
+	var fee: int = int(lic.get("fee", 0))
+	var total_funds: int = PlayerData.money + PlayerData.bank_savings
+	if total_funds < fee:
+		return {"allowed": false, "reason": "Insufficient funds: Exam & certification fee is $%d (Available: $%d)." % [fee, total_funds]}
+
+	return {"allowed": true, "reason": "Eligible to certify."}
+
+
+static func take_license(license_id: String) -> Dictionary:
+	var eval := can_take_license(license_id)
+	if not bool(eval.get("allowed", false)):
+		return eval
+
+	var lic := get_license_by_id(license_id)
+	var fee: int = int(lic.get("fee", 0))
+
+	# Deduct fee: pocket cash first, then bank savings
+	if PlayerData.money >= fee:
+		PlayerData.money -= fee
+	else:
+		var rem: int = fee - PlayerData.money
+		PlayerData.money = 0
+		PlayerData.bank_savings = maxi(0, PlayerData.bank_savings - rem)
+
+	PlayerData.grant_license(license_id)
+	var lic_name: String = str(lic.get("name", "License"))
+	var unlocked: String = str(lic.get("unlocked_feature", ""))
+
+	PlayerData.add_life_log_entry("📜 LICENSE EXAM PASSED: You paid the $%d exam fee and officially earned your %s! Unlocked: %s." % [
+		fee,
+		lic_name,
+		unlocked
+	], "milestone")
+
+	return {
+		"allowed": true,
+		"message": "Congratulations! You passed the qualification exams and earned your %s!" % lic_name,
+		"license": lic
+	}

@@ -94,6 +94,11 @@ var university_major_title: String = ""
 var university_degree: String = ""
 var university_tuition: int = 12000
 var degrees: Array = []
+var licenses: Array = []
+var active_freelance_jobs: Array = []
+var freelance_reputation: Dictionary = {}
+var owned_businesses: Array = []
+var last_freelance_pitch_age: Dictionary = {}
 var last_school_activity_age: int = -1
 var last_scholarship_applied_age: int = -1
 var last_ged_attempt_age: int = -1
@@ -238,10 +243,38 @@ func reset_player() -> void:
 	event_history.clear()
 	life_log.clear()
 	degrees.clear()
+	licenses.clear()
+	active_freelance_jobs.clear()
+	freelance_reputation.clear()
+	owned_businesses.clear()
+	last_freelance_pitch_age.clear()
 	children.clear()
 	pregnancy = {}
 	active_debuffs.clear()
 	active_buffs.clear()
+
+
+func has_license(license_id: String) -> bool:
+	return licenses.has(license_id)
+
+
+func grant_license(license_id: String) -> void:
+	if not licenses.has(license_id):
+		licenses.append(license_id)
+
+
+func has_degree(major_or_title: String) -> bool:
+	var target := major_or_title.to_lower()
+	if education_level == "University Graduate":
+		if university_major.to_lower() == target or university_major_title.to_lower().contains(target):
+			return true
+	for d in degrees:
+		if d is Dictionary:
+			var d_major: String = str(d.get("major", "")).to_lower()
+			var d_title: String = str(d.get("major_title", "")).to_lower()
+			if d_major == target or d_major.contains(target) or d_title.contains(target):
+				return true
+	return false
 
 
 func is_doctor() -> bool:
@@ -651,9 +684,10 @@ func start_reincarnated_life(identity: Dictionary, debuffs: Array, buffs: Array)
 	add_life_log_entry(desc_karmic, "event")
 
 
-func takeover_as_child(child: Dictionary, inherited_money: int) -> void:
+func takeover_as_child(child: Dictionary, inherited_money: int, inherited_assets: Array = []) -> void:
 	var prev_parent_name: String = first_name
 	var prev_gender: String = gender
+	var assets_copy: Array = inherited_assets.duplicate(true)
 	reset_player()
 
 	first_name = str(child.get("name", "Child"))
@@ -673,6 +707,11 @@ func takeover_as_child(child: Dictionary, inherited_money: int) -> void:
 	debt = 0
 	tax_debt = 0
 	karma = 0
+
+	owned_assets.clear()
+	for a in assets_copy:
+		if a is Dictionary:
+			owned_assets.append(a.duplicate(true))
 
 	if prev_gender == "FEMALE":
 		mother_name = prev_parent_name
@@ -695,4 +734,5 @@ func takeover_as_child(child: Dictionary, inherited_money: int) -> void:
 	else:
 		education_level = "None"
 
-	add_life_log_entry("📜 LEGACY: You inherited your late parent %s's estate ($%d) and continue the family bloodline at age %d." % [prev_parent_name, money, age], "event")
+	var asset_text := " and %d property/vehicle assets" % owned_assets.size() if owned_assets.size() > 0 else ""
+	add_life_log_entry("📜 LEGACY: You inherited your late parent %s's estate ($%d%s) and continue the family bloodline at age %d." % [prev_parent_name, money, asset_text, age], "event")
