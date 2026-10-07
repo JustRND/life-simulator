@@ -17,7 +17,7 @@ subpixel_positioning = 0
 
 [sub_resource type="Theme" id="pixel_theme"]
 default_font = SubResource("pixel_font")
-default_font_size = 24
+default_font_size = 28
 
 [sub_resource type="StyleBoxFlat" id="top"]
 bg_color = Color(0.0745, 0.0588, 0.1647, 1)
@@ -125,6 +125,10 @@ shadow_color = Color(0.01, 0.02, 0.05, 0.5)
 shadow_size = 6
 
 [sub_resource type="StyleBoxFlat" id="card_button_normal"]
+content_margin_left = 24.0
+content_margin_top = 18.0
+content_margin_right = 24.0
+content_margin_bottom = 18.0
 bg_color = Color(0.12, 0.18, 0.32, 0.95)
 border_width_left = 2
 border_width_top = 2
@@ -371,7 +375,7 @@ text = "Alex Morgan"
 [node name="PhaseLabel" type="Label" parent="ProfileStrip/ProfileMargin/ProfileRow/NameAndPhase" unique_id=526626842]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.88, 0.94, 1, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 28
 text = "🍼 Infant"
 
 [node name="BalanceLabel" type="Label" parent="ProfileStrip/ProfileMargin/ProfileRow" unique_id=1720170167]
@@ -425,7 +429,7 @@ theme_override_constants/margin_bottom = 24
 [node name="LifeFeed" type="RichTextLabel" parent="SafeArea/MainColumn/LifeFeedPanel/MarginContainer" unique_id=897098234]
 layout_mode = 2
 theme_override_colors/default_color = Color(0.9, 0.94, 0.98, 1)
-theme_override_font_sizes/normal_font_size = 29
+theme_override_font_sizes/normal_font_size = 32
 bbcode_enabled = true
 text = "[color=#07568f][b]Age: 0 years[/b][/color]
 You were born in Indonesia. Your story begins here."
@@ -458,14 +462,14 @@ theme_override_constants/separation = 3
 [node name="HealthLabel" type="Label" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=1148875418]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
-theme_override_font_sizes/font_size = 21
+theme_override_font_sizes/font_size = 25
 text = "HEALTH  ♥"
 
 [node name="HealthBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=159880371]
-custom_minimum_size = Vector2(0, 28)
+custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 24
 theme_override_styles/background = SubResource("track")
 theme_override_styles/fill = SubResource("green")
 value = 80.0
@@ -473,14 +477,14 @@ value = 80.0
 [node name="HappinessLabel" type="Label" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=517101803]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
-theme_override_font_sizes/font_size = 21
+theme_override_font_sizes/font_size = 25
 text = "HAPPINESS  ☺"
 
 [node name="HappinessBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=681471829]
-custom_minimum_size = Vector2(0, 28)
+custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 24
 theme_override_styles/background = SubResource("track")
 theme_override_styles/fill = SubResource("green")
 value = 75.0
@@ -488,14 +492,14 @@ value = 75.0
 [node name="SmartsLabel" type="Label" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=1861500308]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
-theme_override_font_sizes/font_size = 21
+theme_override_font_sizes/font_size = 25
 text = "SMARTS  ⚡"
 
 [node name="SmartsBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=2141533477]
-custom_minimum_size = Vector2(0, 28)
+custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 24
 theme_override_styles/background = SubResource("track")
 theme_override_styles/fill = SubResource("red")
 value = 60.0
@@ -503,14 +507,14 @@ value = 60.0
 [node name="LooksLabel" type="Label" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=1120094663]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
-theme_override_font_sizes/font_size = 21
+theme_override_font_sizes/font_size = 25
 text = "LOOKS  ✦"
 
 [node name="LooksBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=2119674293]
-custom_minimum_size = Vector2(0, 28)
+custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 24
 theme_override_styles/background = SubResource("track")
 theme_override_styles/fill = SubResource("green")
 value = 65.0
@@ -538,7 +542,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(0.396, 0.902, 1, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 26
 theme_override_styles/normal = SubResource("action_button")
 theme_override_styles/pressed = SubResource("action_button")
 theme_override_styles/hover = SubResource("action_button")
@@ -551,7 +555,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(0.396, 0.902, 1, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 26
 theme_override_styles/normal = SubResource("action_button")
 theme_override_styles/pressed = SubResource("action_button")
 theme_override_styles/hover = SubResource("action_button")
@@ -569,7 +573,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(0.396, 0.902, 1, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 26
 theme_override_styles/normal = SubResource("action_button")
 theme_override_styles/pressed = SubResource("action_button")
 theme_override_styles/hover = SubResource("action_button")
@@ -582,7 +586,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(0.396, 0.902, 1, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 26
 theme_override_styles/normal = SubResource("action_button")
 theme_override_styles/pressed = SubResource("action_button")
 theme_override_styles/hover = SubResource("action_button")
@@ -835,7 +839,7 @@ theme_override_constants/separation = 10
 [node name="CurrentStageLabel" type="Label" parent="InfantPanel/InfantMargin/InfantContent/StatusCard/StatusMargin/StatusBox" unique_id=2003773398]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 30
 text = "Life Stage: Alex Miller (Age 0)"
 
 [node name="CurrentJobLabel" type="Label" parent="InfantPanel/InfantMargin/InfantContent/StatusCard/StatusMargin/StatusBox" unique_id=2119090330]
@@ -1316,16 +1320,16 @@ size_flags_vertical = 3
 [node name="ActList" type="VBoxContainer" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll" unique_id=1644637230]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 16
+theme_override_constants/separation = 20
 
 [node name="EducationActItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=1870605991]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("card_button_normal")
 theme_override_styles/pressed = SubResource("card_button_pressed")
 theme_override_styles/hover = SubResource("card_button_hover")
@@ -1333,13 +1337,13 @@ text = "🎓  Education & School"
 alignment = 0
 
 [node name="JobsActItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=1870605990]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("card_button_normal")
 theme_override_styles/pressed = SubResource("card_button_pressed")
 theme_override_styles/hover = SubResource("card_button_hover")
@@ -1347,13 +1351,13 @@ text = "💼  Careers & Jobs"
 alignment = 0
 
 [node name="DoctorItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=363342909]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("card_button_normal")
 theme_override_styles/pressed = SubResource("card_button_pressed")
 theme_override_styles/hover = SubResource("card_button_hover")
@@ -1361,13 +1365,13 @@ text = "🩺  Doctor & Healthcare"
 alignment = 0
 
 [node name="GymItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=969269764]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("card_button_normal")
 theme_override_styles/pressed = SubResource("card_button_pressed")
 theme_override_styles/hover = SubResource("card_button_hover")
@@ -1375,13 +1379,13 @@ text = "🏋️  Gym & Fitness"
 alignment = 0
 
 [node name="LotteryItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=872144695]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("card_button_normal")
 theme_override_styles/pressed = SubResource("card_button_pressed")
 theme_override_styles/hover = SubResource("card_button_hover")
@@ -1389,13 +1393,13 @@ text = "🎲  Lottery & Scratch Tickets"
 alignment = 0
 
 [node name="StreetHustleItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=348393519]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("card_button_normal")
 theme_override_styles/pressed = SubResource("card_button_pressed")
 theme_override_styles/hover = SubResource("card_button_hover")
@@ -1403,13 +1407,13 @@ text = "🕶️  Underground Street Hustle"
 alignment = 0
 
 [node name="MindItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=1870605856]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("card_button_normal")
 theme_override_styles/pressed = SubResource("card_button_pressed")
 theme_override_styles/hover = SubResource("card_button_hover")
@@ -1417,13 +1421,13 @@ text = "🧘  Mind & Meditation"
 alignment = 0
 
 [node name="BankActItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=987213456]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_colors/font_focus_color = Color(0, 0.94, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(0, 0.94, 1, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("card_button_normal")
 theme_override_styles/pressed = SubResource("card_button_pressed")
 theme_override_styles/hover = SubResource("card_button_hover")
@@ -1431,13 +1435,13 @@ text = "🏦  Bank & Loans"
 alignment = 0
 
 [node name="DatingAppItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=987213457]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_colors/font_focus_color = Color(1, 0.2, 0.6, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(1, 0.2, 0.6, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("card_button_normal")
 theme_override_styles/pressed = SubResource("card_button_pressed")
 theme_override_styles/hover = SubResource("card_button_hover")
@@ -1517,7 +1521,7 @@ theme_override_constants/separation = 4
 [node name="Title" type="Label" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/GameInfoCard/Margin/VBox" unique_id=2005627009]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 30
 text = "🎮 Life Simulator • 16-Bit Prototype"
 
 [node name="Subtitle" type="Label" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/GameInfoCard/Margin/VBox" unique_id=2132290357]
@@ -1544,7 +1548,7 @@ theme_override_constants/separation = 4
 [node name="AudioTitle" type="Label" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/AudioCard/Margin/VBox" unique_id=1015069850]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 30
 text = "🔊 Sound & Haptics"
 
 [node name="AudioStatus" type="Label" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/AudioCard/Margin/VBox" unique_id=95847105]
@@ -1571,7 +1575,7 @@ theme_override_constants/separation = 12
 [node name="DangerLabel" type="Label" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/DangerCard/Margin/VBox" unique_id=338151327]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.827, 0.118, 0.145, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 30
 text = "⚠️ Danger Zone"
 
 [node name="ResetProgressButton" type="Button" parent="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/DangerCard/Margin/VBox" unique_id=1494465007]
@@ -1659,7 +1663,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(0.396, 0.902, 1, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("confirm_keep")
 theme_override_styles/pressed = SubResource("event_choice_pressed")
 theme_override_styles/hover = SubResource("event_choice_hover")
@@ -1671,7 +1675,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(1, 0.9, 0.9, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("danger")
 theme_override_styles/hover = SubResource("danger")
 text = "ERASE & RESTART"

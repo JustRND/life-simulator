@@ -78,6 +78,10 @@ var event_history: Array = []
 var life_log: Array = []
 
 
+func reset() -> void:
+	reset_player()
+
+
 func reset_player() -> void:
 	first_name = ""
 	birthplace = ""

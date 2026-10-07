@@ -562,7 +562,17 @@ func age_up() -> void:
 			PlayerData.happiness = mini(100, PlayerData.happiness + 15)
 			var deg_name: String = PlayerData.university_degree if PlayerData.university_degree != "" else "Bachelor's Degree"
 			var maj_name: String = PlayerData.university_major_title if PlayerData.university_major_title != "" else "Specialized Major"
-			add_life_event("🎓 CONGRATULATIONS! You graduated from %s with a %s in %s! Careers in %s are now unlocked." % [uni_title, deg_name, maj_name, maj_name], "milestone")
+			var completed_degree := {
+				"university": uni_title,
+				"major": PlayerData.university_major,
+				"major_title": maj_name,
+				"degree": deg_name,
+				"grades": PlayerData.grades,
+				"year_graduated": PlayerData.age
+			}
+			PlayerData.degrees.append(completed_degree)
+			PlayerData.university_years = 0
+			add_life_event("🎓 CONGRATULATIONS! You graduated from %s with a %s in %s! Careers in %s are now unlocked. You are now free to work or take another study path." % [uni_title, deg_name, maj_name, maj_name], "milestone")
 		else:
 			var m_label: String = " (%s)" % PlayerData.university_major_title if PlayerData.university_major_title != "" else ""
 			add_life_event("You finished Year %d of 4 at %s%s (Grades: %d%%)." % [PlayerData.university_years, uni_title, m_label, PlayerData.grades], "education")
@@ -1513,7 +1523,8 @@ func apply_for_job(job_id: String) -> void:
 		"grades": PlayerData.grades,
 		"education_level": PlayerData.education_level,
 		"major": PlayerData.university_major,
-		"university_name": PlayerData.university_name
+		"university_name": PlayerData.university_name,
+		"degrees": PlayerData.degrees
 	})
 	if not bool(eval.get("allowed", false)):
 		return
@@ -1860,7 +1871,7 @@ func _setup_parent_action_row(vbox: VBoxContainer, parent_type: String) -> void:
 
 	var row := HBoxContainer.new()
 	row.name = row_name
-	row.add_theme_constant_override("separation", 8)
+	row.add_theme_constant_override("separation", 14)
 
 	var actions := []
 	if PlayerData.age < 5:
@@ -1886,9 +1897,9 @@ func _setup_parent_action_row(vbox: VBoxContainer, parent_type: String) -> void:
 	for act in actions:
 		var btn := Button.new()
 		btn.text = act[0]
-		btn.custom_minimum_size.y = 48
+		btn.custom_minimum_size.y = 64
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.add_theme_font_size_override("font_size", 18)
+		btn.add_theme_font_size_override("font_size", 24)
 
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color("#1e293b")
@@ -2213,8 +2224,8 @@ func _setup_partner_card_ui() -> void:
 		# Action Row
 		var act_row := GridContainer.new()
 		act_row.columns = 3
-		act_row.add_theme_constant_override("h_separation", 8)
-		act_row.add_theme_constant_override("v_separation", 8)
+		act_row.add_theme_constant_override("h_separation", 14)
+		act_row.add_theme_constant_override("v_separation", 14)
 
 		var actions: Array = [
 			["Spend Time", "spend_time", "#0284c7"],
@@ -2244,9 +2255,9 @@ func _setup_partner_card_ui() -> void:
 		for act in actions:
 			var btn := Button.new()
 			btn.text = act[0]
-			btn.custom_minimum_size.y = 48
+			btn.custom_minimum_size.y = 64
 			btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			btn.add_theme_font_size_override("font_size", 18)
+			btn.add_theme_font_size_override("font_size", 24)
 
 			var style := StyleBoxFlat.new()
 			style.bg_color = Color("#1e293b")
@@ -3071,7 +3082,7 @@ func _show_jobs_modal() -> void:
 		var title_lbl := Label.new()
 		title_lbl.text = "%s  •  %s" % [job.get("title", "Job"), job.get("workplace", "Company")]
 		title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		title_lbl.add_theme_font_size_override("font_size", 26)
+		title_lbl.add_theme_font_size_override("font_size", 30)
 		title_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
 		vbox.add_child(title_lbl)
 
@@ -3079,7 +3090,7 @@ func _show_jobs_modal() -> void:
 		var salary_lbl := Label.new()
 		salary_lbl.text = "💰 Salary: $%s / yr   •   Min Age: %d" % [_format_number(salary_val), int(job.get("min_age", 16))]
 		salary_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		salary_lbl.add_theme_font_size_override("font_size", 22)
+		salary_lbl.add_theme_font_size_override("font_size", 26)
 		salary_lbl.add_theme_color_override("font_color", Color("#34d399"))
 		vbox.add_child(salary_lbl)
 
@@ -3097,14 +3108,14 @@ func _show_jobs_modal() -> void:
 			var req_lbl := Label.new()
 			req_lbl.text = "📋 " + " • ".join(req_parts)
 			req_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			req_lbl.add_theme_font_size_override("font_size", 20)
+			req_lbl.add_theme_font_size_override("font_size", 24)
 			req_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
 			vbox.add_child(req_lbl)
 
 		var desc_lbl := Label.new()
 		desc_lbl.text = str(job.get("description", ""))
 		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		desc_lbl.add_theme_font_size_override("font_size", 20)
+		desc_lbl.add_theme_font_size_override("font_size", 23)
 		desc_lbl.add_theme_color_override("font_color", Color("#e2e8f0"))
 		vbox.add_child(desc_lbl)
 
@@ -3112,16 +3123,17 @@ func _show_jobs_modal() -> void:
 			"grades": PlayerData.grades,
 			"education_level": PlayerData.education_level,
 			"major": PlayerData.university_major,
-			"university_name": PlayerData.university_name
+			"university_name": PlayerData.university_name,
+			"degrees": PlayerData.degrees
 		})
 		var is_qualified: bool = bool(eval.get("allowed", false))
 		var is_current: bool = PlayerData.job_id == str(job.get("id", ""))
 
 		var btn := Button.new()
-		btn.custom_minimum_size.y = 56
+		btn.custom_minimum_size.y = 74
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		btn.add_theme_font_size_override("font_size", 22)
+		btn.add_theme_font_size_override("font_size", 26)
 
 		if is_current:
 			btn.text = "✓ CURRENT OCCUPATION"
@@ -3179,14 +3191,14 @@ func _show_education_modal() -> void:
 	var summary_card := PanelContainer.new()
 	summary_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#818cf8")))
 	var sm := MarginContainer.new()
-	sm.add_theme_constant_override("margin_left", 20)
-	sm.add_theme_constant_override("margin_right", 20)
-	sm.add_theme_constant_override("margin_top", 16)
-	sm.add_theme_constant_override("margin_bottom", 16)
+	sm.add_theme_constant_override("margin_left", 24)
+	sm.add_theme_constant_override("margin_right", 24)
+	sm.add_theme_constant_override("margin_top", 18)
+	sm.add_theme_constant_override("margin_bottom", 18)
 	summary_card.add_child(sm)
 
 	var sv := VBoxContainer.new()
-	sv.add_theme_constant_override("separation", 8)
+	sv.add_theme_constant_override("separation", 12)
 	sm.add_child(sv)
 
 	var level_lbl := Label.new()
@@ -3195,7 +3207,7 @@ func _show_education_modal() -> void:
 	else:
 		level_lbl.text = "🏫 Academic Status: %s" % PlayerData.get_education_display_string()
 	level_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	level_lbl.add_theme_font_size_override("font_size", 24)
+	level_lbl.add_theme_font_size_override("font_size", 28)
 	level_lbl.add_theme_color_override("font_color", Color("#c7d2fe"))
 	sv.add_child(level_lbl)
 
@@ -3208,7 +3220,7 @@ func _show_education_modal() -> void:
 		grade_lbl.text = "📊 Current Marks / GPA: %d%% (%s)" % [PlayerData.grades, PlayerData.get_letter_grade()]
 		grade_lbl.add_theme_color_override("font_color", grade_color)
 	grade_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	grade_lbl.add_theme_font_size_override("font_size", 24)
+	grade_lbl.add_theme_font_size_override("font_size", 28)
 	sv.add_child(grade_lbl)
 
 	var schol_lbl := Label.new()
@@ -3225,13 +3237,13 @@ func _show_education_modal() -> void:
 		schol_lbl.text = "🏆 University Scholarship: None (Tuition varies by institution)"
 		schol_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
 	schol_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	schol_lbl.add_theme_font_size_override("font_size", 22)
+	schol_lbl.add_theme_font_size_override("font_size", 25)
 	sv.add_child(schol_lbl)
 
 	var impact_lbl := Label.new()
 	impact_lbl.text = "Career Impact: Academic marks directly dictate career qualification. High grades unlock high-paying corporate, tech, and medical careers; failing grades restrict you to low-paying manual labor."
 	impact_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	impact_lbl.add_theme_font_size_override("font_size", 20)
+	impact_lbl.add_theme_font_size_override("font_size", 23)
 	impact_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
 	sv.add_child(impact_lbl)
 
@@ -3243,16 +3255,16 @@ func _show_education_modal() -> void:
 		var lock_banner := PanelContainer.new()
 		lock_banner.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
 		var lm := MarginContainer.new()
-		lm.add_theme_constant_override("margin_left", 18)
-		lm.add_theme_constant_override("margin_right", 18)
-		lm.add_theme_constant_override("margin_top", 12)
-		lm.add_theme_constant_override("margin_bottom", 12)
+		lm.add_theme_constant_override("margin_left", 20)
+		lm.add_theme_constant_override("margin_right", 20)
+		lm.add_theme_constant_override("margin_top", 14)
+		lm.add_theme_constant_override("margin_bottom", 14)
 		lock_banner.add_child(lm)
 
 		var ll := Label.new()
 		ll.text = "⏳ ANNUAL SCHOOL PARTICIPATION COMPLETED\nYou have already taken a school activity for Age %d.\nTo prevent status modifier exploits, all study options are locked until next year. Advance age (+1 Year) to participate again!" % PlayerData.age
 		ll.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		ll.add_theme_font_size_override("font_size", 20)
+		ll.add_theme_font_size_override("font_size", 23)
 		ll.add_theme_color_override("font_color", Color("#fbbf24"))
 		lm.add_child(ll)
 		list.add_child(lock_banner)
@@ -3492,20 +3504,121 @@ func _show_education_modal() -> void:
 			)
 			list.add_child(btn_schol)
 
-	# Enroll in University Institutions (High School Graduates)
-	if PlayerData.age >= 18 and PlayerData.education_level in ["High School", "High School Graduate"]:
+	# Active University Student Status Card
+	if PlayerData.education_level == "University Student":
+		var uni_active := PanelContainer.new()
+		uni_active.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#00f0ff")))
+		var um := MarginContainer.new()
+		um.add_theme_constant_override("margin_left", 24)
+		um.add_theme_constant_override("margin_right", 24)
+		um.add_theme_constant_override("margin_top", 18)
+		um.add_theme_constant_override("margin_bottom", 18)
+		uni_active.add_child(um)
+
+		var uv := VBoxContainer.new()
+		uv.add_theme_constant_override("separation", 14)
+		um.add_child(uv)
+
+		var u_title := Label.new()
+		u_title.text = "🏛️ ACTIVE UNIVERSITY ENROLLMENT (OBLIGATED 4 YEARS)"
+		u_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		u_title.add_theme_font_size_override("font_size", 28)
+		u_title.add_theme_color_override("font_color", Color("#00f0ff"))
+		uv.add_child(u_title)
+
+		var u_inst := Label.new()
+		var yr_current: int = maxi(1, PlayerData.university_years + 1)
+		u_inst.text = "Institution: %s\nMajor: %s   •   Degree in Progress: %s\nProgress: Completed %d of 4 Years (Currently in Year %d)" % [
+			PlayerData.university_name,
+			PlayerData.university_major_title,
+			PlayerData.university_degree,
+			PlayerData.university_years,
+			yr_current
+		]
+		u_inst.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		u_inst.add_theme_font_size_override("font_size", 24)
+		u_inst.add_theme_color_override("font_color", Color("#f8fafc"))
+		uv.add_child(u_inst)
+
+		var t_info := Label.new()
+		var t_cost: int = PlayerData.university_tuition if PlayerData.university_tuition > 0 else 12000
+		t_info.text = "Annual Tuition: Free (Scholarship Active)" if PlayerData.has_scholarship else "Annual Tuition: $%s / yr" % _format_number(t_cost)
+		t_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		t_info.add_theme_font_size_override("font_size", 23)
+		t_info.add_theme_color_override("font_color", Color("#34d399") if PlayerData.has_scholarship else Color("#fbbf24"))
+		uv.add_child(t_info)
+
+		if has_done_school_activity_this_year:
+			uv.add_child(_create_disabled_cyber_button("📖 Intensive Major Coursework Study\nHit the library and master course exams. Grades +2-4%, Smarts +2-4", "Completed for Age %d (Age up to study again next year)" % PlayerData.age))
+		else:
+			var btn_study_uni := _create_cyber_button("📖 Intensive Major Coursework Study\nHit the library and master course exams. Grades +2-4%, Smarts +2-4", Color("#38bdf8"), func():
+				if PlayerData.last_school_activity_age == PlayerData.age:
+					_close_education_modal_and_return_to_main()
+					return
+				PlayerData.last_school_activity_age = PlayerData.age
+				var g_gain := randi_range(2, 4)
+				var s_gain := randi_range(2, 4)
+				PlayerData.grades = mini(100, PlayerData.grades + g_gain)
+				PlayerData.smarts = mini(100, PlayerData.smarts + s_gain)
+				PlayerData.happiness = maxi(5, PlayerData.happiness - 3)
+				add_life_event("You studied late into the night preparing for %s midterms. Grades +%d%%, Smarts +%d." % [PlayerData.university_major_title, g_gain, s_gain], "education")
+				update_ui()
+				SaveManager.save_game()
+				_close_education_modal_and_return_to_main()
+			)
+			uv.add_child(btn_study_uni)
+
+		# Drop out choice: allowed ONLY after completing Year 1, 2, or 3 (PlayerData.university_years in [1, 2, 3])
+		if PlayerData.university_years < 1:
+			var btn_drop_locked := _create_disabled_cyber_button(
+				"🚪 Drop Out of University",
+				"OBLIGATED: You are currently completing Year 1. Dropping out unlocks after completing Year 1 (Years 1-3)."
+			)
+			uv.add_child(btn_drop_locked)
+		elif PlayerData.university_years in [1, 2, 3]:
+			var btn_drop_uni := _create_cyber_button(
+				"🚪 Drop Out of University (Completed Year %d of 4)\nAbandon degree in %s. Stop tuition and enter workforce or take another path later." % [
+					PlayerData.university_years,
+					PlayerData.university_major_title
+				],
+				Color("#ef4444"),
+				func():
+					var u_name := PlayerData.university_name
+					var m_name := PlayerData.university_major_title
+					var yrs := PlayerData.university_years
+					PlayerData.education_level = "University Dropout"
+					PlayerData.university_years = 0
+					PlayerData.university_name = ""
+					PlayerData.university_major = ""
+					PlayerData.university_major_title = ""
+					PlayerData.university_degree = ""
+					PlayerData.university_tuition = 0
+					add_life_event("🚪 You made the choice to drop out of %s after completing %d year(s) in %s. You can enter the workforce or enroll in another study path in the future." % [u_name, yrs, m_name], "education")
+					update_ui()
+					SaveManager.save_game()
+					_close_education_modal_and_return_to_main()
+			)
+			uv.add_child(btn_drop_uni)
+
+		list.add_child(uni_active)
+
+	# Enroll in University Institutions (High School Graduates, Dropouts, & University Graduates seeking another study path)
+	var can_view_uni_catalog: bool = PlayerData.age >= 18 and (PlayerData.education_level in ["High School", "High School Graduate", "University Graduate", "University Dropout", "University Student"])
+	if can_view_uni_catalog:
 		var uni_header := Label.new()
-		uni_header.text = "🏛️ UNIVERSITY ENROLLMENT & MAJORS"
-		uni_header.add_theme_font_size_override("font_size", 26)
+		uni_header.text = "🏛️ UNIVERSITY ENROLLMENT & STUDY PATHS"
+		uni_header.add_theme_font_size_override("font_size", 30)
 		uni_header.add_theme_color_override("font_color", Color("#38bdf8"))
 		list.add_child(uni_header)
 
 		var uni_sub := Label.new()
-		uni_sub.text = "Choose an institution and major. Your degree directly dictates career qualification (e.g. IT Major for Tech, Business Management for Store Management)."
+		uni_sub.text = "Choose an institution and major. Characters may only enroll in one university at a time and are obligated to study for 4 years. After graduating, you can take another study path!"
 		uni_sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		uni_sub.add_theme_font_size_override("font_size", 20)
-		uni_sub.add_theme_color_override("font_color", Color("#94a3b8"))
+		uni_sub.add_theme_font_size_override("font_size", 23)
+		uni_sub.add_theme_color_override("font_color", Color("#cbd5e1"))
 		list.add_child(uni_sub)
+
+		var is_currently_enrolled: bool = (PlayerData.education_level == "University Student")
 
 		var institutions: Array = EducationCatalog.get_all_institutions()
 		for inst in institutions:
@@ -3516,34 +3629,34 @@ func _show_education_modal() -> void:
 			card.add_theme_stylebox_override("panel", load_style_box_cyber_card(col))
 
 			var m := MarginContainer.new()
-			m.add_theme_constant_override("margin_left", 20)
-			m.add_theme_constant_override("margin_right", 20)
-			m.add_theme_constant_override("margin_top", 14)
-			m.add_theme_constant_override("margin_bottom", 14)
+			m.add_theme_constant_override("margin_left", 22)
+			m.add_theme_constant_override("margin_right", 22)
+			m.add_theme_constant_override("margin_top", 18)
+			m.add_theme_constant_override("margin_bottom", 18)
 			card.add_child(m)
 
 			var vb := VBoxContainer.new()
-			vb.add_theme_constant_override("separation", 6)
+			vb.add_theme_constant_override("separation", 10)
 			m.add_child(vb)
 
 			var inst_title := Label.new()
 			inst_title.text = "%s  %s" % [str(inst.get("icon", "🏛️")), str(inst.get("name", ""))]
 			inst_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			inst_title.add_theme_font_size_override("font_size", 24)
+			inst_title.add_theme_font_size_override("font_size", 28)
 			inst_title.add_theme_color_override("font_color", col)
 			vb.add_child(inst_title)
 
 			var inst_tagline := Label.new()
 			inst_tagline.text = str(inst.get("tagline", ""))
 			inst_tagline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			inst_tagline.add_theme_font_size_override("font_size", 20)
+			inst_tagline.add_theme_font_size_override("font_size", 23)
 			inst_tagline.add_theme_color_override("font_color", Color("#93c5fd"))
 			vb.add_child(inst_tagline)
 
 			var inst_major := Label.new()
 			inst_major.text = "🎓 Major: %s  •  %s" % [str(inst.get("major_title", "")), str(inst.get("degree_title", ""))]
 			inst_major.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			inst_major.add_theme_font_size_override("font_size", 21)
+			inst_major.add_theme_font_size_override("font_size", 25)
 			inst_major.add_theme_color_override("font_color", Color("#f8fafc"))
 			vb.add_child(inst_major)
 
@@ -3551,14 +3664,14 @@ func _show_education_modal() -> void:
 			var c_list: Array = inst.get("unlocked_careers", [])
 			inst_careers.text = "🎯 Unlocks Careers: %s" % ", ".join(c_list)
 			inst_careers.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			inst_careers.add_theme_font_size_override("font_size", 19)
+			inst_careers.add_theme_font_size_override("font_size", 23)
 			inst_careers.add_theme_color_override("font_color", Color("#34d399"))
 			vb.add_child(inst_careers)
 
 			var inst_desc := Label.new()
 			inst_desc.text = str(inst.get("description", ""))
 			inst_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			inst_desc.add_theme_font_size_override("font_size", 19)
+			inst_desc.add_theme_font_size_override("font_size", 22)
 			inst_desc.add_theme_color_override("font_color", Color("#cbd5e1"))
 			vb.add_child(inst_desc)
 
@@ -3567,7 +3680,30 @@ func _show_education_modal() -> void:
 			var req_eval: Dictionary = EducationCatalog.can_enroll(inst, PlayerData.grades, PlayerData.smarts)
 			var is_eligible: bool = bool(req_eval.get("allowed", false))
 
-			if is_eligible:
+			if is_currently_enrolled:
+				var locked_btn := Button.new()
+				locked_btn.custom_minimum_size.y = 74
+				locked_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				locked_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				locked_btn.text = "🔒 OBLIGATED: Currently studying at %s (Year %d of 4)\nOnly 1 university allowed at a time. Must complete 4-year degree or drop out before enrolling." % [
+					PlayerData.university_name,
+					maxi(1, PlayerData.university_years + 1)
+				]
+				locked_btn.disabled = true
+				var lk_style := StyleBoxFlat.new()
+				lk_style.bg_color = Color("#181f2f")
+				lk_style.border_color = Color("#475569")
+				lk_style.set_border_width_all(2)
+				lk_style.set_corner_radius_all(10)
+				lk_style.content_margin_left = 22
+				lk_style.content_margin_right = 22
+				lk_style.content_margin_top = 14
+				lk_style.content_margin_bottom = 14
+				locked_btn.add_theme_stylebox_override("disabled", lk_style)
+				locked_btn.add_theme_color_override("font_color", Color("#94a3b8"))
+				locked_btn.add_theme_font_size_override("font_size", 23)
+				vb.add_child(locked_btn)
+			elif is_eligible:
 				var enroll_btn := _create_cyber_button("🏛️ Enroll in %s (%s)\nReq Met: %d%% GPA & %d Smarts" % [
 					str(inst.get("major_title", "")),
 					tuition_text,
@@ -3593,7 +3729,7 @@ func _show_education_modal() -> void:
 				vb.add_child(enroll_btn)
 			else:
 				var locked_btn := Button.new()
-				locked_btn.custom_minimum_size.y = 54
+				locked_btn.custom_minimum_size.y = 74
 				locked_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 				locked_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 				locked_btn.text = "🔒 LOCKED: " + str(req_eval.get("reason", "Ineligible"))
@@ -3602,91 +3738,17 @@ func _show_education_modal() -> void:
 				lk_style.bg_color = Color("#181f2f")
 				lk_style.border_color = Color("#334155")
 				lk_style.set_border_width_all(2)
-				lk_style.set_corner_radius_all(6)
+				lk_style.set_corner_radius_all(10)
+				lk_style.content_margin_left = 22
+				lk_style.content_margin_right = 22
+				lk_style.content_margin_top = 14
+				lk_style.content_margin_bottom = 14
 				locked_btn.add_theme_stylebox_override("disabled", lk_style)
 				locked_btn.add_theme_color_override("font_color", Color("#94a3b8"))
-				locked_btn.add_theme_font_size_override("font_size", 20)
+				locked_btn.add_theme_font_size_override("font_size", 23)
 				vb.add_child(locked_btn)
 
 			list.add_child(card)
-
-	# Active University Student Status Card
-	if PlayerData.education_level == "University Student":
-		var uni_active := PanelContainer.new()
-		uni_active.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#00f0ff")))
-		var um := MarginContainer.new()
-		um.add_theme_constant_override("margin_left", 20)
-		um.add_theme_constant_override("margin_right", 20)
-		um.add_theme_constant_override("margin_top", 14)
-		um.add_theme_constant_override("margin_bottom", 14)
-		uni_active.add_child(um)
-
-		var uv := VBoxContainer.new()
-		uv.add_theme_constant_override("separation", 8)
-		um.add_child(uv)
-
-		var u_title := Label.new()
-		u_title.text = "🏛️ ACTIVE UNIVERSITY ENROLLMENT"
-		u_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		u_title.add_theme_font_size_override("font_size", 24)
-		u_title.add_theme_color_override("font_color", Color("#00f0ff"))
-		uv.add_child(u_title)
-
-		var u_inst := Label.new()
-		u_inst.text = "Institution: %s\nMajor: %s   •   Degree in Progress: %s\nProgress: Year %d of 4 completed" % [
-			PlayerData.university_name,
-			PlayerData.university_major_title,
-			PlayerData.university_degree,
-			PlayerData.university_years
-		]
-		u_inst.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		u_inst.add_theme_font_size_override("font_size", 21)
-		u_inst.add_theme_color_override("font_color", Color("#f8fafc"))
-		uv.add_child(u_inst)
-
-		var t_info := Label.new()
-		var t_cost: int = PlayerData.university_tuition if PlayerData.university_tuition > 0 else 12000
-		t_info.text = "Annual Tuition: Free (Scholarship Active)" if PlayerData.has_scholarship else "Annual Tuition: $%s / yr" % _format_number(t_cost)
-		t_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		t_info.add_theme_font_size_override("font_size", 20)
-		t_info.add_theme_color_override("font_color", Color("#34d399") if PlayerData.has_scholarship else Color("#fbbf24"))
-		uv.add_child(t_info)
-
-		if has_done_school_activity_this_year:
-			uv.add_child(_create_disabled_cyber_button("📖 Intensive Major Coursework Study\nHit the library and master course exams. Grades +2-4%, Smarts +2-4", "Completed for Age %d (Age up to study again next year)" % PlayerData.age))
-		else:
-			var btn_study_uni := _create_cyber_button("📖 Intensive Major Coursework Study\nHit the library and master course exams. Grades +2-4%, Smarts +2-4", Color("#38bdf8"), func():
-				if PlayerData.last_school_activity_age == PlayerData.age:
-					_close_education_modal_and_return_to_main()
-					return
-				PlayerData.last_school_activity_age = PlayerData.age
-				var g_gain := randi_range(2, 4)
-				var s_gain := randi_range(2, 4)
-				PlayerData.grades = mini(100, PlayerData.grades + g_gain)
-				PlayerData.smarts = mini(100, PlayerData.smarts + s_gain)
-				PlayerData.happiness = maxi(5, PlayerData.happiness - 3)
-				add_life_event("You studied late into the night preparing for %s midterms. Grades +%d%%, Smarts +%d." % [PlayerData.university_major_title, g_gain, s_gain], "education")
-				update_ui()
-				SaveManager.save_game()
-				_close_education_modal_and_return_to_main()
-			)
-			uv.add_child(btn_study_uni)
-
-		var btn_drop_uni := _create_cyber_button("🚪 Drop Out of University\nAbandon your degree program and enter the workforce.", Color("#ef4444"), func():
-			PlayerData.education_level = "High School Graduate"
-			add_life_event("You dropped out of %s. You forfeited your degree in %s." % [PlayerData.university_name, PlayerData.university_major_title], "education")
-			PlayerData.university_years = 0
-			PlayerData.university_name = ""
-			PlayerData.university_major = ""
-			PlayerData.university_major_title = ""
-			PlayerData.university_degree = ""
-			update_ui()
-			SaveManager.save_game()
-			_close_education_modal_and_return_to_main()
-		)
-		uv.add_child(btn_drop_uni)
-
-		list.add_child(uni_active)
 
 	# Dropout Overview Card & GED option
 	if PlayerData.education_level == "High School Dropout":
@@ -3731,41 +3793,65 @@ func _show_education_modal() -> void:
 			list.add_child(btn_ged)
 
 	# University Graduate Honors Card
-	if PlayerData.education_level == "University Graduate":
+	if PlayerData.education_level == "University Graduate" or PlayerData.degrees.size() > 0:
 		var grad_card := PanelContainer.new()
 		grad_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#10b981")))
 		var gm := MarginContainer.new()
-		gm.add_theme_constant_override("margin_left", 20)
-		gm.add_theme_constant_override("margin_right", 20)
-		gm.add_theme_constant_override("margin_top", 14)
-		gm.add_theme_constant_override("margin_bottom", 14)
+		gm.add_theme_constant_override("margin_left", 24)
+		gm.add_theme_constant_override("margin_right", 24)
+		gm.add_theme_constant_override("margin_top", 18)
+		gm.add_theme_constant_override("margin_bottom", 18)
 		grad_card.add_child(gm)
 
 		var gv := VBoxContainer.new()
-		gv.add_theme_constant_override("separation", 6)
+		gv.add_theme_constant_override("separation", 10)
 		gm.add_child(gv)
 
 		var gl := Label.new()
-		gl.text = "🎓 UNIVERSITY ALUMNUS - %s" % (PlayerData.university_name.to_upper() if PlayerData.university_name != "" else "ALUMNUS")
+		gl.text = "🎓 UNIVERSITY ALUMNUS • COMPLETED DEGREES (%d)" % maxi(1, PlayerData.degrees.size())
 		gl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		gl.add_theme_font_size_override("font_size", 24)
+		gl.add_theme_font_size_override("font_size", 28)
 		gl.add_theme_color_override("font_color", Color("#34d399"))
 		gv.add_child(gl)
 
-		var g_sub := Label.new()
-		var d_str: String = PlayerData.university_degree if PlayerData.university_degree != "" else "Bachelor's Degree"
-		var m_str: String = PlayerData.university_major_title if PlayerData.university_major_title != "" else "Specialized Major"
-		g_sub.text = "%s in %s\nFinal Academic Marks: %d%% (%s)\nCareers requiring %s are fully unlocked!" % [
-			d_str,
-			m_str,
-			PlayerData.grades,
-			PlayerData.get_letter_grade(),
-			m_str
-		]
-		g_sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		g_sub.add_theme_font_size_override("font_size", 21)
-		g_sub.add_theme_color_override("font_color", Color("#a7f3d0"))
-		gv.add_child(g_sub)
+		if PlayerData.degrees.is_empty():
+			var d_str: String = PlayerData.university_degree if PlayerData.university_degree != "" else "Bachelor's Degree"
+			var m_str: String = PlayerData.university_major_title if PlayerData.university_major_title != "" else "Specialized Major"
+			var g_sub := Label.new()
+			g_sub.text = "%s in %s @ %s\nFinal Academic Marks: %d%% (%s)\nAll careers requiring %s are permanently unlocked!" % [
+				d_str,
+				m_str,
+				PlayerData.university_name,
+				PlayerData.grades,
+				PlayerData.get_letter_grade(),
+				m_str
+			]
+			g_sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			g_sub.add_theme_font_size_override("font_size", 24)
+			g_sub.add_theme_color_override("font_color", Color("#a7f3d0"))
+			gv.add_child(g_sub)
+		else:
+			for d_idx in range(PlayerData.degrees.size()):
+				var deg_item: Dictionary = PlayerData.degrees[d_idx]
+				var deg_lbl := Label.new()
+				deg_lbl.text = "Degree #%d: %s in %s @ %s (Graduated Age %d)" % [
+					d_idx + 1,
+					str(deg_item.get("degree", "Bachelor's Degree")),
+					str(deg_item.get("major_title", "Major")),
+					str(deg_item.get("university", "University")),
+					int(deg_item.get("year_graduated", PlayerData.age))
+				]
+				deg_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				deg_lbl.add_theme_font_size_override("font_size", 24)
+				deg_lbl.add_theme_color_override("font_color", Color("#a7f3d0"))
+				gv.add_child(deg_lbl)
+
+		var path_note := Label.new()
+		path_note.text = "✨ Multiple Study Paths: Having completed a 4-year degree, you are free to enroll in another university and pursue additional degrees at any time!"
+		path_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		path_note.add_theme_font_size_override("font_size", 22)
+		path_note.add_theme_color_override("font_color", Color("#6ee7b7"))
+		gv.add_child(path_note)
 
 		list.add_child(grad_card)
 
@@ -3944,7 +4030,7 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	card.add_child(margin)
 
 	var main_vbox := VBoxContainer.new()
-	main_vbox.add_theme_constant_override("separation", 16)
+	main_vbox.add_theme_constant_override("separation", 22)
 	margin.add_child(main_vbox)
 
 	# Header row
@@ -3955,20 +4041,20 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	title_lbl.text = title_text
 	title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_lbl.add_theme_color_override("font_color", border_color)
-	title_lbl.add_theme_font_size_override("font_size", 34)
+	title_lbl.add_theme_font_size_override("font_size", 36)
 	header_row.add_child(title_lbl)
 
 	var close_btn := Button.new()
 	close_btn.text = "✕"
-	close_btn.custom_minimum_size = Vector2(64, 52)
-	close_btn.add_theme_font_size_override("font_size", 28)
+	close_btn.custom_minimum_size = Vector2(72, 60)
+	close_btn.add_theme_font_size_override("font_size", 30)
 	close_btn.add_theme_color_override("font_color", Color("#e2e8f0"))
 	close_btn.add_theme_color_override("font_hover_color", Color("#f43f5e"))
 	var close_style := StyleBoxFlat.new()
 	close_style.bg_color = Color("#1e293b")
 	close_style.border_color = border_color
 	close_style.set_border_width_all(2)
-	close_style.set_corner_radius_all(6)
+	close_style.set_corner_radius_all(8)
 	close_btn.add_theme_stylebox_override("normal", close_style)
 	close_btn.pressed.connect(func(): overlay.queue_free())
 	header_row.add_child(close_btn)
@@ -3976,7 +4062,7 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	var sub_lbl := Label.new()
 	sub_lbl.text = subtitle_text
 	sub_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
-	sub_lbl.add_theme_font_size_override("font_size", 22)
+	sub_lbl.add_theme_font_size_override("font_size", 24)
 	sub_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	main_vbox.add_child(sub_lbl)
 
@@ -3998,7 +4084,7 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 
 	var content_list := VBoxContainer.new()
 	content_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	content_list.add_theme_constant_override("separation", 14)
+	content_list.add_theme_constant_override("separation", 22)
 	scroll_margin.add_child(content_list)
 
 	return {
@@ -4014,10 +4100,10 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callable) -> Button:
 	var btn := Button.new()
 	btn.text = btn_text
-	btn.custom_minimum_size.y = 86
+	btn.custom_minimum_size.y = 104
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	btn.add_theme_font_size_override("font_size", 21)
+	btn.add_theme_font_size_override("font_size", 25)
 	btn.add_theme_color_override("font_color", Color("#f8fafc"))
 	btn.add_theme_color_override("font_hover_color", Color("#ffffff"))
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -4026,11 +4112,11 @@ func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callabl
 	style.bg_color = Color("#111827")
 	style.border_color = border_col
 	style.set_border_width_all(2)
-	style.set_corner_radius_all(8)
-	style.content_margin_left = 20
-	style.content_margin_right = 20
-	style.content_margin_top = 12
-	style.content_margin_bottom = 12
+	style.set_corner_radius_all(10)
+	style.content_margin_left = 24
+	style.content_margin_right = 24
+	style.content_margin_top = 18
+	style.content_margin_bottom = 18
 	btn.add_theme_stylebox_override("normal", style)
 
 	var hover := style.duplicate() as StyleBoxFlat
@@ -4045,20 +4131,20 @@ func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callabl
 func _create_disabled_cyber_button(btn_text: String, reason: String) -> Button:
 	var btn := Button.new()
 	btn.text = "%s\n🔒 %s" % [btn_text, reason]
-	btn.custom_minimum_size.y = 86
+	btn.custom_minimum_size.y = 104
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	btn.add_theme_font_size_override("font_size", 20)
+	btn.add_theme_font_size_override("font_size", 24)
 	btn.disabled = true
 	var lock_style := StyleBoxFlat.new()
 	lock_style.bg_color = Color("#0f172a")
 	lock_style.border_color = Color("#334155")
 	lock_style.set_border_width_all(2)
-	lock_style.set_corner_radius_all(8)
-	lock_style.content_margin_left = 20
-	lock_style.content_margin_right = 20
-	lock_style.content_margin_top = 12
-	lock_style.content_margin_bottom = 12
+	lock_style.set_corner_radius_all(10)
+	lock_style.content_margin_left = 24
+	lock_style.content_margin_right = 24
+	lock_style.content_margin_top = 18
+	lock_style.content_margin_bottom = 18
 	btn.add_theme_stylebox_override("disabled", lock_style)
 	btn.add_theme_color_override("font_color", Color("#64748b"))
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -4205,20 +4291,20 @@ func _show_gym_modal() -> void:
 	var summary_card := PanelContainer.new()
 	summary_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#10b981")))
 	var sm := MarginContainer.new()
-	sm.add_theme_constant_override("margin_left", 20)
-	sm.add_theme_constant_override("margin_right", 20)
-	sm.add_theme_constant_override("margin_top", 16)
-	sm.add_theme_constant_override("margin_bottom", 16)
+	sm.add_theme_constant_override("margin_left", 24)
+	sm.add_theme_constant_override("margin_right", 24)
+	sm.add_theme_constant_override("margin_top", 18)
+	sm.add_theme_constant_override("margin_bottom", 18)
 	summary_card.add_child(sm)
 
 	var sv := VBoxContainer.new()
-	sv.add_theme_constant_override("separation", 8)
+	sv.add_theme_constant_override("separation", 12)
 	sm.add_child(sv)
 
 	var stat_title := Label.new()
 	stat_title.text = "💪 PHYSICAL PROFILE & HEALTH VITALS"
 	stat_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	stat_title.add_theme_font_size_override("font_size", 24)
+	stat_title.add_theme_font_size_override("font_size", 28)
 	stat_title.add_theme_color_override("font_color", Color("#34d399"))
 	sv.add_child(stat_title)
 
@@ -4229,7 +4315,7 @@ func _show_gym_modal() -> void:
 		PlayerData.happiness
 	]
 	vitals_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	vitals_lbl.add_theme_font_size_override("font_size", 22)
+	vitals_lbl.add_theme_font_size_override("font_size", 25)
 	vitals_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
 	sv.add_child(vitals_lbl)
 
@@ -4239,7 +4325,7 @@ func _show_gym_modal() -> void:
 		PlayerData.money
 	]
 	bank_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	bank_lbl.add_theme_font_size_override("font_size", 20)
+	bank_lbl.add_theme_font_size_override("font_size", 23)
 	bank_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
 	sv.add_child(bank_lbl)
 
@@ -4250,36 +4336,32 @@ func _show_gym_modal() -> void:
 	var mem_border := Color("#38bdf8") if PlayerData.has_gym_membership else Color("#f59e0b")
 	mem_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(mem_border))
 	var mm := MarginContainer.new()
-	mm.add_theme_constant_override("margin_left", 20)
-	mm.add_theme_constant_override("margin_right", 20)
-	mm.add_theme_constant_override("margin_top", 16)
-	mm.add_theme_constant_override("margin_bottom", 16)
+	mm.add_theme_constant_override("margin_left", 24)
+	mm.add_theme_constant_override("margin_right", 24)
+	mm.add_theme_constant_override("margin_top", 18)
+	mm.add_theme_constant_override("margin_bottom", 18)
 	mem_card.add_child(mm)
 
 	var mv := VBoxContainer.new()
-	mv.add_theme_constant_override("separation", 10)
+	mv.add_theme_constant_override("separation", 14)
 	mm.add_child(mv)
 
 	var mem_title := Label.new()
 	mem_title.text = "💳 ALL-INCLUSIVE ANNUAL GYM MEMBERSHIP"
 	mem_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	mem_title.add_theme_font_size_override("font_size", 24)
+	mem_title.add_theme_font_size_override("font_size", 28)
 	mem_title.add_theme_color_override("font_color", Color("#38bdf8"))
 	mv.add_child(mem_title)
 
 	var mem_desc := Label.new()
 	if PlayerData.has_gym_membership:
-		mem_desc.text = "STATUS: ACTIVE MEMBER ✅
-Annual Fee: $%d/year (automatically debited from your bank account every year).
-PERK: ALL gym visits, classes, weight rooms, and athletic tracks are 100%% FREE!" % PlayerData.gym_membership_annual_fee
+		mem_desc.text = "STATUS: ACTIVE MEMBER ✅\nAnnual Fee: $%d/year (automatically debited from your bank account every year).\nPERK: ALL gym visits, classes, weight rooms, and athletic tracks are 100%% FREE!" % PlayerData.gym_membership_annual_fee
 		mem_desc.add_theme_color_override("font_color", Color("#34d399"))
 	else:
-		mem_desc.text = "STATUS: NON-MEMBER ❌
-Annual Fee: $%d/year (debited directly from your bank account yearly).
-BENEFIT: Unlocks 100%% FREE unlimited access to all workouts, swimming laps, spin classes, and boxing. Never pay individual day passes again!" % PlayerData.gym_membership_annual_fee
+		mem_desc.text = "STATUS: NON-MEMBER ❌\nAnnual Fee: $%d/year (debited directly from your bank account yearly).\nBENEFIT: Unlocks 100%% FREE unlimited access to all workouts, swimming laps, spin classes, and boxing. Never pay individual day passes again!" % PlayerData.gym_membership_annual_fee
 		mem_desc.add_theme_color_override("font_color", Color("#e2e8f0"))
 	mem_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	mem_desc.add_theme_font_size_override("font_size", 20)
+	mem_desc.add_theme_font_size_override("font_size", 23)
 	mv.add_child(mem_desc)
 
 	if not PlayerData.has_gym_membership:
@@ -4412,20 +4494,20 @@ func _show_meditation_modal() -> void:
 	var summary_card := PanelContainer.new()
 	summary_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#a855f7")))
 	var sm := MarginContainer.new()
-	sm.add_theme_constant_override("margin_left", 20)
-	sm.add_theme_constant_override("margin_right", 20)
-	sm.add_theme_constant_override("margin_top", 16)
-	sm.add_theme_constant_override("margin_bottom", 16)
+	sm.add_theme_constant_override("margin_left", 24)
+	sm.add_theme_constant_override("margin_right", 24)
+	sm.add_theme_constant_override("margin_top", 18)
+	sm.add_theme_constant_override("margin_bottom", 18)
 	summary_card.add_child(sm)
 
 	var sv := VBoxContainer.new()
-	sv.add_theme_constant_override("separation", 8)
+	sv.add_theme_constant_override("separation", 12)
 	sm.add_child(sv)
 
 	var stat_title := Label.new()
 	stat_title.text = "🧘 MENTAL WELLNESS & SPIRITUAL ALIGNMENT"
 	stat_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	stat_title.add_theme_font_size_override("font_size", 24)
+	stat_title.add_theme_font_size_override("font_size", 28)
 	stat_title.add_theme_color_override("font_color", Color("#c084fc"))
 	sv.add_child(stat_title)
 
@@ -4438,14 +4520,14 @@ func _show_meditation_modal() -> void:
 		PlayerData.karma
 	]
 	vitals_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	vitals_lbl.add_theme_font_size_override("font_size", 22)
+	vitals_lbl.add_theme_font_size_override("font_size", 25)
 	vitals_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
 	sv.add_child(vitals_lbl)
 
 	var benefit_lbl := Label.new()
 	benefit_lbl.text = "Mindfulness Impact: Regular meditation cleanses mental fatigue, sharpens focus, reduces existential anxiety, and harmonizes positive karma. Advanced spiritual retreats grant major karmic redemption."
 	benefit_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	benefit_lbl.add_theme_font_size_override("font_size", 20)
+	benefit_lbl.add_theme_font_size_override("font_size", 23)
 	benefit_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
 	sv.add_child(benefit_lbl)
 
@@ -4457,18 +4539,16 @@ func _show_meditation_modal() -> void:
 		var lock_banner := PanelContainer.new()
 		lock_banner.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
 		var lm := MarginContainer.new()
-		lm.add_theme_constant_override("margin_left", 18)
-		lm.add_theme_constant_override("margin_right", 18)
-		lm.add_theme_constant_override("margin_top", 12)
-		lm.add_theme_constant_override("margin_bottom", 12)
+		lm.add_theme_constant_override("margin_left", 20)
+		lm.add_theme_constant_override("margin_right", 20)
+		lm.add_theme_constant_override("margin_top", 14)
+		lm.add_theme_constant_override("margin_bottom", 14)
 		lock_banner.add_child(lm)
 
 		var ll := Label.new()
-		ll.text = "⏳ ANNUAL MINDFULNESS SESSION COMPLETED
-You have already completed your meditation session for Age %d.
-To prevent status modifier exploits, mindfulness options are locked until next year. Advance age (+1 Year) to meditate again!" % PlayerData.age
+		ll.text = "⏳ ANNUAL MINDFULNESS SESSION COMPLETED\nYou have already completed your meditation session for Age %d.\nTo prevent status modifier exploits, mindfulness options are locked until next year. Advance age (+1 Year) to meditate again!" % PlayerData.age
 		ll.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		ll.add_theme_font_size_override("font_size", 20)
+		ll.add_theme_font_size_override("font_size", 23)
 		ll.add_theme_color_override("font_color", Color("#fbbf24"))
 		lm.add_child(ll)
 		list.add_child(lock_banner)
@@ -4570,19 +4650,19 @@ func _show_doctor_modal() -> void:
 	var stat_card := PanelContainer.new()
 	stat_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#38bdf8")))
 	var stat_m := MarginContainer.new()
-	stat_m.add_theme_constant_override("margin_left", 20)
-	stat_m.add_theme_constant_override("margin_right", 20)
-	stat_m.add_theme_constant_override("margin_top", 16)
-	stat_m.add_theme_constant_override("margin_bottom", 16)
+	stat_m.add_theme_constant_override("margin_left", 24)
+	stat_m.add_theme_constant_override("margin_right", 24)
+	stat_m.add_theme_constant_override("margin_top", 18)
+	stat_m.add_theme_constant_override("margin_bottom", 18)
 	stat_card.add_child(stat_m)
 
 	var stat_v := VBoxContainer.new()
-	stat_v.add_theme_constant_override("separation", 6)
+	stat_v.add_theme_constant_override("separation", 10)
 	stat_m.add_child(stat_v)
 
 	var health_lbl := Label.new()
 	health_lbl.text = "Current Health: %d%%   •   Cash: $%s" % [PlayerData.health, _format_number(PlayerData.money)]
-	health_lbl.add_theme_font_size_override("font_size", 24)
+	health_lbl.add_theme_font_size_override("font_size", 28)
 	health_lbl.add_theme_color_override("font_color", Color("#22c55e") if PlayerData.health > 40 else Color("#f87171"))
 	stat_v.add_child(health_lbl)
 
@@ -4594,7 +4674,7 @@ func _show_doctor_modal() -> void:
 	else:
 		illness_lbl.text = "Medical Status: No active malignant illnesses detected."
 		illness_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
-	illness_lbl.add_theme_font_size_override("font_size", 21)
+	illness_lbl.add_theme_font_size_override("font_size", 24)
 	stat_v.add_child(illness_lbl)
 
 	list.add_child(stat_card)

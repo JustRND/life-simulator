@@ -82,12 +82,14 @@ func can_apply(job: Dictionary, age: int, stats: Dictionary, education_data: Dic
 	if reqs.has("min_education"):
 		var req_edu: String = str(reqs["min_education"])
 		var current_edu: String = str(education_data.get("education_level", "None"))
-		if req_edu == "University Graduate" and current_edu != "University Graduate":
+		var degrees_list: Array = education_data.get("degrees", [])
+		var has_any_degree: bool = (current_edu == "University Graduate" or degrees_list.size() > 0)
+		if req_edu == "University Graduate" and not has_any_degree:
 			return {
 				"allowed": false,
 				"reason": "Requires University Degree (Current: %s)." % current_edu
 			}
-		elif req_edu == "High School Graduate" and current_edu in ["None", "High School Dropout", "Kindergarten", "Primary School", "Middle School", "High School"]:
+		elif req_edu == "High School Graduate" and not has_any_degree and current_edu in ["None", "High School Dropout", "Kindergarten", "Primary School", "Middle School", "High School"]:
 			return {
 				"allowed": false,
 				"reason": "Requires High School Diploma (Current: %s)." % current_edu
@@ -98,19 +100,23 @@ func can_apply(job: Dictionary, age: int, stats: Dictionary, education_data: Dic
 		var req_major: String = str(reqs["required_major"]).to_lower()
 		var current_major: String = str(education_data.get("major", "")).to_lower()
 		var current_edu: String = str(education_data.get("education_level", "None"))
+		var degrees_list: Array = education_data.get("degrees", [])
 		var req_name := get_major_display_name(req_major)
-		var current_name := get_major_display_name(current_major) if current_major != "" else "No Major"
 
-		if current_edu != "University Graduate":
+		var has_required_major: bool = false
+		if current_edu == "University Graduate" and current_major == req_major:
+			has_required_major = true
+		else:
+			for deg in degrees_list:
+				if deg is Dictionary and str(deg.get("major", "")).to_lower() == req_major:
+					has_required_major = true
+					break
+
+		if not has_required_major:
+			var current_name := get_major_display_name(current_major) if current_major != "" else "No Major"
 			return {
 				"allowed": false,
-				"reason": "Requires University Degree in %s (Current: %s)." % [req_name, current_edu]
-			}
-
-		if current_major != req_major:
-			return {
-				"allowed": false,
-				"reason": "Requires %s Major (Your Major: %s)." % [req_name, current_name]
+				"reason": "Requires University Degree in %s (Your Major: %s)." % [req_name, current_name]
 			}
 
 	if reqs.has("min_health") and int(stats.get("health", 0)) < int(reqs["min_health"]):
