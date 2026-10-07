@@ -45,6 +45,7 @@ func save_game() -> void:
 		"university_major_title": PlayerData.university_major_title,
 		"university_degree": PlayerData.university_degree,
 		"university_tuition": PlayerData.university_tuition,
+		"degrees": PlayerData.degrees,
 		"last_school_activity_age": PlayerData.last_school_activity_age,
 		"last_scholarship_applied_age": PlayerData.last_scholarship_applied_age,
 		"last_ged_attempt_age": PlayerData.last_ged_attempt_age,
@@ -151,6 +152,7 @@ func load_game() -> bool:
 	PlayerData.university_major_title = str(data.get("university_major_title", ""))
 	PlayerData.university_degree = str(data.get("university_degree", ""))
 	PlayerData.university_tuition = int(data.get("university_tuition", 12000))
+	PlayerData.degrees = Array(data.get("degrees", []))
 	PlayerData.last_school_activity_age = int(data.get("last_school_activity_age", -1))
 	PlayerData.last_scholarship_applied_age = int(data.get("last_scholarship_applied_age", -1))
 	PlayerData.last_ged_attempt_age = int(data.get("last_ged_attempt_age", -1))
@@ -161,6 +163,7 @@ func load_game() -> bool:
 	PlayerData.karma = int(data.get("karma", 0))
 
 	PlayerData.partner = Dictionary(data.get("partner", {}))
+	preload("res://scripts/core/romance_rules.gd").normalize(PlayerData)
 	PlayerData.ex_partners = Array(data.get("ex_partners", []))
 	PlayerData.last_parent_interact_age = int(data.get("last_parent_interact_age", -1))
 	PlayerData.last_partner_interact_age = int(data.get("last_partner_interact_age", -1))

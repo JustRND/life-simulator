@@ -4,6 +4,7 @@ const NameCatalog = preload("res://scripts/core/name_catalog.gd")
 const PortraitCatalog = preload("res://scripts/core/portrait_catalog.gd")
 const BirthStoryGenerator = preload("res://scripts/core/birth_story_generator.gd")
 const EducationCatalog = preload("res://scripts/education/education_catalog.gd")
+const RomanceRules = preload("res://scripts/core/romance_rules.gd")
 
 var portrait: TextureRect
 var portrait_key: String = ""
@@ -138,7 +139,11 @@ func _ready() -> void:
 		sounds.name = "ButtonSounds"
 		add_child(sounds)
 
+	# Configure translucent, sleek scroll indicators on every page and scroll container
+	_setup_all_translucent_scrollbars()
+
 	var loaded: bool = SaveManager.load_game()
+	RomanceRules.normalize(PlayerData)
 
 	if event_overlay != null:
 		event_overlay.visible = false
@@ -803,6 +808,16 @@ func _on_age_button_pressed() -> void:
 
 
 func trigger_event() -> void:
+	if not PlayerData.is_dead and not PlayerData.is_in_prison and PlayerData.age >= 18 and not PlayerData.has_partner() and randf() < 0.25:
+		var candidate := _generate_dating_candidate()
+		var venues: Array[String] = ["a coffee date", "a picnic in the park", "a night at the arcade", "a walk through the night market"]
+		current_event = {"id": "date_invitation", "title": "A DATE INVITATION", "candidate": candidate,
+			"text": "%s asked you out for %s. Do you want to go on a date with %s?" % [candidate.name, venues.pick_random(), candidate.name]}
+		current_event_choices = [
+			{"text": "Yes, let's go!", "accept_date": true, "description": "A chance at a relationship; a poor impression lowers happiness."},
+			{"text": "Politely decline", "accept_date": false, "description": "Stay single. No happiness penalty."}]
+		show_event_popup()
+		return
 	current_event = EventManager.get_random_event(
 		PlayerData.age,
 		PlayerData.event_history,
@@ -924,8 +939,10 @@ func choose_event_option(choice_index: int) -> void:
 	PlayerData.apply_effects(choice.get("effects", {}))
 
 	var result_text: String = str(choice.get("result", ""))
+	if current_event.has("candidate"):
+		result_text = RomanceRules.date_result(PlayerData, current_event.candidate, bool(choice.get("accept_date", false)), randf())
 	if result_text != "":
-		add_life_event(result_text, "event")
+		add_life_event(result_text, "relationship" if current_event.has("candidate") else "event")
 
 	PlayerData.record_event(event_id)
 
@@ -1146,6 +1163,8 @@ func show_tab(tab_name: String) -> void:
 		update_relationships_panel()
 	elif tab_name == "activities":
 		_configure_button_contrasts()
+
+	_apply_translucent_scrollbars_recursive(self)
 
 
 # Avatar Button clicked -> opens Character profile panel!
@@ -2192,8 +2211,10 @@ func _setup_partner_card_ui() -> void:
 		_setup_relationship_bar(cv, "PartnerRelBar", p_rel)
 
 		# Action Row
-		var act_row := HBoxContainer.new()
-		act_row.add_theme_constant_override("separation", 8)
+		var act_row := GridContainer.new()
+		act_row.columns = 3
+		act_row.add_theme_constant_override("h_separation", 8)
+		act_row.add_theme_constant_override("v_separation", 8)
 
 		var actions: Array = [
 			["Spend Time", "spend_time", "#0284c7"],
@@ -2205,6 +2226,17 @@ func _setup_partner_card_ui() -> void:
 			actions.append(["💍 Propose", "propose", "#ec4899"])
 		elif p_status in ["Fiancé", "Fiancée"]:
 			actions.append(["💒 Marry", "marry", "#eab308"])
+			actions.append(["Postpone", "postpone", "#8b5cf6"])
+			RomanceRules.normalize(PlayerData)
+			var engagement_note := Label.new()
+			engagement_note.text = "Engaged at age %d • Wedding from age %d\nLonger postponements reduce your bond and both partners' happiness." % [int(p.engaged_age), int(p.engaged_age) + 1]
+			engagement_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			engagement_note.add_theme_font_size_override("font_size", 20)
+			cv.add_child(engagement_note)
+		var partner_joy := Label.new()
+		partner_joy.text = "Partner happiness: %d%%" % int(p.get("happiness", 50))
+		partner_joy.add_theme_font_size_override("font_size", 20)
+		cv.add_child(partner_joy)
 
 		var break_word := "Divorce" if p_status in ["Wife", "Husband"] else "Break Up"
 		actions.append(["💔 " + break_word, "breakup", "#ef4444"])
@@ -2230,6 +2262,9 @@ func _setup_partner_card_ui() -> void:
 			btn.add_theme_color_override("font_color", Color("#f1f5f9"))
 
 			var act_key: String = act[1]
+			if act_key == "marry" and not RomanceRules.can_marry(PlayerData):
+				btn.disabled = true
+				btn.tooltip_text = "You must age up before marrying."
 			btn.pressed.connect(func(): _interact_partner(act_key))
 			act_row.add_child(btn)
 
@@ -2331,6 +2366,9 @@ func _interact_partner(action: String) -> void:
 		"marry":
 			_show_wedding_modal()
 			return
+		"postpone":
+			_show_postpone_modal()
+			return
 
 		"breakup":
 			_break_up_with_partner()
@@ -2340,113 +2378,113 @@ func _interact_partner(action: String) -> void:
 	SaveManager.save_game()
 
 
-func _show_proposal_modal() -> void:
-	if not PlayerData.has_partner():
+func _finish_romance_action(message: String, kind: String = "relationship") -> void:
+	if message.is_empty():
 		return
-	var p_name: String = PlayerData.get_partner_name()
-	var p_gender: String = str(PlayerData.partner.get("gender", "FEMALE"))
-	var p_rel: int = PlayerData.get_partner_relationship()
+	if is_instance_valid(romance_action_modal_overlay):
+		romance_action_modal_overlay.queue_free()
+	romance_action_modal_overlay = null
+	add_life_event(message, kind)
+	update_ui()
+	SaveManager.save_game()
+	show_tab("timeline")
 
-	var modal := _create_cyber_modal("💍 MARRIAGE PROPOSAL", "Choose an engagement ring to propose to %s" % p_name, Color("#ec4899"))
+
+func _show_proposal_modal() -> void:
+	if PlayerData.is_dead or PlayerData.age < 18 or not PlayerData.has_partner() or PlayerData.get_partner_status() not in ["Boyfriend", "Girlfriend"]:
+		return
+	var modal := _create_cyber_modal("MARRIAGE PROPOSAL", "Choose one or more gifts for %s. More expensive gifts add more partner happiness, but acceptance is never guaranteed. Gifts are paid for even if the proposal is declined." % PlayerData.get_partner_name(), Color("#ec4899"))
 	romance_action_modal_overlay = modal.overlay
 	var list: VBoxContainer = modal.list
-
-	var rings: Array = [
-		{"name": "Silver Engagement Band", "cost": 500, "bonus": 5, "desc": "A sleek minimalist silver band."},
-		{"name": "Solitaire Diamond Ring", "cost": 2500, "bonus": 15, "desc": "A brilliant-cut diamond in a platinum setting."},
-		{"name": "Cyber Platinum Masterpiece", "cost": 7500, "bonus": 25, "desc": "An opulent custom-crafted heirloom ring with holographic shimmer."}
-	]
-
-	for r in rings:
-		var r_cost: int = int(r["cost"])
-		var r_name: String = str(r["name"])
-		var btn_text := "%s ($%s)
-%s" % [r_name, _format_number(r_cost), str(r["desc"])]
-		var btn := _create_cyber_button(btn_text, Color("#ec4899"), func():
-			if romance_action_modal_overlay != null and is_instance_valid(romance_action_modal_overlay):
-				romance_action_modal_overlay.queue_free()
-				romance_action_modal_overlay = null
-			if PlayerData.money < r_cost:
-				add_life_event("You cannot afford the $%s %s." % [_format_number(r_cost), r_name], "finance")
-				show_tab("timeline")
-				return
-			PlayerData.money -= r_cost
-			var accept_chance: int = p_rel + int(r["bonus"])
-			if accept_chance >= 70:
-				var new_status := "Fiancée" if p_gender == "FEMALE" else "Fiancé"
-				PlayerData.partner["status"] = new_status
-				PlayerData.set_partner_relationship(p_rel + 18)
-				PlayerData.happiness = mini(100, PlayerData.happiness + 25)
-				PlayerData.last_partner_interact_age = PlayerData.age
-				add_life_event("💍 ENGAGEMENT: You got down on one knee and presented the %s to %s. With tears in their eyes, they said YES! You are now officially engaged to your %s!" % [
-					r_name,
-					p_name,
-					new_status
-				], "relationship")
+	var selected: Array = []
+	var total := Label.new()
+	total.add_theme_font_size_override("font_size", 26)
+	total.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var confirm := _create_cyber_button("Give gifts & propose", Color("#ec4899"), func():
+		var message := RomanceRules.propose(PlayerData, selected, randf())
+		_finish_romance_action(message)
+	)
+	var refresh := func():
+		var cost := 0
+		var joy := 0
+		for id in selected:
+			cost += int(RomanceRules.GIFTS[id].cost)
+			joy += int(RomanceRules.GIFTS[id].joy)
+		total.text = "Total: $%s • Partner happiness +%d (max 100)\nAvailable cash: $%s" % [_format_number(cost), joy, _format_number(PlayerData.money)]
+		confirm.disabled = selected.is_empty() or cost > PlayerData.money
+	for id in range(RomanceRules.GIFTS.size()):
+		var gift: Dictionary = RomanceRules.GIFTS[id]
+		var gift_text := "%s • $%s\nPartner happiness +%d" % [gift.name, _format_number(int(gift.cost)), int(gift.joy)]
+		var button := _create_cyber_button(gift_text, Color("#ec4899"), func(): pass)
+		button.toggle_mode = true
+		var selected_style := StyleBoxFlat.new()
+		selected_style.bg_color = Color("#302040")
+		selected_style.border_color = Color("#ff8fc7")
+		selected_style.set_border_width_all(3)
+		selected_style.set_corner_radius_all(8)
+		button.add_theme_stylebox_override("pressed", selected_style)
+		button.add_theme_stylebox_override("hover_pressed", selected_style)
+		button.toggled.connect(func(on: bool):
+			button.text = ("[SELECTED] " if on else "") + gift_text
+			if on:
+				selected.append(id)
 			else:
-				PlayerData.set_partner_relationship(p_rel - 10)
-				PlayerData.happiness = maxi(5, PlayerData.happiness - 10)
-				add_life_event("💔 REJECTED PROPOSAL: You proposed to %s with the %s, but they hesitated and said it's too early for marriage." % [
-					p_name,
-					r_name
-				], "relationship")
-			update_ui()
-			SaveManager.save_game()
-			show_tab("timeline")
+				selected.erase(id)
+			refresh.call()
 		)
-		list.add_child(btn)
-
-	romance_action_modal_overlay.visible = true
+		list.add_child(button)
+	list.add_child(total)
+	list.add_child(confirm)
+	refresh.call()
 
 
 func _show_wedding_modal() -> void:
-	if not PlayerData.has_partner():
+	if not RomanceRules.can_marry(PlayerData):
 		return
-	var p_name: String = PlayerData.get_partner_name()
-	var p_gender: String = str(PlayerData.partner.get("gender", "FEMALE"))
-	var p_rel: int = PlayerData.get_partner_relationship()
-
-	var modal := _create_cyber_modal("💒 WEDDING CEREMONY", "Plan your wedding ceremony with %s" % p_name, Color("#38bdf8"))
+	var modal := _create_cyber_modal("WEDDING CEREMONY", "Plan your wedding with %s, or postpone until you feel ready." % PlayerData.get_partner_name(), Color("#38bdf8"))
 	romance_action_modal_overlay = modal.overlay
 	var list: VBoxContainer = modal.list
-
 	var ceremonies: Array = [
-		{"name": "City Hall Courthouse Wedding", "cost": 300, "desc": "A simple, legal ceremony with close witnesses and official certificates."},
-		{"name": "Grand Neon Cathedral & Banquet", "cost": 5000, "desc": "An extravagant cyber ceremony with glowing aisle arches, live orchestra, and catered feast."}
+		{"name": "City Hall Wedding", "cost": 300},
+		{"name": "Grand Neon Cathedral & Banquet", "cost": 5000}
 	]
-
-	for c in ceremonies:
-		var c_cost: int = int(c["cost"])
-		var c_name: String = str(c["name"])
-		var btn_text := "%s ($%s)
-%s" % [c_name, _format_number(c_cost), str(c["desc"])]
-		var btn := _create_cyber_button(btn_text, Color("#38bdf8"), func():
-			if romance_action_modal_overlay != null and is_instance_valid(romance_action_modal_overlay):
-				romance_action_modal_overlay.queue_free()
-				romance_action_modal_overlay = null
-			if PlayerData.money < c_cost:
-				add_life_event("You cannot afford the $%s cost for %s." % [_format_number(c_cost), c_name], "finance")
-				show_tab("timeline")
-				return
-			PlayerData.money -= c_cost
-			var new_status := "Wife" if p_gender == "FEMALE" else "Husband"
-			PlayerData.partner["status"] = new_status
-			PlayerData.set_partner_relationship(p_rel + 20)
-			PlayerData.happiness = mini(100, PlayerData.happiness + 35)
-			PlayerData.last_partner_interact_age = PlayerData.age
-			add_life_event("💒 MARRIED: You and %s tied the knot during a %s! You are now legally and happily married as %s and %s." % [
-				p_name,
-				c_name,
-				"Husband" if PlayerData.gender == "MALE" else "Wife",
-				new_status
-			], "milestone")
-			update_ui()
-			SaveManager.save_game()
-			show_tab("timeline")
+	for ceremony in ceremonies:
+		var cost := int(ceremony.cost)
+		var ceremony_name := str(ceremony.name)
+		var button := _create_cyber_button("%s • $%s" % [ceremony_name, _format_number(cost)], Color("#38bdf8"), func():
+			_finish_romance_action(RomanceRules.marry(PlayerData, cost, ceremony_name), "milestone")
 		)
-		list.add_child(btn)
+		button.disabled = PlayerData.money < cost
+		list.add_child(button)
+	list.add_child(_create_cyber_button("Postpone wedding", Color("#8b5cf6"), func():
+		if is_instance_valid(romance_action_modal_overlay):
+			romance_action_modal_overlay.queue_free()
+		_show_postpone_modal()
+	))
 
-	romance_action_modal_overlay.visible = true
+
+func _show_postpone_modal() -> void:
+	if not RomanceRules.engaged(PlayerData):
+		return
+	RomanceRules.normalize(PlayerData)
+	var modal := _create_cyber_modal("POSTPONE WEDDING", "You decide when you are ready. Delay penalties grow each year and affect your relationship and both partners' happiness.", Color("#8b5cf6"))
+	romance_action_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+	var already_delayed := int(PlayerData.partner.get("last_delay_age", -1)) >= PlayerData.age
+	var waiting := PlayerData.age <= int(PlayerData.partner.engaged_age)
+	if waiting or already_delayed:
+		var note := Label.new()
+		note.text = "You are already waiting this year. Revisit wedding plans after your next birthday."
+		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		note.add_theme_font_size_override("font_size", 26)
+		list.add_child(note)
+		return
+	var count := maxi(int(PlayerData.partner.get("delay_count", 0)) + 1, PlayerData.age - int(PlayerData.partner.engaged_age))
+	var loss := mini(30, count * 4)
+	var sadness := mini(20, count * 3)
+	list.add_child(_create_cyber_button("Wait another year\nRelationship -%d • Both happiness -%d" % [loss, sadness], Color("#8b5cf6"), func():
+		_finish_romance_action(RomanceRules.delay_wedding(PlayerData, true))
+	))
 
 
 func _break_up_with_partner() -> void:
@@ -2783,6 +2821,9 @@ func _process_relationships_aging() -> void:
 
 	# Partner aging, relationship decay & consequences
 	if PlayerData.has_partner():
+		var delay_message := RomanceRules.delay_wedding(PlayerData)
+		if not delay_message.is_empty():
+			add_life_event(delay_message, "relationship")
 		PlayerData.partner["age"] = int(PlayerData.partner.get("age", 20)) + 1
 		PlayerData.partner["years_together"] = int(PlayerData.partner.get("years_together", 0)) + 1
 		var p_name: String = PlayerData.get_partner_name()
@@ -2807,7 +2848,7 @@ func _process_relationships_aging() -> void:
 				add_life_event("💔 BREAKUP: %s felt completely neglected and distant over the past year. They packed their bags and broke up with you." % p_name, "relationship")
 			PlayerData.ex_partners.append(PlayerData.partner)
 			PlayerData.partner = {}
-		elif p_rel >= 80:
+		elif p_rel >= 80 and delay_message.is_empty():
 			var yrs: int = int(PlayerData.partner.get("years_together", 1))
 			PlayerData.happiness = mini(100, PlayerData.happiness + 8)
 			add_life_event("❤️ ANNIVERSARY: You and %s celebrated %d %s together with a romantic candlelight dinner! (Happiness +8)" % [
@@ -3746,6 +3787,115 @@ var romance_action_modal_overlay: ColorRect = null
 var current_dating_candidate: Dictionary = {}
 
 
+func _setup_all_translucent_scrollbars() -> void:
+	# Configure root theme so all existing and future VScrollBar/HScrollBar nodes inherit translucent styling
+	var t: Theme = theme
+	if t == null:
+		t = Theme.new()
+		theme = t
+
+	var grabber := StyleBoxFlat.new()
+	grabber.bg_color = Color(0.45, 0.75, 1.0, 0.18) # 18% opacity soft translucent glass
+	grabber.set_corner_radius_all(4)
+	grabber.content_margin_left = 2
+	grabber.content_margin_right = 2
+	grabber.content_margin_top = 4
+	grabber.content_margin_bottom = 4
+
+	var grabber_hl := StyleBoxFlat.new()
+	grabber_hl.bg_color = Color(0.50, 0.85, 1.0, 0.40) # 40% opacity on hover
+	grabber_hl.set_corner_radius_all(4)
+	grabber_hl.content_margin_left = 2
+	grabber_hl.content_margin_right = 2
+	grabber_hl.content_margin_top = 4
+	grabber_hl.content_margin_bottom = 4
+
+	var grabber_pressed := StyleBoxFlat.new()
+	grabber_pressed.bg_color = Color(0.30, 0.85, 1.0, 0.70) # 70% opacity when dragging
+	grabber_pressed.set_corner_radius_all(4)
+	grabber_pressed.content_margin_left = 2
+	grabber_pressed.content_margin_right = 2
+	grabber_pressed.content_margin_top = 4
+	grabber_pressed.content_margin_bottom = 4
+
+	var track := StyleBoxEmpty.new()
+
+	t.set_stylebox("grabber", "VScrollBar", grabber)
+	t.set_stylebox("grabber_highlight", "VScrollBar", grabber_hl)
+	t.set_stylebox("grabber_pressed", "VScrollBar", grabber_pressed)
+	t.set_stylebox("scroll", "VScrollBar", track)
+	t.set_stylebox("scroll_focus", "VScrollBar", track)
+
+	t.set_stylebox("grabber", "HScrollBar", grabber)
+	t.set_stylebox("grabber_highlight", "HScrollBar", grabber_hl)
+	t.set_stylebox("grabber_pressed", "HScrollBar", grabber_pressed)
+	t.set_stylebox("scroll", "HScrollBar", track)
+	t.set_stylebox("scroll_focus", "HScrollBar", track)
+
+	_apply_translucent_scrollbars_recursive(self)
+
+
+func _style_single_scrollbar(sb: ScrollBar) -> void:
+	if sb == null:
+		return
+
+	var grabber := StyleBoxFlat.new()
+	grabber.bg_color = Color(0.45, 0.75, 1.0, 0.18)
+	grabber.set_corner_radius_all(4)
+	grabber.content_margin_left = 2
+	grabber.content_margin_right = 2
+	grabber.content_margin_top = 4
+	grabber.content_margin_bottom = 4
+
+	var grabber_hl := StyleBoxFlat.new()
+	grabber_hl.bg_color = Color(0.50, 0.85, 1.0, 0.40)
+	grabber_hl.set_corner_radius_all(4)
+	grabber_hl.content_margin_left = 2
+	grabber_hl.content_margin_right = 2
+	grabber_hl.content_margin_top = 4
+	grabber_hl.content_margin_bottom = 4
+
+	var grabber_pressed := StyleBoxFlat.new()
+	grabber_pressed.bg_color = Color(0.30, 0.85, 1.0, 0.70)
+	grabber_pressed.set_corner_radius_all(4)
+	grabber_pressed.content_margin_left = 2
+	grabber_pressed.content_margin_right = 2
+	grabber_pressed.content_margin_top = 4
+	grabber_pressed.content_margin_bottom = 4
+
+	var track := StyleBoxEmpty.new()
+
+	sb.add_theme_stylebox_override("grabber", grabber)
+	sb.add_theme_stylebox_override("grabber_highlight", grabber_hl)
+	sb.add_theme_stylebox_override("grabber_pressed", grabber_pressed)
+	sb.add_theme_stylebox_override("scroll", track)
+	sb.add_theme_stylebox_override("scroll_focus", track)
+
+	if sb is VScrollBar:
+		sb.custom_minimum_size.x = 8
+	elif sb is HScrollBar:
+		sb.custom_minimum_size.y = 8
+
+
+func _apply_translucent_scrollbar_to_node(control: Control) -> void:
+	if control == null:
+		return
+	if control is ScrollContainer:
+		var sc := control as ScrollContainer
+		_style_single_scrollbar(sc.get_v_scroll_bar())
+		_style_single_scrollbar(sc.get_h_scroll_bar())
+	elif control is RichTextLabel:
+		var rtl := control as RichTextLabel
+		_style_single_scrollbar(rtl.get_v_scroll_bar())
+
+
+func _apply_translucent_scrollbars_recursive(node: Node) -> void:
+	if node is ScrollContainer or node is RichTextLabel:
+		_apply_translucent_scrollbar_to_node(node as Control)
+	for child in node.get_children():
+		_apply_translucent_scrollbars_recursive(child)
+
+
 func _create_cyber_modal(title_text: String, subtitle_text: String, border_color: Color) -> Dictionary:
 	var overlay := ColorRect.new()
 	overlay.color = Color(0.012, 0.035, 0.07, 0.88)
@@ -3767,15 +3917,16 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	overlay.add_child(center)
 
 	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(920, 1180)
+	# ENLARGED ACTIVITY MODAL SIZE: 1020x1680 (Expansive, luxurious layout for 1080x1920 mobile portrait)
+	card.custom_minimum_size = Vector2(1020, 1680)
 	card.mouse_filter = Control.MOUSE_FILTER_STOP
 	var card_style := StyleBoxFlat.new()
 	card_style.bg_color = Color("#090f1d")
 	card_style.border_color = border_color
 	card_style.set_border_width_all(3)
-	card_style.set_corner_radius_all(12)
+	card_style.set_corner_radius_all(14)
 	card_style.shadow_color = Color(0, 0, 0, 0.85)
-	card_style.shadow_size = 20
+	card_style.shadow_size = 24
 	card.add_theme_stylebox_override("panel", card_style)
 	center.add_child(card)
 
@@ -3786,10 +3937,10 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	)
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 36)
-	margin.add_theme_constant_override("margin_right", 36)
-	margin.add_theme_constant_override("margin_top", 32)
-	margin.add_theme_constant_override("margin_bottom", 32)
+	margin.add_theme_constant_override("margin_left", 30)
+	margin.add_theme_constant_override("margin_right", 30)
+	margin.add_theme_constant_override("margin_top", 28)
+	margin.add_theme_constant_override("margin_bottom", 28)
 	card.add_child(margin)
 
 	var main_vbox := VBoxContainer.new()
@@ -3833,13 +3984,14 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_apply_translucent_scrollbar_to_node(scroll)
 	main_vbox.add_child(scroll)
 
 	var scroll_margin := MarginContainer.new()
 	scroll_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll_margin.add_theme_constant_override("margin_left", 4)
-	scroll_margin.add_theme_constant_override("margin_right", 28)
+	scroll_margin.add_theme_constant_override("margin_right", 18)
 	scroll_margin.add_theme_constant_override("margin_top", 4)
 	scroll_margin.add_theme_constant_override("margin_bottom", 24)
 	scroll.add_child(scroll_margin)
@@ -4984,7 +5136,7 @@ func _show_death_screen(cause: String) -> void:
 	death_screen_overlay.add_child(center)
 
 	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(920, 1180)
+	card.custom_minimum_size = Vector2(1000, 1500)
 	var card_style := StyleBoxFlat.new()
 	card_style.bg_color = Color("#07050d")
 	card_style.border_color = Color("#f43f5e")
@@ -5223,7 +5375,7 @@ func _configure_creation() -> void:
 
 	# Card Styling: High-contrast Dark Cyber Card
 	var card := content.get_parent() as PanelContainer
-	card.custom_minimum_size = Vector2(860, 1140)
+	card.custom_minimum_size = Vector2(980, 1420)
 	var card_style := StyleBoxFlat.new()
 	card_style.bg_color = Color("#090f1d") # Rich dark cyber navy
 	card_style.border_color = Color("#38bdf8") # Radiant cyan border

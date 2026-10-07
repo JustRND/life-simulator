@@ -53,6 +53,7 @@ var university_major: String = ""
 var university_major_title: String = ""
 var university_degree: String = ""
 var university_tuition: int = 12000
+var degrees: Array = []
 var last_school_activity_age: int = -1
 var last_scholarship_applied_age: int = -1
 var last_ged_attempt_age: int = -1
@@ -152,6 +153,7 @@ func reset_player() -> void:
 
 	event_history.clear()
 	life_log.clear()
+	degrees.clear()
 
 
 func is_doctor() -> bool:
@@ -206,8 +208,29 @@ func get_education_display_string() -> String:
 				return "Bachelor's Degree in %s" % university_major_title
 			else:
 				return "University Graduate (Bachelor's Degree)"
+		"University Dropout":
+			if degrees.size() > 0:
+				var last_deg: Dictionary = degrees[-1] if degrees[-1] is Dictionary else {}
+				var d_title: String = str(last_deg.get("degree", "Degree"))
+				var m_title: String = str(last_deg.get("major_title", "Major"))
+				return "%s in %s (University Dropout)" % [d_title, m_title]
+			return "University Dropout (College Leaver)"
 		_:
 			return education_level
+
+
+func has_major(major_id: String) -> bool:
+	var m := major_id.to_lower()
+	if university_major.to_lower() == m:
+		return true
+	for deg in degrees:
+		if deg is Dictionary and str(deg.get("major", "")).to_lower() == m:
+			return true
+	return false
+
+
+func has_completed_degree() -> bool:
+	return education_level == "University Graduate" or degrees.size() > 0
 
 
 func get_net_worth() -> int:
