@@ -381,13 +381,13 @@ theme_override_font_sizes/font_size = 28
 text = "🍼 Infant"
 
 [node name="BalanceLabel" type="Label" parent="ProfileStrip/ProfileMargin/ProfileRow" unique_id=1720170167]
-custom_minimum_size = Vector2(240, 110)
+custom_minimum_size = Vector2(250, 96)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.255, 0.839, 0.424, 1)
-theme_override_font_sizes/font_size = 28
-text = "$0
-Bank balance"
-horizontal_alignment = 2
+theme_override_font_sizes/font_size = 24
+text = "💳 $0
+FUNDS"
+horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="SafeArea" type="Control" parent="." unique_id=1948948979]

@@ -229,6 +229,30 @@ func _configure_ui() -> void:
 	if disclaimer_card != null:
 		disclaimer_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#00f0ff")))
 
+	if balance_label != null:
+		var bal_sb := StyleBoxFlat.new()
+		bal_sb.bg_color = Color(0.035, 0.08, 0.16, 0.95)
+		bal_sb.border_color = Color("#10b981")
+		bal_sb.border_width_left = 2
+		bal_sb.border_width_top = 2
+		bal_sb.border_width_right = 2
+		bal_sb.border_width_bottom = 2
+		bal_sb.corner_radius_top_left = 12
+		bal_sb.corner_radius_top_right = 12
+		bal_sb.corner_radius_bottom_right = 12
+		bal_sb.corner_radius_bottom_left = 12
+		bal_sb.content_margin_left = 18
+		bal_sb.content_margin_right = 18
+		bal_sb.content_margin_top = 8
+		bal_sb.content_margin_bottom = 8
+		bal_sb.shadow_color = Color(0.06, 0.72, 0.51, 0.25)
+		bal_sb.shadow_size = 8
+		balance_label.add_theme_stylebox_override("normal", bal_sb)
+		balance_label.add_theme_color_override("font_color", Color("#34d399"))
+		balance_label.add_theme_font_size_override("font_size", 24)
+		balance_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		balance_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+
 	life_feed.scroll_following = true
 	life_feed.get_v_scroll_bar().changed.connect(_scroll_after_layout)
 	name_label.add_theme_font_size_override("font_size", 40)
@@ -931,7 +955,7 @@ func update_ui() -> void:
 	_update_portrait()
 	name_label.text = PlayerData.first_name
 	phase_label.text = "%s %s" % [PlayerData.get_stage_icon(), PlayerData.get_stage_name()]
-	balance_label.text = "$%s\nFunds" % _format_number(PlayerData.money + PlayerData.bank_savings)
+	balance_label.text = "💳 $%s\nFUNDS" % _format_number(PlayerData.money + PlayerData.bank_savings)
 
 	if nationality_flag != null and PlayerData.birthplace != "":
 		nationality_flag.texture = CreationOptions.get_flag_for_country(PlayerData.birthplace)
@@ -1850,14 +1874,6 @@ func _render_assets_list() -> void:
 	btn_props.custom_minimum_size.y = 56
 	btn_props.add_theme_font_size_override("font_size", 22)
 	sgrid.add_child(btn_props)
-
-	# Dealership Button 4: Commercial Businesses & Enterprise Founders
-	var btn_biz := _create_cyber_button("🏢 Cyber Enterprises (Business Acquisitions & Startups)", Color("#f59e0b"), func():
-		_show_business_modal()
-	)
-	btn_biz.custom_minimum_size.y = 56
-	btn_biz.add_theme_font_size_override("font_size", 22)
-	sgrid.add_child(btn_biz)
 
 	assets_list.add_child(store_card)
 
@@ -4441,6 +4457,7 @@ func _show_licensing_modal() -> void:
 		var title_lbl := Label.new()
 		title_lbl.text = "%s %s" % [lic_icon, lic_name]
 		title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		title_lbl.add_theme_font_size_override("font_size", 24)
 		title_lbl.add_theme_color_override("font_color", Color("#ffffff"))
 		header_row.add_child(title_lbl)
@@ -4454,6 +4471,7 @@ func _show_licensing_modal() -> void:
 
 		var meta_lbl := Label.new()
 		meta_lbl.text = "Min Age: %d+  •  Authorizes: %s" % [min_age, unlocked]
+		meta_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		meta_lbl.add_theme_font_size_override("font_size", 21)
 		meta_lbl.add_theme_color_override("font_color", Color("#a5f3fc"))
 		cv.add_child(meta_lbl)
@@ -4498,7 +4516,7 @@ func _show_licensing_modal() -> void:
 				btn_take.add_theme_font_size_override("font_size", 22)
 				cv.add_child(btn_take)
 			else:
-				var lk_btn := _create_disabled_cyber_button("🔒 %s" % str(eval.get("reason", "Ineligible")), str(eval.get("reason", "")))
+				var lk_btn := _create_disabled_cyber_button(str(eval.get("reason", "Ineligible to take qualification exam.")))
 				lk_btn.custom_minimum_size.y = 52
 				lk_btn.add_theme_font_size_override("font_size", 20)
 				cv.add_child(lk_btn)
@@ -4580,6 +4598,7 @@ func _show_freelance_modal() -> void:
 		var title_lbl := Label.new()
 		title_lbl.text = "%s %s" % [j_icon, j_title]
 		title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		title_lbl.add_theme_font_size_override("font_size", 24)
 		title_lbl.add_theme_color_override("font_color", Color("#ffffff"))
 		top_row.add_child(title_lbl)
@@ -4593,6 +4612,7 @@ func _show_freelance_modal() -> void:
 
 		var lic_lbl := Label.new()
 		lic_lbl.text = "Required Credential: %s (%s)" % [lic_title, "✓ Certified" if has_license else "❌ Not Certified"]
+		lic_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		lic_lbl.add_theme_font_size_override("font_size", 21)
 		lic_lbl.add_theme_color_override("font_color", Color("#a7f3d0") if has_license else Color("#fca5a5"))
 		cv.add_child(lic_lbl)
@@ -4666,7 +4686,7 @@ func _show_freelance_modal() -> void:
 			reg_btn.add_theme_font_size_override("font_size", 22)
 			cv.add_child(reg_btn)
 		else:
-			var lk_btn := _create_disabled_cyber_button("🔒 Requires %s" % lic_title, "You must take the qualification exam in the Licensing Panel first.")
+			var lk_btn := _create_disabled_cyber_button("Requires %s" % lic_title, "You must take the qualification exam in the Licensing Panel first.")
 			lk_btn.custom_minimum_size.y = 52
 			lk_btn.add_theme_font_size_override("font_size", 20)
 			cv.add_child(lk_btn)
@@ -4691,9 +4711,10 @@ func _show_business_modal(initial_tab: String = "", selected_uid: String = "") -
 	if tab == "":
 		tab = "enterprises" if PlayerData.owned_businesses.size() > 0 else "incorporate"
 
-	# Top Tab Bar
+	# Top Tab Bar (Pinned above scroll container)
 	var tab_bar := HBoxContainer.new()
 	tab_bar.add_theme_constant_override("separation", 10)
+	tab_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var btn_tab_ent := _create_cyber_button("📊 My Enterprises (%d)" % PlayerData.owned_businesses.size(), Color("#f59e0b") if tab == "enterprises" else Color("#475569"), func():
 		_show_business_modal("enterprises", selected_uid)
@@ -4701,6 +4722,7 @@ func _show_business_modal(initial_tab: String = "", selected_uid: String = "") -
 	btn_tab_ent.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	btn_tab_ent.custom_minimum_size.y = 50
 	btn_tab_ent.add_theme_font_size_override("font_size", 21)
+	btn_tab_ent.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	tab_bar.add_child(btn_tab_ent)
 
 	var btn_tab_inc := _create_cyber_button("🚀 Incorporate (16 Types)", Color("#f59e0b") if tab == "incorporate" else Color("#475569"), func():
@@ -4709,18 +4731,21 @@ func _show_business_modal(initial_tab: String = "", selected_uid: String = "") -
 	btn_tab_inc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	btn_tab_inc.custom_minimum_size.y = 50
 	btn_tab_inc.add_theme_font_size_override("font_size", 21)
+	btn_tab_inc.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	tab_bar.add_child(btn_tab_inc)
 
 	if not PlayerData.owned_businesses.is_empty():
-		var btn_tab_fin := _create_cyber_button("💰 Corporate Financials & Loans", Color("#f59e0b") if tab == "financials" else Color("#475569"), func():
+		var btn_tab_fin := _create_cyber_button("💰 Financials & Loans", Color("#f59e0b") if tab == "financials" else Color("#475569"), func():
 			_show_business_modal("financials", selected_uid)
 		)
 		btn_tab_fin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn_tab_fin.custom_minimum_size.y = 50
 		btn_tab_fin.add_theme_font_size_override("font_size", 21)
+		btn_tab_fin.alignment = HORIZONTAL_ALIGNMENT_CENTER
 		tab_bar.add_child(btn_tab_fin)
 
-	list.add_child(tab_bar)
+	modal.vbox.add_child(tab_bar)
+	modal.vbox.move_child(tab_bar, 2)
 
 	# Content based on tab
 	match tab:
@@ -4893,6 +4918,7 @@ func _render_business_tab_incorporate(list: VBoxContainer) -> void:
 
 	var ih := Label.new()
 	ih.text = "🏛️ 16 COMMERCIAL ENTERPRISE OPPORTUNITIES"
+	ih.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	ih.add_theme_font_size_override("font_size", 26)
 	ih.add_theme_color_override("font_color", Color("#fbbf24"))
 	iv.add_child(ih)
@@ -4942,6 +4968,7 @@ func _render_business_tab_incorporate(list: VBoxContainer) -> void:
 		var title_lbl := Label.new()
 		title_lbl.text = "%s %s" % [b_icon, b_name]
 		title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		title_lbl.add_theme_font_size_override("font_size", 24)
 		title_lbl.add_theme_color_override("font_color", Color("#ffffff"))
 		top_row.add_child(title_lbl)
@@ -4955,12 +4982,14 @@ func _render_business_tab_incorporate(list: VBoxContainer) -> void:
 
 		var deg_lbl := Label.new()
 		deg_lbl.text = "Required Degree: Bachelor of %s (%s)" % [deg_title, "✓ Completed" if has_degree else "❌ Degree Missing"]
+		deg_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		deg_lbl.add_theme_font_size_override("font_size", 21)
 		deg_lbl.add_theme_color_override("font_color", Color("#a7f3d0") if has_degree else Color("#fca5a5"))
 		cv.add_child(deg_lbl)
 
 		var proj_lbl := Label.new()
 		proj_lbl.text = "Projected Revenue: $%s - $%s/yr  •  Base OpEx: $%s/yr" % [_format_number(rev_min), _format_number(rev_max), _format_number(opex)]
+		proj_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		proj_lbl.add_theme_font_size_override("font_size", 21)
 		proj_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
 		cv.add_child(proj_lbl)
@@ -4975,11 +5004,46 @@ func _render_business_tab_incorporate(list: VBoxContainer) -> void:
 		if has_degree:
 			var total_funds: int = PlayerData.money + PlayerData.bank_savings
 			if total_funds >= cost:
-				var btn_found := _create_cyber_button("🚀 Incorporate %s for $%s" % [b_name, _format_number(cost)], Color("#f59e0b"), func():
-					var res := BusinessManager.found_business(b_id)
+				var name_box := VBoxContainer.new()
+				name_box.add_theme_constant_override("separation", 6)
+
+				var name_lbl := Label.new()
+				name_lbl.text = "Business / Trade Name:"
+				name_lbl.add_theme_font_size_override("font_size", 20)
+				name_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
+				name_box.add_child(name_lbl)
+
+				var name_edit := LineEdit.new()
+				name_edit.text = b_name
+				name_edit.placeholder_text = "Enter custom business name..."
+				name_edit.custom_minimum_size.y = 48
+				name_edit.add_theme_font_size_override("font_size", 21)
+				name_edit.add_theme_color_override("font_color", Color("#ffffff"))
+				name_edit.add_theme_color_override("placeholder_color", Color("#64748b"))
+
+				var edit_sb := StyleBoxFlat.new()
+				edit_sb.bg_color = Color("#071022")
+				edit_sb.border_color = Color("#f59e0b")
+				edit_sb.set_border_width_all(2)
+				edit_sb.set_corner_radius_all(8)
+				edit_sb.content_margin_left = 16
+				edit_sb.content_margin_right = 16
+				edit_sb.content_margin_top = 8
+				edit_sb.content_margin_bottom = 8
+				name_edit.add_theme_stylebox_override("normal", edit_sb)
+				name_edit.add_theme_stylebox_override("focus", edit_sb)
+				name_box.add_child(name_edit)
+				cv.add_child(name_box)
+
+				var btn_found := _create_cyber_button("🚀 Incorporate Enterprise ($%s Capital)" % _format_number(cost), Color("#f59e0b"), func():
+					var custom_name := name_edit.text.strip_edges()
+					if custom_name.is_empty():
+						custom_name = b_name
+					var res := BusinessManager.found_business(b_id, custom_name)
 					if bool(res.get("allowed", false)):
 						var b_data: Dictionary = res.get("business", {})
-						_show_simple_popup("🚀 ENTERPRISE INCORPORATED", "Congratulations! '%s' has been registered and certified. Business treasury seeded with $10,000 working capital." % b_name, Color("#10b981"))
+						var registered_name: String = str(b_data.get("name", custom_name))
+						_show_simple_popup("🚀 ENTERPRISE INCORPORATED", "Congratulations! '%s' has been officially incorporated and registered.\n\nBusiness treasury seeded with $10,000 working capital." % registered_name, Color("#10b981"))
 						update_ui()
 						SaveManager.save_game()
 						_show_business_modal("financials", str(b_data.get("uid", "")))
@@ -4990,12 +5054,12 @@ func _render_business_tab_incorporate(list: VBoxContainer) -> void:
 				btn_found.add_theme_font_size_override("font_size", 22)
 				cv.add_child(btn_found)
 			else:
-				var lk_funds := _create_disabled_cyber_button("🔒 Insufficient Funds ($%s Required • You have $%s)" % [_format_number(cost), _format_number(total_funds)], "Deposit or save more cash to meet startup incorporation requirements.")
+				var lk_funds := _create_disabled_cyber_button("Insufficient Funds ($%s Required • You have $%s)" % [_format_number(cost), _format_number(total_funds)], "Deposit or save more cash to meet startup incorporation requirements.")
 				lk_funds.custom_minimum_size.y = 52
 				lk_funds.add_theme_font_size_override("font_size", 20)
 				cv.add_child(lk_funds)
 		else:
-			var lk_deg := _create_disabled_cyber_button("🔒 Requires Degree: Bachelor in %s" % deg_title, "You must complete a full 4-year degree at university first.")
+			var lk_deg := _create_disabled_cyber_button("Requires Degree: Bachelor in %s" % deg_title, "You must complete a full 4-year degree at university first.")
 			lk_deg.custom_minimum_size.y = 52
 			lk_deg.add_theme_font_size_override("font_size", 20)
 			cv.add_child(lk_deg)
@@ -5340,9 +5404,6 @@ func _render_business_tab_financials(list: VBoxContainer, selected_uid: String) 
 # ASSET PANEL OWNED BUSINESSES SECTION
 # -----------------------------------------------------------------------------
 func _render_owned_businesses_section() -> void:
-	if PlayerData.owned_businesses.is_empty():
-		return
-
 	var section_card := PanelContainer.new()
 	section_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
 	var sm := MarginContainer.new()
@@ -5357,49 +5418,66 @@ func _render_owned_businesses_section() -> void:
 	sm.add_child(sv)
 
 	var stitle := Label.new()
-	stitle.text = "🏢 OWNED COMMERCIAL ENTERPRISES (%d)" % PlayerData.owned_businesses.size()
+	stitle.text = "🏢 COMMERCIAL ENTERPRISES & BUSINESSES (%d)" % PlayerData.owned_businesses.size()
 	stitle.add_theme_font_size_override("font_size", 24)
 	stitle.add_theme_color_override("font_color", Color("#fbbf24"))
 	sv.add_child(stitle)
 
-	for b in PlayerData.owned_businesses:
-		var card := PanelContainer.new()
-		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#d97706")))
-		var cm := MarginContainer.new()
-		cm.add_theme_constant_override("margin_left", 16)
-		cm.add_theme_constant_override("margin_right", 16)
-		cm.add_theme_constant_override("margin_top", 14)
-		cm.add_theme_constant_override("margin_bottom", 14)
-		card.add_child(cm)
+	# Dedicated business button located directly below owned real estate
+	var btn_biz := _create_cyber_button("🏢 Cyber Enterprises (Business Acquisitions & Startups)", Color("#f59e0b"), func():
+		_show_business_modal()
+	)
+	btn_biz.custom_minimum_size.y = 56
+	btn_biz.add_theme_font_size_override("font_size", 22)
+	sv.add_child(btn_biz)
 
-		var cv := VBoxContainer.new()
-		cv.add_theme_constant_override("separation", 8)
-		cm.add_child(cv)
+	if PlayerData.owned_businesses.is_empty():
+		var empty_lbl := Label.new()
+		empty_lbl.text = "You do not currently own any commercial enterprises. Click the button above to explore business incorporation opportunities!"
+		empty_lbl.add_theme_font_size_override("font_size", 20)
+		empty_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
+		empty_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		sv.add_child(empty_lbl)
+	else:
+		for b in PlayerData.owned_businesses:
+			var card := PanelContainer.new()
+			card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#d97706")))
+			var cm := MarginContainer.new()
+			cm.add_theme_constant_override("margin_left", 16)
+			cm.add_theme_constant_override("margin_right", 16)
+			cm.add_theme_constant_override("margin_top", 14)
+			cm.add_theme_constant_override("margin_bottom", 14)
+			card.add_child(cm)
 
-		var name_lbl := Label.new()
-		name_lbl.text = "%s %s" % [str(b.get("icon", "🏢")), str(b.get("name", "Business"))]
-		name_lbl.add_theme_font_size_override("font_size", 24)
-		name_lbl.add_theme_color_override("font_color", Color("#ffffff"))
-		cv.add_child(name_lbl)
+			var cv := VBoxContainer.new()
+			cv.add_theme_constant_override("separation", 8)
+			cm.add_child(cv)
 
-		var val_lbl := Label.new()
-		val_lbl.text = "Valuation: $%s  •  Treasury: $%s  •  Staff: %d" % [
-			_format_number(int(b.get("valuation", 0))),
-			_format_number(int(b.get("treasury", 0))),
-			int(b.get("employees", 4))
-		]
-		val_lbl.add_theme_font_size_override("font_size", 20)
-		val_lbl.add_theme_color_override("font_color", Color("#fde68a"))
-		cv.add_child(val_lbl)
+			var name_lbl := Label.new()
+			name_lbl.text = "%s %s" % [str(b.get("icon", "🏢")), str(b.get("name", "Business"))]
+			name_lbl.add_theme_font_size_override("font_size", 24)
+			name_lbl.add_theme_color_override("font_color", Color("#ffffff"))
+			name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			cv.add_child(name_lbl)
 
-		var btn_manage := _create_cyber_button("💰 Open Financials & Operations", Color("#f59e0b"), func():
-			_show_business_modal("financials", str(b.get("uid", "")))
-		)
-		btn_manage.custom_minimum_size.y = 48
-		btn_manage.add_theme_font_size_override("font_size", 20)
-		cv.add_child(btn_manage)
+			var val_lbl := Label.new()
+			val_lbl.text = "Valuation: $%s  •  Treasury: $%s  •  Staff: %d" % [
+				_format_number(int(b.get("valuation", 0))),
+				_format_number(int(b.get("treasury", 0))),
+				int(b.get("employees", 4))
+			]
+			val_lbl.add_theme_font_size_override("font_size", 20)
+			val_lbl.add_theme_color_override("font_color", Color("#fde68a"))
+			cv.add_child(val_lbl)
 
-		sv.add_child(card)
+			var btn_manage := _create_cyber_button("💰 Open Financials & Operations", Color("#f59e0b"), func():
+				_show_business_modal("financials", str(b.get("uid", "")))
+			)
+			btn_manage.custom_minimum_size.y = 48
+			btn_manage.add_theme_font_size_override("font_size", 20)
+			cv.add_child(btn_manage)
+
+			sv.add_child(card)
 
 	assets_list.add_child(section_card)
 
@@ -6823,17 +6901,25 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(overlay)
 
-	var center := CenterContainer.new()
-	center.anchors_preset = Control.PRESET_FULL_RECT
-	center.anchor_right = 1.0
-	center.anchor_bottom = 1.0
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	overlay.add_child(center)
+	# Responsive outer margin container to prevent clipping against any viewport bounds
+	var margin_outer := MarginContainer.new()
+	margin_outer.anchors_preset = Control.PRESET_FULL_RECT
+	margin_outer.anchor_right = 1.0
+	margin_outer.anchor_bottom = 1.0
+	margin_outer.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	margin_outer.grow_vertical = Control.GROW_DIRECTION_BOTH
+	margin_outer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin_outer.add_theme_constant_override("margin_left", 28)
+	margin_outer.add_theme_constant_override("margin_right", 28)
+	margin_outer.add_theme_constant_override("margin_top", 44)
+	margin_outer.add_theme_constant_override("margin_bottom", 44)
+	overlay.add_child(margin_outer)
 
 	var card := PanelContainer.new()
-	# ENLARGED ACTIVITY MODAL SIZE: 1020x1680 (Expansive, luxurious layout for 1080x1920 mobile portrait)
-	card.custom_minimum_size = Vector2(1020, 1680)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	card.mouse_filter = Control.MOUSE_FILTER_STOP
+	card.clip_contents = true
 	var card_style := StyleBoxFlat.new()
 	card_style.bg_color = Color("#090f1d")
 	card_style.border_color = border_color
@@ -6842,7 +6928,7 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	card_style.shadow_color = Color(0, 0, 0, 0.85)
 	card_style.shadow_size = 24
 	card.add_theme_stylebox_override("panel", card_style)
-	center.add_child(card)
+	margin_outer.add_child(card)
 
 	# Click outside card on dim backdrop to close
 	overlay.gui_input.connect(func(event: InputEvent):
@@ -6851,25 +6937,31 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	)
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 30)
-	margin.add_theme_constant_override("margin_right", 30)
-	margin.add_theme_constant_override("margin_top", 28)
-	margin.add_theme_constant_override("margin_bottom", 28)
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	margin.add_theme_constant_override("margin_left", 28)
+	margin.add_theme_constant_override("margin_right", 28)
+	margin.add_theme_constant_override("margin_top", 24)
+	margin.add_theme_constant_override("margin_bottom", 24)
 	card.add_child(margin)
 
 	var main_vbox := VBoxContainer.new()
-	main_vbox.add_theme_constant_override("separation", 22)
+	main_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	main_vbox.add_theme_constant_override("separation", 18)
 	margin.add_child(main_vbox)
 
 	# Header row
 	var header_row := HBoxContainer.new()
+	header_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	main_vbox.add_child(header_row)
 
 	var title_lbl := Label.new()
 	title_lbl.text = title_text
 	title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_lbl.add_theme_color_override("font_color", border_color)
-	title_lbl.add_theme_font_size_override("font_size", 36)
+	title_lbl.add_theme_font_size_override("font_size", 34)
+	title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	header_row.add_child(title_lbl)
 
 	var close_btn := Button.new()
@@ -6889,13 +6981,16 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 
 	var sub_lbl := Label.new()
 	sub_lbl.text = subtitle_text
+	sub_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sub_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
-	sub_lbl.add_theme_font_size_override("font_size", 24)
+	sub_lbl.add_theme_font_size_override("font_size", 22)
 	sub_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	main_vbox.add_child(sub_lbl)
 
 	var scroll := ScrollContainer.new()
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.clip_contents = true
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	_apply_translucent_scrollbar_to_node(scroll)
@@ -6905,14 +7000,14 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	scroll_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll_margin.add_theme_constant_override("margin_left", 4)
-	scroll_margin.add_theme_constant_override("margin_right", 18)
+	scroll_margin.add_theme_constant_override("margin_right", 16)
 	scroll_margin.add_theme_constant_override("margin_top", 4)
-	scroll_margin.add_theme_constant_override("margin_bottom", 24)
+	scroll_margin.add_theme_constant_override("margin_bottom", 20)
 	scroll.add_child(scroll_margin)
 
 	var content_list := VBoxContainer.new()
 	content_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	content_list.add_theme_constant_override("separation", 22)
+	content_list.add_theme_constant_override("separation", 20)
 	scroll_margin.add_child(content_list)
 
 	return {
@@ -6920,6 +7015,8 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 		"card": card,
 		"title": title_lbl,
 		"subtitle": sub_lbl,
+		"vbox": main_vbox,
+		"scroll": scroll,
 		"list": content_list,
 		"close_button": close_btn
 	}
@@ -6928,10 +7025,10 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callable) -> Button:
 	var btn := Button.new()
 	btn.text = btn_text
-	btn.custom_minimum_size.y = 104
+	btn.custom_minimum_size.y = 56
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	btn.add_theme_font_size_override("font_size", 25)
+	btn.add_theme_font_size_override("font_size", 23)
 	btn.add_theme_color_override("font_color", Color("#f8fafc"))
 	btn.add_theme_color_override("font_hover_color", Color("#ffffff"))
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -6941,10 +7038,10 @@ func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callabl
 	style.border_color = border_col
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(10)
-	style.content_margin_left = 24
-	style.content_margin_right = 24
-	style.content_margin_top = 18
-	style.content_margin_bottom = 18
+	style.content_margin_left = 20
+	style.content_margin_right = 20
+	style.content_margin_top = 14
+	style.content_margin_bottom = 14
 	btn.add_theme_stylebox_override("normal", style)
 
 	var hover := style.duplicate() as StyleBoxFlat
@@ -6956,25 +7053,37 @@ func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callabl
 	return btn
 
 
-func _create_disabled_cyber_button(btn_text: String, reason: String) -> Button:
+func _create_disabled_cyber_button(btn_text: String, reason: String = "") -> Button:
 	var btn := Button.new()
-	btn.text = "%s\n🔒 %s" % [btn_text, reason]
-	btn.custom_minimum_size.y = 104
+	var clean_btn := btn_text.strip_edges()
+	var clean_reason := reason.strip_edges()
+	while clean_btn.begins_with("🔒"):
+		clean_btn = clean_btn.substr(1).strip_edges()
+	while clean_reason.begins_with("🔒"):
+		clean_reason = clean_reason.substr(1).strip_edges()
+
+	if clean_reason == "" or clean_reason == clean_btn or clean_btn.contains(clean_reason):
+		btn.text = "🔒 %s" % clean_btn
+	else:
+		btn.text = "🔒 %s\n%s" % [clean_btn, clean_reason]
+
+	btn.custom_minimum_size.y = 52
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	btn.add_theme_font_size_override("font_size", 24)
+	btn.add_theme_font_size_override("font_size", 21)
 	btn.disabled = true
 	var lock_style := StyleBoxFlat.new()
 	lock_style.bg_color = Color("#0f172a")
 	lock_style.border_color = Color("#334155")
 	lock_style.set_border_width_all(2)
 	lock_style.set_corner_radius_all(10)
-	lock_style.content_margin_left = 24
-	lock_style.content_margin_right = 24
-	lock_style.content_margin_top = 18
-	lock_style.content_margin_bottom = 18
+	lock_style.content_margin_left = 20
+	lock_style.content_margin_right = 20
+	lock_style.content_margin_top = 14
+	lock_style.content_margin_bottom = 14
 	btn.add_theme_stylebox_override("disabled", lock_style)
-	btn.add_theme_color_override("font_color", Color("#64748b"))
+	btn.add_theme_color_override("font_color", Color("#94a3b8"))
+	btn.add_theme_color_override("font_disabled_color", Color("#94a3b8"))
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	return btn
 
