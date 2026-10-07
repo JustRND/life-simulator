@@ -37,6 +37,7 @@ var father_health: int = 80
 var partner: Dictionary = {}
 var ex_partners: Array = []
 var children: Array = []
+var pregnancy: Dictionary = {}
 var active_debuffs: Array = []
 var active_buffs: Array = []
 var last_parent_interact_age: int = -1
@@ -47,11 +48,38 @@ var last_father_spend_time_age: int = -1
 var last_father_compliment_age: int = -1
 var last_father_ask_money_age: int = -1
 var last_partner_interact_age: int = -1
+var last_partner_spend_time_age: int = -1
+var last_partner_compliment_age: int = -1
+var last_partner_gift_age: int = -1
+var last_partner_propose_age: int = -1
+var last_breakup_age: int = -1
+var last_baby_age: int = -1
+
+var last_mother_pay_meds_age: int = -1
+var last_father_pay_meds_age: int = -1
+var last_mother_doctor_checkup_age: int = -1
+var last_father_doctor_checkup_age: int = -1
+var last_mother_vitamin_shot_age: int = -1
+var last_father_vitamin_shot_age: int = -1
+
+var last_doctor_checkup_age: int = -1
+var last_doctor_vitamin_age: int = -1
+var last_plastic_surgery_age: int = -1
+var last_chemo_age: int = -1
+var last_therapy_age: int = -1
+var last_er_age: int = -1
+
+var last_prison_activity_age: int = -1
+var last_casino_age: int = -1
+var casino_plays_this_year: int = 0
+var last_overtime_age: int = -1
+var last_childhood_gig_age: int = -1
 
 var karma: int = 0
 var money: int = 0
 var bank_savings: int = 0
 var debt: int = 0
+var tax_debt: int = 0
 var loan_balance: int = 0
 var loan_interest_rate: float = 0.08
 
@@ -133,6 +161,32 @@ func reset_player() -> void:
 	last_father_compliment_age = -1
 	last_father_ask_money_age = -1
 	last_partner_interact_age = -1
+	last_partner_spend_time_age = -1
+	last_partner_compliment_age = -1
+	last_partner_gift_age = -1
+	last_partner_propose_age = -1
+	last_breakup_age = -1
+	last_baby_age = -1
+
+	last_mother_pay_meds_age = -1
+	last_father_pay_meds_age = -1
+	last_mother_doctor_checkup_age = -1
+	last_father_doctor_checkup_age = -1
+	last_mother_vitamin_shot_age = -1
+	last_father_vitamin_shot_age = -1
+
+	last_doctor_checkup_age = -1
+	last_doctor_vitamin_age = -1
+	last_plastic_surgery_age = -1
+	last_chemo_age = -1
+	last_therapy_age = -1
+	last_er_age = -1
+
+	last_prison_activity_age = -1
+	last_casino_age = -1
+	casino_plays_this_year = 0
+	last_overtime_age = -1
+	last_childhood_gig_age = -1
 
 	age = 0
 
@@ -145,6 +199,7 @@ func reset_player() -> void:
 	money = 0
 	bank_savings = 0
 	debt = 0
+	tax_debt = 0
 	loan_balance = 0
 
 	education_level = "None"
@@ -182,6 +237,7 @@ func reset_player() -> void:
 	life_log.clear()
 	degrees.clear()
 	children.clear()
+	pregnancy = {}
 	active_debuffs.clear()
 	active_buffs.clear()
 
@@ -301,7 +357,16 @@ func cure_illness(illness_id: String) -> bool:
 
 
 func get_total_debt() -> int:
-	return debt + loan_balance
+	return debt + tax_debt + loan_balance
+
+
+func pay_outstanding_tax() -> int:
+	if tax_debt <= 0 or money < tax_debt:
+		return 0
+	var paid := tax_debt
+	money -= paid
+	tax_debt = 0
+	return paid
 
 
 func get_stage_name() -> String:
@@ -580,6 +645,7 @@ func takeover_as_child(child: Dictionary, inherited_money: int) -> void:
 	money = maxi(0, inherited_money)
 	bank_savings = 0
 	debt = 0
+	tax_debt = 0
 	karma = 0
 
 	if prev_gender == "FEMALE":

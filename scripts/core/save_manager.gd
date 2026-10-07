@@ -36,6 +36,7 @@ func save_game() -> void:
 		"money": PlayerData.money,
 		"bank_savings": PlayerData.bank_savings,
 		"debt": PlayerData.debt,
+		"tax_debt": PlayerData.tax_debt,
 		"loan_balance": PlayerData.loan_balance,
 		"loan_interest_rate": PlayerData.loan_interest_rate,
 		"education_level": PlayerData.education_level,
@@ -70,6 +71,7 @@ func save_game() -> void:
 		"life_log": PlayerData.life_log,
 		"karma": PlayerData.karma,
 		"children": PlayerData.children,
+		"pregnancy": PlayerData.pregnancy,
 		"active_debuffs": PlayerData.active_debuffs,
 		"active_buffs": PlayerData.active_buffs,
 		"partner": PlayerData.partner,
@@ -81,7 +83,30 @@ func save_game() -> void:
 		"last_father_spend_time_age": PlayerData.last_father_spend_time_age,
 		"last_father_compliment_age": PlayerData.last_father_compliment_age,
 		"last_father_ask_money_age": PlayerData.last_father_ask_money_age,
-		"last_partner_interact_age": PlayerData.last_partner_interact_age
+		"last_partner_interact_age": PlayerData.last_partner_interact_age,
+		"last_partner_spend_time_age": PlayerData.last_partner_spend_time_age,
+		"last_partner_compliment_age": PlayerData.last_partner_compliment_age,
+		"last_partner_gift_age": PlayerData.last_partner_gift_age,
+		"last_partner_propose_age": PlayerData.last_partner_propose_age,
+		"last_breakup_age": PlayerData.last_breakup_age,
+		"last_baby_age": PlayerData.last_baby_age,
+		"last_mother_pay_meds_age": PlayerData.last_mother_pay_meds_age,
+		"last_father_pay_meds_age": PlayerData.last_father_pay_meds_age,
+		"last_mother_doctor_checkup_age": PlayerData.last_mother_doctor_checkup_age,
+		"last_father_doctor_checkup_age": PlayerData.last_father_doctor_checkup_age,
+		"last_mother_vitamin_shot_age": PlayerData.last_mother_vitamin_shot_age,
+		"last_father_vitamin_shot_age": PlayerData.last_father_vitamin_shot_age,
+		"last_doctor_checkup_age": PlayerData.last_doctor_checkup_age,
+		"last_doctor_vitamin_age": PlayerData.last_doctor_vitamin_age,
+		"last_plastic_surgery_age": PlayerData.last_plastic_surgery_age,
+		"last_chemo_age": PlayerData.last_chemo_age,
+		"last_therapy_age": PlayerData.last_therapy_age,
+		"last_er_age": PlayerData.last_er_age,
+		"last_prison_activity_age": PlayerData.last_prison_activity_age,
+		"last_casino_age": PlayerData.last_casino_age,
+		"casino_plays_this_year": PlayerData.casino_plays_this_year,
+		"last_overtime_age": PlayerData.last_overtime_age,
+		"last_childhood_gig_age": PlayerData.last_childhood_gig_age
 	}
 
 	var file := FileAccess.open(
@@ -156,6 +181,8 @@ func load_game() -> bool:
 	PlayerData.money = int(data.get("money", 0))
 	PlayerData.bank_savings = int(data.get("bank_savings", 0))
 	PlayerData.debt = int(data.get("debt", 0))
+	# Legacy mixed debt stays in general debt; do not invent an unpaid tax amount.
+	PlayerData.tax_debt = maxi(0, int(data.get("tax_debt", 0)))
 	PlayerData.loan_balance = int(data.get("loan_balance", 0))
 	PlayerData.loan_interest_rate = float(data.get("loan_interest_rate", 0.08))
 	PlayerData.education_level = str(data.get("education_level", "None"))
@@ -177,6 +204,7 @@ func load_game() -> bool:
 	PlayerData.last_meditation_activity_age = int(data.get("last_meditation_activity_age", -1))
 	PlayerData.karma = int(data.get("karma", 0))
 	PlayerData.children = Array(data.get("children", []))
+	PlayerData.pregnancy = Dictionary(data.get("pregnancy", {}))
 	PlayerData.active_debuffs = Array(data.get("active_debuffs", []))
 	PlayerData.active_buffs = Array(data.get("active_buffs", []))
 	PlayerData.enforce_buffs_and_debuffs()
@@ -192,6 +220,29 @@ func load_game() -> bool:
 	PlayerData.last_father_compliment_age = int(data.get("last_father_compliment_age", -1))
 	PlayerData.last_father_ask_money_age = int(data.get("last_father_ask_money_age", -1))
 	PlayerData.last_partner_interact_age = int(data.get("last_partner_interact_age", -1))
+	PlayerData.last_partner_spend_time_age = int(data.get("last_partner_spend_time_age", -1))
+	PlayerData.last_partner_compliment_age = int(data.get("last_partner_compliment_age", -1))
+	PlayerData.last_partner_gift_age = int(data.get("last_partner_gift_age", -1))
+	PlayerData.last_partner_propose_age = int(data.get("last_partner_propose_age", -1))
+	PlayerData.last_breakup_age = int(data.get("last_breakup_age", -1))
+	PlayerData.last_baby_age = int(data.get("last_baby_age", -1))
+	PlayerData.last_mother_pay_meds_age = int(data.get("last_mother_pay_meds_age", -1))
+	PlayerData.last_father_pay_meds_age = int(data.get("last_father_pay_meds_age", -1))
+	PlayerData.last_mother_doctor_checkup_age = int(data.get("last_mother_doctor_checkup_age", -1))
+	PlayerData.last_father_doctor_checkup_age = int(data.get("last_father_doctor_checkup_age", -1))
+	PlayerData.last_mother_vitamin_shot_age = int(data.get("last_mother_vitamin_shot_age", -1))
+	PlayerData.last_father_vitamin_shot_age = int(data.get("last_father_vitamin_shot_age", -1))
+	PlayerData.last_doctor_checkup_age = int(data.get("last_doctor_checkup_age", -1))
+	PlayerData.last_doctor_vitamin_age = int(data.get("last_doctor_vitamin_age", -1))
+	PlayerData.last_plastic_surgery_age = int(data.get("last_plastic_surgery_age", -1))
+	PlayerData.last_chemo_age = int(data.get("last_chemo_age", -1))
+	PlayerData.last_therapy_age = int(data.get("last_therapy_age", -1))
+	PlayerData.last_er_age = int(data.get("last_er_age", -1))
+	PlayerData.last_prison_activity_age = int(data.get("last_prison_activity_age", -1))
+	PlayerData.last_casino_age = int(data.get("last_casino_age", -1))
+	PlayerData.casino_plays_this_year = int(data.get("casino_plays_this_year", 0))
+	PlayerData.last_overtime_age = int(data.get("last_overtime_age", -1))
+	PlayerData.last_childhood_gig_age = int(data.get("last_childhood_gig_age", -1))
 
 	PlayerData.job_id = str(data.get("job_id", ""))
 	PlayerData.job_title = str(data.get("job_title", ""))

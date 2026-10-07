@@ -482,7 +482,7 @@ func age_up() -> void:
 				var unpaid_tax: int = tax_due - paid_tax
 				PlayerData.money = 0
 				PlayerData.bank_savings = 0
-				PlayerData.debt += unpaid_tax
+				PlayerData.tax_debt += unpaid_tax
 				add_life_event("⚠️ TAX AUDIT: You couldn't afford your annual income tax of $%s! The unpaid $%s has been added to your debt (Total Debt: $%s)." % [
 					_format_number(tax_due),
 					_format_number(unpaid_tax),
@@ -1801,9 +1801,9 @@ func update_bank_panel() -> void:
 	summary_vbox.add_child(loan_lbl)
 
 	var tax_lbl := Label.new()
-	tax_lbl.text = "• Unpaid Tax Debt: $%s" % _format_number(PlayerData.debt)
+	tax_lbl.text = "• Unpaid Tax: $%s\n• Other Outstanding Debt: $%s" % [_format_number(PlayerData.tax_debt), _format_number(PlayerData.debt)]
 	tax_lbl.add_theme_font_size_override("font_size", 24)
-	tax_lbl.add_theme_color_override("font_color", Color("#f87171") if PlayerData.debt > 0 else Color("#f8fafc"))
+	tax_lbl.add_theme_color_override("font_color", Color("#f87171") if PlayerData.tax_debt + PlayerData.debt > 0 else Color("#f8fafc"))
 	summary_vbox.add_child(tax_lbl)
 
 	var total_debt_lbl := Label.new()
@@ -1866,6 +1866,11 @@ func update_bank_panel() -> void:
 	repay_title.add_theme_font_size_override("font_size", 28)
 	repay_title.add_theme_color_override("font_color", Color("#22c55e"))
 	repay_vbox.add_child(repay_title)
+	var btn_pay_tax := _create_cyber_button("Pay Tax $%s" % _format_number(PlayerData.tax_debt), Color("#38bdf8"), _pay_tax)
+	btn_pay_tax.name = "PayTaxButton"
+	btn_pay_tax.disabled = PlayerData.tax_debt <= 0 or PlayerData.money < PlayerData.tax_debt
+	btn_pay_tax.tooltip_text = "Pay outstanding tax from cash. Withdraw savings first if needed."
+	repay_vbox.add_child(btn_pay_tax)
 
 	var btn_pay_1k := _create_cyber_button("Repay $1,000", Color("#22c55e"), func(): _repay_debt(1000))
 	btn_pay_1k.disabled = PlayerData.money < 1000 or PlayerData.get_total_debt() <= 0
@@ -1891,6 +1896,17 @@ func _borrow_loan(amount: int, interest_rate: float) -> void:
 	SaveManager.save_game()
 
 
+func _pay_tax() -> void:
+	var paid := PlayerData.pay_outstanding_tax()
+	if paid <= 0:
+		update_bank_panel()
+		return
+	add_life_event("You paid your outstanding tax of $%s." % _format_number(paid), "finance")
+	update_ui()
+	update_bank_panel()
+	SaveManager.save_game()
+
+
 func _repay_debt(amount: int) -> void:
 	var total_debt: int = PlayerData.get_total_debt()
 	if total_debt <= 0 or PlayerData.money <= 0:
@@ -1899,12 +1915,16 @@ func _repay_debt(amount: int) -> void:
 	var pay_amount: int = mini(amount, mini(PlayerData.money, total_debt))
 	PlayerData.money -= pay_amount
 
-	# Pay tax debt first, then loan balance
+	# Pay tax first, then other debt and loans; each balance is charged only once.
 	var remaining_pay: int = pay_amount
-	if PlayerData.debt > 0:
-		var paid_tax: int = mini(remaining_pay, PlayerData.debt)
-		PlayerData.debt -= paid_tax
+	if PlayerData.tax_debt > 0:
+		var paid_tax: int = mini(remaining_pay, PlayerData.tax_debt)
+		PlayerData.tax_debt -= paid_tax
 		remaining_pay -= paid_tax
+	if PlayerData.debt > 0:
+		var paid_other: int = mini(remaining_pay, PlayerData.debt)
+		PlayerData.debt -= paid_other
+		remaining_pay -= paid_other
 
 	if remaining_pay > 0 and PlayerData.loan_balance > 0:
 		var paid_loan: int = mini(remaining_pay, PlayerData.loan_balance)
@@ -2018,6 +2038,21 @@ func _setup_parent_action_row(vbox: VBoxContainer, parent_type: String) -> void:
 			if is_mother and PlayerData.last_mother_ask_money_age == PlayerData.age:
 				is_used_this_year = true
 			elif not is_mother and PlayerData.last_father_ask_money_age == PlayerData.age:
+				is_used_this_year = true
+		elif act_key == "pay_medication":
+			if is_mother and PlayerData.last_mother_pay_meds_age == PlayerData.age:
+				is_used_this_year = true
+			elif not is_mother and PlayerData.last_father_pay_meds_age == PlayerData.age:
+				is_used_this_year = true
+		elif act_key == "doctor_checkup":
+			if is_mother and PlayerData.last_mother_doctor_checkup_age == PlayerData.age:
+				is_used_this_year = true
+			elif not is_mother and PlayerData.last_father_doctor_checkup_age == PlayerData.age:
+				is_used_this_year = true
+		elif act_key == "doctor_vitamin_shot":
+			if is_mother and PlayerData.last_mother_vitamin_shot_age == PlayerData.age:
+				is_used_this_year = true
+			elif not is_mother and PlayerData.last_father_vitamin_shot_age == PlayerData.age:
 				is_used_this_year = true
 
 		if is_used_this_year:
@@ -2134,7 +2169,16 @@ func _interact_parent(parent_type: String, action: String) -> void:
 				add_life_event("You asked your %s for money, but they lectured you about being responsible and gave you nothing." % role, "relationship")
 
 		"pay_medication":
+			var already_used_meds: bool = (is_mother and PlayerData.last_mother_pay_meds_age == PlayerData.age) or (not is_mother and PlayerData.last_father_pay_meds_age == PlayerData.age)
+			if already_used_meds:
+				add_life_event("⏳ You have already paid for your %s's medication this year. Available again next year!" % role, "relationship")
+				update_ui()
+				return
 			if PlayerData.money >= 800:
+				if is_mother:
+					PlayerData.last_mother_pay_meds_age = PlayerData.age
+				else:
+					PlayerData.last_father_pay_meds_age = PlayerData.age
 				PlayerData.money -= 800
 				var new_health: int = 0
 				if is_mother:
@@ -2151,6 +2195,15 @@ func _interact_parent(parent_type: String, action: String) -> void:
 				add_life_event("You didn't have enough money ($800 required) to pay for your %s's medication." % role, "relationship")
 
 		"doctor_checkup":
+			var already_used_checkup: bool = (is_mother and PlayerData.last_mother_doctor_checkup_age == PlayerData.age) or (not is_mother and PlayerData.last_father_doctor_checkup_age == PlayerData.age)
+			if already_used_checkup:
+				add_life_event("⏳ You have already given your %s a clinical examination this year. Available again next year!" % role, "relationship")
+				update_ui()
+				return
+			if is_mother:
+				PlayerData.last_mother_doctor_checkup_age = PlayerData.age
+			else:
+				PlayerData.last_father_doctor_checkup_age = PlayerData.age
 			var health_boost := 15
 			var rel_boost := 10
 			if is_mother:
@@ -2163,7 +2216,16 @@ func _interact_parent(parent_type: String, action: String) -> void:
 			add_life_event("Applying your medical doctor credentials, you gave your %s a thorough clinical examination. Their vitals improved (+%d%% Health)." % [role, health_boost], "relationship")
 
 		"doctor_vitamin_shot":
+			var already_used_shot: bool = (is_mother and PlayerData.last_mother_vitamin_shot_age == PlayerData.age) or (not is_mother and PlayerData.last_father_vitamin_shot_age == PlayerData.age)
+			if already_used_shot:
+				add_life_event("⏳ You have already administered a vitamin shot to your %s this year. Available again next year!" % role, "relationship")
+				update_ui()
+				return
 			if PlayerData.money >= 30:
+				if is_mother:
+					PlayerData.last_mother_vitamin_shot_age = PlayerData.age
+				else:
+					PlayerData.last_father_vitamin_shot_age = PlayerData.age
 				PlayerData.money -= 30
 				var health_boost := 10
 				var rel_boost := 6
@@ -2418,7 +2480,47 @@ func _setup_partner_card_ui() -> void:
 
 		for act in actions:
 			var btn := Button.new()
-			btn.text = act[0]
+			var act_key: String = act[1]
+			var is_locked := false
+			var lock_tooltip := ""
+			var button_title: String = act[0]
+
+			if act_key == "spend_time":
+				if PlayerData.last_partner_spend_time_age == PlayerData.age:
+					is_locked = true
+					button_title = "Spend Time (Used)"
+					lock_tooltip = "Already spent time with your partner this year. Available again next year."
+			elif act_key == "compliment":
+				if PlayerData.last_partner_compliment_age == PlayerData.age:
+					is_locked = true
+					button_title = "Compliment (Used)"
+					lock_tooltip = "Already gave a compliment this year. Available again next year."
+			elif act_key == "gift":
+				if PlayerData.last_partner_gift_age == PlayerData.age:
+					is_locked = true
+					button_title = "Gift ($150) (Used)"
+					lock_tooltip = "Already gave a gift to your partner this year. Available again next year."
+			elif act_key == "propose":
+				if PlayerData.last_partner_propose_age == PlayerData.age:
+					is_locked = true
+					button_title = "💍 Propose (Locked)"
+					lock_tooltip = "Already proposed this year. Available again next year."
+			elif act_key == "breakup":
+				if PlayerData.last_breakup_age == PlayerData.age:
+					is_locked = true
+					button_title = "💔 " + break_word + " (Locked)"
+					lock_tooltip = "Already broke up/divorced this year. Available again next year."
+			elif act_key == "have_baby":
+				if PlayerData.last_baby_age != -1 and (PlayerData.age - PlayerData.last_baby_age < 2):
+					var wait_years: int = 2 - (PlayerData.age - PlayerData.last_baby_age)
+					is_locked = true
+					button_title = "🍼 Have Baby (%d-Yr Wait)" % wait_years
+					lock_tooltip = "You can only try to have a baby once every 2 years. Wait %d more year(s)." % wait_years
+			elif act_key == "marry" and not RomanceRules.can_marry(PlayerData):
+				is_locked = true
+				lock_tooltip = "You must age up before marrying."
+
+			btn.text = button_title
 			btn.custom_minimum_size.y = 64
 			btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			btn.add_theme_font_size_override("font_size", 24)
@@ -2436,11 +2538,12 @@ func _setup_partner_card_ui() -> void:
 			btn.add_theme_stylebox_override("hover", hover)
 			btn.add_theme_color_override("font_color", Color("#f1f5f9"))
 
-			var act_key: String = act[1]
-			if act_key == "marry" and not RomanceRules.can_marry(PlayerData):
+			if is_locked:
 				btn.disabled = true
-				btn.tooltip_text = "You must age up before marrying."
-			btn.pressed.connect(func(): _interact_partner(act_key))
+				btn.modulate = Color(0.6, 0.6, 0.6, 0.65)
+				btn.tooltip_text = lock_tooltip
+			else:
+				btn.pressed.connect(func(): _interact_partner(act_key))
 			act_row.add_child(btn)
 
 		cv.add_child(act_row)
@@ -2561,9 +2664,16 @@ func _setup_children_cards_ui() -> void:
 		var act_row := HBoxContainer.new()
 		act_row.add_theme_constant_override("separation", 12)
 
-		var btn_spend := _create_cyber_button("Spend Time", Color("#0284c7"), func():
+		var child_spent: bool = int(c.get("last_spend_time_age", -1)) == PlayerData.age
+		var child_gifted: bool = int(c.get("last_gift_age", -1)) == PlayerData.age
+
+		var spend_text := "Spend Time (Used)" if child_spent else "Spend Time"
+		var btn_spend := _create_cyber_button(spend_text, Color("#0284c7"), func():
 			var idx = i
 			var cur_c: Dictionary = PlayerData.children[idx]
+			if int(cur_c.get("last_spend_time_age", -1)) == PlayerData.age:
+				return
+			cur_c["last_spend_time_age"] = PlayerData.age
 			cur_c["relationship"] = mini(100, int(cur_c.get("relationship", 80)) + randi_range(8, 14))
 			PlayerData.happiness = mini(100, PlayerData.happiness + randi_range(5, 8))
 			add_life_event("You spent heartwarming quality time with your child %s! Relationship +%d%%." % [cur_c.name, 10], "family")
@@ -2572,15 +2682,23 @@ func _setup_children_cards_ui() -> void:
 		)
 		btn_spend.custom_minimum_size.y = 54
 		btn_spend.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if child_spent:
+			btn_spend.disabled = true
+			btn_spend.modulate = Color(0.6, 0.6, 0.6, 0.65)
+			btn_spend.tooltip_text = "Already spent time with %s this year. Available again next year." % c_name
 		act_row.add_child(btn_spend)
 
-		var btn_gift := _create_cyber_button("Gift ($50)", Color("#10b981"), func():
+		var gift_text := "Gift ($50) (Used)" if child_gifted else "Gift ($50)"
+		var btn_gift := _create_cyber_button(gift_text, Color("#10b981"), func():
 			var idx = i
 			var cur_c: Dictionary = PlayerData.children[idx]
+			if int(cur_c.get("last_gift_age", -1)) == PlayerData.age:
+				return
 			if PlayerData.money < 50:
 				add_life_event("You cannot afford the $50 gift for your child %s." % cur_c.name, "finance")
 				show_tab("timeline")
 				return
+			cur_c["last_gift_age"] = PlayerData.age
 			PlayerData.money -= 50
 			cur_c["relationship"] = mini(100, int(cur_c.get("relationship", 80)) + randi_range(12, 18))
 			PlayerData.happiness = mini(100, PlayerData.happiness + 6)
@@ -2590,6 +2708,10 @@ func _setup_children_cards_ui() -> void:
 		)
 		btn_gift.custom_minimum_size.y = 54
 		btn_gift.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if child_gifted:
+			btn_gift.disabled = true
+			btn_gift.modulate = Color(0.6, 0.6, 0.6, 0.65)
+			btn_gift.tooltip_text = "Already gave a gift to %s this year. Available again next year." % c_name
 		act_row.add_child(btn_gift)
 
 		cv.add_child(act_row)
@@ -2605,6 +2727,11 @@ func _interact_partner(action: String) -> void:
 
 	match action:
 		"spend_time":
+			if PlayerData.last_partner_spend_time_age == PlayerData.age:
+				add_life_event("⏳ You have already spent quality time with %s this year. Available again next year!" % p_name, "relationship")
+				update_ui()
+				return
+			PlayerData.last_partner_spend_time_age = PlayerData.age
 			var rel_gain := randi_range(7, 12)
 			var happy_gain := randi_range(5, 9)
 			PlayerData.set_partner_relationship(p_rel + rel_gain)
@@ -2618,6 +2745,11 @@ func _interact_partner(action: String) -> void:
 			], "relationship")
 
 		"compliment":
+			if PlayerData.last_partner_compliment_age == PlayerData.age:
+				add_life_event("⏳ You have already complimented %s this year. Available again next year!" % p_name, "relationship")
+				update_ui()
+				return
+			PlayerData.last_partner_compliment_age = PlayerData.age
 			var rel_gain := randi_range(5, 8)
 			PlayerData.set_partner_relationship(p_rel + rel_gain)
 			PlayerData.happiness = mini(100, PlayerData.happiness + 3)
@@ -2629,10 +2761,15 @@ func _interact_partner(action: String) -> void:
 			], "relationship")
 
 		"gift":
+			if PlayerData.last_partner_gift_age == PlayerData.age:
+				add_life_event("⏳ You have already given %s a gift this year. Available again next year!" % p_name, "relationship")
+				update_ui()
+				return
 			if PlayerData.money < 150:
 				add_life_event("You cannot afford the $150 gift for %s." % p_name, "finance")
 				show_tab("timeline")
 				return
+			PlayerData.last_partner_gift_age = PlayerData.age
 			PlayerData.money -= 150
 			var rel_gain := randi_range(14, 18)
 			var happy_gain := 8
@@ -2647,6 +2784,10 @@ func _interact_partner(action: String) -> void:
 			], "relationship")
 
 		"propose":
+			if PlayerData.last_partner_propose_age == PlayerData.age:
+				add_life_event("💍 You have already proposed to %s this year. Give your relationship time before asking again next year!" % p_name, "relationship")
+				update_ui()
+				return
 			_show_proposal_modal()
 			return
 
@@ -2658,16 +2799,26 @@ func _interact_partner(action: String) -> void:
 			return
 
 		"breakup":
+			if PlayerData.last_breakup_age == PlayerData.age:
+				add_life_event("💔 You have already gone through a breakup/divorce this year.", "relationship")
+				update_ui()
+				return
 			_break_up_with_partner()
 			return
 
 		"have_baby":
+			if PlayerData.last_baby_age != -1 and (PlayerData.age - PlayerData.last_baby_age < 2):
+				var wait_years: int = 2 - (PlayerData.age - PlayerData.last_baby_age)
+				add_life_event("🍼 You must wait %d more year(s) before having another baby (2-year interval required)." % wait_years, "relationship")
+				update_ui()
+				return
 			if PlayerData.age < 18:
 				add_life_event("You are too young to start a family.", "relationship")
 				return
 			if p_rel < 50:
 				add_life_event("%s gently tells you they aren't ready to have a baby together yet. (Requires 50%+ Relationship)" % p_name, "relationship")
 				return
+			PlayerData.last_baby_age = PlayerData.age
 			var baby_female: bool = (randf() < 0.5)
 			var country_for_names: String = PlayerData.birthplace if PlayerData.birthplace != "" else "United States"
 			var raw_name: String = NameCatalog.random_name(country_for_names, baby_female)
@@ -2713,6 +2864,7 @@ func _show_proposal_modal() -> void:
 	total.add_theme_font_size_override("font_size", 26)
 	total.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var confirm := _create_cyber_button("Give gifts & propose", Color("#ec4899"), func():
+		PlayerData.last_partner_propose_age = PlayerData.age
 		var message := RomanceRules.propose(PlayerData, selected, randf())
 		_finish_romance_action(message)
 	)
@@ -2802,6 +2954,9 @@ func _show_postpone_modal() -> void:
 func _break_up_with_partner() -> void:
 	if not PlayerData.has_partner():
 		return
+	if PlayerData.last_breakup_age == PlayerData.age:
+		return
+	PlayerData.last_breakup_age = PlayerData.age
 	var p_name: String = PlayerData.get_partner_name()
 	var p_status: String = PlayerData.get_partner_status()
 
@@ -3076,6 +3231,12 @@ func _ask_out_dating_candidate(list: VBoxContainer) -> void:
 		_close_dating_app_modal()
 		return
 
+	if PlayerData.last_breakup_age == PlayerData.age:
+		add_life_event("💔 Heartbreak Cooldown: You went through a breakup/divorce this year. Take time to heal before dating someone new! Available again next year.", "relationship")
+		show_tab("timeline")
+		_close_dating_app_modal()
+		return
+
 	var cand: Dictionary = current_dating_candidate
 	var match_chance: int = 60 + int(PlayerData.looks * 0.25) + int(PlayerData.smarts * 0.15)
 	var roll := randi_range(1, 100)
@@ -3309,7 +3470,12 @@ func _show_jobs_modal() -> void:
 		cur_v.add_child(cur_desc)
 		cur_v.add_child(_create_cyber_button("View career ladder", Color("#38bdf8"), func(): _show_career_ladder()))
 
-		var btn_ot := _create_cyber_button("⏱️ Work Overtime\nPut in extra hours at %s. +$%s Bonus, -5 Happiness" % [PlayerData.job_company, _format_number(maxi(150, int(PlayerData.job_salary * 0.05)))], Color("#38bdf8"), func():
+		var ot_used: bool = PlayerData.last_overtime_age == PlayerData.age
+		var ot_text := "⏱️ Work Overtime (Used)\nAnnual overtime limit reached for Age %d. Age up to work extra hours next year." % PlayerData.age if ot_used else "⏱️ Work Overtime\nPut in extra hours at %s. +$%s Bonus, -5 Happiness" % [PlayerData.job_company, _format_number(maxi(150, int(PlayerData.job_salary * 0.05)))]
+		var btn_ot := _create_cyber_button(ot_text, Color("#38bdf8"), func():
+			if PlayerData.last_overtime_age == PlayerData.age:
+				return
+			PlayerData.last_overtime_age = PlayerData.age
 			var bonus := maxi(150, int(PlayerData.job_salary * 0.05))
 			PlayerData.money += bonus
 			PlayerData.happiness = maxi(5, PlayerData.happiness - 5)
@@ -3318,6 +3484,10 @@ func _show_jobs_modal() -> void:
 			SaveManager.save_game()
 			_show_jobs_modal()
 		)
+		if ot_used:
+			btn_ot.disabled = true
+			btn_ot.modulate = Color(0.6, 0.6, 0.6, 0.65)
+			btn_ot.tooltip_text = "Already worked overtime this year. Available again next year."
 		cur_v.add_child(btn_ot)
 
 		var btn_quit := _create_cyber_button("🚪 Resign / Quit Job", Color("#ef4444"), func():
@@ -3332,8 +3502,14 @@ func _show_jobs_modal() -> void:
 		cur_v.add_child(cur_title)
 		cur_v.add_child(cur_desc)
 
+		var gig_used: bool = PlayerData.last_childhood_gig_age == PlayerData.age
+
 		if PlayerData.age < 4:
-			var btn_toy := _create_cyber_button("🍼 Toy Cash Register & Play Coins\nPlay with pretend cash and count plastic coins. +2 Smarts, +4 Happiness", Color("#38bdf8"), func():
+			var toy_text := "🍼 Toy Cash Register & Play Coins (Used)" if gig_used else "🍼 Toy Cash Register & Play Coins\nPlay with pretend cash and count plastic coins. +2 Smarts, +4 Happiness"
+			var btn_toy := _create_cyber_button(toy_text, Color("#38bdf8"), func():
+				if PlayerData.last_childhood_gig_age == PlayerData.age:
+					return
+				PlayerData.last_childhood_gig_age = PlayerData.age
 				PlayerData.smarts = mini(100, PlayerData.smarts + 2)
 				PlayerData.happiness = mini(100, PlayerData.happiness + 4)
 				add_life_event("You had fun ringing up items on your toy cash register! 'Beep beep!' (+Smarts, +Happiness)", "activity")
@@ -3341,9 +3517,17 @@ func _show_jobs_modal() -> void:
 				SaveManager.save_game()
 				_show_jobs_modal()
 			)
+			if gig_used:
+				btn_toy.disabled = true
+				btn_toy.modulate = Color(0.6, 0.6, 0.6, 0.65)
+				btn_toy.tooltip_text = "Activity completed for Age %d (Age up to play again next year)." % PlayerData.age
 			cur_v.add_child(btn_toy)
 		elif PlayerData.age < 10:
-			var btn_chores := _create_cyber_button("🧹 Help Parents with Household Chores ($15 Cash)\nClean your room and organize the kitchen. +$15 Cash, +5 Parent Relationship, +3 Happiness", Color("#10b981"), func():
+			var chores_text := "🧹 Help Parents with Household Chores ($15 Cash) (Used)" if gig_used else "🧹 Help Parents with Household Chores ($15 Cash)\nClean your room and organize the kitchen. +$15 Cash, +5 Parent Relationship, +3 Happiness"
+			var btn_chores := _create_cyber_button(chores_text, Color("#10b981"), func():
+				if PlayerData.last_childhood_gig_age == PlayerData.age:
+					return
+				PlayerData.last_childhood_gig_age = PlayerData.age
 				PlayerData.money += 15
 				PlayerData.happiness = mini(100, PlayerData.happiness + 3)
 				if PlayerData.mother_relationship > 0:
@@ -3355,9 +3539,17 @@ func _show_jobs_modal() -> void:
 				SaveManager.save_game()
 				_show_jobs_modal()
 			)
+			if gig_used:
+				btn_chores.disabled = true
+				btn_chores.modulate = Color(0.6, 0.6, 0.6, 0.65)
+				btn_chores.tooltip_text = "Completed for Age %d (Age up to do chores next year)." % PlayerData.age
 			cur_v.add_child(btn_chores)
 
-			var btn_comics := _create_cyber_button("🎨 Draw & Sell Hand-Drawn Comics ($10 Cash)\nSketch mini comic strips and sell them to school friends. +$10 Cash, +3 Smarts, +4 Happiness", Color("#f59e0b"), func():
+			var comics_text := "🎨 Draw & Sell Hand-Drawn Comics ($10 Cash) (Used)" if gig_used else "🎨 Draw & Sell Hand-Drawn Comics ($10 Cash)\nSketch mini comic strips and sell them to school friends. +$10 Cash, +3 Smarts, +4 Happiness"
+			var btn_comics := _create_cyber_button(comics_text, Color("#f59e0b"), func():
+				if PlayerData.last_childhood_gig_age == PlayerData.age:
+					return
+				PlayerData.last_childhood_gig_age = PlayerData.age
 				PlayerData.money += 10
 				PlayerData.smarts = mini(100, PlayerData.smarts + 3)
 				PlayerData.happiness = mini(100, PlayerData.happiness + 4)
@@ -3366,9 +3558,17 @@ func _show_jobs_modal() -> void:
 				SaveManager.save_game()
 				_show_jobs_modal()
 			)
+			if gig_used:
+				btn_comics.disabled = true
+				btn_comics.modulate = Color(0.6, 0.6, 0.6, 0.65)
+				btn_comics.tooltip_text = "Completed for Age %d (Age up to sell comics next year)." % PlayerData.age
 			cur_v.add_child(btn_comics)
 		else:
-			var btn_lemonade := _create_cyber_button("🍋 Run a Neighborhood Lemonade Stand ($35 Cash)\nMix fresh lemonade and sell cups on the sidewalk. +$35 Cash, +3 Smarts, +6 Happiness", Color("#f59e0b"), func():
+			var lemonade_text := "🍋 Run a Neighborhood Lemonade Stand ($35 Cash) (Used)" if gig_used else "🍋 Run a Neighborhood Lemonade Stand ($35 Cash)\nMix fresh lemonade and sell cups on the sidewalk. +$35 Cash, +3 Smarts, +6 Happiness"
+			var btn_lemonade := _create_cyber_button(lemonade_text, Color("#f59e0b"), func():
+				if PlayerData.last_childhood_gig_age == PlayerData.age:
+					return
+				PlayerData.last_childhood_gig_age = PlayerData.age
 				PlayerData.money += 35
 				PlayerData.smarts = mini(100, PlayerData.smarts + 3)
 				PlayerData.happiness = mini(100, PlayerData.happiness + 6)
@@ -3377,9 +3577,17 @@ func _show_jobs_modal() -> void:
 				SaveManager.save_game()
 				_show_jobs_modal()
 			)
+			if gig_used:
+				btn_lemonade.disabled = true
+				btn_lemonade.modulate = Color(0.6, 0.6, 0.6, 0.65)
+				btn_lemonade.tooltip_text = "Completed for Age %d (Age up to run stand next year)." % PlayerData.age
 			cur_v.add_child(btn_lemonade)
 
-			var btn_mow := _create_cyber_button("🌱 Mow Lawns & Rake Leaves for Neighbors ($45 Cash)\nOffer yard work services to neighbors on weekends. +$45 Cash, +4 Health", Color("#10b981"), func():
+			var mow_text := "🌱 Mow Lawns & Rake Leaves for Neighbors ($45 Cash) (Used)" if gig_used else "🌱 Mow Lawns & Rake Leaves for Neighbors ($45 Cash)\nOffer yard work services to neighbors on weekends. +$45 Cash, +4 Health"
+			var btn_mow := _create_cyber_button(mow_text, Color("#10b981"), func():
+				if PlayerData.last_childhood_gig_age == PlayerData.age:
+					return
+				PlayerData.last_childhood_gig_age = PlayerData.age
 				PlayerData.money += 45
 				PlayerData.health = mini(100, PlayerData.health + 4)
 				PlayerData.karma += 3
@@ -3388,6 +3596,10 @@ func _show_jobs_modal() -> void:
 				SaveManager.save_game()
 				_show_jobs_modal()
 			)
+			if gig_used:
+				btn_mow.disabled = true
+				btn_mow.modulate = Color(0.6, 0.6, 0.6, 0.65)
+				btn_mow.tooltip_text = "Completed for Age %d (Age up to mow lawns next year)." % PlayerData.age
 			cur_v.add_child(btn_mow)
 	else:
 		cur_title.text = "CURRENT OCCUPATION"
@@ -5089,9 +5301,14 @@ func _show_doctor_modal() -> void:
 
 	# Procedures:
 	# 1. Vitamin Shot
-	var btn_vit := _create_cyber_button("💉 Vitamin & Bio-Booster Shot ($150)  [+8 Health]", Color("#38bdf8"), func():
+	var vit_used: bool = PlayerData.last_doctor_vitamin_age == PlayerData.age
+	var vit_text := "💉 Vitamin & Bio-Booster Shot ($150) (Used)" if vit_used else "💉 Vitamin & Bio-Booster Shot ($150)  [+8 Health]"
+	var btn_vit := _create_cyber_button(vit_text, Color("#38bdf8"), func():
+		if PlayerData.last_doctor_vitamin_age == PlayerData.age:
+			return
 		if PlayerData.money >= 150:
 			PlayerData.money -= 150
+			PlayerData.last_doctor_vitamin_age = PlayerData.age
 			PlayerData.health = mini(100, PlayerData.health + 8)
 			add_life_event("You received a potent Vitamin & Bio-Booster injection ($150). Health +8%.", "health")
 			update_ui()
@@ -5100,12 +5317,21 @@ func _show_doctor_modal() -> void:
 		else:
 			add_life_event("You couldn't afford a Vitamin Shot ($150 required).", "health")
 	)
+	if vit_used:
+		btn_vit.disabled = true
+		btn_vit.modulate = Color(0.6, 0.6, 0.6, 0.65)
+		btn_vit.tooltip_text = "Annual treatment completed for Age %d (Age up to receive next year)." % PlayerData.age
 	list.add_child(btn_vit)
 
 	# 2. General Checkup
-	var btn_checkup := _create_cyber_button("🩺 Full Diagnostic Checkup ($300)  [+10 Health, Screen Illness]", Color("#38bdf8"), func():
+	var checkup_used: bool = PlayerData.last_doctor_checkup_age == PlayerData.age
+	var checkup_text := "🩺 Full Diagnostic Checkup ($300) (Used)" if checkup_used else "🩺 Full Diagnostic Checkup ($300)  [+10 Health, Screen Illness]"
+	var btn_checkup := _create_cyber_button(checkup_text, Color("#38bdf8"), func():
+		if PlayerData.last_doctor_checkup_age == PlayerData.age:
+			return
 		if PlayerData.money >= 300:
 			PlayerData.money -= 300
+			PlayerData.last_doctor_checkup_age = PlayerData.age
 			PlayerData.health = mini(100, PlayerData.health + 10)
 			if PlayerData.has_illness("cancer"):
 				var c: Dictionary = PlayerData.get_illness("cancer")
@@ -5118,12 +5344,21 @@ func _show_doctor_modal() -> void:
 		else:
 			add_life_event("You couldn't afford a Diagnostic Checkup ($300 required).", "health")
 	)
+	if checkup_used:
+		btn_checkup.disabled = true
+		btn_checkup.modulate = Color(0.6, 0.6, 0.6, 0.65)
+		btn_checkup.tooltip_text = "Annual checkup completed for Age %d (Age up to examine next year)." % PlayerData.age
 	list.add_child(btn_checkup)
 
 	# 3. Plastic Surgery
-	var btn_surgery := _create_cyber_button("✨ Aesthetic Plastic Surgery ($3,500)  [+20 Looks, -12 Health, -8 Happy]", Color("#ec4899"), func():
+	var surgery_used: bool = PlayerData.last_plastic_surgery_age == PlayerData.age
+	var surgery_text := "✨ Aesthetic Plastic Surgery ($3,500) (Used)" if surgery_used else "✨ Aesthetic Plastic Surgery ($3,500)  [+20 Looks, -12 Health, -8 Happy]"
+	var btn_surgery := _create_cyber_button(surgery_text, Color("#ec4899"), func():
+		if PlayerData.last_plastic_surgery_age == PlayerData.age:
+			return
 		if PlayerData.money >= 3500:
 			PlayerData.money -= 3500
+			PlayerData.last_plastic_surgery_age = PlayerData.age
 			if randf() < 0.10: # 10% risk of botched surgery
 				PlayerData.looks = maxi(0, PlayerData.looks - 12)
 				PlayerData.health = maxi(0, PlayerData.health - 25)
@@ -5145,12 +5380,21 @@ func _show_doctor_modal() -> void:
 		else:
 			add_life_event("You couldn't afford Plastic Surgery ($3,500 required).", "health")
 	)
+	if surgery_used:
+		btn_surgery.disabled = true
+		btn_surgery.modulate = Color(0.6, 0.6, 0.6, 0.65)
+		btn_surgery.tooltip_text = "Annual cosmetic surgery completed for Age %d. Allow your body time to heal." % PlayerData.age
 	list.add_child(btn_surgery)
 
 	# 4. Chemotherapy Treatment
-	var btn_chemo := _create_cyber_button("🧬 Chemotherapy Treatment ($5,000)  [Treats & Cures Cancer]", Color("#f43f5e"), func():
+	var chemo_used: bool = PlayerData.last_chemo_age == PlayerData.age
+	var chemo_text := "🧬 Chemotherapy Treatment ($5,000) (Used)" if chemo_used else "🧬 Chemotherapy Treatment ($5,000)  [Treats & Cures Cancer]"
+	var btn_chemo := _create_cyber_button(chemo_text, Color("#f43f5e"), func():
+		if PlayerData.last_chemo_age == PlayerData.age:
+			return
 		if PlayerData.money >= 5000:
 			PlayerData.money -= 5000
+			PlayerData.last_chemo_age = PlayerData.age
 			if PlayerData.has_illness("cancer"):
 				if randf() < 0.60:
 					PlayerData.cure_illness("cancer")
@@ -5170,12 +5414,21 @@ func _show_doctor_modal() -> void:
 		else:
 			add_life_event("You couldn't afford Chemotherapy Treatment ($5,000 required).", "health")
 	)
+	if chemo_used:
+		btn_chemo.disabled = true
+		btn_chemo.modulate = Color(0.6, 0.6, 0.6, 0.65)
+		btn_chemo.tooltip_text = "Annual chemotherapy cycle completed for Age %d." % PlayerData.age
 	list.add_child(btn_chemo)
 
 	# 5. Psychotherapy & Grief Counseling
-	var btn_therapy := _create_cyber_button("🧠 Psychotherapy & Grief Counseling ($250)  [+20 Happiness]", Color("#8b5cf6"), func():
+	var therapy_used: bool = PlayerData.last_therapy_age == PlayerData.age
+	var therapy_text := "🧠 Psychotherapy & Grief Counseling ($250) (Used)" if therapy_used else "🧠 Psychotherapy & Grief Counseling ($250)  [+20 Happiness]"
+	var btn_therapy := _create_cyber_button(therapy_text, Color("#8b5cf6"), func():
+		if PlayerData.last_therapy_age == PlayerData.age:
+			return
 		if PlayerData.money >= 250:
 			PlayerData.money -= 250
+			PlayerData.last_therapy_age = PlayerData.age
 			PlayerData.happiness = mini(100, PlayerData.happiness + 20)
 			add_life_event("You attended an enlightening psychotherapy session ($250). Grief and emotional weight lifted. Happiness +20%.", "health")
 			update_ui()
@@ -5184,12 +5437,21 @@ func _show_doctor_modal() -> void:
 		else:
 			add_life_event("You couldn't afford Psychotherapy ($250 required).", "health")
 	)
+	if therapy_used:
+		btn_therapy.disabled = true
+		btn_therapy.modulate = Color(0.6, 0.6, 0.6, 0.65)
+		btn_therapy.tooltip_text = "Annual psychotherapy completed for Age %d." % PlayerData.age
 	list.add_child(btn_therapy)
 
 	# 6. Emergency Trauma Care
-	var btn_er := _create_cyber_button("🚨 Emergency ER Resuscitation ($1,500)  [+40 Health]", Color("#eab308"), func():
+	var er_used: bool = PlayerData.last_er_age == PlayerData.age
+	var er_text := "🚨 Emergency ER Resuscitation ($1,500) (Used)" if er_used else "🚨 Emergency ER Resuscitation ($1,500)  [+40 Health]"
+	var btn_er := _create_cyber_button(er_text, Color("#eab308"), func():
+		if PlayerData.last_er_age == PlayerData.age:
+			return
 		if PlayerData.money >= 1500:
 			PlayerData.money -= 1500
+			PlayerData.last_er_age = PlayerData.age
 			PlayerData.health = mini(100, PlayerData.health + 40)
 			add_life_event("ER medical trauma team stabilized your critical vitals ($1,500). Health +40%.", "health")
 			update_ui()
@@ -5198,6 +5460,10 @@ func _show_doctor_modal() -> void:
 		else:
 			add_life_event("You couldn't afford Emergency ER care ($1,500 required).", "health")
 	)
+	if er_used:
+		btn_er.disabled = true
+		btn_er.modulate = Color(0.6, 0.6, 0.6, 0.65)
+		btn_er.tooltip_text = "Emergency resuscitation already utilized for Age %d." % PlayerData.age
 	list.add_child(btn_er)
 
 	doctor_modal_overlay.visible = true
@@ -5220,7 +5486,13 @@ func _show_crime_modal() -> void:
 		info_lbl.add_theme_color_override("font_color", Color("#f87171"))
 		p_list.add_child(info_lbl)
 
-		var btn_yard := _create_cyber_button("🏋️ Hit the Prison Yard Weights  [+6 Health, +3 Looks, +5 Happy]", Color("#ef4444"), func():
+		var prison_used: bool = PlayerData.last_prison_activity_age == PlayerData.age
+
+		var yard_text := "🏋️ Hit the Prison Yard Weights (Used)" if prison_used else "🏋️ Hit the Prison Yard Weights  [+6 Health, +3 Looks, +5 Happy]"
+		var btn_yard := _create_cyber_button(yard_text, Color("#ef4444"), func():
+			if PlayerData.last_prison_activity_age == PlayerData.age:
+				return
+			PlayerData.last_prison_activity_age = PlayerData.age
 			PlayerData.health = mini(100, PlayerData.health + 6)
 			PlayerData.looks = mini(100, PlayerData.looks + 3)
 			PlayerData.happiness = mini(100, PlayerData.happiness + 5)
@@ -5229,9 +5501,17 @@ func _show_crime_modal() -> void:
 			SaveManager.save_game()
 			_show_crime_modal()
 		)
+		if prison_used:
+			btn_yard.disabled = true
+			btn_yard.modulate = Color(0.6, 0.6, 0.6, 0.65)
+			btn_yard.tooltip_text = "Annual prison activity completed for Age %d (Age up to perform another)." % PlayerData.age
 		p_list.add_child(btn_yard)
 
-		var btn_read := _create_cyber_button("📖 Read in Prison Library  [+5 Smarts, +4 Happy]", Color("#38bdf8"), func():
+		var read_text := "📖 Read in Prison Library (Used)" if prison_used else "📖 Read in Prison Library  [+5 Smarts, +4 Happy]"
+		var btn_read := _create_cyber_button(read_text, Color("#38bdf8"), func():
+			if PlayerData.last_prison_activity_age == PlayerData.age:
+				return
+			PlayerData.last_prison_activity_age = PlayerData.age
 			PlayerData.smarts = mini(100, PlayerData.smarts + 5)
 			PlayerData.happiness = mini(100, PlayerData.happiness + 4)
 			add_life_event("You immersed yourself in law and literature in the penitentiary library.", "crime")
@@ -5239,15 +5519,27 @@ func _show_crime_modal() -> void:
 			SaveManager.save_game()
 			_show_crime_modal()
 		)
+		if prison_used:
+			btn_read.disabled = true
+			btn_read.modulate = Color(0.6, 0.6, 0.6, 0.65)
+			btn_read.tooltip_text = "Annual prison activity completed for Age %d (Age up to perform another)." % PlayerData.age
 		p_list.add_child(btn_read)
 
-		var btn_sleep := _create_cyber_button("💤 Rest in Cell / Keep Low Profile  [+2 Health]", Color("#94a3b8"), func():
+		var sleep_text := "💤 Rest in Cell / Keep Low Profile (Used)" if prison_used else "💤 Rest in Cell / Keep Low Profile  [+2 Health]"
+		var btn_sleep := _create_cyber_button(sleep_text, Color("#94a3b8"), func():
+			if PlayerData.last_prison_activity_age == PlayerData.age:
+				return
+			PlayerData.last_prison_activity_age = PlayerData.age
 			PlayerData.health = mini(100, PlayerData.health + 2)
 			add_life_event("You kept to yourself and avoided penitentiary gang disputes.", "crime")
 			update_ui()
 			SaveManager.save_game()
 			_show_crime_modal()
 		)
+		if prison_used:
+			btn_sleep.disabled = true
+			btn_sleep.modulate = Color(0.6, 0.6, 0.6, 0.65)
+			btn_sleep.tooltip_text = "Annual prison activity completed for Age %d (Age up to perform another)." % PlayerData.age
 		p_list.add_child(btn_sleep)
 
 		crime_modal_overlay.visible = true
@@ -5313,7 +5605,15 @@ func _show_casino_modal() -> void:
 	if casino_modal_overlay != null and is_instance_valid(casino_modal_overlay):
 		casino_modal_overlay.queue_free()
 
-	var modal := _create_cyber_modal("🎰 THE NEON PALACE CASINO", "Cash on Hand: $%s  •  Dice, Slots & Scratchcards" % _format_number(PlayerData.money), Color("#f59e0b"))
+	if PlayerData.last_casino_age != PlayerData.age:
+		PlayerData.last_casino_age = PlayerData.age
+		PlayerData.casino_plays_this_year = 0
+
+	var max_plays := 5
+	var plays_left := maxi(0, max_plays - PlayerData.casino_plays_this_year)
+	var casino_locked: bool = plays_left <= 0
+
+	var modal := _create_cyber_modal("🎰 THE NEON PALACE CASINO", "Cash: $%s  •  Dice, Slots & Scratchcards (Plays left: %d/%d)" % [_format_number(PlayerData.money), plays_left, max_plays], Color("#f59e0b"))
 	casino_modal_overlay = modal.overlay
 	var list: VBoxContainer = modal.list
 
@@ -5343,9 +5643,13 @@ func _show_casino_modal() -> void:
 	casino_scratch_result_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
 	v_scratch.add_child(casino_scratch_result_lbl)
 
-	var btn_scratch := _create_cyber_button("Scratch Ticket ($25)", Color("#f59e0b"), func():
+	var scratch_btn_text := "Scratch Ticket ($25) (Limit Reached)" if casino_locked else "Scratch Ticket ($25)"
+	var btn_scratch := _create_cyber_button(scratch_btn_text, Color("#f59e0b"), func():
+		if PlayerData.casino_plays_this_year >= 5:
+			return
 		if PlayerData.money >= 25:
 			PlayerData.money -= 25
+			PlayerData.casino_plays_this_year += 1
 			# 30% winning chance with house edge
 			if randf() < 0.30:
 				var roll := randf()
@@ -5369,11 +5673,15 @@ func _show_casino_modal() -> void:
 				casino_scratch_result_lbl.add_theme_color_override("font_color", Color("#f87171"))
 			update_ui()
 			SaveManager.save_game()
-			modal.subtitle.text = "Cash on Hand: $%s  •  Dice, Slots & Scratchcards" % _format_number(PlayerData.money)
+			_show_casino_modal()
 		else:
 			casino_scratch_result_lbl.text = "Insufficient funds for $25 scratchcard."
 			casino_scratch_result_lbl.add_theme_color_override("font_color", Color("#ef4444"))
 	)
+	if casino_locked:
+		btn_scratch.disabled = true
+		btn_scratch.modulate = Color(0.6, 0.6, 0.6, 0.65)
+		btn_scratch.tooltip_text = "Annual gaming limit reached (5 plays per year). Come back next year!"
 	v_scratch.add_child(btn_scratch)
 	list.add_child(card_scratch)
 
@@ -5410,9 +5718,13 @@ func _show_casino_modal() -> void:
 	casino_slots_result_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
 	v_slots.add_child(casino_slots_result_lbl)
 
-	var btn_spin := _create_cyber_button("Spin Reels ($50)", Color("#f59e0b"), func():
+	var spin_btn_text := "Spin Reels ($50) (Limit Reached)" if casino_locked else "Spin Reels ($50)"
+	var btn_spin := _create_cyber_button(spin_btn_text, Color("#f59e0b"), func():
+		if PlayerData.casino_plays_this_year >= 5:
+			return
 		if PlayerData.money >= 50:
 			PlayerData.money -= 50
+			PlayerData.casino_plays_this_year += 1
 			var syms := ["🍒", "🔔", "💎", "7️⃣", "💀"]
 			# 24% chance of 3-match
 			if randf() < 0.24:
@@ -5458,11 +5770,15 @@ func _show_casino_modal() -> void:
 
 			update_ui()
 			SaveManager.save_game()
-			modal.subtitle.text = "Cash on Hand: $%s  •  Dice, Slots & Scratchcards" % _format_number(PlayerData.money)
+			_show_casino_modal()
 		else:
 			casino_slots_result_lbl.text = "Insufficient funds for $50 spin."
 			casino_slots_result_lbl.add_theme_color_override("font_color", Color("#ef4444"))
 	)
+	if casino_locked:
+		btn_spin.disabled = true
+		btn_spin.modulate = Color(0.6, 0.6, 0.6, 0.65)
+		btn_spin.tooltip_text = "Annual gaming limit reached (5 plays per year). Come back next year!"
 	v_slots.add_child(btn_spin)
 	list.add_child(card_slots)
 
@@ -5534,11 +5850,15 @@ func _show_casino_modal() -> void:
 	]
 
 	for opt in roll_options:
-		var opt_text: String = opt[0]
+		var opt_text: String = opt[0] if not casino_locked else opt[0] + " (Limit Reached)"
 		var opt_key: String = opt[1]
 		var btn_opt := _create_cyber_button(opt_text, Color("#f59e0b"), func():
 			_play_dice_roll(opt_key, modal)
 		)
+		if casino_locked:
+			btn_opt.disabled = true
+			btn_opt.modulate = Color(0.6, 0.6, 0.6, 0.65)
+			btn_opt.tooltip_text = "Annual gaming limit reached (5 plays per year). Come back next year!"
 		v_dice.add_child(btn_opt)
 
 	list.add_child(card_dice)
@@ -5546,12 +5866,15 @@ func _show_casino_modal() -> void:
 
 
 func _play_dice_roll(prediction: String, modal: Dictionary) -> void:
+	if PlayerData.casino_plays_this_year >= 5:
+		return
 	if PlayerData.money < current_dice_bet_amount:
 		casino_dice_result_lbl.text = "Insufficient funds for $%d wager!" % current_dice_bet_amount
 		casino_dice_result_lbl.add_theme_color_override("font_color", Color("#ef4444"))
 		return
 
 	PlayerData.money -= current_dice_bet_amount
+	PlayerData.casino_plays_this_year += 1
 	var d1: int = randi_range(1, 6)
 	var d2: int = randi_range(1, 6)
 	var sum: int = d1 + d2
@@ -5590,7 +5913,7 @@ func _play_dice_roll(prediction: String, modal: Dictionary) -> void:
 
 	update_ui()
 	SaveManager.save_game()
-	modal.subtitle.text = "Cash on Hand: $%s  •  Dice, Slots & Scratchcards" % _format_number(PlayerData.money)
+	_show_casino_modal()
 
 
 # --- 4. DEATH SCREEN SYSTEM ---

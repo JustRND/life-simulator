@@ -93,14 +93,14 @@ static func delay_wedding(player: Node, explicit_postpone: bool = false) -> Stri
 	player.happiness = clampi(player.happiness - sadness, 0, 100)
 	return "Your wedding with %s remains postponed. The growing uncertainty strains your bond. Relationship -%d; your happiness and partner happiness -%d." % [player.get_partner_name(), loss, sadness]
 
-static func marry(player: Node, cost: int, ceremony: String) -> String:
+static func marry(player: Node, cost: int, ceremony: String, happiness_gain: int = 35) -> String:
 	if not can_marry(player) or cost < 0 or player.money < cost:
 		return ""
 	player.money -= cost
 	player.partner["status"] = "Wife" if player.partner.get("gender") == "FEMALE" else "Husband"
 	player.partner["married_age"] = player.age
 	player.set_partner_relationship(player.get_partner_relationship() + 20)
-	player.partner["happiness"] = clampi(int(player.partner.happiness) + 25, 0, 100)
-	player.happiness = clampi(player.happiness + 35, 0, 100)
+	player.partner["happiness"] = clampi(int(player.partner.happiness) + happiness_gain, 0, 100)
+	player.happiness = clampi(player.happiness + happiness_gain, 0, 100)
 	player.last_partner_interact_age = player.age
-	return "MARRIED: You and %s celebrated your %s ($%d)! Happiness +35." % [player.get_partner_name(), ceremony, cost]
+	return "MARRIED: You and %s celebrated your %s ($%d)! Both partners' happiness +%d." % [player.get_partner_name(), ceremony, cost, happiness_gain]
