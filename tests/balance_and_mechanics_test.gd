@@ -562,7 +562,48 @@ func test_relationship_panel_layout() -> void:
 	for lbl in labels:
 		assert((lbl as Label).autowrap_mode == TextServer.AUTOWRAP_WORD_SMART, "All partner labels must have AUTOWRAP_WORD_SMART to prevent card widening!")
 
+	# 3. Children card UI: Babies under age 5 cannot receive gifts; children 5+ can receive gifts
+	PlayerData.children = [
+		{"name": "Baby Ethan", "gender": "MALE", "age": 1, "relationship": 80, "last_gift_age": -1, "last_spend_time_age": -1},
+		{"name": "Kid Sophia", "gender": "FEMALE", "age": 7, "relationship": 85, "last_gift_age": -1, "last_spend_time_age": -1}
+	]
+	main_scene._setup_children_cards_ui()
+
+	var baby_card = rel_list.get_node_or_null("ChildCard_0")
+	assert(baby_card != null, "ChildCard_0 (Baby Ethan) must exist")
+	var baby_buttons = baby_card.find_children("*", "Button", true, false)
+	var baby_gift_btn: Button = null
+	for b in baby_buttons:
+		if "Gift" in b.text:
+			baby_gift_btn = b
+			break
+	assert(baby_gift_btn != null, "Baby gift button must exist")
+	assert(baby_gift_btn.disabled, "Baby under age 5 MUST NOT be able to receive gifts!")
+	assert("Age 5+" in baby_gift_btn.text, "Baby gift button text must indicate Age 5+ unlock requirement: %s" % baby_gift_btn.text)
+
+	var kid_card = rel_list.get_node_or_null("ChildCard_1")
+	assert(kid_card != null, "ChildCard_1 (Kid Sophia) must exist")
+	var kid_buttons = kid_card.find_children("*", "Button", true, false)
+	var kid_gift_btn: Button = null
+	for b in kid_buttons:
+		if "Gift" in b.text:
+			kid_gift_btn = b
+			break
+	assert(kid_gift_btn != null, "Kid gift button must exist")
+	assert(not kid_gift_btn.disabled, "Child age 5+ MUST be able to receive gifts!")
+
+	# 4. Afterlife minigame non-clipping layout test
+	var minigame_script = preload("res://scripts/minigames/afterlife_minigame.gd")
+	var mg = minigame_script.new()
+	main_scene.add_child(mg)
+	mg.setup(-50, Callable())
+	var scrolls = mg.find_children("*", "ScrollContainer", true, false)
+	assert(not scrolls.is_empty(), "AfterlifeMinigame must have a ScrollContainer so it never clips out of screen!")
+	assert(scrolls[0].horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED, "Horizontal scroll must be disabled to enforce wrapping")
+	assert(mg.scale_needle.autowrap_mode == TextServer.AUTOWRAP_WORD_SMART, "Scale needle label must autowrap!")
+	mg.queue_free()
+
 	main_scene.queue_free()
-	print("✔ Test 8: Relationship panel 2-column layout and non-clipping text wrapping verified")
+	print("✔ Test 8: Relationship panel 2-column layout, baby gifting restrictions, and Afterlife non-clipping layout verified")
 
 

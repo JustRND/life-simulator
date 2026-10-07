@@ -2791,10 +2791,17 @@ func _setup_children_cards_ui() -> void:
 			btn_spend.tooltip_text = "Already spent time with %s this year. Available again next year." % c_name
 		act_row.add_child(btn_spend)
 
+		var is_baby_or_toddler: bool = c_age < 5
 		var gift_text := "Gift ($50) (Used)" if child_gifted else "Gift ($50)"
+		if is_baby_or_toddler:
+			gift_text = "Gift (Age 5+)"
+
 		var btn_gift := _create_cyber_button(gift_text, Color("#10b981"), func():
 			var idx = i
 			var cur_c: Dictionary = PlayerData.children[idx]
+			if int(cur_c.get("age", 0)) < 5:
+				add_life_event("%s is an infant/toddler and too young for gifts. Gifts unlock at Age 5 (Child stage)." % cur_c.name, "family")
+				return
 			if int(cur_c.get("last_gift_age", -1)) == PlayerData.age:
 				return
 			if PlayerData.money < 50:
@@ -2814,7 +2821,11 @@ func _setup_children_cards_ui() -> void:
 		btn_gift.add_theme_font_size_override("font_size", 22)
 		btn_gift.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
-		if child_gifted:
+		if is_baby_or_toddler:
+			btn_gift.disabled = true
+			btn_gift.modulate = Color(0.5, 0.5, 0.5, 0.6)
+			btn_gift.tooltip_text = "%s is an infant/toddler. Monetary gifts unlock when they turn into a Child (Age 5)." % c_name
+		elif child_gifted:
 			btn_gift.disabled = true
 			btn_gift.modulate = Color(0.6, 0.6, 0.6, 0.65)
 			btn_gift.tooltip_text = "Already gave a gift to %s this year. Available again next year." % c_name
@@ -6497,48 +6508,68 @@ func _show_death_screen(cause: String) -> void:
 	death_screen_overlay.z_index = 80
 	add_child(death_screen_overlay)
 
-	var center := CenterContainer.new()
-	center.anchors_preset = Control.PRESET_FULL_RECT
-	center.anchor_right = 1.0
-	center.anchor_bottom = 1.0
-	death_screen_overlay.add_child(center)
+	var screen_margin := MarginContainer.new()
+	screen_margin.anchors_preset = Control.PRESET_FULL_RECT
+	screen_margin.anchor_right = 1.0
+	screen_margin.anchor_bottom = 1.0
+	screen_margin.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	screen_margin.grow_vertical = Control.GROW_DIRECTION_BOTH
+	screen_margin.add_theme_constant_override("margin_left", 36)
+	screen_margin.add_theme_constant_override("margin_right", 36)
+	screen_margin.add_theme_constant_override("margin_top", 44)
+	screen_margin.add_theme_constant_override("margin_bottom", 44)
+	death_screen_overlay.add_child(screen_margin)
 
 	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(1000, 1500)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var card_style := StyleBoxFlat.new()
 	card_style.bg_color = Color("#07050d")
 	card_style.border_color = Color("#f43f5e")
 	card_style.set_border_width_all(3)
-	card_style.set_corner_radius_all(14)
+	card_style.set_corner_radius_all(16)
 	card_style.shadow_color = Color(0, 0, 0, 0.95)
-	card_style.shadow_size = 24
+	card_style.shadow_size = 28
 	card.add_theme_stylebox_override("panel", card_style)
-	center.add_child(card)
+	screen_margin.add_child(card)
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 42)
-	margin.add_theme_constant_override("margin_right", 42)
-	margin.add_theme_constant_override("margin_top", 40)
-	margin.add_theme_constant_override("margin_bottom", 40)
+	margin.add_theme_constant_override("margin_left", 28)
+	margin.add_theme_constant_override("margin_right", 28)
+	margin.add_theme_constant_override("margin_top", 28)
+	margin.add_theme_constant_override("margin_bottom", 28)
 	card.add_child(margin)
 
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 18)
-	margin.add_child(vbox)
+	var main_v := VBoxContainer.new()
+	main_v.add_theme_constant_override("separation", 16)
+	margin.add_child(main_v)
 
 	var title_lbl := Label.new()
 	title_lbl.text = "💀 FLATLINED • REST IN PEACE 💀"
 	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title_lbl.add_theme_font_size_override("font_size", 38)
+	title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title_lbl.add_theme_font_size_override("font_size", 34)
 	title_lbl.add_theme_color_override("font_color", Color("#f43f5e"))
-	vbox.add_child(title_lbl)
+	main_v.add_child(title_lbl)
 
 	var sub_lbl := Label.new()
 	sub_lbl.text = "YOUR SIMULATED LIFETIME HAS COME TO AN END"
 	sub_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	sub_lbl.add_theme_font_size_override("font_size", 22)
+	sub_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	sub_lbl.add_theme_font_size_override("font_size", 19)
 	sub_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
-	vbox.add_child(sub_lbl)
+	main_v.add_child(sub_lbl)
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	main_v.add_child(scroll)
+
+	var vbox := VBoxContainer.new()
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.add_theme_constant_override("separation", 18)
+	scroll.add_child(vbox)
 
 	# Stats breakdown card
 	var stats_p := PanelContainer.new()
@@ -6556,6 +6587,7 @@ func _show_death_screen(cause: String) -> void:
 
 	var name_lbl := Label.new()
 	name_lbl.text = "Identity: %s   •   Birthplace: %s" % [PlayerData.first_name, PlayerData.birthplace]
+	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_lbl.add_theme_font_size_override("font_size", 26)
 	name_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
 	stats_v.add_child(name_lbl)
@@ -6566,14 +6598,27 @@ func _show_death_screen(cause: String) -> void:
 
 	var age_cause_lbl := Label.new()
 	age_cause_lbl.text = "Age of Demise: %d years\nCause of Death: %s" % [PlayerData.age, clean_cause]
+	age_cause_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	age_cause_lbl.add_theme_font_size_override("font_size", 24)
 	age_cause_lbl.add_theme_color_override("font_color", Color("#f87171"))
 	stats_v.add_child(age_cause_lbl)
 
+	var net_worth: int = PlayerData.get_net_worth()
+	var total_assets: int = PlayerData.money + PlayerData.bank_savings
+	var total_debt: int = PlayerData.get_total_debt()
 	var wealth_lbl := Label.new()
-	wealth_lbl.text = "Final Net Worth: $%s" % _format_number(PlayerData.get_net_worth())
+	if net_worth < 0:
+		wealth_lbl.text = "Final Net Worth: -$%s\n(Assets: $%s  •  Unpaid Debt: $%s)" % [
+			_format_number(absi(net_worth)),
+			_format_number(total_assets),
+			_format_number(total_debt)
+		]
+		wealth_lbl.add_theme_color_override("font_color", Color("#ef4444"))
+	else:
+		wealth_lbl.text = "Final Net Worth: $%s" % _format_number(net_worth)
+		wealth_lbl.add_theme_color_override("font_color", Color("#22c55e"))
+	wealth_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	wealth_lbl.add_theme_font_size_override("font_size", 24)
-	wealth_lbl.add_theme_color_override("font_color", Color("#22c55e"))
 	stats_v.add_child(wealth_lbl)
 
 	var career_str := "%s at %s" % [PlayerData.job_title, PlayerData.job_company] if PlayerData.job_title != "" else "Unemployed"

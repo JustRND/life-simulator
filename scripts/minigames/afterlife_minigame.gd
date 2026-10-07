@@ -167,14 +167,21 @@ func _build_ui() -> void:
 	overlay.color = Color(0.02, 0.01, 0.04, 0.98) if is_condemned else Color(0.01, 0.03, 0.06, 0.98)
 	add_child(overlay)
 
-	var center := CenterContainer.new()
-	center.anchors_preset = Control.PRESET_FULL_RECT
-	center.anchor_right = 1.0
-	center.anchor_bottom = 1.0
-	overlay.add_child(center)
+	var screen_margin := MarginContainer.new()
+	screen_margin.anchors_preset = Control.PRESET_FULL_RECT
+	screen_margin.anchor_right = 1.0
+	screen_margin.anchor_bottom = 1.0
+	screen_margin.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	screen_margin.grow_vertical = Control.GROW_DIRECTION_BOTH
+	screen_margin.add_theme_constant_override("margin_left", 36)
+	screen_margin.add_theme_constant_override("margin_right", 36)
+	screen_margin.add_theme_constant_override("margin_top", 44)
+	screen_margin.add_theme_constant_override("margin_bottom", 44)
+	overlay.add_child(screen_margin)
 
 	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(1020, 1680)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var card_style := StyleBoxFlat.new()
 	card_style.bg_color = Color("#07050d") if is_condemned else Color("#050c18")
 	card_style.border_color = Color("#f43f5e") if is_condemned else Color("#38bdf8")
@@ -183,36 +190,49 @@ func _build_ui() -> void:
 	card_style.shadow_color = Color(0, 0, 0, 0.95)
 	card_style.shadow_size = 30
 	card.add_theme_stylebox_override("panel", card_style)
-	center.add_child(card)
+	screen_margin.add_child(card)
 
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 36)
-	margin.add_theme_constant_override("margin_right", 36)
-	margin.add_theme_constant_override("margin_top", 36)
-	margin.add_theme_constant_override("margin_bottom", 36)
-	card.add_child(margin)
+	var card_margin := MarginContainer.new()
+	card_margin.add_theme_constant_override("margin_left", 26)
+	card_margin.add_theme_constant_override("margin_right", 26)
+	card_margin.add_theme_constant_override("margin_top", 24)
+	card_margin.add_theme_constant_override("margin_bottom", 24)
+	card.add_child(card_margin)
 
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 18)
-	margin.add_child(vbox)
+	var main_v := VBoxContainer.new()
+	main_v.add_theme_constant_override("separation", 16)
+	card_margin.add_child(main_v)
 
-	# 1. Header
+	# 1. Header (Fixed at top of modal)
 	var title_lbl := Label.new()
 	title_lbl.text = "⚖️ ASTRAL TRIBUNAL • SCALES OF SAMSARA" if is_condemned else "✨ CELESTIAL HALL • ASCENSION OF SOULS"
 	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title_lbl.add_theme_font_size_override("font_size", 34)
+	title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title_lbl.add_theme_font_size_override("font_size", 30)
 	title_lbl.add_theme_color_override("font_color", Color("#f43f5e") if is_condemned else Color("#38bdf8"))
-	vbox.add_child(title_lbl)
+	main_v.add_child(title_lbl)
 
 	var sub_lbl := Label.new()
 	sub_lbl.text = "YOUR MORTAL LIFE HAS ENDED. THE COSMIC ARBITER WEIGHS YOUR EXISTENCE."
 	sub_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	sub_lbl.add_theme_font_size_override("font_size", 20)
+	sub_lbl.add_theme_font_size_override("font_size", 18)
 	sub_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
-	vbox.add_child(sub_lbl)
+	main_v.add_child(sub_lbl)
 
-	# 2. The Interactive Scales of Judgment Card
+	# 2. ScrollContainer to ensure all content can be scrolled comfortably and never clips
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	main_v.add_child(scroll)
+
+	var vbox := VBoxContainer.new()
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.add_theme_constant_override("separation", 16)
+	scroll.add_child(vbox)
+
+	# 3. The Interactive Scales of Judgment Card
 	var scale_card := PanelContainer.new()
 	var sc_style := StyleBoxFlat.new()
 	sc_style.bg_color = Color("#0b0816") if is_condemned else Color("#081528")
@@ -223,14 +243,14 @@ func _build_ui() -> void:
 	vbox.add_child(scale_card)
 
 	var sc_margin := MarginContainer.new()
-	sc_margin.add_theme_constant_override("margin_left", 24)
-	sc_margin.add_theme_constant_override("margin_right", 24)
-	sc_margin.add_theme_constant_override("margin_top", 20)
-	sc_margin.add_theme_constant_override("margin_bottom", 20)
+	sc_margin.add_theme_constant_override("margin_left", 20)
+	sc_margin.add_theme_constant_override("margin_right", 20)
+	sc_margin.add_theme_constant_override("margin_top", 18)
+	sc_margin.add_theme_constant_override("margin_bottom", 18)
 	scale_card.add_child(sc_margin)
 
 	var sc_v := VBoxContainer.new()
-	sc_v.add_theme_constant_override("separation", 12)
+	sc_v.add_theme_constant_override("separation", 14)
 	sc_margin.add_child(sc_v)
 
 	var sc_header := Label.new()
@@ -240,36 +260,58 @@ func _build_ui() -> void:
 	sc_header.add_theme_color_override("font_color", Color("#f59e0b"))
 	sc_v.add_child(sc_header)
 
-	# Visual representation of the scale
-	var scale_row := HBoxContainer.new()
-	scale_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	scale_row.add_theme_constant_override("separation", 24)
-	sc_v.add_child(scale_row)
+	# Visual representation of the scale: Two-pan header
+	var pans_row := HBoxContainer.new()
+	pans_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sc_v.add_child(pans_row)
 
 	var left_pan := Label.new()
 	left_pan.text = "⚖️ [ Sins & Transgressions ]"
-	left_pan.add_theme_font_size_override("font_size", 22)
+	left_pan.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left_pan.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	left_pan.add_theme_font_size_override("font_size", 20)
 	left_pan.add_theme_color_override("font_color", Color("#f87171"))
-	scale_row.add_child(left_pan)
+	pans_row.add_child(left_pan)
+
+	var right_pan := Label.new()
+	right_pan.text = "[ Virtues & Merits ] ⚖️"
+	right_pan.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	right_pan.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_pan.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	right_pan.add_theme_font_size_override("font_size", 20)
+	right_pan.add_theme_color_override("font_color", Color("#4ade80"))
+	pans_row.add_child(right_pan)
+
+	# Dedicated Center Badge for Needle & Tipped Outcome
+	var needle_panel := PanelContainer.new()
+	var np_style := StyleBoxFlat.new()
+	np_style.bg_color = Color("#171126") if is_condemned else Color("#0d1e38")
+	np_style.border_color = Color("#475569")
+	np_style.set_border_width_all(1)
+	np_style.set_corner_radius_all(8)
+	needle_panel.add_theme_stylebox_override("panel", np_style)
+	sc_v.add_child(needle_panel)
+
+	var npm := MarginContainer.new()
+	npm.add_theme_constant_override("margin_left", 12)
+	npm.add_theme_constant_override("margin_right", 12)
+	npm.add_theme_constant_override("margin_top", 10)
+	npm.add_theme_constant_override("margin_bottom", 10)
+	needle_panel.add_child(npm)
 
 	scale_needle = Label.new()
 	scale_needle.text = "• • [ BALANCING ] • •"
 	scale_needle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	scale_needle.add_theme_font_size_override("font_size", 24)
+	scale_needle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	scale_needle.add_theme_font_size_override("font_size", 22)
 	scale_needle.add_theme_color_override("font_color", Color("#e2e8f0"))
-	scale_row.add_child(scale_needle)
-
-	var right_pan := Label.new()
-	right_pan.text = "[ Virtues & Merits ] ⚖️"
-	right_pan.add_theme_font_size_override("font_size", 22)
-	right_pan.add_theme_color_override("font_color", Color("#4ade80"))
-	scale_row.add_child(right_pan)
+	npm.add_child(scale_needle)
 
 	scale_status_lbl = Label.new()
 	scale_status_lbl.text = "Press below to place your mortal soul upon the Scales of Judgment."
 	scale_status_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	scale_status_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	scale_status_lbl.add_theme_font_size_override("font_size", 20)
+	scale_status_lbl.add_theme_font_size_override("font_size", 19)
 	scale_status_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
 	sc_v.add_child(scale_status_lbl)
 
@@ -427,6 +469,7 @@ func _build_ui() -> void:
 		reborn_identity["birthplace"],
 		reborn_identity["ethnicity"].capitalize()
 	]
+	id_details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	id_details.add_theme_font_size_override("font_size", 20)
 	id_details.add_theme_color_override("font_color", Color("#f8fafc"))
 	id_info_v.add_child(id_details)
@@ -434,14 +477,10 @@ func _build_ui() -> void:
 	var unnegotiable_note := Label.new()
 	unnegotiable_note.text = "⛔ UNMODIFIABLE & UNNEGOTIABLE: Destiny is sealed by cosmic verdict." if is_condemned else "✨ BLESSED DESTINY: Reborn with auspicious cosmic grace."
 	unnegotiable_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	unnegotiable_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	unnegotiable_note.add_theme_font_size_override("font_size", 18)
 	unnegotiable_note.add_theme_color_override("font_color", Color("#f87171") if is_condemned else Color("#4ade80"))
 	vp_v.add_child(unnegotiable_note)
-
-	# Spacer
-	var sp := Control.new()
-	sp.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	vbox.add_child(sp)
 
 	# 6. Final Rebirth Action Button
 	accept_button = Button.new()
