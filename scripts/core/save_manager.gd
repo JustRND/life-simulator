@@ -63,7 +63,11 @@ func save_game() -> void:
 		"prison_sentence_years": PlayerData.prison_sentence_years,
 		"event_history": PlayerData.event_history,
 		"life_log": PlayerData.life_log,
-		"karma": PlayerData.karma
+		"karma": PlayerData.karma,
+		"partner": PlayerData.partner,
+		"ex_partners": PlayerData.ex_partners,
+		"last_parent_interact_age": PlayerData.last_parent_interact_age,
+		"last_partner_interact_age": PlayerData.last_partner_interact_age
 	}
 
 	var file := FileAccess.open(
@@ -155,6 +159,11 @@ func load_game() -> bool:
 	PlayerData.last_gym_activity_age = int(data.get("last_gym_activity_age", -1))
 	PlayerData.last_meditation_activity_age = int(data.get("last_meditation_activity_age", -1))
 	PlayerData.karma = int(data.get("karma", 0))
+
+	PlayerData.partner = Dictionary(data.get("partner", {}))
+	PlayerData.ex_partners = Array(data.get("ex_partners", []))
+	PlayerData.last_parent_interact_age = int(data.get("last_parent_interact_age", -1))
+	PlayerData.last_partner_interact_age = int(data.get("last_partner_interact_age", -1))
 
 	PlayerData.job_id = str(data.get("job_id", ""))
 	PlayerData.job_title = str(data.get("job_title", ""))

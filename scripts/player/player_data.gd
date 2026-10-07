@@ -32,6 +32,11 @@ var father_relationship: int = 80
 var father_alive: bool = true
 var father_health: int = 80
 
+var partner: Dictionary = {}
+var ex_partners: Array = []
+var last_parent_interact_age: int = -1
+var last_partner_interact_age: int = -1
+
 var karma: int = 0
 var money: int = 0
 var bank_savings: int = 0
@@ -97,6 +102,11 @@ func reset_player() -> void:
 	father_relationship = 80
 	father_alive = true
 	father_health = 80
+
+	partner = {}
+	ex_partners = []
+	last_parent_interact_age = -1
+	last_partner_interact_age = -1
 
 	age = 0
 
@@ -332,3 +342,24 @@ func record_event(event_id: String) -> void:
 
 	if not event_history.has(event_id):
 		event_history.append(event_id)
+
+
+func has_partner() -> bool:
+	return partner != null and not partner.is_empty() and bool(partner.get("is_alive", false))
+
+
+func get_partner_name() -> String:
+	return str(partner.get("name", ""))
+
+
+func get_partner_status() -> String:
+	return str(partner.get("status", "Partner"))
+
+
+func get_partner_relationship() -> int:
+	return int(partner.get("relationship", 0))
+
+
+func set_partner_relationship(val: int) -> void:
+	if has_partner():
+		partner["relationship"] = clampi(val, 0, 100)

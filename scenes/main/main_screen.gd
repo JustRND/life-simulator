@@ -28,6 +28,7 @@ var current_event_choices: Array = []
 
 # Loading Screen
 @onready var loading_screen: Control = get_node_or_null("LoadingScreen") as Control
+@onready var disclaimer_screen: Control = get_node_or_null("DisclaimerScreen") as Control
 @onready var loading_progress_label: Label = get_node_or_null("LoadingScreen/CenterContainer/LoadingVBox/LoadingProgressLabel") as Label
 @onready var age_button: Button = $SafeArea/MainColumn/AgeButton
 
@@ -121,6 +122,16 @@ func _ready() -> void:
 	_configure_ui()
 	_connect_runtime_signals()
 
+	var shop := preload("res://scripts/ui/shop_panel.gd").new()
+	shop.name = "ShopPanel"
+	add_child(shop)
+	shop.install_button($TopBar/Row)
+	shop.closed.connect(func(): show_tab("timeline"))
+	var settings_pages := preload("res://scripts/ui/settings_pages.gd").new()
+	settings_pages.name = "SettingsPages"
+	add_child(settings_pages)
+	settings_pages.install(settings_overlay)
+
 	# Soft UI taps, including buttons created later by modal panels.
 	if get_node_or_null("ButtonSounds") == null:
 		var sounds := preload("res://scripts/ui/button_sounds.gd").new()
@@ -155,7 +166,13 @@ func _ready() -> void:
 	else:
 		show_new_game_screen()
 
-	if loading_screen != null:
+	if disclaimer_screen != null and loading_screen != null:
+		disclaimer_screen.visible = true
+		disclaimer_screen.modulate.a = 1.0
+		loading_screen.visible = true
+		loading_screen.modulate.a = 1.0
+		_start_game_initialization_sequence()
+	elif loading_screen != null:
 		loading_screen.visible = true
 		loading_screen.modulate.a = 1.0
 		_start_loading_animation()
@@ -172,6 +189,10 @@ func _connect_runtime_signals() -> void:
 	if filter_unique_btn != null and not filter_unique_btn.pressed.is_connected(_on_filter_unique_pressed):
 		filter_unique_btn.pressed.connect(_on_filter_unique_pressed)
 
+	var dating_app_btn := get_node_or_null("ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/DatingAppItem") as Button
+	if dating_app_btn != null and not dating_app_btn.pressed.is_connected(_on_dating_app_item_pressed):
+		dating_app_btn.pressed.connect(_on_dating_app_item_pressed)
+
 
 func _configure_ui() -> void:
 	_configure_creation()
@@ -181,6 +202,10 @@ func _configure_ui() -> void:
 	_configure_stat_bars()
 	_configure_portrait()
 	_configure_button_contrasts()
+
+	var disclaimer_card := get_node_or_null("DisclaimerScreen/CenterContainer/DisclaimerCard") as PanelContainer
+	if disclaimer_card != null:
+		disclaimer_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#00f0ff")))
 
 	life_feed.scroll_following = true
 	life_feed.get_v_scroll_bar().changed.connect(_scroll_after_layout)
@@ -611,8 +636,8 @@ func age_up() -> void:
 		trigger_death(fallback_cause)
 		return
 
-	# 11. Parents Aging & Mortality
-	_process_parents_aging()
+	# 11. Relationships Aging, Neglect & Consequences
+	_process_relationships_aging()
 
 	trigger_event()
 	update_ui()
@@ -756,6 +781,15 @@ func update_ui() -> void:
 		if ResourceLoader.exists(stage_icon_path):
 			infant_button.icon = load(stage_icon_path)
 		infant_button.text = PlayerData.get_stage_name()
+
+	# Assets Button Dimming & Tooltip Gating for Infants / Toddlers
+	if assets_button != null:
+		if PlayerData.age < 5:
+			assets_button.tooltip_text = "🔒 Assets unlock at age 5 (Childhood)"
+			assets_button.modulate = Color(0.65, 0.65, 0.65, 0.8)
+		else:
+			assets_button.tooltip_text = "Assets & Net Worth"
+			assets_button.modulate = Color.WHITE
 
 	# If panels are open, refresh them
 	if relationships_panel.visible:
@@ -1080,6 +1114,13 @@ func _on_start_game_button_pressed() -> void:
 
 
 func show_tab(tab_name: String) -> void:
+	if tab_name == "assets" and PlayerData.age < 5:
+		if PlayerData.age == 0:
+			add_life_event("🍼 Restricted: You are an infant! Infants do not possess financial assets or bank accounts yet. Advance age (+1 Year) to grow up.", "finance")
+		else:
+			add_life_event("🧸 Restricted: You are %d years old. Financial assets and wealth management unlock at age 5 (Childhood)—advance age to grow up!" % PlayerData.age, "finance")
+		return
+
 	timeline_panel.visible = tab_name == "timeline"
 	character_panel.visible = tab_name == "character"
 	infant_panel.visible = tab_name == "infant"
@@ -1122,6 +1163,12 @@ func _on_infant_button_pressed() -> void:
 
 
 func _on_assets_button_pressed() -> void:
+	if PlayerData.age < 5:
+		if PlayerData.age == 0:
+			add_life_event("🍼 Restricted: You are an infant! Infants do not possess financial assets or bank accounts yet. Advance age (+1 Year) to grow up.", "finance")
+		else:
+			add_life_event("🧸 Restricted: You are %d years old. Financial assets and wealth management unlock at age 5 (Childhood)—advance age to grow up!" % PlayerData.age, "finance")
+		return
 	show_tab("assets")
 
 
@@ -1780,9 +1827,12 @@ func _relationship_status_text(val: int) -> String:
 
 func _setup_parent_action_row(vbox: VBoxContainer, parent_type: String) -> void:
 	var row_name := parent_type.capitalize() + "ActionRow"
-	var existing_row := vbox.get_node_or_null(row_name)
-	if existing_row != null:
-		existing_row.queue_free()
+
+	# Immediately remove and queue_free ANY existing action rows for this parent
+	for child in vbox.get_children():
+		if child.name.begins_with(row_name):
+			vbox.remove_child(child)
+			child.queue_free()
 
 	var is_mother := parent_type == "mother"
 	var is_alive := PlayerData.mother_alive if is_mother else PlayerData.father_alive
@@ -1793,11 +1843,16 @@ func _setup_parent_action_row(vbox: VBoxContainer, parent_type: String) -> void:
 	row.name = row_name
 	row.add_theme_constant_override("separation", 8)
 
-	var actions := [
-		["Spend Time", "spend_time", "#0284c7"],
-		["Compliment", "compliment", "#8b5cf6"],
-		["Ask Money", "ask_money", "#10b981"]
-	]
+	var actions := []
+	if PlayerData.age < 5:
+		# Early childhood: infants and toddlers can ONLY spend time with parents
+		# INFANTS SHOULD NOT BE ALLOWED TO ASK PARENTS FOR MONEY
+		# INFANTS COULD ONLY SPEND TIME WITH PARENTS
+		actions.append(["Spend Time", "spend_time", "#0284c7"])
+	else:
+		actions.append(["Spend Time", "spend_time", "#0284c7"])
+		actions.append(["Compliment", "compliment", "#8b5cf6"])
+		actions.append(["Ask Money", "ask_money", "#10b981"])
 
 	# Age Gating: Infants and kids cannot pay for parents' medication (requires age >= 13)
 	if PlayerData.age >= 13:
@@ -1850,9 +1905,17 @@ func _interact_parent(parent_type: String, action: String) -> void:
 			else:
 				PlayerData.father_relationship = mini(100, PlayerData.father_relationship + rel_gain)
 			PlayerData.happiness = mini(100, PlayerData.happiness + happy_gain)
-			add_life_event("You spent quality time chatting and hanging out with your %s, %s." % [role, parent_name], "relationship")
+			if PlayerData.age == 0:
+				add_life_event("🍼 You cuddled warmly, cooed, and babbled in your %s's (%s) loving arms." % [role, parent_name], "relationship")
+			elif PlayerData.age < 5:
+				add_life_event("🧸 You giggled, babbled, and played peek-a-boo with your %s, %s." % [role, parent_name], "relationship")
+			else:
+				add_life_event("You spent quality time chatting and hanging out with your %s, %s." % [role, parent_name], "relationship")
 
 		"compliment":
+			if PlayerData.age < 5:
+				add_life_event("🍼 Restricted: Infants and toddlers can only express affection by spending time.", "relationship")
+				return
 			var rel_gain := randi_range(4, 8)
 			if is_mother:
 				PlayerData.mother_relationship = mini(100, PlayerData.mother_relationship + rel_gain)
@@ -1863,6 +1926,9 @@ func _interact_parent(parent_type: String, action: String) -> void:
 			add_life_event("You gave your %s, %s, a heartfelt compliment. They beamed with joy!" % [role, parent_name], "relationship")
 
 		"ask_money":
+			if PlayerData.age < 5:
+				add_life_event("🍼 Restricted: Infants and toddlers cannot ask parents for money.", "relationship")
+				return
 			var rel := PlayerData.mother_relationship if is_mother else PlayerData.father_relationship
 			if rel >= 40:
 				var amount := randi_range(15, 60) if PlayerData.age < 18 else randi_range(30, 120)
@@ -1922,8 +1988,6 @@ func _interact_parent(parent_type: String, action: String) -> void:
 				add_life_event("You didn't have enough funds ($30 wholesale) for the vitamin infusion.", "relationship")
 
 	update_ui()
-	update_relationships_panel()
-	show_tab("timeline")
 	SaveManager.save_game()
 
 
@@ -1938,9 +2002,14 @@ func update_relationships_panel() -> void:
 		else:
 			mother_name_label.text = "Mother: Unknown (Age %d)" % mom_age
 			mother_job_label.text = "Occupation: Homemaker"
-		mother_status_label.text = "Health: %d%%  •  Relationship: %s" % [PlayerData.mother_health, _relationship_status_text(PlayerData.mother_relationship)]
+		mother_status_label.text = "Health: %d%%  •  Relationship: %d%% (%s)" % [
+			PlayerData.mother_health,
+			PlayerData.mother_relationship,
+			_relationship_status_text(PlayerData.mother_relationship)
+		]
 		mother_status_label.add_theme_color_override("font_color", Color("#22c55e") if PlayerData.mother_health > 35 else Color("#f59e0b"))
 		if mom_vbox != null:
+			_setup_relationship_bar(mom_vbox, "MotherRelBar", PlayerData.mother_relationship)
 			_setup_parent_action_row(mom_vbox, "mother")
 	else:
 		mother_name_label.text = "Mother: %s (Deceased)" % PlayerData.mother_name
@@ -1948,6 +2017,9 @@ func update_relationships_panel() -> void:
 		mother_status_label.text = "Status: Passed Away • Rest in Peace"
 		mother_status_label.add_theme_color_override("font_color", Color("#94a3b8"))
 		if mom_vbox != null:
+			var old_bar := mom_vbox.get_node_or_null("MotherRelBar")
+			if old_bar != null:
+				old_bar.queue_free()
 			var act_row := mom_vbox.get_node_or_null("MotherActionRow")
 			if act_row != null:
 				act_row.queue_free()
@@ -1964,9 +2036,14 @@ func update_relationships_panel() -> void:
 		if PlayerData.father_alive:
 			father_name_label.text = "Father: %s (Age %d)" % [PlayerData.father_name, dad_age]
 			father_job_label.text = "Occupation: %s" % PlayerData.father_job
-			father_status_label.text = "Health: %d%%  •  Relationship: %s" % [PlayerData.father_health, _relationship_status_text(PlayerData.father_relationship)]
+			father_status_label.text = "Health: %d%%  •  Relationship: %d%% (%s)" % [
+				PlayerData.father_health,
+				PlayerData.father_relationship,
+				_relationship_status_text(PlayerData.father_relationship)
+			]
 			father_status_label.add_theme_color_override("font_color", Color("#22c55e") if PlayerData.father_health > 35 else Color("#f59e0b"))
 			if dad_vbox != null:
+				_setup_relationship_bar(dad_vbox, "FatherRelBar", PlayerData.father_relationship)
 				_setup_parent_action_row(dad_vbox, "father")
 		else:
 			father_name_label.text = "Father: %s (Deceased)" % PlayerData.father_name
@@ -1974,6 +2051,9 @@ func update_relationships_panel() -> void:
 			father_status_label.text = "Status: Passed Away • Rest in Peace"
 			father_status_label.add_theme_color_override("font_color", Color("#94a3b8"))
 			if dad_vbox != null:
+				var old_bar := dad_vbox.get_node_or_null("FatherRelBar")
+				if old_bar != null:
+					old_bar.queue_free()
 				var act_row := dad_vbox.get_node_or_null("FatherActionRow")
 				if act_row != null:
 					act_row.queue_free()
@@ -1982,6 +2062,759 @@ func update_relationships_panel() -> void:
 		father_icon.material = PortraitCatalog.cutout_material()
 	else:
 		father_card.visible = false
+
+	# Partner / Romantic Relationship Card
+	_setup_partner_card_ui()
+
+
+func _setup_relationship_bar(vbox: VBoxContainer, bar_name: String, rel_val: int) -> ProgressBar:
+	var bar: ProgressBar = null
+	for child in vbox.get_children():
+		if child is ProgressBar and child.name.begins_with(bar_name):
+			if bar == null:
+				bar = child
+			else:
+				vbox.remove_child(child)
+				child.queue_free()
+
+	if bar == null:
+		bar = ProgressBar.new()
+		bar.name = bar_name
+		bar.min_value = 0
+		bar.max_value = 100
+		bar.show_percentage = false
+		bar.custom_minimum_size = Vector2(0, 14)
+		vbox.add_child(bar)
+
+	bar.value = clampi(rel_val, 0, 100)
+
+	var bg := StyleBoxFlat.new()
+	bg.bg_color = Color("#0f172a")
+	bg.border_color = Color("#334155")
+	bg.set_border_width_all(1)
+	bg.set_corner_radius_all(4)
+	bar.add_theme_stylebox_override("background", bg)
+
+	var fill := StyleBoxFlat.new()
+	if rel_val >= 70:
+		fill.bg_color = Color("#10b981") # Emerald
+	elif rel_val >= 40:
+		fill.bg_color = Color("#f59e0b") # Amber
+	else:
+		fill.bg_color = Color("#ef4444") # Crimson
+	fill.set_corner_radius_all(4)
+	bar.add_theme_stylebox_override("fill", fill)
+
+	return bar
+
+
+func _setup_partner_card_ui() -> void:
+	var rel_list := get_node_or_null("RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList") as VBoxContainer
+	if rel_list == null:
+		return
+
+	# Immediately detach and free ANY existing PartnerCard or SinglePromptCard instances
+	for child in rel_list.get_children():
+		if child.name.begins_with("PartnerCard") or child.name.begins_with("SinglePromptCard"):
+			rel_list.remove_child(child)
+			child.queue_free()
+
+	if PlayerData.has_partner():
+		var p: Dictionary = PlayerData.partner
+		var p_name: String = str(p.get("name", "Partner"))
+		var p_status: String = str(p.get("status", "Partner"))
+		var p_age: int = int(p.get("age", 20))
+		var p_gender: String = str(p.get("gender", "FEMALE" if PlayerData.gender == "MALE" else "MALE"))
+		var p_occ: String = str(p.get("occupation", "Unemployed"))
+		var p_edu: String = str(p.get("education", "High School"))
+		var p_rel: int = int(p.get("relationship", 75))
+		var p_variant: int = int(p.get("portrait_variant", 0))
+		var p_hobbies: Array = p.get("hobbies", ["Music", "Reading", "Gaming"])
+		var p_years: int = int(p.get("years_together", 0))
+
+		var card := PanelContainer.new()
+		card.name = "PartnerCard"
+		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f43f5e")))
+
+		var cm := MarginContainer.new()
+		cm.add_theme_constant_override("margin_left", 20)
+		cm.add_theme_constant_override("margin_top", 20)
+		cm.add_theme_constant_override("margin_right", 20)
+		cm.add_theme_constant_override("margin_bottom", 20)
+		card.add_child(cm)
+
+		var ch := HBoxContainer.new()
+		ch.add_theme_constant_override("separation", 20)
+		cm.add_child(ch)
+
+		# Avatar
+		var icon := TextureRect.new()
+		icon.custom_minimum_size = Vector2(96, 96)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		icon.texture = PortraitCatalog.texture(p_age, p_gender, p_variant)
+		icon.material = PortraitCatalog.cutout_material()
+		ch.add_child(icon)
+
+		# Info VBox
+		var cv := VBoxContainer.new()
+		cv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cv.add_theme_constant_override("separation", 6)
+		ch.add_child(cv)
+
+		var name_lbl := Label.new()
+		name_lbl.text = "%s: %s (Age %d)" % [p_status, p_name, p_age]
+		name_lbl.add_theme_font_size_override("font_size", 28)
+		name_lbl.add_theme_color_override("font_color", Color("#f43f5e"))
+		cv.add_child(name_lbl)
+
+		var job_lbl := Label.new()
+		job_lbl.text = "Occupation: %s  •  Education: %s" % [p_occ, p_edu]
+		job_lbl.add_theme_font_size_override("font_size", 24)
+		job_lbl.add_theme_color_override("font_color", Color("#f1f5f9"))
+		cv.add_child(job_lbl)
+
+		var hob_lbl := Label.new()
+		hob_lbl.text = "Interests: %s" % ", ".join(p_hobbies)
+		hob_lbl.add_theme_font_size_override("font_size", 20)
+		hob_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+		cv.add_child(hob_lbl)
+
+		var stat_lbl := Label.new()
+		var yr_str := "year" if p_years == 1 else "years"
+		stat_lbl.text = "Relationship: %d%% (%s)  •  Together: %d %s" % [p_rel, _relationship_status_text(p_rel), p_years, yr_str]
+		stat_lbl.add_theme_font_size_override("font_size", 22)
+		stat_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
+		cv.add_child(stat_lbl)
+
+		# Visual Relationship Bar
+		_setup_relationship_bar(cv, "PartnerRelBar", p_rel)
+
+		# Action Row
+		var act_row := HBoxContainer.new()
+		act_row.add_theme_constant_override("separation", 8)
+
+		var actions: Array = [
+			["Spend Time", "spend_time", "#0284c7"],
+			["Compliment", "compliment", "#8b5cf6"],
+			["Gift ($150)", "gift", "#10b981"]
+		]
+
+		if p_status in ["Boyfriend", "Girlfriend"]:
+			actions.append(["💍 Propose", "propose", "#ec4899"])
+		elif p_status in ["Fiancé", "Fiancée"]:
+			actions.append(["💒 Marry", "marry", "#eab308"])
+
+		var break_word := "Divorce" if p_status in ["Wife", "Husband"] else "Break Up"
+		actions.append(["💔 " + break_word, "breakup", "#ef4444"])
+
+		for act in actions:
+			var btn := Button.new()
+			btn.text = act[0]
+			btn.custom_minimum_size.y = 48
+			btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			btn.add_theme_font_size_override("font_size", 18)
+
+			var style := StyleBoxFlat.new()
+			style.bg_color = Color("#1e293b")
+			style.border_color = Color(act[2])
+			style.set_border_width_all(2)
+			style.set_corner_radius_all(6)
+			btn.add_theme_stylebox_override("normal", style)
+
+			var hover := style.duplicate() as StyleBoxFlat
+			hover.bg_color = Color(act[2])
+			hover.bg_color.a = 0.3
+			btn.add_theme_stylebox_override("hover", hover)
+			btn.add_theme_color_override("font_color", Color("#f1f5f9"))
+
+			var act_key: String = act[1]
+			btn.pressed.connect(func(): _interact_partner(act_key))
+			act_row.add_child(btn)
+
+		cv.add_child(act_row)
+		rel_list.add_child(card)
+
+	else:
+		# Single Status Card
+		var single_card := PanelContainer.new()
+		single_card.name = "SinglePromptCard"
+		single_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#64748b")))
+
+		var sm := MarginContainer.new()
+		sm.add_theme_constant_override("margin_left", 20)
+		sm.add_theme_constant_override("margin_top", 18)
+		sm.add_theme_constant_override("margin_right", 20)
+		sm.add_theme_constant_override("margin_bottom", 18)
+		single_card.add_child(sm)
+
+		var sv := VBoxContainer.new()
+		sv.add_theme_constant_override("separation", 10)
+		sm.add_child(sv)
+
+		var stitle := Label.new()
+		stitle.text = "💔 NO ROMANTIC PARTNER"
+		stitle.add_theme_font_size_override("font_size", 24)
+		stitle.add_theme_color_override("font_color", Color("#94a3b8"))
+		sv.add_child(stitle)
+
+		var sdesc := Label.new()
+		sdesc.text = "You are currently single. Looking for companionship or love? Launch the Dating App in Activities to browse compatible profiles, chat, and ask potential partners out!"
+		sdesc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		sdesc.add_theme_font_size_override("font_size", 20)
+		sdesc.add_theme_color_override("font_color", Color("#cbd5e1"))
+		sv.add_child(sdesc)
+
+		var open_app_btn := _create_cyber_button("💘 Launch Dating App (Activities)", Color("#f43f5e"), func():
+			_on_dating_app_item_pressed()
+		)
+		sv.add_child(open_app_btn)
+
+		rel_list.add_child(single_card)
+
+
+func _interact_partner(action: String) -> void:
+	if not PlayerData.has_partner():
+		return
+	var p_name: String = PlayerData.get_partner_name()
+	var p_status: String = PlayerData.get_partner_status()
+	var p_rel: int = PlayerData.get_partner_relationship()
+
+	match action:
+		"spend_time":
+			var rel_gain := randi_range(7, 12)
+			var happy_gain := randi_range(5, 9)
+			PlayerData.set_partner_relationship(p_rel + rel_gain)
+			PlayerData.happiness = mini(100, PlayerData.happiness + happy_gain)
+			PlayerData.last_partner_interact_age = PlayerData.age
+			add_life_event("You spent quality romantic time chatting and walking through the city with your %s, %s. Relationship +%d%%, Happiness +%d%%." % [
+				p_status.to_lower(),
+				p_name,
+				rel_gain,
+				happy_gain
+			], "relationship")
+
+		"compliment":
+			var rel_gain := randi_range(5, 8)
+			PlayerData.set_partner_relationship(p_rel + rel_gain)
+			PlayerData.happiness = mini(100, PlayerData.happiness + 3)
+			PlayerData.last_partner_interact_age = PlayerData.age
+			add_life_event("You gave your %s, %s, a heartfelt compliment. They blushed with joy! Relationship +%d%%." % [
+				p_status.to_lower(),
+				p_name,
+				rel_gain
+			], "relationship")
+
+		"gift":
+			if PlayerData.money < 150:
+				add_life_event("You cannot afford the $150 gift for %s." % p_name, "finance")
+				show_tab("timeline")
+				return
+			PlayerData.money -= 150
+			var rel_gain := randi_range(14, 18)
+			var happy_gain := 8
+			PlayerData.set_partner_relationship(p_rel + rel_gain)
+			PlayerData.happiness = mini(100, PlayerData.happiness + happy_gain)
+			PlayerData.last_partner_interact_age = PlayerData.age
+			add_life_event("You surprised your %s, %s, with a thoughtful gift ($150)! They were ecstatic. Relationship +%d%%, Happiness +%d%%." % [
+				p_status.to_lower(),
+				p_name,
+				rel_gain,
+				happy_gain
+			], "relationship")
+
+		"propose":
+			_show_proposal_modal()
+			return
+
+		"marry":
+			_show_wedding_modal()
+			return
+
+		"breakup":
+			_break_up_with_partner()
+			return
+
+	update_ui()
+	SaveManager.save_game()
+
+
+func _show_proposal_modal() -> void:
+	if not PlayerData.has_partner():
+		return
+	var p_name: String = PlayerData.get_partner_name()
+	var p_gender: String = str(PlayerData.partner.get("gender", "FEMALE"))
+	var p_rel: int = PlayerData.get_partner_relationship()
+
+	var modal := _create_cyber_modal("💍 MARRIAGE PROPOSAL", "Choose an engagement ring to propose to %s" % p_name, Color("#ec4899"))
+	romance_action_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var rings: Array = [
+		{"name": "Silver Engagement Band", "cost": 500, "bonus": 5, "desc": "A sleek minimalist silver band."},
+		{"name": "Solitaire Diamond Ring", "cost": 2500, "bonus": 15, "desc": "A brilliant-cut diamond in a platinum setting."},
+		{"name": "Cyber Platinum Masterpiece", "cost": 7500, "bonus": 25, "desc": "An opulent custom-crafted heirloom ring with holographic shimmer."}
+	]
+
+	for r in rings:
+		var r_cost: int = int(r["cost"])
+		var r_name: String = str(r["name"])
+		var btn_text := "%s ($%s)
+%s" % [r_name, _format_number(r_cost), str(r["desc"])]
+		var btn := _create_cyber_button(btn_text, Color("#ec4899"), func():
+			if romance_action_modal_overlay != null and is_instance_valid(romance_action_modal_overlay):
+				romance_action_modal_overlay.queue_free()
+				romance_action_modal_overlay = null
+			if PlayerData.money < r_cost:
+				add_life_event("You cannot afford the $%s %s." % [_format_number(r_cost), r_name], "finance")
+				show_tab("timeline")
+				return
+			PlayerData.money -= r_cost
+			var accept_chance: int = p_rel + int(r["bonus"])
+			if accept_chance >= 70:
+				var new_status := "Fiancée" if p_gender == "FEMALE" else "Fiancé"
+				PlayerData.partner["status"] = new_status
+				PlayerData.set_partner_relationship(p_rel + 18)
+				PlayerData.happiness = mini(100, PlayerData.happiness + 25)
+				PlayerData.last_partner_interact_age = PlayerData.age
+				add_life_event("💍 ENGAGEMENT: You got down on one knee and presented the %s to %s. With tears in their eyes, they said YES! You are now officially engaged to your %s!" % [
+					r_name,
+					p_name,
+					new_status
+				], "relationship")
+			else:
+				PlayerData.set_partner_relationship(p_rel - 10)
+				PlayerData.happiness = maxi(5, PlayerData.happiness - 10)
+				add_life_event("💔 REJECTED PROPOSAL: You proposed to %s with the %s, but they hesitated and said it's too early for marriage." % [
+					p_name,
+					r_name
+				], "relationship")
+			update_ui()
+			SaveManager.save_game()
+			show_tab("timeline")
+		)
+		list.add_child(btn)
+
+	romance_action_modal_overlay.visible = true
+
+
+func _show_wedding_modal() -> void:
+	if not PlayerData.has_partner():
+		return
+	var p_name: String = PlayerData.get_partner_name()
+	var p_gender: String = str(PlayerData.partner.get("gender", "FEMALE"))
+	var p_rel: int = PlayerData.get_partner_relationship()
+
+	var modal := _create_cyber_modal("💒 WEDDING CEREMONY", "Plan your wedding ceremony with %s" % p_name, Color("#38bdf8"))
+	romance_action_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var ceremonies: Array = [
+		{"name": "City Hall Courthouse Wedding", "cost": 300, "desc": "A simple, legal ceremony with close witnesses and official certificates."},
+		{"name": "Grand Neon Cathedral & Banquet", "cost": 5000, "desc": "An extravagant cyber ceremony with glowing aisle arches, live orchestra, and catered feast."}
+	]
+
+	for c in ceremonies:
+		var c_cost: int = int(c["cost"])
+		var c_name: String = str(c["name"])
+		var btn_text := "%s ($%s)
+%s" % [c_name, _format_number(c_cost), str(c["desc"])]
+		var btn := _create_cyber_button(btn_text, Color("#38bdf8"), func():
+			if romance_action_modal_overlay != null and is_instance_valid(romance_action_modal_overlay):
+				romance_action_modal_overlay.queue_free()
+				romance_action_modal_overlay = null
+			if PlayerData.money < c_cost:
+				add_life_event("You cannot afford the $%s cost for %s." % [_format_number(c_cost), c_name], "finance")
+				show_tab("timeline")
+				return
+			PlayerData.money -= c_cost
+			var new_status := "Wife" if p_gender == "FEMALE" else "Husband"
+			PlayerData.partner["status"] = new_status
+			PlayerData.set_partner_relationship(p_rel + 20)
+			PlayerData.happiness = mini(100, PlayerData.happiness + 35)
+			PlayerData.last_partner_interact_age = PlayerData.age
+			add_life_event("💒 MARRIED: You and %s tied the knot during a %s! You are now legally and happily married as %s and %s." % [
+				p_name,
+				c_name,
+				"Husband" if PlayerData.gender == "MALE" else "Wife",
+				new_status
+			], "milestone")
+			update_ui()
+			SaveManager.save_game()
+			show_tab("timeline")
+		)
+		list.add_child(btn)
+
+	romance_action_modal_overlay.visible = true
+
+
+func _break_up_with_partner() -> void:
+	if not PlayerData.has_partner():
+		return
+	var p_name: String = PlayerData.get_partner_name()
+	var p_status: String = PlayerData.get_partner_status()
+
+	if p_status in ["Wife", "Husband"]:
+		var settlement: int = int(PlayerData.bank_savings * 0.5)
+		PlayerData.bank_savings -= settlement
+		PlayerData.happiness = maxi(5, PlayerData.happiness - 25)
+		add_life_event("⚖️ DIVORCE: You and %s officially finalized your divorce. Half of your bank savings ($%s) were divided in settlement." % [
+			p_name,
+			_format_number(settlement)
+		], "relationship")
+	else:
+		PlayerData.happiness = maxi(5, PlayerData.happiness - 15)
+		add_life_event("💔 BREAKUP: You and %s decided to end your relationship and part ways." % p_name, "relationship")
+
+	PlayerData.ex_partners.append(PlayerData.partner)
+	PlayerData.partner = {}
+	update_ui()
+	SaveManager.save_game()
+	show_tab("timeline")
+
+
+# --- DATING APP SYSTEM ---
+
+func _close_dating_app_modal() -> void:
+	if dating_app_modal_overlay != null and is_instance_valid(dating_app_modal_overlay):
+		dating_app_modal_overlay.queue_free()
+		dating_app_modal_overlay = null
+	show_tab("timeline")
+
+
+func _generate_dating_candidate() -> Dictionary:
+	# STRICT REQUIREMENT: OPPOSITE GENDER ONLY
+	var target_gender: String = "FEMALE" if PlayerData.gender == "MALE" else "MALE"
+
+	var female_names := [
+		"Maya Lin", "Elena Rostova", "Sophia Vance", "Chloe Sterling",
+		"Aria Thorne", "Zara Chen", "Naomi Mercer", "Luna Zhao",
+		"Jade Kowalski", "Kira Novak", "Amara Reyes", "Freya Lindholm",
+		"Sienna Sinclair", "Ruby O'Connor", "Ivy Moreau"
+	]
+	var male_names := [
+		"Kai Mercer", "Julian Vance", "Ethan Sterling", "Lucas Chen",
+		"Noah Thorne", "Mateo Reyes", "Damian Novak", "Adrian Kowalski",
+		"Caleb Sinclair", "Ezra Moreau", "Silas O'Connor", "Dorian Zhao",
+		"Nico Lindholm", "Jax Blackwood", "Finn Takahashi"
+	]
+
+	var chosen_name: String = (female_names if target_gender == "FEMALE" else male_names).pick_random()
+	var cand_age: int = clampi(PlayerData.age + randi_range(-3, 3), 18, 85)
+
+	var occupations := [
+		"Software Engineer", "Cyberneticist", "Graphic Designer", "Architect",
+		"Emergency Room Nurse", "Chef & Restaurateur", "Music Producer",
+		"Commercial Pilot", "University Lecturer", "Fashion Stylist",
+		"Data Analyst", "Game Developer", "Biotech Researcher",
+		"Attorney at Law", "Physical Therapist"
+	]
+	var educations := [
+		"University Graduate (Computer Science)", "University Graduate (Business Management)",
+		"Medical School Graduate", "Fine Arts Academy Graduate",
+		"Master of Engineering", "Law School Graduate",
+		"High School Graduate", "University Graduate (Cyber Security)"
+	]
+	var hobby_pool := [
+		"Cyber Bouldering", "Retro Synthwave", "Neon Photography", "Gourmet Cooking",
+		"Sci-Fi Literature", "Indie Gaming", "Scuba Diving", "Acoustic Guitar",
+		"Astronomy & Stargazing", "Coffee Roasting", "Martial Arts", "Vintage Cars",
+		"Botanical Gardening", "Drone Racing"
+	]
+
+	hobby_pool.shuffle()
+	var cand_hobbies: Array = [hobby_pool[0], hobby_pool[1], hobby_pool[2]]
+
+	var bios := [
+		"Coffee snob by day, synth musician by night. Looking for genuine connections.",
+		"Seeking someone to explore neon city rooftops and debate sci-fi lore with.",
+		"Looking for real chemistry, spontaneous road trips, and hearty laughs.",
+		"Passionate about art, tech, and deep late-night conversations.",
+		"Fitness fanatic and food lover looking for my player two.",
+		"Always curious, loves stargazing and finding hidden speakeasies in the city."
+	]
+
+	return {
+		"name": chosen_name,
+		"gender": target_gender,
+		"age": cand_age,
+		"occupation": occupations.pick_random(),
+		"education": educations.pick_random(),
+		"hobbies": cand_hobbies,
+		"bio": bios.pick_random(),
+		"portrait_variant": randi_range(0, 1),
+		"compatibility": randi_range(80, 98)
+	}
+
+
+func _show_dating_app_modal() -> void:
+	if dating_app_modal_overlay != null and is_instance_valid(dating_app_modal_overlay):
+		dating_app_modal_overlay.queue_free()
+
+	var modal := _create_cyber_modal("💘 NEON DATE • SMART MATCHMAKING", "Browse verified singles in your metropolis • Swipe, match and connect", Color("#f43f5e"))
+	dating_app_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	if current_dating_candidate.is_empty():
+		current_dating_candidate = _generate_dating_candidate()
+
+	_render_dating_candidate_ui(list)
+	dating_app_modal_overlay.visible = true
+
+
+func _render_dating_candidate_ui(list: VBoxContainer) -> void:
+	# Clear previous cards in the modal list
+	for child in list.get_children():
+		child.queue_free()
+
+	if PlayerData.has_partner():
+		var warn_card := PanelContainer.new()
+		warn_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
+		var wm := MarginContainer.new()
+		wm.add_theme_constant_override("margin_left", 20)
+		wm.add_theme_constant_override("margin_top", 16)
+		wm.add_theme_constant_override("margin_right", 20)
+		wm.add_theme_constant_override("margin_bottom", 16)
+		warn_card.add_child(wm)
+
+		var wv := VBoxContainer.new()
+		wv.add_theme_constant_override("separation", 8)
+		wm.add_child(wv)
+
+		var wtitle := Label.new()
+		wtitle.text = "⚠️ CURRENTLY IN A RELATIONSHIP"
+		wtitle.add_theme_font_size_override("font_size", 22)
+		wtitle.add_theme_color_override("font_color", Color("#fbbf24"))
+		wv.add_child(wtitle)
+
+		var wdesc := Label.new()
+		wdesc.text = "You are currently with %s (%s). In order to date someone new on Neon Date, you must first break up or divorce in the Relationships panel." % [
+			PlayerData.get_partner_name(),
+			PlayerData.get_partner_status()
+		]
+		wdesc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		wdesc.add_theme_font_size_override("font_size", 20)
+		wdesc.add_theme_color_override("font_color", Color("#f1f5f9"))
+		wv.add_child(wdesc)
+
+		list.add_child(warn_card)
+
+	var cand: Dictionary = current_dating_candidate
+
+	# Candidate Profile Card
+	var profile_card := PanelContainer.new()
+	profile_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f43f5e")))
+	var pm := MarginContainer.new()
+	pm.add_theme_constant_override("margin_left", 22)
+	pm.add_theme_constant_override("margin_top", 20)
+	pm.add_theme_constant_override("margin_right", 22)
+	pm.add_theme_constant_override("margin_bottom", 20)
+	profile_card.add_child(pm)
+
+	var pv := VBoxContainer.new()
+	pv.add_theme_constant_override("separation", 14)
+	pm.add_child(pv)
+
+	# Avatar & Primary Info Row
+	var ph := HBoxContainer.new()
+	ph.add_theme_constant_override("separation", 24)
+	pv.add_child(ph)
+
+	# Avatar TextureRect
+	var avatar := TextureRect.new()
+	avatar.custom_minimum_size = Vector2(130, 130)
+	avatar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	avatar.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	avatar.texture = PortraitCatalog.texture(int(cand["age"]), str(cand["gender"]), int(cand["portrait_variant"]))
+	avatar.material = PortraitCatalog.cutout_material()
+	ph.add_child(avatar)
+
+	# Info Details
+	var info_vbox := VBoxContainer.new()
+	info_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info_vbox.add_theme_constant_override("separation", 6)
+	ph.add_child(info_vbox)
+
+	var name_lbl := Label.new()
+	name_lbl.text = "%s, %d" % [str(cand["name"]), int(cand["age"])]
+	name_lbl.add_theme_font_size_override("font_size", 34)
+	name_lbl.add_theme_color_override("font_color", Color("#f43f5e"))
+	info_vbox.add_child(name_lbl)
+
+	var match_lbl := Label.new()
+	match_lbl.text = "💖 %d%% Compatibility Match" % int(cand["compatibility"])
+	match_lbl.add_theme_font_size_override("font_size", 22)
+	match_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
+	info_vbox.add_child(match_lbl)
+
+	var job_lbl := Label.new()
+	job_lbl.text = "💼 %s" % str(cand["occupation"])
+	job_lbl.add_theme_font_size_override("font_size", 24)
+	job_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+	info_vbox.add_child(job_lbl)
+
+	var edu_lbl := Label.new()
+	edu_lbl.text = "🎓 %s" % str(cand["education"])
+	edu_lbl.add_theme_font_size_override("font_size", 20)
+	edu_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+	info_vbox.add_child(edu_lbl)
+
+	# Hobbies Section
+	var hob_title := Label.new()
+	hob_title.text = "🎯 Hobbies & Interests:"
+	hob_title.add_theme_font_size_override("font_size", 20)
+	hob_title.add_theme_color_override("font_color", Color("#34d399"))
+	pv.add_child(hob_title)
+
+	var hobs: Array = cand["hobbies"]
+	var hob_lbl := Label.new()
+	hob_lbl.text = " •  %s  •  %s  •  %s" % [str(hobs[0]), str(hobs[1]), str(hobs[2])]
+	hob_lbl.add_theme_font_size_override("font_size", 22)
+	hob_lbl.add_theme_color_override("font_color", Color("#ffffff"))
+	pv.add_child(hob_lbl)
+
+	# Bio Quote Box
+	var bio_box := PanelContainer.new()
+	var bio_style := StyleBoxFlat.new()
+	bio_style.bg_color = Color("#1e293b")
+	bio_style.set_corner_radius_all(6)
+	bio_box.add_theme_stylebox_override("panel", bio_style)
+
+	var bm := MarginContainer.new()
+	bm.add_theme_constant_override("margin_left", 14)
+	bm.add_theme_constant_override("margin_top", 10)
+	bm.add_theme_constant_override("margin_right", 14)
+	bm.add_theme_constant_override("margin_bottom", 10)
+	bio_box.add_child(bm)
+
+	var bio_lbl := Label.new()
+	bio_lbl.text = "\"%s\"" % str(cand["bio"])
+	bio_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	bio_lbl.add_theme_font_size_override("font_size", 20)
+	bio_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+	bm.add_child(bio_lbl)
+	pv.add_child(bio_box)
+
+	list.add_child(profile_card)
+
+	# Action Buttons
+	var ask_out_btn := _create_cyber_button("💘 ASK OUT / MATCH
+Shoot your shot and ask %s to become your partner" % str(cand["name"]), Color("#f43f5e"), func():
+		_ask_out_dating_candidate(list)
+	)
+	list.add_child(ask_out_btn)
+
+	var pass_btn := _create_cyber_button("⏭️ PASS / NEXT PROFILE
+Browse the next available single in your area", Color("#64748b"), func():
+		current_dating_candidate = _generate_dating_candidate()
+		_render_dating_candidate_ui(list)
+	)
+	list.add_child(pass_btn)
+
+
+func _ask_out_dating_candidate(list: VBoxContainer) -> void:
+	if PlayerData.has_partner():
+		add_life_event("⚠️ You are already in a relationship with %s! Break up or divorce first before dating someone new." % PlayerData.get_partner_name(), "relationship")
+		show_tab("timeline")
+		_close_dating_app_modal()
+		return
+
+	var cand: Dictionary = current_dating_candidate
+	var match_chance: int = 60 + int(PlayerData.looks * 0.25) + int(PlayerData.smarts * 0.15)
+	var roll := randi_range(1, 100)
+
+	if roll <= match_chance:
+		var target_gender: String = str(cand["gender"])
+		PlayerData.partner = cand.duplicate(true)
+		PlayerData.partner["status"] = "Girlfriend" if target_gender == "FEMALE" else "Boyfriend"
+		PlayerData.partner["relationship"] = randi_range(76, 88)
+		PlayerData.partner["years_together"] = 0
+		PlayerData.partner["is_alive"] = true
+		PlayerData.last_partner_interact_age = PlayerData.age
+		PlayerData.happiness = mini(100, PlayerData.happiness + 20)
+
+		add_life_event("💘 DATING APP: You matched with %s (%s) on Neon Date and asked them out. With a glowing smile, they said YES! You are now officially dating your %s." % [
+			cand["name"],
+			cand["occupation"],
+			PlayerData.partner["status"]
+		], "relationship")
+
+		current_dating_candidate = {}
+		_close_dating_app_modal()
+		update_ui()
+		SaveManager.save_game()
+		show_tab("timeline")
+	else:
+		add_life_event("💔 %s smiled politely: 'You seem very nice, but I'm looking for a different romantic connection right now. Best of luck on Neon Date!'" % cand["name"], "relationship")
+		current_dating_candidate = _generate_dating_candidate()
+		_render_dating_candidate_ui(list)
+
+
+func _process_relationships_aging() -> void:
+	_process_parents_aging()
+
+	# Mother relationship decay & consequences
+	if PlayerData.mother_alive and PlayerData.mother_name != "":
+		if PlayerData.last_parent_interact_age != PlayerData.age:
+			PlayerData.mother_relationship = maxi(0, PlayerData.mother_relationship - randi_range(3, 5))
+		if PlayerData.mother_relationship < 25:
+			PlayerData.happiness = maxi(5, PlayerData.happiness - 3)
+			add_life_event("Your mother called feeling neglected and distant. Your bond is strained.", "relationship")
+		elif PlayerData.mother_relationship >= 80:
+			var gift := randi_range(100, 250)
+			PlayerData.money += gift
+			PlayerData.happiness = mini(100, PlayerData.happiness + 4)
+			add_life_event("Your mother sent you a warm birthday card and a $%d gift!" % gift, "relationship")
+
+	# Father relationship decay & consequences
+	if PlayerData.father_alive and PlayerData.father_name != "" and PlayerData.father_name != "Unknown":
+		if PlayerData.last_parent_interact_age != PlayerData.age:
+			PlayerData.father_relationship = maxi(0, PlayerData.father_relationship - randi_range(3, 5))
+		if PlayerData.father_relationship < 25:
+			PlayerData.happiness = maxi(5, PlayerData.happiness - 3)
+			add_life_event("Your father feels out of touch with you. Family bond is strained.", "relationship")
+		elif PlayerData.father_relationship >= 80:
+			var gift := randi_range(100, 250)
+			PlayerData.money += gift
+			PlayerData.happiness = mini(100, PlayerData.happiness + 4)
+			add_life_event("Your father sent you a supportive birthday card and a $%d gift!" % gift, "relationship")
+
+	# Partner aging, relationship decay & consequences
+	if PlayerData.has_partner():
+		PlayerData.partner["age"] = int(PlayerData.partner.get("age", 20)) + 1
+		PlayerData.partner["years_together"] = int(PlayerData.partner.get("years_together", 0)) + 1
+		var p_name: String = PlayerData.get_partner_name()
+		var p_status: String = PlayerData.get_partner_status()
+		var p_rel: int = PlayerData.get_partner_relationship()
+
+		if PlayerData.last_partner_interact_age != PlayerData.age:
+			p_rel = maxi(0, p_rel - randi_range(4, 7))
+			PlayerData.set_partner_relationship(p_rel)
+
+		if p_rel < 20:
+			if p_status in ["Wife", "Husband"]:
+				var settlement: int = int(PlayerData.bank_savings * 0.5)
+				PlayerData.bank_savings -= settlement
+				PlayerData.happiness = maxi(5, PlayerData.happiness - 30)
+				add_life_event("⚖️ DIVORCE: %s couldn't stand the emotional neglect anymore and filed for divorce. Half of your bank savings ($%s) were awarded in settlement." % [
+					p_name,
+					_format_number(settlement)
+				], "relationship")
+			else:
+				PlayerData.happiness = maxi(5, PlayerData.happiness - 20)
+				add_life_event("💔 BREAKUP: %s felt completely neglected and distant over the past year. They packed their bags and broke up with you." % p_name, "relationship")
+			PlayerData.ex_partners.append(PlayerData.partner)
+			PlayerData.partner = {}
+		elif p_rel >= 80:
+			var yrs: int = int(PlayerData.partner.get("years_together", 1))
+			PlayerData.happiness = mini(100, PlayerData.happiness + 8)
+			add_life_event("❤️ ANNIVERSARY: You and %s celebrated %d %s together with a romantic candlelight dinner! (Happiness +8)" % [
+				p_name,
+				yrs,
+				"year" if yrs == 1 else "years"
+			], "relationship")
 
 
 # Activity Item Handlers
@@ -2037,6 +2870,14 @@ func _on_mind_item_pressed() -> void:
 		show_tab("timeline")
 		return
 	_show_meditation_modal()
+
+
+func _on_dating_app_item_pressed() -> void:
+	if PlayerData.age < 18:
+		add_life_event("🔞 Underage: You must be at least 18 years old to register and use dating apps (Current age: %d)." % PlayerData.age, "activity")
+		show_tab("timeline")
+		return
+	_show_dating_app_modal()
 
 
 func _show_jobs_modal() -> void:
@@ -2900,6 +3741,9 @@ var casino_modal_overlay: ColorRect = null
 var death_screen_overlay: ColorRect = null
 var gym_modal_overlay: ColorRect = null
 var meditation_modal_overlay: ColorRect = null
+var dating_app_modal_overlay: ColorRect = null
+var romance_action_modal_overlay: ColorRect = null
+var current_dating_candidate: Dictionary = {}
 
 
 func _create_cyber_modal(title_text: String, subtitle_text: String, border_color: Color) -> Dictionary:
@@ -4703,6 +5547,66 @@ func _update_portrait() -> void:
 		portrait.texture = PortraitCatalog.texture(PlayerData.age, PlayerData.gender, PlayerData.portrait_variant)
 		portrait_key = key
 	portrait.tooltip_text = "%s %s" % [PlayerData.get_stage_icon(), PlayerData.get_stage_name()]
+
+var is_disclaimer_fading: bool = false
+
+
+func _start_game_initialization_sequence() -> void:
+	if loading_screen == null or loading_progress_label == null:
+		return
+
+	is_disclaimer_fading = false
+	if disclaimer_screen != null:
+		# Decorative children must not intercept taps intended for the splash.
+		for child in disclaimer_screen.find_children("*", "Control", true, false):
+			child.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	loading_progress_label.text = "0 %"
+
+	# BACKGROUND LOADING STARTS CONCURRENTLY AT T = 0 WHILE DISCLAIMER IS SHOWN
+	var loading_tween := create_tween()
+	loading_tween.tween_method(func(val: float) -> void:
+		if loading_progress_label != null:
+			loading_progress_label.text = "%d %%" % int(val)
+	, 0.0, 100.0, 1.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	loading_tween.tween_interval(0.2)
+	# Silky-smooth cinematic dissolve/fade out transition from loading screen into main game
+	loading_tween.set_parallel(true)
+	loading_tween.tween_property(loading_screen, "modulate:a", 0.0, 0.65).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	loading_tween.tween_property(loading_screen, "scale", Vector2(1.03, 1.03), 0.65).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	loading_tween.chain().tween_callback(func() -> void:
+		if loading_screen != null:
+			loading_screen.visible = false
+			loading_screen.scale = Vector2(1.0, 1.0)
+	)
+
+	# Auto-dismiss after two real seconds; a tap can start the fade immediately.
+	if disclaimer_screen != null:
+		await RenderingServer.frame_post_draw
+		var visible_until := Time.get_ticks_msec() + 2000
+		while Time.get_ticks_msec() < visible_until:
+			var remaining_seconds := float(visible_until - Time.get_ticks_msec()) / 1000.0
+			await get_tree().create_timer(maxf(remaining_seconds, 0.001), true, false, true).timeout
+		_fade_out_disclaimer()
+
+
+func _fade_out_disclaimer() -> void:
+	if disclaimer_screen == null or is_disclaimer_fading:
+		return
+	is_disclaimer_fading = true
+	var fade_tween := create_tween()
+	fade_tween.tween_property(disclaimer_screen, "modulate:a", 0.0, 0.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	fade_tween.tween_callback(func() -> void:
+		if disclaimer_screen != null:
+			disclaimer_screen.visible = false
+	)
+
+
+func _on_disclaimer_screen_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		_fade_out_disclaimer()
+	elif event is InputEventScreenTouch and event.pressed:
+		_fade_out_disclaimer()
+
 
 func _start_loading_animation() -> void:
 	if loading_screen == null or loading_progress_label == null:

@@ -1430,6 +1430,20 @@ theme_override_styles/hover = SubResource("card_button_hover")
 text = "🏦  Bank & Loans"
 alignment = 0
 
+[node name="DatingAppItem" type="Button" parent="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList" unique_id=987213457]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_focus_color = Color(1, 0.2, 0.6, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.2, 0.6, 1)
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("card_button_normal")
+theme_override_styles/pressed = SubResource("card_button_pressed")
+theme_override_styles/hover = SubResource("card_button_hover")
+text = "💘  Dating App"
+alignment = 0
+
 [node name="SettingsOverlay" type="ColorRect" parent="." unique_id=289620972]
 visible = false
 z_index = 35
@@ -1887,6 +1901,94 @@ theme_override_font_sizes/font_size = 32
 text = "0 %"
 horizontal_alignment = 1
 
+[node name="DisclaimerScreen" type="Control" parent="." unique_id=778899112]
+z_index = 110
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DisclaimerBackground" type="TextureRect" parent="DisclaimerScreen" unique_id=778899113]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_bg")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="DisclaimerOverlayTint" type="ColorRect" parent="DisclaimerScreen" unique_id=778899114]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.015, 0.035, 0.08, 0.75)
+
+[node name="CenterContainer" type="CenterContainer" parent="DisclaimerScreen" unique_id=778899115]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DisclaimerCard" type="PanelContainer" parent="DisclaimerScreen/CenterContainer" unique_id=778899116]
+custom_minimum_size = Vector2(640, 0)
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="DisclaimerScreen/CenterContainer/DisclaimerCard" unique_id=778899117]
+layout_mode = 2
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 36
+theme_override_constants/margin_right = 36
+theme_override_constants/margin_bottom = 36
+
+[node name="VBox" type="VBoxContainer" parent="DisclaimerScreen/CenterContainer/DisclaimerCard/Margin" unique_id=778899118]
+layout_mode = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="DisclaimerHeaderLabel" type="Label" parent="DisclaimerScreen/CenterContainer/DisclaimerCard/Margin/VBox" unique_id=778899119]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.94, 1, 1)
+theme_override_colors/font_outline_color = Color(0.02, 0.1, 0.25, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 34
+text = "⚠️  DISCLAIMER  ⚠️"
+horizontal_alignment = 1
+
+[node name="DisclaimerSubLabel" type="Label" parent="DisclaimerScreen/CenterContainer/DisclaimerCard/Margin/VBox" unique_id=778899120]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.22, 0.74, 0.97, 1)
+theme_override_font_sizes/font_size = 20
+text = "FICTIONAL SIMULATION PROTOCOL"
+horizontal_alignment = 1
+
+[node name="DisclaimerMessage" type="Label" parent="DisclaimerScreen/CenterContainer/DisclaimerCard/Margin/VBox" unique_id=778899121]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.97, 0.98, 0.99, 1)
+theme_override_font_sizes/font_size = 22
+text = "Life.exe is an interactive simulation of fiction.
+
+All characters, names, professions, financial events, medical conditions, relationships, and storylines portrayed within this simulation are entirely fictional.
+
+Any resemblance to actual persons, living or deceased, or to real-world events or locations is purely coincidental."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="DisclaimerFooter" type="Label" parent="DisclaimerScreen/CenterContainer/DisclaimerCard/Margin/VBox" unique_id=778899122]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.48, 0.6, 1)
+theme_override_font_sizes/font_size = 18
+text = "•  Tap anywhere to continue  •"
+horizontal_alignment = 1
+
 [connection signal="pressed" from="TopBar/Row/MenuButton" to="." method="_on_settings_nav_button_pressed"]
 [connection signal="pressed" from="ProfileStrip/ProfileMargin/ProfileRow/AvatarButton" to="." method="_on_avatar_button_pressed"]
 [connection signal="pressed" from="SafeArea/MainColumn/ActionBar/ActionRow/InfantButton" to="." method="_on_infant_button_pressed"]
@@ -1910,6 +2012,7 @@ horizontal_alignment = 1
 [connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/StreetHustleItem" to="." method="_on_street_hustle_item_pressed"]
 [connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/MindItem" to="." method="_on_mind_item_pressed"]
 [connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/BankActItem" to="." method="_on_bank_button_pressed"]
+[connection signal="pressed" from="ActivitiesPanel/ActMargin/ActContent/ActScroll/ActList/DatingAppItem" to="." method="_on_dating_app_item_pressed"]
 [connection signal="pressed" from="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/SettingsHeader/CloseSettingsHeaderButton" to="." method="_on_close_settings_button_pressed"]
 [connection signal="pressed" from="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/DangerCard/Margin/VBox/ResetProgressButton" to="." method="_on_reset_progress_button_pressed"]
 [connection signal="pressed" from="SettingsOverlay/SettingsCard/SettingsMargin/SettingsContent/CloseSettingsButton" to="." method="_on_close_settings_button_pressed"]
@@ -1920,3 +2023,4 @@ horizontal_alignment = 1
 [connection signal="pressed" from="EventOverlay/EventPanel/EventMargin/EventContent/EventChoices/EventChoice2" to="." method="_on_event_choice_2_pressed"]
 [connection signal="pressed" from="EventOverlay/EventPanel/EventMargin/EventContent/EventChoices/EventChoice3" to="." method="_on_event_choice_3_pressed"]
 [connection signal="pressed" from="EventOverlay/EventPanel/EventMargin/EventContent/EventChoices/EventChoice4" to="." method="_on_event_choice_4_pressed"]
+[connection signal="gui_input" from="DisclaimerScreen" to="." method="_on_disclaimer_screen_gui_input"]

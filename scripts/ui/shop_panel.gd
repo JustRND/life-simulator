@@ -1,0 +1,146 @@
+extends PanelContainer
+
+signal closed
+const OFFERS = [
+	["LIFE.EXE PLUS", "A little extra for every life.", "Mock premium membership and bonus customization.", "$4.99", "#64e6ff"],
+	["NEON WARDROBE", "Make your next chapter brighter.", "Mock pack of portrait frames and profile accents.", "$1.99", "#bda2ff"],
+	["NEW BEGINNINGS", "More room for more stories.", "Mock pack of three additional character save slots.", "$2.99", "#75efb3"],
+	["PIXEL COLLECTION", "Small details. Your signature style.", "Mock bundle of alternate UI color themes.", "$0.99", "#ffd481"]
+]
+var _close: Button
+var _status: Label
+var _shop_button: Button
+
+func _ready() -> void:
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	z_index = 90
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	add_theme_stylebox_override("panel", _style(Color("#090f1d"), Color("#090f1d"), 0))
+	_build()
+	visible = false
+
+func install_button(row: HBoxContainer) -> void:
+	_shop_button = Button.new()
+	_shop_button.name = "ShopButton"
+	_shop_button.text = "SHOP"
+	_shop_button.icon = load("res://assets/ui/shop.svg")
+	_shop_button.expand_icon = true
+	_shop_button.add_theme_constant_override("icon_max_width", 64)
+	_shop_button.add_theme_constant_override("h_separation", 14)
+	_shop_button.add_theme_font_size_override("font_size", 26)
+	_shop_button.custom_minimum_size = Vector2(210, 90)
+	_shop_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_shop_button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_style_button(_shop_button, Color("#64e6ff"))
+	row.add_child(_shop_button)
+	_shop_button.pressed.connect(open_shop)
+
+func open_shop() -> void:
+	_status.text = "Preview shop • Sample prices • No real purchases"
+	show()
+	_close.grab_focus()
+
+func close_shop() -> void:
+	hide()
+	closed.emit()
+	_shop_button.grab_focus()
+
+func _input(event: InputEvent) -> void:
+	if visible and event.is_action_pressed("ui_cancel"):
+		close_shop()
+		get_viewport().set_input_as_handled()
+
+func _build() -> void:
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 38)
+	add_child(margin)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 26)
+	margin.add_child(column)
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 22)
+	column.add_child(header)
+	var icon := TextureRect.new()
+	icon.texture = load("res://assets/ui/shop.svg")
+	icon.custom_minimum_size = Vector2(92, 92)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	header.add_child(icon)
+	var title := _label("LIFE.EXE SHOP", 42, Color("#64e6ff"))
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	header.add_child(title)
+	_close = Button.new()
+	_close.name = "CloseShopButton"
+	_close.text = "X"
+	_close.tooltip_text = "Return to game"
+	_close.custom_minimum_size = Vector2(88, 88)
+	_style_button(_close, Color("#ff90aa"))
+	header.add_child(_close)
+	_close.pressed.connect(close_shop)
+	column.add_child(_label("YOUR LIFE. YOUR STYLE.", 28, Color("#f1f5ff")))
+	column.add_child(_label("Explore extras for your next story.", 25, Color("#a2b5cf")))
+	var scroll := ScrollContainer.new()
+	scroll.name = "OffersScroll"
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	column.add_child(scroll)
+	var offers := VBoxContainer.new()
+	offers.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	offers.add_theme_constant_override("separation", 22)
+	scroll.add_child(offers)
+	for offer in OFFERS:
+		var accent := Color(offer[4])
+		var card := PanelContainer.new()
+		card.add_theme_stylebox_override("panel", _style(Color("#111e34"), accent, 24))
+		offers.add_child(card)
+		var content := VBoxContainer.new()
+		content.add_theme_constant_override("separation", 12)
+		card.add_child(content)
+		content.add_child(_label(offer[0], 32, accent))
+		content.add_child(_label(offer[1], 25, Color("#f1f5ff")))
+		content.add_child(_label(offer[2], 23, Color("#a2b5cf")))
+		var price := Button.new()
+		price.text = "%s  •  PREVIEW" % offer[3]
+		price.custom_minimum_size.y = 72
+		_style_button(price, accent)
+		content.add_child(price)
+		price.pressed.connect(_preview_offer.bind(offer[0]))
+	_status = _label("Preview shop • Sample prices • No real purchases", 23, Color("#a2b5cf"))
+	_status.custom_minimum_size.y = 80
+	column.add_child(_status)
+
+func _preview_offer(offer_name: String) -> void:
+	_status.text = "%s is a mock offer. Nothing was charged or added." % offer_name
+
+func _label(value: String, font_size: int, tint: Color) -> Label:
+	var label := Label.new()
+	label.text = value
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", tint)
+	return label
+
+func _style(fill: Color, border: Color, padding: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill
+	style.border_color = border
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(6)
+	style.content_margin_left = padding
+	style.content_margin_right = padding
+	style.content_margin_top = padding
+	style.content_margin_bottom = padding
+	return style
+
+func _style_button(button: Button, accent: Color) -> void:
+	button.add_theme_font_size_override("font_size", 26)
+	button.add_theme_color_override("font_color", accent)
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	button.add_theme_color_override("font_pressed_color", Color.WHITE)
+	button.add_theme_stylebox_override("normal", _style(Color("#12213b"), accent.darkened(0.4), 12))
+	button.add_theme_stylebox_override("hover", _style(Color("#1d3353"), accent, 12))
+	button.add_theme_stylebox_override("pressed", _style(Color("#0d1729"), accent, 12))
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
