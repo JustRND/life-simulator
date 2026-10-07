@@ -10,6 +10,8 @@ var looks: int = 65
 var first_name: String = ""
 var birthplace: String = ""
 var gender: String = "MALE"
+var ethnicity: String = "white"
+var portrait_track: int = 0
 var portrait_variant: int = 0
 var has_started_game: bool = false
 
@@ -86,7 +88,9 @@ func reset_player() -> void:
 	first_name = ""
 	birthplace = ""
 	gender = "MALE"
-	portrait_variant = randi_range(0, 1)
+	ethnicity = "white"
+	portrait_track = 0
+	portrait_variant = 0
 	has_started_game = false
 
 	birth_story = ""

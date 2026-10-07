@@ -9,6 +9,10 @@ const RomanceRules = preload("res://scripts/core/romance_rules.gd")
 var portrait: TextureRect
 var portrait_key: String = ""
 var gender_input: OptionButton
+var creation_selected_ethnicity: String = "white"
+var creation_selected_track: int = 0
+var creation_avatar_rect: TextureRect
+var creation_avatar_desc: Label
 
 var current_event = null
 var current_event_choices: Array = []
@@ -1105,7 +1109,9 @@ func _on_start_game_button_pressed() -> void:
 	PlayerData.first_name = entered_name
 	PlayerData.birthplace = selected_country
 	PlayerData.gender = "MALE" if gender_input.selected == 0 else "FEMALE"
-	PlayerData.portrait_variant = randi_range(0, 1)
+	PlayerData.ethnicity = creation_selected_ethnicity
+	PlayerData.portrait_track = creation_selected_track
+	PlayerData.portrait_variant = creation_selected_track
 	PlayerData.has_started_game = true
 
 	# Generate rich, unique BitLife-style birth description & family background
@@ -2067,7 +2073,7 @@ func update_relationships_panel() -> void:
 			if act_row != null:
 				act_row.queue_free()
 
-	mother_icon.texture = PortraitCatalog.texture(mom_age, "FEMALE", 0)
+	mother_icon.texture = PortraitCatalog.texture(mom_age, "FEMALE", 0, PlayerData.ethnicity)
 	mother_icon.material = PortraitCatalog.cutout_material()
 
 	# Father
@@ -2101,7 +2107,7 @@ func update_relationships_panel() -> void:
 				if act_row != null:
 					act_row.queue_free()
 
-		father_icon.texture = PortraitCatalog.texture(dad_age, "MALE", 0)
+		father_icon.texture = PortraitCatalog.texture(dad_age, "MALE", 0, PlayerData.ethnicity)
 		father_icon.material = PortraitCatalog.cutout_material()
 	else:
 		father_card.visible = false
@@ -2196,7 +2202,7 @@ func _setup_partner_card_ui() -> void:
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		icon.texture = PortraitCatalog.texture(p_age, p_gender, p_variant)
+		icon.texture = PortraitCatalog.texture(p_age, p_gender, p_variant, str(p.get("ethnicity", "")))
 		icon.material = PortraitCatalog.cutout_material()
 		ch.add_child(icon)
 
@@ -2597,6 +2603,9 @@ func _generate_dating_candidate() -> Dictionary:
 		"Always curious, loves stargazing and finding hidden speakeasies in the city."
 	]
 
+	var cand_eth: String = PortraitCatalog.ETHNICITIES.pick_random()
+	var cand_track: int = randi_range(0, 3)
+
 	return {
 		"name": chosen_name,
 		"gender": target_gender,
@@ -2605,7 +2614,9 @@ func _generate_dating_candidate() -> Dictionary:
 		"education": educations.pick_random(),
 		"hobbies": cand_hobbies,
 		"bio": bios.pick_random(),
-		"portrait_variant": randi_range(0, 1),
+		"ethnicity": cand_eth,
+		"portrait_track": cand_track,
+		"portrait_variant": cand_track,
 		"compatibility": randi_range(80, 98)
 	}
 
@@ -2689,7 +2700,7 @@ func _render_dating_candidate_ui(list: VBoxContainer) -> void:
 	avatar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	avatar.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	avatar.texture = PortraitCatalog.texture(int(cand["age"]), str(cand["gender"]), int(cand["portrait_variant"]))
+	avatar.texture = PortraitCatalog.texture(int(cand["age"]), str(cand["gender"]), int(cand.get("portrait_track", cand.get("portrait_variant", 0))), str(cand.get("ethnicity", "")))
 	avatar.material = PortraitCatalog.cutout_material()
 	ph.add_child(avatar)
 
@@ -5458,17 +5469,99 @@ func _configure_creation() -> void:
 	content.add_child(gender_input)
 	content.move_child(gender_input, gender_label.get_index() + 1)
 
+	var avatar_title := Label.new()
+	avatar_title.name = "AvatarSectionLabel"
+	avatar_title.text = "APPEARANCE"
+	avatar_title.add_theme_font_size_override("font_size", 24)
+	content.add_child(avatar_title)
+	content.move_child(avatar_title, gender_input.get_index() + 1)
+
+	var avatar_row := HBoxContainer.new()
+	avatar_row.name = "AvatarRow"
+	avatar_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	avatar_row.add_theme_constant_override("separation", 20)
+	content.add_child(avatar_row)
+	content.move_child(avatar_row, avatar_title.get_index() + 1)
+
+	var prev_avatar_btn := Button.new()
+	prev_avatar_btn.name = "PrevAvatarButton"
+	prev_avatar_btn.text = " ◀ "
+	prev_avatar_btn.custom_minimum_size = Vector2(80, 80)
+	prev_avatar_btn.add_theme_font_size_override("font_size", 28)
+	var arrow_style := StyleBoxFlat.new()
+	arrow_style.bg_color = Color("#1e293b")
+	arrow_style.border_color = Color("#38bdf8")
+	arrow_style.set_border_width_all(2)
+	arrow_style.set_corner_radius_all(8)
+	var arrow_hover := arrow_style.duplicate() as StyleBoxFlat
+	arrow_hover.bg_color = Color("#0284c7")
+	prev_avatar_btn.add_theme_stylebox_override("normal", arrow_style)
+	prev_avatar_btn.add_theme_stylebox_override("hover", arrow_hover)
+	prev_avatar_btn.add_theme_stylebox_override("pressed", arrow_hover)
+	prev_avatar_btn.add_theme_color_override("font_color", Color("#ffffff"))
+	prev_avatar_btn.pressed.connect(func(): _cycle_creation_avatar(-1))
+	avatar_row.add_child(prev_avatar_btn)
+
+	var preview_panel := PanelContainer.new()
+	preview_panel.custom_minimum_size = Vector2(104, 104)
+	var preview_style := StyleBoxFlat.new()
+	preview_style.bg_color = Color("#0f172a")
+	preview_style.border_color = Color("#00f0ff")
+	preview_style.set_border_width_all(2)
+	preview_style.set_corner_radius_all(10)
+	preview_panel.add_theme_stylebox_override("panel", preview_style)
+	avatar_row.add_child(preview_panel)
+
+	creation_avatar_rect = TextureRect.new()
+	creation_avatar_rect.name = "CreationAvatarRect"
+	creation_avatar_rect.custom_minimum_size = Vector2(96, 96)
+	creation_avatar_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	creation_avatar_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	creation_avatar_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	preview_panel.add_child(creation_avatar_rect)
+
+	var next_avatar_btn := Button.new()
+	next_avatar_btn.name = "NextAvatarButton"
+	next_avatar_btn.text = " ▶ "
+	next_avatar_btn.custom_minimum_size = Vector2(80, 80)
+	next_avatar_btn.add_theme_font_size_override("font_size", 28)
+	next_avatar_btn.add_theme_stylebox_override("normal", arrow_style)
+	next_avatar_btn.add_theme_stylebox_override("hover", arrow_hover)
+	next_avatar_btn.add_theme_stylebox_override("pressed", arrow_hover)
+	next_avatar_btn.add_theme_color_override("font_color", Color("#ffffff"))
+	next_avatar_btn.pressed.connect(func(): _cycle_creation_avatar(1))
+	avatar_row.add_child(next_avatar_btn)
+
+	creation_avatar_desc = Label.new()
+	creation_avatar_desc.name = "AvatarDescLabel"
+	creation_avatar_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	creation_avatar_desc.add_theme_color_override("font_color", Color("#bae6fd"))
+	creation_avatar_desc.add_theme_font_size_override("font_size", 22)
+	content.add_child(creation_avatar_desc)
+	content.move_child(creation_avatar_desc, avatar_row.get_index() + 1)
+
 	var random_button := Button.new()
 	random_button.name = "RandomizeButton"
-	random_button.text = "🎲 Randomize Name & Country"
+	random_button.text = "🎲 Randomize Name, Country & Avatar"
 	random_button.custom_minimum_size.y = 76
 	random_button.pressed.connect(_randomize_identity)
 	content.add_child(random_button)
-	content.move_child(random_button, gender_input.get_index() + 1)
+	content.move_child(random_button, creation_avatar_desc.get_index() + 1)
+
+	birthplace_input.item_selected.connect(func(idx: int):
+		var c_name := birthplace_input.get_item_text(idx)
+		var allowed := PortraitCatalog.get_country_ethnicities(c_name)
+		if not allowed.has(creation_selected_ethnicity):
+			creation_selected_ethnicity = allowed[0]
+			creation_selected_track = 0
+			_update_creation_avatar_preview()
+	)
+
+	_update_creation_avatar_preview()
 
 	# Card Styling: High-contrast Dark Cyber Card
 	var card := content.get_parent() as PanelContainer
-	card.custom_minimum_size = Vector2(980, 1420)
+	card.custom_minimum_size = Vector2(980, 1600)
 	var card_style := StyleBoxFlat.new()
 	card_style.bg_color = Color("#090f1d") # Rich dark cyber navy
 	card_style.border_color = Color("#38bdf8") # Radiant cyan border
@@ -5566,10 +5659,34 @@ func _configure_creation() -> void:
 		start_btn.add_theme_font_size_override("font_size", 30)
 
 
+func _cycle_creation_avatar(direction: int) -> void:
+	var eth_list := PortraitCatalog.ETHNICITIES
+	var eth_idx := eth_list.find(creation_selected_ethnicity)
+	if eth_idx == -1:
+		eth_idx = 0
+	var total_index := eth_idx * 4 + creation_selected_track
+	total_index = posmod(total_index + direction, eth_list.size() * 4)
+	creation_selected_ethnicity = eth_list[floori(float(total_index) / 4)]
+	creation_selected_track = total_index % 4
+	_update_creation_avatar_preview()
+
+
+func _update_creation_avatar_preview() -> void:
+	if creation_avatar_rect != null:
+		creation_avatar_rect.texture = PortraitCatalog.get_baby_texture(creation_selected_ethnicity, creation_selected_track)
+	if creation_avatar_desc != null:
+		var eth_title := creation_selected_ethnicity.capitalize()
+		creation_avatar_desc.text = "%s Baby • Style %d of 4" % [eth_title, creation_selected_track + 1]
+
+
 func _randomize_identity() -> void:
+	gender_input.select(randi_range(0, 1))
 	birthplace_input.select(randi_range(0, birthplace_input.item_count - 1))
 	var country := birthplace_input.get_item_text(birthplace_input.selected)
 	name_input.text = NameCatalog.random_name(country, gender_input.selected == 1)
+	creation_selected_ethnicity = PortraitCatalog.random_ethnicity_for_country(country)
+	creation_selected_track = randi_range(0, 3)
+	_update_creation_avatar_preview()
 	validation_label.text = ""
 
 
@@ -5787,9 +5904,9 @@ func _configure_portrait() -> void:
 
 func _update_portrait() -> void:
 	var stage := PortraitCatalog.stage_index(PlayerData.age)
-	var key := "%d/%s/%d" % [stage, PlayerData.gender, PlayerData.portrait_variant]
+	var key := "%d/%s/%s/%d" % [stage, PlayerData.gender, PlayerData.ethnicity, PlayerData.portrait_track]
 	if key != portrait_key:
-		portrait.texture = PortraitCatalog.texture(PlayerData.age, PlayerData.gender, PlayerData.portrait_variant)
+		portrait.texture = PortraitCatalog.get_portrait(PlayerData.age, PlayerData.gender, PlayerData.portrait_track, PlayerData.ethnicity)
 		portrait_key = key
 	portrait.tooltip_text = "%s %s" % [PlayerData.get_stage_icon(), PlayerData.get_stage_name()]
 

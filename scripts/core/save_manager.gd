@@ -8,6 +8,8 @@ func save_game() -> void:
 		"first_name": PlayerData.first_name,
 		"birthplace": PlayerData.birthplace,
 		"gender": PlayerData.gender,
+		"ethnicity": PlayerData.ethnicity,
+		"portrait_track": PlayerData.portrait_track,
 		"portrait_variant": PlayerData.portrait_variant,
 		"has_started_game": PlayerData.has_started_game,
 		"birth_story": PlayerData.birth_story,
@@ -111,7 +113,9 @@ func load_game() -> bool:
 	PlayerData.first_name = str(data.get("first_name", ""))
 	PlayerData.birthplace = str(data.get("birthplace", ""))
 	PlayerData.gender = str(data.get("gender", "MALE"))
-	PlayerData.portrait_variant = int(data.get("portrait_variant", absi(PlayerData.first_name.hash()) % 2))
+	PlayerData.ethnicity = str(data.get("ethnicity", "white"))
+	PlayerData.portrait_track = int(data.get("portrait_track", int(data.get("portrait_variant", 0)) % 4))
+	PlayerData.portrait_variant = int(data.get("portrait_variant", PlayerData.portrait_track))
 	PlayerData.has_started_game = bool(data.get("has_started_game", false))
 
 	PlayerData.birth_story = str(data.get("birth_story", ""))
