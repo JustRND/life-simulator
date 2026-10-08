@@ -951,6 +951,10 @@ static func buy_asset(player_data: Node, item_id: String) -> Dictionary:
 	player_data.owned_assets.append(new_asset)
 	player_data.happiness = mini(100, player_data.happiness + int(item.get("happiness_bonus", 10)))
 
+	if str(item.get("category", "")) == CATEGORY_PROPERTIES:
+		if player_data.has_method("add_milestone"):
+			player_data.add_milestone("Purchased real estate: %s." % str(item.get("name", "Property")), player_data.age, "🏡")
+
 	return {
 		"success": true,
 		"message": "Congratulations! You purchased %s for $%d." % [new_asset["name"], price],

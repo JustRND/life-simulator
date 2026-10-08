@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://verify_event_rel_finance"]
+
+[ext_resource type="Script" path="res://tests/verify_event_rel_finance.gd" id="1_test"]
+
+[node name="VerifyEventRelFinance" type="Node"]
+script = ExtResource("1_test")

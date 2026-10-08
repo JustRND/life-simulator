@@ -71,6 +71,7 @@ var annual_event_popup_chance: float = 0.45
 @onready var character_story: Label = $CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FamilyCard/Margin/VBox/CharacterStory
 @onready var character_money: Label = $CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FinancesCard/Margin/VBox/CharacterMoney
 @onready var character_karma: Label = $CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/FinancesCard/Margin/VBox/CharacterKarma
+@onready var character_milestones_list: VBoxContainer = get_node_or_null("CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/MilestonesCard/Margin/VBox/MilestonesList") as VBoxContainer
 
 # Toddler / Infant Panel (Life Overview Panel)
 @onready var infant_panel: PanelContainer = $InfantPanel
@@ -616,6 +617,7 @@ func age_up() -> void:
 	var promotion := CareerProgression.advance_year(PlayerData, spent_year_in_prison)
 	if not promotion.is_empty():
 		add_life_event(promotion, "career")
+		PlayerData.add_milestone("Promoted to %s at %s." % [PlayerData.job_title, PlayerData.job_company], PlayerData.age, "🎖️")
 
 	# 5. Bank Loan Interest (8% annual APR)
 	if PlayerData.loan_balance > 0:
@@ -688,7 +690,13 @@ func age_up() -> void:
 		add_life_event("📘 You entered High School! Your academic marks directly determine future career qualification.", "milestone")
 	elif PlayerData.age == 18 and PlayerData.education_level == "High School":
 		PlayerData.education_level = "High School Graduate"
-		add_life_event("🎓 You graduated from High School with a final academic grade of %d%% (%s)!" % [PlayerData.grades, PlayerData.get_letter_grade()], "milestone")
+		var honors_hs := ""
+		if PlayerData.grades >= 90:
+			honors_hs = " with High Honors"
+		elif PlayerData.grades >= 80:
+			honors_hs = " with Honors"
+		add_life_event("🎓 You graduated from High School%s with a final academic grade of %d%% (%s)!" % [honors_hs, PlayerData.grades, PlayerData.get_letter_grade()], "milestone")
+		PlayerData.add_milestone("Graduated from High School%s (Grade: %d%%)." % [honors_hs, PlayerData.grades], PlayerData.age, "🎓")
 	elif PlayerData.education_level == "University Student":
 		PlayerData.university_years += 1
 		var tuition: int = PlayerData.university_tuition if PlayerData.university_tuition > 0 else 12000
@@ -712,17 +720,34 @@ func age_up() -> void:
 			PlayerData.happiness = mini(100, PlayerData.happiness + 15)
 			var deg_name: String = PlayerData.university_degree if PlayerData.university_degree != "" else "Bachelor's Degree"
 			var maj_name: String = PlayerData.university_major_title if PlayerData.university_major_title != "" else "Specialized Major"
+			var gpa: float = clampf((float(PlayerData.grades) / 100.0) * 4.0, 1.0, 4.0)
+			var honors := ""
+			if gpa >= 3.90:
+				honors = "as a summa cum laude"
+			elif gpa >= 3.70:
+				honors = "as a magna cum laude"
+			elif gpa >= 3.50:
+				honors = "as a cum laude"
+
 			var completed_degree := {
 				"university": uni_title,
 				"major": PlayerData.university_major,
 				"major_title": maj_name,
 				"degree": deg_name,
 				"grades": PlayerData.grades,
+				"gpa": gpa,
+				"honors": honors,
 				"year_graduated": PlayerData.age
 			}
 			PlayerData.degrees.append(completed_degree)
 			PlayerData.university_years = 0
-			add_life_event("🎓 CONGRATULATIONS! You graduated from %s with a %s in %s! Careers in %s are now unlocked. You are now free to work or take another study path." % [uni_title, deg_name, maj_name, maj_name], "milestone")
+			var milestone_text := ""
+			if honors != "":
+				milestone_text = "You graduated from %s %s with a GPA of %.2f." % [uni_title, honors, gpa]
+			else:
+				milestone_text = "You graduated from %s with a GPA of %.2f." % [uni_title, gpa]
+			add_life_event("🎓 CONGRATULATIONS! %s Degree: %s in %s! Careers in %s are now unlocked." % [milestone_text, deg_name, maj_name, maj_name], "milestone")
+			PlayerData.add_milestone(milestone_text, PlayerData.age, "🎓")
 		else:
 			var m_label: String = " (%s)" % PlayerData.university_major_title if PlayerData.university_major_title != "" else ""
 			add_life_event("You finished Year %d of 4 at %s%s (Grades: %d%%)." % [PlayerData.university_years, uni_title, m_label, PlayerData.grades], "education")
@@ -1104,7 +1129,7 @@ func trigger_event() -> void:
 	if not carrier.is_empty() and randf() < 0.08:
 		current_event = {"id": "unplanned_pregnancy", "title": "UNEXPECTED PREGNANCY", "unplanned_pregnancy": true,
 			"text": "%s unexpectedly pregnant. You had not planned to start a family before marriage, and the news brings anxiety and tension with your parents." % ("You are" if carrier == "player" else PlayerData.get_partner_name() + " is")}
-		current_event_choices = [{"text": "Take time to process the news", "description": "Your happiness -12 • Partner happiness -8 • Living parent relationships -8"}]
+		current_event_choices = [{"text": "Take time to process the news", "description": "Take time to process this momentous life news."}]
 		show_event_popup()
 		return
 	if not PlayerData.is_dead and not PlayerData.is_in_prison and PlayerData.age >= 18 and not PlayerData.has_partner() and randf() < 0.25:
@@ -1113,8 +1138,8 @@ func trigger_event() -> void:
 		current_event = {"id": "date_invitation", "title": "A DATE INVITATION", "candidate": candidate,
 			"text": "%s asked you out for %s. Do you want to go on a date with %s?" % [candidate.name, venues.pick_random(), candidate.name]}
 		current_event_choices = [
-			{"text": "Yes, let's go!", "accept_date": true, "description": "A chance at a relationship; a poor impression lowers happiness."},
-			{"text": "Politely decline", "accept_date": false, "description": "Stay single. No happiness penalty."}]
+			{"text": "Yes, let's go!", "accept_date": true, "description": "Spend an evening getting to know them."},
+			{"text": "Politely decline", "accept_date": false, "description": "Politely decline the date invitation."}]
 		show_event_popup()
 		return
 	current_event = EventManager.get_random_event(
@@ -1138,7 +1163,7 @@ func get_event_text(event: Dictionary) -> String:
 	if not variants.is_empty():
 		return str(variants.pick_random())
 
-	return str(event.get("text", "Something happened."))
+	return str(event.get("text", event.get("description", "Something happened.")))
 
 
 func generate_event_choices(event: Dictionary) -> Array:
@@ -1208,6 +1233,12 @@ func show_event_popup() -> void:
 	event_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	event_description.add_theme_font_size_override("normal_font_size", 30)
 	event_description.add_theme_color_override("default_color", Color("#0f172a") if is_light else Color("#f8fafc"))
+	var desc_inset := StyleBoxEmpty.new()
+	desc_inset.content_margin_left = 32
+	desc_inset.content_margin_right = 32
+	desc_inset.content_margin_top = 20
+	desc_inset.content_margin_bottom = 20
+	event_description.add_theme_stylebox_override("normal", desc_inset)
 
 	event_overlay.visible = true
 	age_button.disabled = true
@@ -1235,11 +1266,10 @@ func show_event_popup() -> void:
 		used_choice_icons.append(choice_icon)
 		buttons[i].set_meta("action_emoji", choice_icon)
 		var title_text := str(choice.get("text", "Choose"))
-		var desc_text := _format_effects_summary(choice)
-		buttons[i].text = "%s\n%s" % [title_text, desc_text]
+		buttons[i].text = title_text
 		buttons[i].autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		buttons[i].add_theme_font_size_override("font_size", 21)
-		buttons[i].custom_minimum_size.y = 100
+		buttons[i].add_theme_font_size_override("font_size", 24)
+		buttons[i].custom_minimum_size.y = 80
 		buttons[i].visible = true
 
 	if has_node("ThemeController"):
@@ -1447,9 +1477,17 @@ func _on_start_game_button_pressed() -> void:
 	PlayerData.mother_name = str(profile.get("mother_name", ""))
 	PlayerData.mother_job = str(profile.get("mother_job", ""))
 	PlayerData.mother_base_age = int(profile.get("mother_age", 35))
+	PlayerData.mother_education = str(profile.get("mother_education", "High School"))
+	PlayerData.mother_condition = str(profile.get("mother_condition", ""))
+	PlayerData.mother_health = int(profile.get("mother_health", 80))
 	PlayerData.father_name = str(profile.get("father_name", ""))
 	PlayerData.father_job = str(profile.get("father_job", ""))
 	PlayerData.father_base_age = int(profile.get("father_age", 37))
+	PlayerData.father_education = str(profile.get("father_education", "High School"))
+	PlayerData.father_condition = str(profile.get("father_condition", ""))
+	PlayerData.father_health = int(profile.get("father_health", 80))
+	PlayerData.family_wealth = str(profile.get("family_wealth", "middle_class"))
+	PlayerData.add_milestone("Born in %s." % PlayerData.birthplace, 0, "🍼")
 
 	hide_new_game_screen()
 
@@ -1802,14 +1840,18 @@ func update_character_panel() -> void:
 	if character_mother != null:
 		if PlayerData.mother_name != "":
 			var mom_age: int = PlayerData.mother_base_age + PlayerData.age
-			character_mother.text = "Mother: %s, %s (age %d)" % [PlayerData.mother_name, PlayerData.mother_job, mom_age]
+			var mom_edu_str := " • Edu: %s" % PlayerData.mother_education if PlayerData.mother_education != "" else ""
+			var mom_cond_str := " • Health: %s" % PlayerData.mother_condition if PlayerData.mother_condition != "" else ""
+			character_mother.text = "Mother: %s, %s (age %d)%s%s" % [PlayerData.mother_name, PlayerData.mother_job, mom_age, mom_edu_str, mom_cond_str]
 		else:
 			character_mother.text = "Mother: Unknown"
 
 	if character_father != null:
 		if PlayerData.father_name != "" and PlayerData.father_name != "Unknown":
 			var dad_age: int = PlayerData.father_base_age + PlayerData.age
-			character_father.text = "Father: %s, %s (age %d)" % [PlayerData.father_name, PlayerData.father_job, dad_age]
+			var dad_edu_str := " • Edu: %s" % PlayerData.father_education if PlayerData.father_education != "" else ""
+			var dad_cond_str := " • Health: %s" % PlayerData.father_condition if PlayerData.father_condition != "" else ""
+			character_father.text = "Father: %s, %s (age %d)%s%s" % [PlayerData.father_name, PlayerData.father_job, dad_age, dad_edu_str, dad_cond_str]
 		else:
 			character_father.text = "Father: Unknown (Single mother)"
 
@@ -1817,10 +1859,40 @@ func update_character_panel() -> void:
 		character_story.text = PlayerData.birth_story if PlayerData.birth_story != "" else "Born into the world."
 
 	if character_money != null:
-		character_money.text = "Cash: $%s • Savings: $%s" % [_format_number(PlayerData.money), _format_number(PlayerData.bank_savings)]
+		var wealth_label := "Middle Class"
+		match PlayerData.family_wealth:
+			"poor": wealth_label = "Working Poor"
+			"wealthy": wealth_label = "Wealthy"
+			_: wealth_label = "Middle Class"
+		character_money.text = "Cash: $%s • Savings: $%s • Family: %s" % [_format_number(PlayerData.money), _format_number(PlayerData.bank_savings), wealth_label]
 
 	if character_karma != null:
 		character_karma.visible = false
+
+	var m_list: VBoxContainer = character_milestones_list if character_milestones_list != null else get_node_or_null("CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/MilestonesCard/Margin/VBox/MilestonesList") as VBoxContainer
+	if m_list != null:
+		for child in m_list.get_children():
+			child.queue_free()
+
+		var is_light: bool = LifeLibrary.data.theme == "light"
+		if PlayerData.life_milestones.is_empty():
+			var empty_lbl := Label.new()
+			empty_lbl.text = "No life milestones achieved yet."
+			empty_lbl.add_theme_font_size_override("font_size", 22)
+			empty_lbl.add_theme_color_override("font_color", Color("#64748b") if is_light else Color("#94a3b8"))
+			m_list.add_child(empty_lbl)
+		else:
+			for m in PlayerData.life_milestones:
+				if m is Dictionary:
+					var m_age: int = int(m.get("age", 0))
+					var m_icon: String = str(m.get("icon", "🏆"))
+					var m_text: String = str(m.get("text", ""))
+					var item := Label.new()
+					item.text = "%s Age %d: %s" % [m_icon, m_age, m_text]
+					item.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+					item.add_theme_font_size_override("font_size", 24)
+					item.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#f1f5f9"))
+					m_list.add_child(item)
 
 
 func update_infant_panel() -> void:
@@ -1918,6 +1990,7 @@ func apply_for_job(job_id: String) -> void:
 		PlayerData.job_company,
 		_format_number(PlayerData.job_salary)
 	], "milestone")
+	PlayerData.add_milestone("Started career as %s at %s." % [PlayerData.job_title, PlayerData.job_company], PlayerData.age, "💼")
 	update_ui()
 	SaveManager.save_game()
 
@@ -2482,7 +2555,7 @@ func _open_asset_marketplace_modal(category: String) -> void:
 				perk_word = "Cruise"
 
 		var perk_lbl := Label.new()
-		perk_lbl.text = "%s Perk: +%d%% Happiness" % [perk_word, happiness_bonus]
+		perk_lbl.text = "%s Lifestyle Asset" % perk_word
 		perk_lbl.add_theme_font_size_override("font_size", 22)
 		perk_lbl.add_theme_color_override("font_color", Color("#f472b6"))
 		perk_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -3070,17 +3143,53 @@ func _interact_parent(parent_type: String, action: String) -> void:
 				PlayerData.last_father_ask_money_age = PlayerData.age
 
 			var rel := PlayerData.mother_relationship if is_mother else PlayerData.father_relationship
-			if rel >= 40:
-				var amount := randi_range(15, 60) if PlayerData.age < 18 else randi_range(30, 120)
+			var wealth := PlayerData.family_wealth
+			var decline_chance := 0.40
+			var min_amt := 15
+			var max_amt := 40
+
+			match wealth:
+				"poor":
+					# Poor parents: high chance of declining (75%), if accepted: small money ($2-$12)
+					decline_chance = 0.75
+					min_amt = 2
+					max_amt = 12
+				"wealthy":
+					# Wealthy parents: low chance of declining (15%), if accepted: high money ($50-$150)
+					decline_chance = 0.15
+					min_amt = 50
+					max_amt = 150
+				_: # middle_class
+					# Medium rich / middle class parents: medium chance of declining (40%), if accepted: medium money ($15-$40)
+					decline_chance = 0.40
+					min_amt = 15
+					max_amt = 40
+
+			if rel < 35:
+				decline_chance = minf(0.95, decline_chance + 0.35)
+
+			var accepted: bool = randf() >= decline_chance
+			if accepted:
+				var amount := randi_range(min_amt, max_amt) if PlayerData.age < 18 else randi_range(int(min_amt * 1.5), int(max_amt * 1.5))
 				PlayerData.money += amount
 				PlayerData.happiness = mini(100, PlayerData.happiness + 3)
-				add_life_event("You asked your %s, %s, for some pocket cash. They happily gave you $%d!" % [role, parent_name, amount], "relationship")
+				if wealth == "poor":
+					add_life_event("You asked your %s for money. They scraped together what little loose change they had and gave you $%d." % [role, amount], "relationship")
+				elif wealth == "wealthy":
+					add_life_event("You asked your %s for money. They generously handed you $%d without hesitation." % [role, amount], "relationship")
+				else:
+					add_life_event("You asked your %s, %s, for some pocket cash. They happily gave you $%d." % [role, parent_name, amount], "relationship")
 			else:
 				if is_mother:
-					PlayerData.mother_relationship = maxi(0, PlayerData.mother_relationship - 3)
+					PlayerData.mother_relationship = maxi(0, PlayerData.mother_relationship - 2)
 				else:
-					PlayerData.father_relationship = maxi(0, PlayerData.father_relationship - 3)
-				add_life_event("You asked your %s for money, but they lectured you about being responsible and gave you nothing." % role, "relationship")
+					PlayerData.father_relationship = maxi(0, PlayerData.father_relationship - 2)
+				if wealth == "poor":
+					add_life_event("You asked your %s for money, but they sighed with a heavy heart, explaining that finances are desperately tight and they cannot afford a single extra dollar." % role, "relationship")
+				elif wealth == "wealthy":
+					add_life_event("You asked your %s for money, but they declined, lecturing you that money doesn't grow on trees and you must learn financial responsibility." % role, "relationship")
+				else:
+					add_life_event("You asked your %s for money, but they reminded you to be responsible with your expenses and declined." % role, "relationship")
 
 		"pay_medication":
 			var already_used_meds: bool = (is_mother and PlayerData.last_mother_pay_meds_age == PlayerData.age) or (not is_mother and PlayerData.last_father_pay_meds_age == PlayerData.age)
@@ -3159,6 +3268,15 @@ func _interact_parent(parent_type: String, action: String) -> void:
 
 
 func update_relationships_panel() -> void:
+	for card in [mother_card, father_card]:
+		if card != null:
+			var m := card.get_node_or_null("Margin") as MarginContainer
+			if m != null:
+				m.add_theme_constant_override("margin_left", 32)
+				m.add_theme_constant_override("margin_right", 32)
+				m.add_theme_constant_override("margin_top", 20)
+				m.add_theme_constant_override("margin_bottom", 20)
+
 	var mom_age: int = PlayerData.mother_base_age + PlayerData.age
 	var mom_vbox := mother_name_label.get_parent() as VBoxContainer
 
@@ -3193,6 +3311,7 @@ func update_relationships_panel() -> void:
 
 	mother_icon.texture = PortraitCatalog.texture(mom_age, "FEMALE", 0, PlayerData.ethnicity)
 	mother_icon.material = PortraitCatalog.cutout_material()
+	mother_icon.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 
 	# Father
 	if PlayerData.father_name != "" and PlayerData.father_name != "Unknown":
@@ -3227,6 +3346,7 @@ func update_relationships_panel() -> void:
 
 		father_icon.texture = PortraitCatalog.texture(dad_age, "MALE", 0, PlayerData.ethnicity)
 		father_icon.material = PortraitCatalog.cutout_material()
+		father_icon.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	else:
 		father_card.visible = false
 
@@ -3306,9 +3426,9 @@ func _setup_partner_card_ui() -> void:
 
 		var cm := MarginContainer.new()
 		cm.name = "Margin"
-		cm.add_theme_constant_override("margin_left", 20)
+		cm.add_theme_constant_override("margin_left", 48)
 		cm.add_theme_constant_override("margin_top", 20)
-		cm.add_theme_constant_override("margin_right", 20)
+		cm.add_theme_constant_override("margin_right", 32)
 		cm.add_theme_constant_override("margin_bottom", 20)
 		card.add_child(cm)
 
@@ -3320,6 +3440,7 @@ func _setup_partner_card_ui() -> void:
 		# Avatar
 		var icon := TextureRect.new()
 		icon.custom_minimum_size = Vector2(96, 96)
+		icon.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -3565,9 +3686,9 @@ func _setup_children_cards_ui() -> void:
 		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f472b6")))
 
 		var cm := MarginContainer.new()
-		cm.add_theme_constant_override("margin_left", 20)
+		cm.add_theme_constant_override("margin_left", 48)
 		cm.add_theme_constant_override("margin_top", 18)
-		cm.add_theme_constant_override("margin_right", 20)
+		cm.add_theme_constant_override("margin_right", 32)
 		cm.add_theme_constant_override("margin_bottom", 18)
 		card.add_child(cm)
 
@@ -3577,6 +3698,7 @@ func _setup_children_cards_ui() -> void:
 
 		var icon := TextureRect.new()
 		icon.custom_minimum_size = Vector2(96, 96)
+		icon.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.texture = PortraitCatalog.texture(c_age, c_gender, c_variant, c_eth)
@@ -3760,6 +3882,11 @@ func _interact_partner(action: String) -> void:
 			PlayerData.happiness = mini(100, PlayerData.happiness + 25)
 			PlayerData.set_partner_relationship(p_rel + 20)
 			PlayerData.last_partner_interact_age = PlayerData.age
+			PlayerData.add_milestone("Welcomed baby %s (%s) into the world with %s." % [
+				baby_name,
+				"daughter" if baby_female else "son",
+				p_name
+			], PlayerData.age, "👶")
 			add_life_event("🍼 BABY BORN! You and %s welcomed a beautiful baby %s, %s, into the world! Happiness +25, Relationship +20%%." % [
 				p_name,
 				"daughter" if baby_female else "son",
@@ -3808,11 +3935,11 @@ func _show_proposal_modal() -> void:
 		for id in selected:
 			cost += int(RomanceRules.GIFTS[id].cost)
 			joy += int(RomanceRules.GIFTS[id].joy)
-		total.text = "Total: $%s • Partner happiness +%d (max 100)\nAvailable cash: $%s" % [_format_number(cost), joy, _format_number(PlayerData.money)]
+		total.text = "Total: $%s\nAvailable cash: $%s" % [_format_number(cost), _format_number(PlayerData.money)]
 		confirm.disabled = selected.is_empty() or cost > PlayerData.money
 	for id in range(RomanceRules.GIFTS.size()):
 		var gift: Dictionary = RomanceRules.GIFTS[id]
-		var gift_text := "%s • $%s\nPartner happiness +%d" % [gift.name, _format_number(int(gift.cost)), int(gift.joy)]
+		var gift_text := "%s • $%s" % [gift.name, _format_number(int(gift.cost))]
 		var button := _create_cyber_button(gift_text, Color("#ec4899"), func(): pass)
 		_apply_romance_icon(button, ["wildflowers", "roses", "silver_ring", "diamond_ring", "platinum_ring"][id])
 		button.toggle_mode = true
@@ -3857,7 +3984,7 @@ func _show_partner_gift_modal() -> void:
 	var list: VBoxContainer = modal.list
 	for id in range(RelationshipExtras.GIFTS.size()):
 		var gift: Dictionary = RelationshipExtras.GIFTS[id]
-		var button := _create_cyber_button("%s • $%s\nPartner happiness +%d • Relationship +%d • Your happiness +4" % [gift.name, _format_number(int(gift.cost)), int(gift.joy), int(gift.bond)], Color("#34d399"), func():
+		var button := _create_cyber_button("%s • $%s" % [gift.name, _format_number(int(gift.cost))], Color("#34d399"), func():
 			_finish_romance_action(RelationshipExtras.give_gift(PlayerData, id))
 		)
 		_apply_romance_icon(button, str(gift.icon))
@@ -3868,7 +3995,7 @@ func _show_partner_gift_modal() -> void:
 func _show_wedding_modal() -> void:
 	if not RomanceRules.can_marry(PlayerData):
 		return
-	var modal := _create_cyber_modal("PLAN YOUR WEDDING", "Choose a venue, celebration style and guest list for your wedding with %s. Each choice changes the total price and both partners' happiness." % PlayerData.get_partner_name(), Color("#38bdf8"))
+	var modal := _create_cyber_modal("PLAN YOUR WEDDING", "Choose a venue, celebration style and guest list for your wedding with %s. Each choice changes the total price and ceremony ambiance." % PlayerData.get_partner_name(), Color("#38bdf8"))
 	romance_action_modal_overlay = modal.overlay
 	var list: VBoxContainer = modal.list
 	var selected: Array[int] = [0, 0, 0]
@@ -3876,12 +4003,14 @@ func _show_wedding_modal() -> void:
 	total.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	total.add_theme_font_size_override("font_size", 26)
 	var confirm := _create_cyber_button("Celebrate & marry", Color("#38bdf8"), func():
+		var p_name: String = PlayerData.get_partner_name()
+		PlayerData.add_milestone("Married %s." % p_name, PlayerData.age, "💍")
 		_finish_romance_action(RelationshipExtras.celebrate_wedding(PlayerData, selected[0], selected[1], selected[2]), "milestone")
 	)
 	_apply_romance_icon(confirm, "diamond_ring")
 	var refresh := func():
 		var quote := RelationshipExtras.wedding_quote(selected[0], selected[1], selected[2])
-		total.text = "Total: $%s • Both partners' happiness +%d (max 100)\nAvailable cash: $%s" % [_format_number(int(quote.cost)), int(quote.joy), _format_number(PlayerData.money)]
+		total.text = "Total: $%s\nAvailable cash: $%s" % [_format_number(int(quote.cost)), _format_number(PlayerData.money)]
 		confirm.disabled = PlayerData.money < int(quote.cost)
 	var headings: Array[String] = ["VENUE", "CELEBRATION STYLE", "GUEST LIST"]
 	var options: Array = [RelationshipExtras.VENUES, RelationshipExtras.STYLES, RelationshipExtras.GUESTS]
@@ -3894,7 +4023,7 @@ func _show_wedding_modal() -> void:
 		var group := ButtonGroup.new()
 		for index in range(options[section].size()):
 			var option: Dictionary = options[section][index]
-			var caption := "%s • $%s • Happiness +%d" % [option.name, _format_number(int(option.cost)), int(option.joy)]
+			var caption := "%s • $%s" % [option.name, _format_number(int(option.cost))]
 			var button := _create_cyber_button(caption, Color("#38bdf8"), func(): pass)
 			button.toggle_mode = true
 			button.button_group = group
@@ -3926,7 +4055,7 @@ func _show_postpone_modal() -> void:
 	if not RomanceRules.engaged(PlayerData):
 		return
 	RomanceRules.normalize(PlayerData)
-	var modal := _create_cyber_modal("POSTPONE WEDDING", "You decide when you are ready. Delay penalties grow each year and affect your relationship and both partners' happiness.", Color("#8b5cf6"))
+	var modal := _create_cyber_modal("POSTPONE WEDDING", "You decide when you are ready. Delay penalties grow each year and affect your relationship and emotional closeness.", Color("#8b5cf6"))
 	romance_action_modal_overlay = modal.overlay
 	var list: VBoxContainer = modal.list
 	var already_delayed := int(PlayerData.partner.get("last_delay_age", -1)) >= PlayerData.age
@@ -3938,10 +4067,7 @@ func _show_postpone_modal() -> void:
 		note.add_theme_font_size_override("font_size", 26)
 		list.add_child(note)
 		return
-	var count := maxi(int(PlayerData.partner.get("delay_count", 0)) + 1, PlayerData.age - int(PlayerData.partner.engaged_age))
-	var loss := mini(30, count * 4)
-	var sadness := mini(20, count * 3)
-	list.add_child(_create_cyber_button("Wait another year\nRelationship -%d • Both happiness -%d" % [loss, sadness], Color("#8b5cf6"), func():
+	list.add_child(_create_cyber_button("Wait another year", Color("#8b5cf6"), func():
 		_finish_romance_action(RomanceRules.delay_wedding(PlayerData, true))
 	))
 
@@ -4314,10 +4440,23 @@ func _process_relationships_aging() -> void:
 			PlayerData.happiness = maxi(5, PlayerData.happiness - 3)
 			add_life_event("Your mother called feeling neglected and distant. Your bond is strained.", "relationship")
 		elif PlayerData.mother_relationship >= 80:
-			var gift := randi_range(100, 250)
-			PlayerData.money += gift
-			PlayerData.happiness = mini(100, PlayerData.happiness + 4)
-			add_life_event("Your mother sent you a warm birthday card and a $%d gift!" % gift, "relationship")
+			var gives_cash: bool = false
+			var gift: int = 0
+			if PlayerData.age >= 5:
+				if PlayerData.family_wealth == "wealthy" and randf() < 0.25:
+					gives_cash = true
+					gift = randi_range(50, 150)
+				elif PlayerData.family_wealth == "middle_class" and randf() < 0.15:
+					gives_cash = true
+					gift = randi_range(20, 50)
+
+			if gives_cash:
+				PlayerData.money += gift
+				PlayerData.happiness = mini(100, PlayerData.happiness + 4)
+				add_life_event("Your mother sent you a warm birthday card and a $%d gift!" % gift, "relationship")
+			elif randf() < 0.20:
+				PlayerData.happiness = mini(100, PlayerData.happiness + 2)
+				add_life_event("Your mother sent you a loving birthday message wishing you a wonderful year.", "relationship")
 
 	# Father relationship decay & consequences
 	if PlayerData.father_alive and PlayerData.father_name != "" and PlayerData.father_name != "Unknown":
@@ -4327,10 +4466,23 @@ func _process_relationships_aging() -> void:
 			PlayerData.happiness = maxi(5, PlayerData.happiness - 3)
 			add_life_event("Your father feels out of touch with you. Family bond is strained.", "relationship")
 		elif PlayerData.father_relationship >= 80:
-			var gift := randi_range(100, 250)
-			PlayerData.money += gift
-			PlayerData.happiness = mini(100, PlayerData.happiness + 4)
-			add_life_event("Your father sent you a supportive birthday card and a $%d gift!" % gift, "relationship")
+			var gives_cash: bool = false
+			var gift: int = 0
+			if PlayerData.age >= 5:
+				if PlayerData.family_wealth == "wealthy" and randf() < 0.25:
+					gives_cash = true
+					gift = randi_range(50, 150)
+				elif PlayerData.family_wealth == "middle_class" and randf() < 0.15:
+					gives_cash = true
+					gift = randi_range(20, 50)
+
+			if gives_cash:
+				PlayerData.money += gift
+				PlayerData.happiness = mini(100, PlayerData.happiness + 4)
+				add_life_event("Your father sent you a supportive birthday card and a $%d gift!" % gift, "relationship")
+			elif randf() < 0.20:
+				PlayerData.happiness = mini(100, PlayerData.happiness + 2)
+				add_life_event("Your father sent you a supportive birthday message wishing you success.", "relationship")
 
 	# Partner aging, relationship decay & consequences
 	if PlayerData.has_partner():
@@ -4622,7 +4774,7 @@ func _show_jobs_modal() -> void:
 		var gig_used: bool = PlayerData.last_childhood_gig_age == PlayerData.age
 
 		if PlayerData.age < 4:
-			var toy_text := "🍼 Toy Cash Register & Play Coins (Used)" if gig_used else "🍼 Toy Cash Register & Play Coins\nPlay with pretend cash and count plastic coins. +2 Smarts, +4 Happiness"
+			var toy_text := "🍼 Toy Cash Register & Play Coins (Used)" if gig_used else "🍼 Toy Cash Register & Play Coins\nPlay with pretend cash and count plastic coins."
 			var btn_toy := _create_cyber_button(toy_text, Color("#38bdf8"), func():
 				if PlayerData.last_childhood_gig_age == PlayerData.age:
 					return
@@ -4640,7 +4792,7 @@ func _show_jobs_modal() -> void:
 				btn_toy.tooltip_text = "Activity completed for Age %d (Age up to play again next year)." % PlayerData.age
 			cur_v.add_child(btn_toy)
 		elif PlayerData.age < 10:
-			var chores_text := "🧹 Help Parents with Household Chores ($15 Cash) (Used)" if gig_used else "🧹 Help Parents with Household Chores ($15 Cash)\nClean your room and organize the kitchen. +$15 Cash, +5 Parent Relationship, +3 Happiness"
+			var chores_text := "🧹 Help Parents with Household Chores ($15 Cash) (Used)" if gig_used else "🧹 Help Parents with Household Chores ($15 Cash)\nClean your room and organize the kitchen with your family."
 			var btn_chores := _create_cyber_button(chores_text, Color("#10b981"), func():
 				if PlayerData.last_childhood_gig_age == PlayerData.age:
 					return
@@ -4662,7 +4814,7 @@ func _show_jobs_modal() -> void:
 				btn_chores.tooltip_text = "Completed for Age %d (Age up to do chores next year)." % PlayerData.age
 			cur_v.add_child(btn_chores)
 
-			var comics_text := "🎨 Draw & Sell Hand-Drawn Comics ($10 Cash) (Used)" if gig_used else "🎨 Draw & Sell Hand-Drawn Comics ($10 Cash)\nSketch mini comic strips and sell them to school friends. +$10 Cash, +3 Smarts, +4 Happiness"
+			var comics_text := "🎨 Draw & Sell Hand-Drawn Comics ($10 Cash) (Used)" if gig_used else "🎨 Draw & Sell Hand-Drawn Comics ($10 Cash)\nSketch mini comic strips and sell them to school friends."
 			var btn_comics := _create_cyber_button(comics_text, Color("#f59e0b"), func():
 				if PlayerData.last_childhood_gig_age == PlayerData.age:
 					return
@@ -4681,7 +4833,7 @@ func _show_jobs_modal() -> void:
 				btn_comics.tooltip_text = "Completed for Age %d (Age up to sell comics next year)." % PlayerData.age
 			cur_v.add_child(btn_comics)
 		else:
-			var lemonade_text := "🍋 Run a Neighborhood Lemonade Stand ($35 Cash) (Used)" if gig_used else "🍋 Run a Neighborhood Lemonade Stand ($35 Cash)\nMix fresh lemonade and sell cups on the sidewalk. +$35 Cash, +3 Smarts, +6 Happiness"
+			var lemonade_text := "🍋 Run a Neighborhood Lemonade Stand ($35 Cash) (Used)" if gig_used else "🍋 Run a Neighborhood Lemonade Stand ($35 Cash)\nMix fresh lemonade and sell cups on the sidewalk."
 			var btn_lemonade := _create_cyber_button(lemonade_text, Color("#f59e0b"), func():
 				if PlayerData.last_childhood_gig_age == PlayerData.age:
 					return
@@ -4700,7 +4852,7 @@ func _show_jobs_modal() -> void:
 				btn_lemonade.tooltip_text = "Completed for Age %d (Age up to run stand next year)." % PlayerData.age
 			cur_v.add_child(btn_lemonade)
 
-			var mow_text := "🌱 Mow Lawns & Rake Leaves for Neighbors ($45 Cash) (Used)" if gig_used else "🌱 Mow Lawns & Rake Leaves for Neighbors ($45 Cash)\nOffer yard work services to neighbors on weekends. +$45 Cash, +4 Health"
+			var mow_text := "🌱 Mow Lawns & Rake Leaves for Neighbors ($45 Cash) (Used)" if gig_used else "🌱 Mow Lawns & Rake Leaves for Neighbors ($45 Cash)\nOffer yard work services to neighbors on weekends."
 			var btn_mow := _create_cyber_button(mow_text, Color("#10b981"), func():
 				if PlayerData.last_childhood_gig_age == PlayerData.age:
 					return
@@ -6213,11 +6365,11 @@ func _show_education_modal() -> void:
 		list.add_child(infant_tip)
 
 		if has_done_school_activity_this_year:
-			list.add_child(_create_disabled_cyber_button("🧸 Picture Books & Nursery Rhymes\nExplore colorful books and alphabet songs. +4 Smarts, +6 Happiness", "Completed for Age %d (Age up to continue next year)" % PlayerData.age))
-			list.add_child(_create_disabled_cyber_button("🧩 Shape Sorting & Building Blocks\nSolve motor puzzles and spatial coordination. +5 Smarts, +4 Happiness", "Completed for Age %d (Age up to continue next year)" % PlayerData.age))
-			list.add_child(_create_disabled_cyber_button("🎨 Finger Painting & Music Play\nExplore vibrant colors and playful sounds. +2 Smarts, +8 Happiness", "Completed for Age %d (Age up to continue next year)" % PlayerData.age))
+			list.add_child(_create_disabled_cyber_button("🧸 Picture Books & Nursery Rhymes\nExplore colorful books and alphabet songs.", "Completed for Age %d (Age up to continue next year)" % PlayerData.age))
+			list.add_child(_create_disabled_cyber_button("🧩 Shape Sorting & Building Blocks\nSolve motor puzzles and spatial coordination.", "Completed for Age %d (Age up to continue next year)" % PlayerData.age))
+			list.add_child(_create_disabled_cyber_button("🎨 Finger Painting & Music Play\nExplore vibrant colors and playful sounds.", "Completed for Age %d (Age up to continue next year)" % PlayerData.age))
 		else:
-			var btn_books := _create_cyber_button("🧸 Picture Books & Nursery Rhymes\nExplore colorful books and alphabet songs. +4 Smarts, +6 Happiness", Color("#818cf8"), func():
+			var btn_books := _create_cyber_button("🧸 Picture Books & Nursery Rhymes\nExplore colorful books and alphabet songs.", Color("#818cf8"), func():
 				if PlayerData.last_school_activity_age == PlayerData.age:
 					_close_education_modal_and_return_to_main()
 					return
@@ -6231,7 +6383,7 @@ func _show_education_modal() -> void:
 			)
 			list.add_child(btn_books)
 
-			var btn_blocks := _create_cyber_button("🧩 Shape Sorting & Building Blocks\nSolve motor puzzles and spatial coordination. +5 Smarts, +4 Happiness", Color("#38bdf8"), func():
+			var btn_blocks := _create_cyber_button("🧩 Shape Sorting & Building Blocks\nSolve motor puzzles and spatial coordination.", Color("#38bdf8"), func():
 				if PlayerData.last_school_activity_age == PlayerData.age:
 					_close_education_modal_and_return_to_main()
 					return
@@ -6245,7 +6397,7 @@ func _show_education_modal() -> void:
 			)
 			list.add_child(btn_blocks)
 
-			var btn_music := _create_cyber_button("🎨 Finger Painting & Music Play\nExplore vibrant colors and playful sounds. +2 Smarts, +8 Happiness", Color("#ec4899"), func():
+			var btn_music := _create_cyber_button("🎨 Finger Painting & Music Play\nExplore vibrant colors and playful sounds.", Color("#ec4899"), func():
 				if PlayerData.last_school_activity_age == PlayerData.age:
 					_close_education_modal_and_return_to_main()
 					return
@@ -6262,9 +6414,9 @@ func _show_education_modal() -> void:
 	elif is_student:
 		# 1. Study Hard
 		if has_done_school_activity_this_year:
-			list.add_child(_create_disabled_cyber_button("📖 Study Diligently\n+8% Grades, +3 Smarts, -4 Happiness", "Already studied or engaged in school activities for Age %d (Age up to next year)" % PlayerData.age))
+			list.add_child(_create_disabled_cyber_button("📖 Study Diligently\nHit the books and complete extra homework assignments.", "Already studied or engaged in school activities for Age %d (Age up to next year)" % PlayerData.age))
 		else:
-			var btn_study := _create_cyber_button("📖 Study Diligently\n+8% Grades, +3 Smarts, -4 Happiness", Color("#818cf8"), func():
+			var btn_study := _create_cyber_button("📖 Study Diligently\nHit the books and complete extra homework assignments.", Color("#818cf8"), func():
 				if PlayerData.last_school_activity_age == PlayerData.age:
 					_close_education_modal_and_return_to_main()
 					return
@@ -6284,9 +6436,9 @@ func _show_education_modal() -> void:
 
 		# 2. Slack Off at School
 		if has_done_school_activity_this_year:
-			list.add_child(_create_disabled_cyber_button("🎮 Slack Off in Class\n-10% Grades, +8 Happiness, -1 Smarts (Risk of Detention)", "Already participated in school activities for Age %d (Age up to next year)" % PlayerData.age))
+			list.add_child(_create_disabled_cyber_button("🎮 Slack Off in Class\nDaydream, mess around, and skip homework.", "Already participated in school activities for Age %d (Age up to next year)" % PlayerData.age))
 		else:
-			var btn_slack := _create_cyber_button("🎮 Slack Off in Class\n-10% Grades, +8 Happiness, -1 Smarts (Risk of Detention)", Color("#f59e0b"), func():
+			var btn_slack := _create_cyber_button("🎮 Slack Off in Class\nDaydream, mess around, and skip homework.", Color("#f59e0b"), func():
 				if PlayerData.last_school_activity_age == PlayerData.age:
 					_close_education_modal_and_return_to_main()
 					return
@@ -6340,9 +6492,9 @@ func _show_education_modal() -> void:
 
 		# 4. Lead Group Study
 		if has_done_school_activity_this_year:
-			list.add_child(_create_disabled_cyber_button("👥 Lead Group Study\n+6% Grades, +3 Smarts, +5 Happiness (Req: 55%+ Grades)", "Already participated in school activities for Age %d (Age up to next year)" % PlayerData.age))
+			list.add_child(_create_disabled_cyber_button("👥 Lead Group Study\nOrganize a collaborative study group with peers. (Req: 55%+ Grades)", "Already participated in school activities for Age %d (Age up to next year)" % PlayerData.age))
 		else:
-			var btn_group := _create_cyber_button("👥 Lead Group Study\n+6% Grades, +3 Smarts, +5 Happiness (Req: 55%+ Grades)", Color("#22c55e"), func():
+			var btn_group := _create_cyber_button("👥 Lead Group Study\nOrganize a collaborative study group with peers. (Req: 55%+ Grades)", Color("#22c55e"), func():
 				if PlayerData.last_school_activity_age == PlayerData.age:
 					_close_education_modal_and_return_to_main()
 					return
@@ -6385,9 +6537,9 @@ func _show_education_modal() -> void:
 
 		# 6. Private Tutor
 		if has_done_school_activity_this_year:
-			list.add_child(_create_disabled_cyber_button("👨‍🏫 Hire Academic Tutor ($200)\n+12% Grades, -$200 Cash", "Already engaged private tutoring or study activities for Age %d (Age up to next year)" % PlayerData.age))
+			list.add_child(_create_disabled_cyber_button("👨‍🏫 Hire Academic Tutor ($200)\nPrivate instruction to reinforce challenging subjects.", "Already engaged private tutoring or study activities for Age %d (Age up to next year)" % PlayerData.age))
 		else:
-			var btn_tutor := _create_cyber_button("👨‍🏫 Hire Academic Tutor ($200)\n+12% Grades, -$200 Cash", Color("#38bdf8"), func():
+			var btn_tutor := _create_cyber_button("👨‍🏫 Hire Academic Tutor ($200)\nPrivate instruction to reinforce challenging subjects.", Color("#38bdf8"), func():
 				if PlayerData.last_school_activity_age == PlayerData.age:
 					_close_education_modal_and_return_to_main()
 					return
@@ -6480,9 +6632,9 @@ func _show_education_modal() -> void:
 		uv.add_child(t_info)
 
 		if has_done_school_activity_this_year:
-			uv.add_child(_create_disabled_cyber_button("📖 Intensive Major Coursework Study\nHit the library and master course exams. Grades +2-4%, Smarts +2-4", "Completed for Age %d (Age up to study again next year)" % PlayerData.age))
+			uv.add_child(_create_disabled_cyber_button("📖 Intensive Major Coursework Study\nHit the library and master course exams.", "Completed for Age %d (Age up to study again next year)" % PlayerData.age))
 		else:
-			var btn_study_uni := _create_cyber_button("📖 Intensive Major Coursework Study\nHit the library and master course exams. Grades +2-4%, Smarts +2-4", Color("#38bdf8"), func():
+			var btn_study_uni := _create_cyber_button("📖 Intensive Major Coursework Study\nHit the library and master course exams.", Color("#38bdf8"), func():
 				if PlayerData.last_school_activity_age == PlayerData.age:
 					_close_education_modal_and_return_to_main()
 					return
@@ -6704,10 +6856,10 @@ func _show_education_modal() -> void:
 		lv_lib.add_child(lib_desc)
 
 		if has_done_school_activity_this_year:
-			lv_lib.add_child(_create_disabled_cyber_button("📖 Read Non-Fiction & Books at Public Library (Free)\n+2 to +4 Smarts • Prevents annual cognitive degradation", "Annual academic study completed for Age %d (Age up to read again next year)" % PlayerData.age))
-			lv_lib.add_child(_create_disabled_cyber_button("💻 Professional Skill & Certification Seminar ($150)\n+3 to +5 Smarts • Prevents annual cognitive degradation", "Annual academic study completed for Age %d (Age up to attend next year)" % PlayerData.age))
+			lv_lib.add_child(_create_disabled_cyber_button("📖 Read Non-Fiction & Books at Public Library (Free)\nBroaden your knowledge and prevent annual cognitive decline", "Annual academic study completed for Age %d (Age up to read again next year)" % PlayerData.age))
+			lv_lib.add_child(_create_disabled_cyber_button("💻 Professional Skill & Certification Seminar ($150)\nAttend intensive professional skill workshops and seminars", "Annual academic study completed for Age %d (Age up to attend next year)" % PlayerData.age))
 		else:
-			var btn_read := _create_cyber_button("📖 Read Non-Fiction & Books at Public Library (Free)\n+2 to +4 Smarts • Prevents annual cognitive degradation", Color("#38bdf8"), func():
+			var btn_read := _create_cyber_button("📖 Read Non-Fiction & Books at Public Library (Free)\nBroaden your knowledge and prevent annual cognitive decline", Color("#38bdf8"), func():
 				if PlayerData.last_school_activity_age == PlayerData.age:
 					_close_education_modal_and_return_to_main()
 					return
@@ -6722,7 +6874,7 @@ func _show_education_modal() -> void:
 			)
 			lv_lib.add_child(btn_read)
 
-			var btn_seminar := _create_cyber_button("💻 Professional Skill & Certification Seminar ($150)\n+3 to +5 Smarts • Prevents annual cognitive degradation", Color("#818cf8"), func():
+			var btn_seminar := _create_cyber_button("💻 Professional Skill & Certification Seminar ($150)\nAttend intensive professional skill workshops and seminars", Color("#818cf8"), func():
 				if PlayerData.last_school_activity_age == PlayerData.age:
 					_close_education_modal_and_return_to_main()
 					return
@@ -6938,9 +7090,9 @@ func _render_university_enrollment_category(list: VBoxContainer) -> void:
 
 		var has_done_study: bool = (PlayerData.last_school_activity_age == PlayerData.age)
 		if has_done_study:
-			uv.add_child(_create_disabled_cyber_button("📖 Intensive Major Coursework Study\nHit the library and master course exams. Grades +2-4%, Smarts +2-4", "Completed for Age %d (Age up to study again next year)" % PlayerData.age))
+			uv.add_child(_create_disabled_cyber_button("📖 Intensive Major Coursework Study\nHit the library and master course exams.", "Completed for Age %d (Age up to study again next year)" % PlayerData.age))
 		else:
-			var btn_study_uni := _create_cyber_button("📖 Intensive Major Coursework Study\nHit the library and master course exams. Grades +2-4%, Smarts +2-4", Color("#38bdf8"), func():
+			var btn_study_uni := _create_cyber_button("📖 Intensive Major Coursework Study\nHit the library and master course exams.", Color("#38bdf8"), func():
 				if PlayerData.last_school_activity_age == PlayerData.age:
 					return
 				PlayerData.last_school_activity_age = PlayerData.age
@@ -8723,7 +8875,7 @@ func _show_salon_modal() -> void:
 
 	for s in services:
 		var cost: int = int(s["cost"])
-		var btn_text := "%s ($%d)\n%s (+%d%% Looks, +%d%% Happiness)" % [s["name"], cost, s["desc"], s["looks"], s["hap"]]
+		var btn_text := "%s ($%d)\n%s" % [s["name"], cost, s["desc"]]
 		if has_salon_this_year:
 			list.add_child(_create_disabled_cyber_button(btn_text, "Completed for Age %d (Age up to visit next year)" % PlayerData.age))
 		else:
@@ -8819,7 +8971,7 @@ func _show_spa_modal() -> void:
 
 	for s in services:
 		var cost: int = int(s["cost"])
-		var btn_text := "%s ($%d)\n%s (+%d%% Health, +%d%% Happiness, +%d%% Looks)" % [s["name"], cost, s["desc"], s["health"], s["hap"], s["looks"]]
+		var btn_text := "%s ($%d)\n%s" % [s["name"], cost, s["desc"]]
 		if has_spa_this_year:
 			list.add_child(_create_disabled_cyber_button(btn_text, "Completed for Age %d (Age up to visit next year)" % PlayerData.age))
 		else:
@@ -9949,7 +10101,7 @@ func _show_doctor_modal() -> void:
 	# Procedures:
 	# 1. Vitamin Shot
 	var vit_used: bool = PlayerData.last_doctor_vitamin_age == PlayerData.age
-	var vit_text := "💉 Vitamin & Bio-Booster Shot ($150) (Used)" if vit_used else "💉 Vitamin & Bio-Booster Shot ($150)  [+8 Health]"
+	var vit_text := "💉 Vitamin & Bio-Booster Shot ($150) (Used)" if vit_used else "💉 Vitamin & Bio-Booster Shot ($150)"
 	var btn_vit := _create_cyber_button(vit_text, Color("#38bdf8"), func():
 		if PlayerData.last_doctor_vitamin_age == PlayerData.age:
 			return
@@ -9972,7 +10124,7 @@ func _show_doctor_modal() -> void:
 
 	# 2. General Checkup
 	var checkup_used: bool = PlayerData.last_doctor_checkup_age == PlayerData.age
-	var checkup_text := "🩺 Full Diagnostic Checkup ($300) (Used)" if checkup_used else "🩺 Full Diagnostic Checkup ($300)  [+10 Health, Screen Illness]"
+	var checkup_text := "🩺 Full Diagnostic Checkup ($300) (Used)" if checkup_used else "🩺 Full Diagnostic Checkup ($300)"
 	var btn_checkup := _create_cyber_button(checkup_text, Color("#38bdf8"), func():
 		if PlayerData.last_doctor_checkup_age == PlayerData.age:
 			return
@@ -9999,7 +10151,7 @@ func _show_doctor_modal() -> void:
 
 	# 3. Plastic Surgery
 	var surgery_used: bool = PlayerData.last_plastic_surgery_age == PlayerData.age
-	var surgery_text := "✨ Aesthetic Plastic Surgery ($3,500) (Used)" if surgery_used else "✨ Aesthetic Plastic Surgery ($3,500)  [+20 Looks, -12 Health, -8 Happy]"
+	var surgery_text := "✨ Aesthetic Plastic Surgery ($3,500) (Used)" if surgery_used else "✨ Aesthetic Plastic Surgery ($3,500)"
 	var btn_surgery := _create_cyber_button(surgery_text, Color("#ec4899"), func():
 		if PlayerData.last_plastic_surgery_age == PlayerData.age:
 			return
@@ -10035,7 +10187,7 @@ func _show_doctor_modal() -> void:
 
 	# 4. Chemotherapy Treatment
 	var chemo_used: bool = PlayerData.last_chemo_age == PlayerData.age
-	var chemo_text := "🧬 Chemotherapy Treatment ($5,000) (Used)" if chemo_used else "🧬 Chemotherapy Treatment ($5,000)  [Treats & Cures Cancer]"
+	var chemo_text := "🧬 Chemotherapy Treatment ($5,000) (Used)" if chemo_used else "🧬 Chemotherapy Treatment ($5,000)"
 	var btn_chemo := _create_cyber_button(chemo_text, Color("#f43f5e"), func():
 		if PlayerData.last_chemo_age == PlayerData.age:
 			return
@@ -10069,7 +10221,7 @@ func _show_doctor_modal() -> void:
 
 	# 5. Psychotherapy & Grief Counseling
 	var therapy_used: bool = PlayerData.last_therapy_age == PlayerData.age
-	var therapy_text := "🧠 Psychotherapy & Grief Counseling ($250) (Used)" if therapy_used else "🧠 Psychotherapy & Grief Counseling ($250)  [+20 Happiness]"
+	var therapy_text := "🧠 Psychotherapy & Grief Counseling ($250) (Used)" if therapy_used else "🧠 Psychotherapy & Grief Counseling ($250)"
 	var btn_therapy := _create_cyber_button(therapy_text, Color("#8b5cf6"), func():
 		if PlayerData.last_therapy_age == PlayerData.age:
 			return
@@ -10092,7 +10244,7 @@ func _show_doctor_modal() -> void:
 
 	# 6. Emergency Trauma Care
 	var er_used: bool = PlayerData.last_er_age == PlayerData.age
-	var er_text := "🚨 Emergency ER Resuscitation ($1,500) (Used)" if er_used else "🚨 Emergency ER Resuscitation ($1,500)  [+40 Health]"
+	var er_text := "🚨 Emergency ER Resuscitation ($1,500) (Used)" if er_used else "🚨 Emergency ER Resuscitation ($1,500)"
 	var btn_er := _create_cyber_button(er_text, Color("#eab308"), func():
 		if PlayerData.last_er_age == PlayerData.age:
 			return
@@ -10135,7 +10287,7 @@ func _show_crime_modal() -> void:
 
 		var prison_used: bool = PlayerData.last_prison_activity_age == PlayerData.age
 
-		var yard_text := "🏋️ Hit the Prison Yard Weights (Used)" if prison_used else "🏋️ Hit the Prison Yard Weights  [+6 Health, +3 Looks, +5 Happy]"
+		var yard_text := "🏋️ Hit the Prison Yard Weights (Used)" if prison_used else "🏋️ Hit the Prison Yard Weights"
 		var btn_yard := _create_cyber_button(yard_text, Color("#ef4444"), func():
 			if PlayerData.last_prison_activity_age == PlayerData.age:
 				return
@@ -10154,7 +10306,7 @@ func _show_crime_modal() -> void:
 			btn_yard.tooltip_text = "Annual prison activity completed for Age %d (Age up to perform another)." % PlayerData.age
 		p_list.add_child(btn_yard)
 
-		var read_text := "📖 Read in Prison Library (Used)" if prison_used else "📖 Read in Prison Library  [+5 Smarts, +4 Happy]"
+		var read_text := "📖 Read in Prison Library (Used)" if prison_used else "📖 Read in Prison Library"
 		var btn_read := _create_cyber_button(read_text, Color("#38bdf8"), func():
 			if PlayerData.last_prison_activity_age == PlayerData.age:
 				return
@@ -10172,7 +10324,7 @@ func _show_crime_modal() -> void:
 			btn_read.tooltip_text = "Annual prison activity completed for Age %d (Age up to perform another)." % PlayerData.age
 		p_list.add_child(btn_read)
 
-		var sleep_text := "💤 Rest in Cell / Keep Low Profile (Used)" if prison_used else "💤 Rest in Cell / Keep Low Profile  [+2 Health]"
+		var sleep_text := "💤 Rest in Cell / Keep Low Profile (Used)" if prison_used else "💤 Rest in Cell / Keep Low Profile"
 		var btn_sleep := _create_cyber_button(sleep_text, Color("#94a3b8"), func():
 			if PlayerData.last_prison_activity_age == PlayerData.age:
 				return

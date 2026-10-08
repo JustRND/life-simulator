@@ -80,7 +80,14 @@ func apply(node: Control, light: bool) -> void:
 				node.add_theme_font_size_override("font_size", 36)
 				node.add_theme_color_override("font_color", Color("#075b91") if light else Color("#a9dcff"))
 				node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		if node is Label and node.get_parent() is VBoxContainer and not node.has_meta("reference_section"):
+		if (node is RichTextLabel or node is Label) and (node.name == "EventDescription" or (node.get_parent() != null and node.get_parent().name == "EventContent")):
+			var inset := StyleBoxEmpty.new()
+			inset.content_margin_left = 32
+			inset.content_margin_right = 32
+			inset.content_margin_top = 18
+			inset.content_margin_bottom = 18
+			node.add_theme_stylebox_override("normal", inset)
+		elif node is Label and node.get_parent() is VBoxContainer and not node.has_meta("reference_section"):
 			var inset := StyleBoxEmpty.new()
 			inset.content_margin_left = 28
 			inset.content_margin_right = 28
@@ -96,9 +103,21 @@ func apply(node: Control, light: bool) -> void:
 			node.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
 	if node is VBoxContainer:
 		node.add_theme_constant_override("separation", 0 if node.has_meta("reference_menu") or str(node.name).ends_with("List") else 16)
-	if node is MarginContainer and (str(node.name).ends_with("Margin") or node.has_meta("reference_edge")):
-		for side in ["left", "right", "top", "bottom"]:
-			node.add_theme_constant_override("margin_" + side, 0)
+	if node is MarginContainer:
+		var parent_name := str(node.get_parent().name) if node.get_parent() != null else ""
+		if parent_name in ["MotherCard", "FatherCard", "PartnerCard"] or parent_name.begins_with("ChildCard_"):
+			node.add_theme_constant_override("margin_left", 48)
+			node.add_theme_constant_override("margin_right", 32)
+			node.add_theme_constant_override("margin_top", 20)
+			node.add_theme_constant_override("margin_bottom", 20)
+		elif "Card" in parent_name:
+			node.add_theme_constant_override("margin_left", 32)
+			node.add_theme_constant_override("margin_right", 32)
+			node.add_theme_constant_override("margin_top", 20)
+			node.add_theme_constant_override("margin_bottom", 20)
+		elif str(node.name) in ["ActMargin", "RelMargin", "AssetsMargin", "BankMargin", "InfantMargin"] or node.has_meta("reference_edge"):
+			for side in ["left", "right", "top", "bottom"]:
+				node.add_theme_constant_override("margin_" + side, 0)
 	if node is LineEdit or node is TextEdit or node is Button:
 		for state in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus", "read_only"]:
 			node.add_theme_stylebox_override(state, surface(light, state))

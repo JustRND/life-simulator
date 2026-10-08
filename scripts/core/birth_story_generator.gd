@@ -1,14 +1,46 @@
+class_name BirthStoryGenerator
 extends RefCounted
 
 const NameCatalog = preload("res://scripts/core/name_catalog.gd")
 
-const PROFESSIONS := [
-	"grocer", "elementary school teacher", "nurse", "accountant", "carpenter",
-	"electrician", "police officer", "librarian", "journalist", "mechanic",
-	"software engineer", "chef", "dentist", "architect", "firefighter",
-	"pharmacist", "bus driver", "veterinarian", "photographer", "realtor",
-	"plumber", "florist", "baker", "flight attendant", "graphic designer",
-	"barista", "bank teller", "tailor", "paralegal", "postal worker"
+const POOR_JOBS := [
+	"dishwasher", "day laborer", "cleaner", "janitor", "fast food crew",
+	"street vendor", "farmhand", "warehouse packer", "laundromat worker",
+	"security guard", "cashier", "scrap collector", "cook"
+]
+
+const MIDDLE_JOBS := [
+	"elementary school teacher", "nurse", "accountant", "carpenter", "electrician",
+	"police officer", "librarian", "journalist", "mechanic", "bus driver",
+	"paralegal", "postal worker", "baker", "florist", "graphic designer",
+	"grocer", "realtor", "plumber"
+]
+
+const WEALTHY_JOBS := [
+	"software engineer", "dentist", "architect", "pharmacist", "veterinarian",
+	"corporate executive", "neurosurgeon", "investment banker", "commercial pilot",
+	"corporate attorney", "hedge fund manager", "biotech director", "venture capitalist"
+]
+
+const POOR_EDU := [
+	"Middle School", "Middle School", "High School Dropout", "High School"
+]
+
+const MIDDLE_EDU := [
+	"High School", "Vocational Diploma", "Associate's Degree", "Bachelor's Degree"
+]
+
+const WEALTHY_EDU := [
+	"Bachelor's Degree", "Master's Degree", "Doctorate (Ph.D.)", "Medical Degree (M.D.)",
+	"Master of Business Administration (MBA)", "Law Degree (J.D.)"
+]
+
+const CANCER_CONDITIONS := [
+	"Breast Cancer", "Leukemia", "Lung Cancer", "Colon Cancer", "Lymphoma", "Skin Cancer", "Ovarian Cancer"
+]
+
+const OTHER_CONDITIONS := [
+	"Chronic Asthma", "Hypertension", "Type 2 Diabetes", "Rheumatoid Arthritis", "Heart Arrhythmia"
 ]
 
 const MONTH_DATA := [
@@ -55,7 +87,6 @@ const CONCEPTION_STORIES := [
 
 
 static func get_zodiac(month: int, day: int) -> String:
-	# month is 1-12
 	match month:
 		1: return "Capricorn" if day <= 19 else "Aquarius"
 		2: return "Aquarius" if day <= 18 else "Pisces"
@@ -73,6 +104,7 @@ static func get_zodiac(month: int, day: int) -> String:
 
 
 static func generate_profile(first_name: String, country: String, gender: String) -> Dictionary:
+	var safe_country := country if NameCatalog.POOLS.has(country) else "United States"
 	var month_idx := randi_range(0, 11)
 	var month_info: Dictionary = MONTH_DATA[month_idx]
 	var month_name: String = month_info["name"]
@@ -84,19 +116,91 @@ static func generate_profile(first_name: String, country: String, gender: String
 	if name_parts.size() > 1:
 		last_name = name_parts[name_parts.size() - 1]
 	else:
-		last_name = NameCatalog.random_name(country, false).split(" ", false)[-1]
+		var r_parts := NameCatalog.random_name(safe_country, false).split(" ", false)
+		last_name = r_parts[r_parts.size() - 1] if r_parts.size() > 0 else "Smith"
 
-	var mom_first := NameCatalog.random_name(country, true).split(" ", false)[0]
+	# 1. Roll Socioeconomic Family Wealth Tier
+	var wealth_roll := randf()
+	var family_wealth := "middle_class"
+	if wealth_roll < 0.25:
+		family_wealth = "poor"
+	elif wealth_roll < 0.80:
+		family_wealth = "middle_class"
+	else:
+		family_wealth = "wealthy"
+
+	# 2. Mother Details aligned with wealth
+	var mom_parts := NameCatalog.random_name(safe_country, true).split(" ", false)
+	var mom_first: String = mom_parts[0] if mom_parts.size() > 0 else "Sarah"
 	var mom_age := randi_range(22, 44)
-	var mom_job: String = PROFESSIONS.pick_random()
+	var mom_job := ""
+	var mom_edu := ""
+	var mom_health := 80
+	var mom_condition := ""
+	var mom_has_cancer := false
 
+	match family_wealth:
+		"poor":
+			mom_edu = POOR_EDU.pick_random()
+			if randf() < 0.35:
+				mom_job = "unemployed"
+			else:
+				mom_job = POOR_JOBS.pick_random()
+		"wealthy":
+			mom_edu = WEALTHY_EDU.pick_random()
+			mom_job = WEALTHY_JOBS.pick_random()
+		_: # middle_class
+			mom_edu = MIDDLE_EDU.pick_random()
+			mom_job = MIDDLE_JOBS.pick_random()
+
+	# Mother health condition check (~14% chance)
+	if randf() < 0.14:
+		if randf() < 0.50:
+			var cancer_type: String = CANCER_CONDITIONS.pick_random()
+			mom_condition = "Cancer (" + cancer_type + ")"
+			mom_has_cancer = true
+			mom_health = randi_range(35, 50)
+		else:
+			mom_condition = OTHER_CONDITIONS.pick_random()
+			mom_health = randi_range(50, 65)
+
+	# 3. Father Details aligned with wealth
 	var dad_present := randf() > 0.15
 	var dad_first := ""
 	var dad_age := mom_age + randi_range(-2, 5)
 	var dad_job := ""
+	var dad_edu := ""
+	var dad_health := 80
+	var dad_condition := ""
+	var dad_has_cancer := false
+
 	if dad_present:
-		dad_first = NameCatalog.random_name(country, false).split(" ", false)[0]
-		dad_job = PROFESSIONS.pick_random()
+		var dad_parts := NameCatalog.random_name(safe_country, false).split(" ", false)
+		dad_first = dad_parts[0] if dad_parts.size() > 0 else "David"
+		match family_wealth:
+			"poor":
+				dad_edu = POOR_EDU.pick_random()
+				if randf() < 0.35:
+					dad_job = "unemployed"
+				else:
+					dad_job = POOR_JOBS.pick_random()
+			"wealthy":
+				dad_edu = WEALTHY_EDU.pick_random()
+				dad_job = WEALTHY_JOBS.pick_random()
+			_: # middle_class
+				dad_edu = MIDDLE_EDU.pick_random()
+				dad_job = MIDDLE_JOBS.pick_random()
+
+		# Father health condition check (~14% chance)
+		if randf() < 0.14:
+			if randf() < 0.50:
+				var cancer_type: String = CANCER_CONDITIONS.pick_random()
+				dad_condition = "Cancer (" + cancer_type + ")"
+				dad_has_cancer = true
+				dad_health = randi_range(35, 50)
+			else:
+				dad_condition = OTHER_CONDITIONS.pick_random()
+				dad_health = randi_range(50, 65)
 
 	var circumstance: String = CONCEPTION_STORIES.pick_random()
 	var gender_term := "male" if gender.to_upper() == "MALE" else "female"
@@ -106,10 +210,38 @@ static func generate_profile(first_name: String, country: String, gender: String
 	lines.append(circumstance)
 	lines.append("My birthday is %s %d. I am a %s." % [month_name, day, zodiac])
 	lines.append("My name is %s." % first_name)
-	lines.append("My mother is %s %s, a %s (age %d)." % [mom_first, last_name, mom_job, mom_age])
 
+	# Socioeconomic background line
+	match family_wealth:
+		"poor":
+			lines.append("I was born into an impoverished household where money is tight and every dollar counts.")
+		"wealthy":
+			lines.append("I was born into an affluent, wealthy family surrounded by luxury and high society.")
+		_: # middle_class
+			lines.append("I was born into a hardworking middle-class family residing in a cozy suburban neighborhood.")
+
+	# Mother line
+	if mom_job == "unemployed":
+		lines.append("My mother is %s %s (age %d), currently unemployed with a %s education." % [mom_first, last_name, mom_age, mom_edu])
+	else:
+		lines.append("My mother is %s %s (age %d), a %s with a %s education." % [mom_first, last_name, mom_age, mom_job, mom_edu])
+
+	if mom_has_cancer:
+		lines.append("Your mother has cancer (%s)." % mom_condition)
+	elif mom_condition != "":
+		lines.append("Your mother suffers from %s." % mom_condition)
+
+	# Father line
 	if dad_present:
-		lines.append("My father is %s %s, a %s (age %d)." % [dad_first, last_name, dad_job, dad_age])
+		if dad_job == "unemployed":
+			lines.append("My father is %s %s (age %d), currently unemployed with a %s education." % [dad_first, last_name, dad_age, dad_edu])
+		else:
+			lines.append("My father is %s %s (age %d), a %s with a %s education." % [dad_first, last_name, dad_age, dad_job, dad_edu])
+
+		if dad_has_cancer:
+			lines.append("Your father has cancer (%s)." % dad_condition)
+		elif dad_condition != "":
+			lines.append("Your father suffers from %s." % dad_condition)
 	else:
 		lines.append("My mother is raising me as a single parent.")
 
@@ -117,14 +249,22 @@ static func generate_profile(first_name: String, country: String, gender: String
 
 	return {
 		"story": full_text,
+		"birth_description": full_text,
 		"birth_month": month_name,
 		"birth_day": day,
 		"zodiac": zodiac,
+		"family_wealth": family_wealth,
 		"mother_name": "%s %s" % [mom_first, last_name],
 		"mother_age": mom_age,
 		"mother_job": mom_job,
+		"mother_education": mom_edu,
+		"mother_condition": mom_condition,
+		"mother_health": mom_health,
 		"father_name": "%s %s" % [dad_first, last_name] if dad_present else "Unknown",
 		"father_age": dad_age if dad_present else 0,
 		"father_job": dad_job if dad_present else "N/A",
+		"father_education": dad_edu if dad_present else "N/A",
+		"father_condition": dad_condition if dad_present else "",
+		"father_health": dad_health,
 		"has_father": dad_present
 	}

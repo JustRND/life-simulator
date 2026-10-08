@@ -300,6 +300,7 @@ static func found_business(biz_id: String, business_name: String = "") -> Dictio
 	PlayerData.owned_businesses.append(new_biz)
 
 	PlayerData.add_life_log_entry("🚀 ENTERPRISE INCORPORATED: You invested $%d to officially launch '%s'! Business treasury initialized with $10,000 working capital." % [cost, default_name], "milestone")
+	PlayerData.add_milestone("Founded '%s'." % default_name, PlayerData.age, "🏢")
 
 	return {
 		"allowed": true,

@@ -25,12 +25,18 @@ func capture_data() -> Dictionary:
 		"mother_relationship": PlayerData.mother_relationship,
 		"mother_alive": PlayerData.mother_alive,
 		"mother_health": PlayerData.mother_health,
+		"mother_education": PlayerData.mother_education,
+		"mother_condition": PlayerData.mother_condition,
 		"father_name": PlayerData.father_name,
 		"father_job": PlayerData.father_job,
 		"father_base_age": PlayerData.father_base_age,
 		"father_relationship": PlayerData.father_relationship,
 		"father_alive": PlayerData.father_alive,
 		"father_health": PlayerData.father_health,
+		"father_education": PlayerData.father_education,
+		"father_condition": PlayerData.father_condition,
+		"family_wealth": PlayerData.family_wealth,
+		"life_milestones": PlayerData.life_milestones,
 		"age": PlayerData.age,
 		"health": PlayerData.health,
 		"happiness": PlayerData.happiness,
@@ -201,6 +207,8 @@ func apply_data(data: Dictionary) -> bool:
 	PlayerData.mother_relationship = int(data.get("mother_relationship", 80))
 	PlayerData.mother_alive = bool(data.get("mother_alive", true))
 	PlayerData.mother_health = int(data.get("mother_health", 80))
+	PlayerData.mother_education = str(data.get("mother_education", "High School"))
+	PlayerData.mother_condition = str(data.get("mother_condition", ""))
 
 	PlayerData.father_name = str(data.get("father_name", ""))
 	PlayerData.father_job = str(data.get("father_job", ""))
@@ -208,6 +216,11 @@ func apply_data(data: Dictionary) -> bool:
 	PlayerData.father_relationship = int(data.get("father_relationship", 80))
 	PlayerData.father_alive = bool(data.get("father_alive", true))
 	PlayerData.father_health = int(data.get("father_health", 80))
+	PlayerData.father_education = str(data.get("father_education", "High School"))
+	PlayerData.father_condition = str(data.get("father_condition", ""))
+
+	PlayerData.family_wealth = str(data.get("family_wealth", "middle_class"))
+	PlayerData.life_milestones = Array(data.get("life_milestones", []))
 
 	PlayerData.age = int(data.get("age", 0))
 	PlayerData.health = int(data.get("health", 80))

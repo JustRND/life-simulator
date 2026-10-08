@@ -29,6 +29,8 @@ var mother_base_age: int = 35
 var mother_relationship: int = 80
 var mother_alive: bool = true
 var mother_health: int = 80
+var mother_education: String = "High School"
+var mother_condition: String = ""
 
 var father_name: String = ""
 var father_job: String = ""
@@ -36,6 +38,11 @@ var father_base_age: int = 37
 var father_relationship: int = 80
 var father_alive: bool = true
 var father_health: int = 80
+var father_education: String = "High School"
+var father_condition: String = ""
+
+var family_wealth: String = "middle_class"
+var life_milestones: Array = []
 
 var partner: Dictionary = {}
 var ex_partners: Array = []
@@ -166,6 +173,8 @@ func reset_player() -> void:
 	mother_relationship = 80
 	mother_alive = true
 	mother_health = 80
+	mother_education = "High School"
+	mother_condition = ""
 
 	father_name = ""
 	father_job = ""
@@ -173,6 +182,11 @@ func reset_player() -> void:
 	father_relationship = 80
 	father_alive = true
 	father_health = 80
+	father_education = "High School"
+	father_condition = ""
+
+	family_wealth = "middle_class"
+	life_milestones.clear()
 
 	partner = {}
 	ex_partners = []
@@ -279,6 +293,18 @@ func reset_player() -> void:
 	social_media.clear()
 	pets.clear()
 	will_recipient = "CHILDREN"
+
+
+func add_milestone(m_text: String, milestone_age: int = -1, icon: String = "🏆") -> void:
+	var a: int = age if milestone_age < 0 else milestone_age
+	for m in life_milestones:
+		if m is Dictionary and str(m.get("text", "")) == m_text and int(m.get("age", -1)) == a:
+			return
+	life_milestones.append({
+		"text": m_text,
+		"age": a,
+		"icon": icon
+	})
 
 
 func has_license(license_id: String) -> bool:

@@ -796,6 +796,31 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_font_sizes/font_size = 26
 
+[node name="MilestonesCard" type="PanelContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("card")
+
+[node name="Margin" type="MarginContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/MilestonesCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/MilestonesCard/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="CardTitle" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/MilestonesCard/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
+theme_override_font_sizes/font_size = 30
+text = "Life Milestones"
+
+[node name="MilestonesList" type="VBoxContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/MilestonesCard/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
 [node name="InfantPanel" type="PanelContainer" parent="." unique_id=2119090324]
 visible = false
 layout_mode = 1
@@ -1219,9 +1244,9 @@ theme_override_styles/panel = SubResource("card")
 
 [node name="Margin" type="MarginContainer" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/MotherCard" unique_id=164811389]
 layout_mode = 2
-theme_override_constants/margin_left = 20
+theme_override_constants/margin_left = 48
 theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 20
+theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 20
 
 [node name="HBox" type="HBoxContainer" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/MotherCard/Margin" unique_id=543110986]
@@ -1232,6 +1257,7 @@ theme_override_constants/separation = 20
 texture_filter = 1
 custom_minimum_size = Vector2(96, 96)
 layout_mode = 2
+size_flags_vertical = 0
 expand_mode = 1
 stretch_mode = 5
 
@@ -1267,9 +1293,9 @@ theme_override_styles/panel = SubResource("card")
 
 [node name="Margin" type="MarginContainer" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/FatherCard" unique_id=1845775668]
 layout_mode = 2
-theme_override_constants/margin_left = 20
+theme_override_constants/margin_left = 48
 theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 20
+theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 20
 
 [node name="HBox" type="HBoxContainer" parent="RelationshipsPanel/RelMargin/RelContent/RelScroll/RelList/FatherCard/Margin" unique_id=219630325]
@@ -1280,6 +1306,7 @@ theme_override_constants/separation = 20
 texture_filter = 1
 custom_minimum_size = Vector2(96, 96)
 layout_mode = 2
+size_flags_vertical = 0
 expand_mode = 1
 stretch_mode = 5
 
