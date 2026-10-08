@@ -68,15 +68,18 @@ func _ready() -> void:
 			found_custom = true
 			break
 	assert(found_custom)
-	await RenderingServer.frame_post_draw
-	get_viewport().get_texture().get_image().save_png("res://work/options-dark.png")
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png("res://work/options-dark.png")
 	LifeLibrary.data.theme = "light"
 	root.get_node("ThemeController").apply_theme()
-	await RenderingServer.frame_post_draw
-	get_viewport().get_texture().get_image().save_png("res://work/options-light.png")
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png("res://work/options-light.png")
 	root._on_close_settings_button_pressed()
-	await RenderingServer.frame_post_draw
-	get_viewport().get_texture().get_image().save_png("res://work/game-light.png")
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png("res://work/game-light.png")
 	root.show_tab("settings")
 	options._save_life()
 	options._load_life()
@@ -93,8 +96,9 @@ func _ready() -> void:
 	options._queue_notice("Test Achievement", "Floating popup test")
 	await get_tree().create_timer(0.4).timeout
 	assert(root.get_node_or_null("AchievementToast") != null)
-	await RenderingServer.frame_post_draw
-	get_viewport().get_texture().get_image().save_png("res://work/custom-people.png")
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png("res://work/custom-people.png")
 	for entry in LifeLibrary.slots():
 		DirAccess.remove_absolute(LifeLibrary.slot_path(entry.id))
 	DirAccess.remove_absolute(LifeLibrary.slots_path)

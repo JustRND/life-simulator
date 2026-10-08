@@ -31,7 +31,7 @@ func install_button(row: HBoxContainer) -> void:
 	_shop_button.add_theme_font_size_override("font_size", 26)
 	_shop_button.custom_minimum_size = Vector2(210, 90)
 	_shop_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	_shop_button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_shop_button.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_style_button(_shop_button, Color("#64e6ff"))
 	row.add_child(_shop_button)
 	_shop_button.pressed.connect(open_shop)
@@ -69,7 +69,7 @@ func _build() -> void:
 	icon.custom_minimum_size = Vector2(92, 92)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	header.add_child(icon)
 	var title := _label("LIFE.EXE SHOP", 42, Color("#64e6ff"))
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -141,7 +141,7 @@ func _style(fill: Color, border: Color, padding: int) -> StyleBoxFlat:
 	style.bg_color = fill
 	style.border_color = border
 	style.set_border_width_all(2)
-	style.set_corner_radius_all(6)
+	style.set_corner_radius_all(10)
 	style.content_margin_left = padding
 	style.content_margin_right = padding
 	style.content_margin_top = padding
@@ -155,7 +155,23 @@ func _style_button(button: Button, accent: Color) -> void:
 	button.add_theme_color_override("font_color", Color("#0f172a") if is_light else accent)
 	button.add_theme_color_override("font_hover_color", Color("#0284c7") if is_light else Color.WHITE)
 	button.add_theme_color_override("font_pressed_color", Color("#000000") if is_light else Color.WHITE)
-	button.add_theme_stylebox_override("normal", _style(Color("#edf3fa") if is_light else Color("#12213b"), dark_accent, 12))
-	button.add_theme_stylebox_override("hover", _style(Color("#bfdbfe") if is_light else Color("#1d3353"), Color("#0284c7") if is_light else accent, 12))
-	button.add_theme_stylebox_override("pressed", _style(Color("#93c5fd") if is_light else Color("#0d1729"), Color("#0369a1") if is_light else accent, 12))
+
+	var normal_sb := _style(Color("#edf3fa") if is_light else Color("#12213b"), dark_accent, 12)
+	normal_sb.shadow_color = Color(0, 0, 0, 0.22)
+	normal_sb.shadow_size = 4
+	normal_sb.shadow_offset = Vector2(0, 3)
+
+	var hover_sb := _style(Color("#bfdbfe") if is_light else Color("#1d3353"), Color("#0284c7") if is_light else Color.WHITE, 12)
+	hover_sb.shadow_color = Color(0, 0, 0, 0.28)
+	hover_sb.shadow_size = 6
+	hover_sb.shadow_offset = Vector2(0, 3)
+
+	var pressed_sb := _style(Color("#93c5fd") if is_light else Color("#0d1729"), Color("#0369a1") if is_light else accent, 12)
+	pressed_sb.shadow_color = Color(0, 0, 0, 0.18)
+	pressed_sb.shadow_size = 1
+	pressed_sb.shadow_offset = Vector2(0, 1)
+
+	button.add_theme_stylebox_override("normal", normal_sb)
+	button.add_theme_stylebox_override("hover", hover_sb)
+	button.add_theme_stylebox_override("pressed", pressed_sb)
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND

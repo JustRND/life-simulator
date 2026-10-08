@@ -41,5 +41,7 @@ func _draw() -> void:
 func _background(light: bool) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color("#edf3fa") if light else Color("#12213b")
-	style.set_corner_radius_all(8)
+	style.border_color = Color("#cbd5e1" if light else "#334155")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(10)
 	return style

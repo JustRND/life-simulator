@@ -7,7 +7,7 @@
 [ext_resource type="Shader" uid="uid://0bwcmxsuaqxt" path="res://assets/ui/background_pulse.gdshader" id="5_bg_pulse"]
 
 [sub_resource type="SystemFont" id="pixel_font"]
-font_names = PackedStringArray("Consolas", "Courier New", "monospace")
+font_names = PackedStringArray("Arial", "Noto Sans")
 font_weight = 700
 subpixel_positioning = 0
 

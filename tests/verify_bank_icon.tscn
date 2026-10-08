@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://cy81729381730"]
+[gd_scene format=3 uid="uid://cy8173a381730"]
 
 [ext_resource type="Script" path="res://tests/verify_bank_icon.gd" id="1_test"]
 

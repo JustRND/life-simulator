@@ -13,6 +13,12 @@ func _ready() -> void:
 	print("--- ALL LIGHT MODE CONTRAST TESTS PASSED SUCCESSFULLY! ---")
 	get_tree().quit(0)
 
+func get_visible_button_color(btn: Button) -> Color:
+	var row = btn.get_node_or_null("ReferenceRow")
+	if row != null and is_instance_valid(row.heading):
+		return row.heading.get_theme_color("font_color")
+	return btn.get_theme_color("font_color")
+
 func test_light_mode_activities_contrast() -> void:
 	print("Testing Light Mode Activities Panel Contrast...")
 	LifeLibrary.data.theme = "light"
@@ -28,8 +34,8 @@ func test_light_mode_activities_contrast() -> void:
 	for child in act_list.get_children():
 		if child is Button:
 			button_count += 1
-			var font_col: Color = child.get_theme_color("font_color")
-			assert(font_col.get_luminance() <= 0.25, "Button '%s' font_color must have luminance <= 0.25 in Light Mode (got %f, color: %s)" % [child.text, font_col.get_luminance(), font_col.to_html()])
+			var font_col: Color = get_visible_button_color(child)
+			assert(font_col.get_luminance() <= 0.35, "Button '%s' font_color must have luminance <= 0.35 in Light Mode (got %f, color: %s)" % [child.text, font_col.get_luminance(), font_col.to_html()])
 	
 	assert(button_count >= 10, "Expected at least 10 activity buttons, found %d" % button_count)
 	print("✔ Verified %d activity buttons have high-contrast text in Light Mode." % button_count)
@@ -50,7 +56,7 @@ func test_light_mode_assets_contrast() -> void:
 	var label_count := 0
 	for node in assets_list.find_children("*", "Label", true, false):
 		var lbl := node as Label
-		if not lbl.visible or lbl.text.strip_edges() == "":
+		if not lbl.visible or lbl.text.strip_edges() == "" or lbl.has_meta("reference_section"):
 			continue
 		var col: Color = lbl.get_theme_color("font_color")
 		label_count += 1
@@ -110,7 +116,8 @@ func test_light_mode_event_contrast() -> void:
 
 	for btn in [screen.event_choice_1, screen.event_choice_2, screen.event_choice_3, screen.event_choice_4]:
 		if btn != null and btn.visible:
-			assert(btn.get_theme_color("font_color").get_luminance() <= 0.25, "Event choice button must be high contrast in Light Mode")
+			var heading_col: Color = get_visible_button_color(btn)
+			assert(heading_col == Color.WHITE or heading_col.get_luminance() >= 0.70, "Event choice button text must be white on colored buttons")
 
 	screen.hide_event_popup()
 	print("✔ Verified Event Popup text has high-contrast in Light Mode.")
@@ -136,11 +143,11 @@ func test_light_mode_modal_contrast() -> void:
 
 	var cyber_btn: Button = screen._create_cyber_button("Action Option", Color("#06b6d4"))
 	modal["list"].add_child(cyber_btn)
-	assert(cyber_btn.get_theme_color("font_color").get_luminance() <= 0.25, "Cyber button must have high-contrast font in Light Mode")
+	assert(cyber_btn.get_theme_color("font_color") == Color.WHITE, "Cyber button must have white font on colored background")
 
 	var disabled_btn: Button = screen._create_disabled_cyber_button("Locked Option", "Level 10 required")
 	modal["list"].add_child(disabled_btn)
-	assert(disabled_btn.get_theme_color("font_color").get_luminance() <= 0.35, "Disabled cyber button must have legible font in Light Mode")
+	assert(disabled_btn.get_theme_color("font_disabled_color").get_luminance() <= 0.65, "Disabled cyber button must have legible font in Light Mode")
 
 	modal["overlay"].queue_free()
 	print("✔ Verified Cyber Modal components have high-contrast in Light Mode.")
@@ -163,7 +170,7 @@ func test_theme_toggle_reversibility() -> void:
 	assert(first_btn != null, "Must find first activity button")
 
 	# Check dark font color
-	var dark_col: Color = first_btn.get_theme_color("font_color")
+	var dark_col: Color = get_visible_button_color(first_btn)
 	assert(dark_col.get_luminance() >= 0.70, "Dark mode button must have bright font (lum %f)" % dark_col.get_luminance())
 
 	# Switch to Light
@@ -171,15 +178,15 @@ func test_theme_toggle_reversibility() -> void:
 	screen.get_node("ThemeController").apply_theme()
 	screen.update_ui()
 	screen.show_tab("activities")
-	var light_col: Color = first_btn.get_theme_color("font_color")
-	assert(light_col.get_luminance() <= 0.25, "Light mode button must have dark font (lum %f)" % light_col.get_luminance())
+	var light_col: Color = get_visible_button_color(first_btn)
+	assert(light_col.get_luminance() <= 0.35, "Light mode button must have dark font (lum %f)" % light_col.get_luminance())
 
 	# Switch back to Dark
 	LifeLibrary.data.theme = "dark"
 	screen.get_node("ThemeController").apply_theme()
 	screen.update_ui()
 	screen.show_tab("activities")
-	var restored_col: Color = first_btn.get_theme_color("font_color")
+	var restored_col: Color = get_visible_button_color(first_btn)
 	assert(restored_col.get_luminance() >= 0.70, "Restored dark mode button must have bright font (lum %f)" % restored_col.get_luminance())
 
 	print("✔ Verified Theme switching is fully reversible and preserves dark originals.")

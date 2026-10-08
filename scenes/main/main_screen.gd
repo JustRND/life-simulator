@@ -8244,6 +8244,7 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	main_vbox.add_child(header_row)
 
 	var title_lbl := Label.new()
+	title_lbl.set_meta("reference_part", true)
 	title_lbl.text = title_text
 	title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var title_col: Color = border_color.darkened(0.35) if (is_light and border_color.get_luminance() > 0.35) else border_color
@@ -8255,6 +8256,7 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	header_row.add_child(title_lbl)
 
 	var close_btn := Button.new()
+	close_btn.set_meta("reference_part", true)
 	close_btn.text = "✕"
 	close_btn.custom_minimum_size = Vector2(72, 60)
 	close_btn.add_theme_font_size_override("font_size", 30)
@@ -8264,8 +8266,19 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	close_style.bg_color = Color("#edf3fa") if is_light else Color("#1e293b")
 	close_style.border_color = modal_border
 	close_style.set_border_width_all(2)
-	close_style.set_corner_radius_all(8)
+	close_style.set_corner_radius_all(10)
+	close_style.shadow_color = Color(0, 0, 0, 0.22)
+	close_style.shadow_size = 4
+	close_style.shadow_offset = Vector2(0, 2)
+	var close_hover := close_style.duplicate() as StyleBoxFlat
+	close_hover.border_color = Color("#f43f5e")
+	close_hover.shadow_size = 6
+	var close_pressed := close_style.duplicate() as StyleBoxFlat
+	close_pressed.shadow_size = 1
+	close_pressed.shadow_offset = Vector2(0, 1)
 	close_btn.add_theme_stylebox_override("normal", close_style)
+	close_btn.add_theme_stylebox_override("hover", close_hover)
+	close_btn.add_theme_stylebox_override("pressed", close_pressed)
 	close_btn.pressed.connect(func(): preload("res://scripts/ui/panel_close.gd").dismiss(overlay, true, Callable(), card))
 	header_row.add_child(close_btn)
 
@@ -8399,7 +8412,8 @@ func _create_disabled_cyber_button(btn_text: String, reason: String = "") -> But
 	btn.add_theme_stylebox_override("disabled", disabled_sb)
 	btn.add_theme_stylebox_override("normal", disabled_sb)
 
-	btn.add_theme_color_override("font_disabled_color", Color("#e2e8f0" if is_light else "#64748b"))
+	btn.add_theme_color_override("font_disabled_color", Color("#334155" if is_light else "#94a3b8"))
+	btn.add_theme_color_override("font_color", Color("#334155" if is_light else "#94a3b8"))
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	return btn
 
@@ -10785,6 +10799,8 @@ func _show_casino_modal() -> void:
 	for amt in bet_amounts:
 		var btn_b := Button.new()
 		btn_b.text = "Wager $%d" % amt
+		btn_b.set_meta("reference_part", true)
+		btn_b.set_meta("market_button", true)
 		btn_b.custom_minimum_size.y = 52
 		btn_b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn_b.add_theme_font_size_override("font_size", 20)
@@ -11148,7 +11164,7 @@ func _show_death_screen(cause: String) -> void:
 
 	var will_exec_header := Label.new()
 	will_exec_header.set_meta("reference_part", true)
-	will_exec_header.text = "⚖️ DISPERSAL OF EARTHLY REMAINS"
+	will_exec_header.text = "⚖️ LAST WILL & TESTAMENT ESTATE EXECUTION"
 	will_exec_header.add_theme_font_size_override("font_size", 22)
 	will_exec_header.add_theme_color_override("font_color", Color("#ef4444"))
 	wp_v.add_child(will_exec_header)
@@ -11699,7 +11715,7 @@ func _configure_creation() -> void:
 	field_style.bg_color = Color("#111827")
 	field_style.border_color = Color("#2563eb")
 	field_style.set_border_width_all(2)
-	field_style.set_corner_radius_all(6)
+	field_style.set_corner_radius_all(10)
 	field_style.content_margin_left = 18
 	field_style.content_margin_right = 18
 
@@ -11720,18 +11736,30 @@ func _configure_creation() -> void:
 
 	name_input.add_theme_color_override("font_placeholder_color", Color("#94a3b8"))
 
-	# Randomize Button: Stylish cyber button
+	# Randomize Button: Stylish cyber button with tactile depth
 	var rand_style := StyleBoxFlat.new()
 	rand_style.bg_color = Color("#1e293b")
 	rand_style.border_color = Color("#6366f1")
 	rand_style.set_border_width_all(2)
-	rand_style.set_corner_radius_all(6)
+	rand_style.set_corner_radius_all(10)
+	rand_style.shadow_color = Color(0, 0, 0, 0.25)
+	rand_style.shadow_size = 4
+	rand_style.shadow_offset = Vector2(0, 3)
+
 	var rand_hover := rand_style.duplicate() as StyleBoxFlat
 	rand_hover.bg_color = Color("#312e81")
-	rand_hover.border_color = Color("#818cf8")
+	rand_hover.border_color = Color.WHITE
+	rand_hover.shadow_size = 6
+	rand_hover.shadow_offset = Vector2(0, 3)
+
+	var rand_pressed := rand_style.duplicate() as StyleBoxFlat
+	rand_pressed.bg_color = Color("#1e1b4b")
+	rand_pressed.shadow_size = 1
+	rand_pressed.shadow_offset = Vector2(0, 1)
+
 	random_button.add_theme_stylebox_override("normal", rand_style)
 	random_button.add_theme_stylebox_override("hover", rand_hover)
-	random_button.add_theme_stylebox_override("pressed", rand_style)
+	random_button.add_theme_stylebox_override("pressed", rand_pressed)
 	random_button.add_theme_color_override("font_color", Color("#ffffff"))
 	random_button.add_theme_color_override("font_hover_color", Color("#c7d2fe"))
 	random_button.add_theme_font_size_override("font_size", 24)
@@ -11741,7 +11769,7 @@ func _configure_creation() -> void:
 	popup_style.bg_color = Color("#0f172a")
 	popup_style.border_color = Color("#38bdf8")
 	popup_style.set_border_width_all(2)
-	popup_style.set_corner_radius_all(6)
+	popup_style.set_corner_radius_all(10)
 	popup.add_theme_stylebox_override("panel", popup_style)
 	popup.add_theme_color_override("font_color", Color("#f8fafc"))
 	popup.add_theme_color_override("font_hover_color", Color("#38bdf8"))
@@ -11761,7 +11789,7 @@ func _configure_creation() -> void:
 	gender_highlight.bg_color = Color("#1d3353")
 	gender_highlight.border_color = Color("#64e6ff")
 	gender_highlight.set_border_width_all(2)
-	gender_highlight.set_corner_radius_all(4)
+	gender_highlight.set_corner_radius_all(10)
 	gender_popup.add_theme_stylebox_override("hover", gender_highlight)
 	gender_popup.add_theme_font_override("font", gender_input.get_theme_font("font"))
 	gender_popup.add_theme_font_size_override("font_size", 26)
@@ -11773,21 +11801,35 @@ func _configure_creation() -> void:
 	gender_popup.add_theme_constant_override("item_start_padding", 12)
 	gender_popup.add_theme_constant_override("item_end_padding", 12)
 
-	# Start Life Button: High-visibility green
+	# Start Life Button: Tactile high-visibility button
 	var start_btn := content.get_node_or_null("StartGameButton") as Button
 	if start_btn != null:
 		var start_style := StyleBoxFlat.new()
 		start_style.bg_color = Color("#22c55e")
 		start_style.border_color = Color("#15803d")
 		start_style.set_border_width_all(2)
-		start_style.set_corner_radius_all(8)
+		start_style.set_corner_radius_all(10)
+		start_style.shadow_color = Color(0, 0, 0, 0.28)
+		start_style.shadow_size = 4
+		start_style.shadow_offset = Vector2(0, 3)
+
 		var start_hover := start_style.duplicate() as StyleBoxFlat
 		start_hover.bg_color = Color("#4ade80")
+		start_hover.border_color = Color.WHITE
+		start_hover.shadow_size = 6
+		start_hover.shadow_offset = Vector2(0, 3)
+
+		var start_pressed := start_style.duplicate() as StyleBoxFlat
+		start_pressed.bg_color = Color("#15803d")
+		start_pressed.shadow_size = 1
+		start_pressed.shadow_offset = Vector2(0, 1)
+
 		start_btn.add_theme_stylebox_override("normal", start_style)
 		start_btn.add_theme_stylebox_override("hover", start_hover)
-		start_btn.add_theme_stylebox_override("pressed", start_style)
-		start_btn.add_theme_color_override("font_color", Color("#052e16"))
-		start_btn.add_theme_color_override("font_hover_color", Color("#052e16"))
+		start_btn.add_theme_stylebox_override("pressed", start_pressed)
+		start_btn.add_theme_color_override("font_color", Color.WHITE)
+		start_btn.add_theme_color_override("font_hover_color", Color.WHITE)
+		start_btn.add_theme_color_override("font_pressed_color", Color.WHITE)
 		start_btn.add_theme_font_size_override("font_size", 30)
 
 

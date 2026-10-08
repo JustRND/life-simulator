@@ -56,11 +56,12 @@ func _ready() -> void:
 		assert(l.get_theme_color("font_color") != Color("#174666"), "Death screen label must NOT be styled with light mode blue ink")
 	
 	print("✔ Verified %d labels in Death Screen (All exempt, zero theme contamination)" % labels_found)
-	await RenderingServer.frame_post_draw
-	var vp_img := get_viewport().get_texture().get_image()
-	if vp_img != null and not vp_img.is_empty():
-		vp_img.save_png("res://tests/death_screen_condemned.png")
-		print("Saved res://tests/death_screen_condemned.png")
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		var vp_img := get_viewport().get_texture().get_image()
+		if vp_img != null and not vp_img.is_empty():
+			vp_img.save_png("res://tests/death_screen_condemned.png")
+			print("Saved res://tests/death_screen_condemned.png")
 	
 	# 2. Test Death Screen Blessed (Positive Karma)
 	print("\n--- 2. Testing Death Screen (Blessed / Positive Karma) ---")
@@ -135,11 +136,12 @@ func _ready() -> void:
 	print("id_title text: '%s', size: %s" % [id_title.text, id_title.size])
 	print("id_name text: '%s', size: %s" % [id_name.text, id_name.size])
 	print("id_details text: '%s', size: %s" % [id_details.text, id_details.size])
-	await RenderingServer.frame_post_draw
-	var amg_img := get_viewport().get_texture().get_image()
-	if amg_img != null and not amg_img.is_empty():
-		amg_img.save_png("res://tests/afterlife_condemned.png")
-		print("Saved res://tests/afterlife_condemned.png")
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		var amg_img := get_viewport().get_texture().get_image()
+		if amg_img != null and not amg_img.is_empty():
+			amg_img.save_png("res://tests/afterlife_condemned.png")
+			print("Saved res://tests/afterlife_condemned.png")
 	
 	# 4. Test Afterlife Minigame Layout (Blessed)
 	print("\n--- 4. Testing Afterlife Minigame Layout (Blessed) ---")
@@ -156,11 +158,12 @@ func _ready() -> void:
 	
 	assert(amg_blessed.verdict_panel.visible, "Verdict panel visible")
 	print("✔ Blessed Afterlife minigame instantiated and weighed successfully")
-	await RenderingServer.frame_post_draw
-	var blessed_img := get_viewport().get_texture().get_image()
-	if blessed_img != null and not blessed_img.is_empty():
-		blessed_img.save_png("res://tests/afterlife_blessed.png")
-		print("Saved res://tests/afterlife_blessed.png")
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		var blessed_img := get_viewport().get_texture().get_image()
+		if blessed_img != null and not blessed_img.is_empty():
+			blessed_img.save_png("res://tests/afterlife_blessed.png")
+			print("Saved res://tests/afterlife_blessed.png")
 	
 	print("\n--- ALL DEATH & AFTERLIFE TESTS PASSED PERFECTLY! ---")
 	get_tree().quit(0)

@@ -3,11 +3,12 @@ extends Node
 const MainScreenScene = preload("res://scenes/main/main_screen.tscn")
 
 func capture_screenshot(path: String) -> void:
-	await RenderingServer.frame_post_draw
-	var img := get_viewport().get_texture().get_image()
-	if img != null and not img.is_empty():
-		img.save_png(path)
-		print("Saved %s" % path)
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		var img := get_viewport().get_texture().get_image()
+		if img != null and not img.is_empty():
+			img.save_png(path)
+			print("Saved %s" % path)
 
 func _ready() -> void:
 	print("=== VISUAL VERIFICATION: CHARACTER PROFILE, LIFE MILESTONES & BLIND BOX ===")

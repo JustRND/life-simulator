@@ -5,6 +5,7 @@ const COLORS = ["font_color", "font_hover_color", "font_pressed_color", "font_di
 var body_font := SystemFont.new()
 var bold_font := SystemFont.new()
 var title_font := SystemFont.new()
+var custom_style = preload("res://scripts/ui/ui_style.gd").new()
 
 func _init() -> void:
 	body_font.font_names = PackedStringArray(["Arial", "Noto Sans"])
@@ -40,14 +41,55 @@ func surface(light: bool, state: String = "normal") -> StyleBoxFlat:
 		style.border_color = Color("#127bb7") if light else Color("#8cd5ff")
 	return style
 
+func button_surface(light: bool, state: String = "normal") -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("#ffffff") if light else Color("#151e2b")
+	style.border_color = Color("#9aaaba") if light else Color("#45576b")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(10)
+	style.content_margin_left = 24
+	style.content_margin_right = 24
+	style.content_margin_top = 16
+	style.content_margin_bottom = 16
+	if state == "normal":
+		style.shadow_color = Color(0, 0, 0, 0.15 if light else 0.35)
+		style.shadow_size = 4
+		style.shadow_offset = Vector2(0, 3)
+	elif state in ["hover", "hover_pressed"]:
+		style.bg_color = Color("#e2edf6") if light else Color("#263a50")
+		style.border_color = Color("#0284c7") if light else Color.WHITE
+		style.shadow_color = Color(0, 0, 0, 0.22 if light else 0.45)
+		style.shadow_size = 6
+		style.shadow_offset = Vector2(0, 3)
+	elif state == "pressed":
+		style.bg_color = Color("#cbdceb") if light else Color("#1a2938")
+		style.shadow_color = Color(0, 0, 0, 0.12 if light else 0.25)
+		style.shadow_size = 1
+		style.shadow_offset = Vector2(0, 1)
+	elif state == "disabled":
+		style.shadow_size = 0
+		style.shadow_offset = Vector2.ZERO
+		style.bg_color = Color("#e2e8f0") if light else Color("#1e293b")
+		style.border_color = Color("#cbd5e1") if light else Color("#334155")
+	elif state == "focus":
+		style.bg_color = Color.TRANSPARENT
+		style.set_border_width_all(3)
+		style.border_color = Color("#127bb7") if light else Color("#8cd5ff")
+		style.shadow_size = 0
+		style.shadow_offset = Vector2.ZERO
+	return style
+
 func apply(node: Control, light: bool) -> void:
-	if node.has_meta("reference_part") or node.has_meta("market_button") or node.has_meta("theme_exempt"):
+	if node.has_meta("theme_exempt"):
 		return
 	var cur: Node = node
 	while cur != null:
 		if cur.has_meta("theme_exempt") or "Death" in str(cur.name) or "Afterlife" in str(cur.name):
 			return
 		cur = cur.get_parent()
+	if node.has_meta("reference_part") or node.has_meta("market_button"):
+		custom_style.apply_custom(node, light)
+		return
 	if node is Label and node.get_parent() is VBoxContainer and not node.has_meta("reference_header_title"):
 		var text: String = node.text.strip_edges()
 		if text.length() > 4 and text.length() < 90 and not "\n" in text and not ":" in text and text == text.to_upper() and text != text.to_lower():
@@ -69,6 +111,8 @@ func apply(node: Control, light: bool) -> void:
 	for key in COLORS:
 		node.add_theme_color_override(key, (Color("#606773") if light else Color("#a7b4c5")) if key == "font_disabled_color" else ink)
 	if node is Label or node is RichTextLabel:
+		if node is Label and node.get_parent() is VBoxContainer:
+			node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		node.add_theme_font_size_override("font_size", maxi(26, node.get_theme_font_size("font_size")))
 		node.add_theme_font_size_override("normal_font_size", 28)
 		# Give nested information cards the same title/body hierarchy as menu rows.
@@ -122,20 +166,21 @@ func apply(node: Control, light: bool) -> void:
 			node.add_theme_constant_override("margin_right", 32)
 			node.add_theme_constant_override("margin_top", 20)
 			node.add_theme_constant_override("margin_bottom", 20)
-		elif str(node.name) in ["ActMargin", "RelMargin", "AssetsMargin", "BankMargin", "InfantMargin"] or node.has_meta("reference_edge"):
+		elif str(node.name) in ["ActMargin", "RelMargin", "AssetsMargin", "BankMargin", "InfantMargin", "CharacterMargin", "SettingsMargin", "ConfirmMargin"] or node.has_meta("reference_edge"):
 			node.add_theme_constant_override("margin_left", 24)
 			node.add_theme_constant_override("margin_right", 24)
 			node.add_theme_constant_override("margin_top", 16)
 			node.add_theme_constant_override("margin_bottom", 20)
-	if node is LineEdit or node is TextEdit or node is Button:
+	if node is LineEdit or node is TextEdit:
 		for state in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus", "read_only"]:
 			node.add_theme_stylebox_override(state, surface(light, state))
-		if node is LineEdit or node is TextEdit:
-			node.add_theme_font_size_override("font_size", 30)
-			node.add_theme_color_override("caret_color", ink)
-			node.add_theme_color_override("selection_color", Color("#3c7096"))
-			node.add_theme_color_override("font_selected_color", Color.WHITE)
-	if node is Button:
+		node.add_theme_font_size_override("font_size", 30)
+		node.add_theme_color_override("caret_color", ink)
+		node.add_theme_color_override("selection_color", Color("#3c7096"))
+		node.add_theme_color_override("font_selected_color", Color.WHITE)
+	elif node is Button:
+		for state in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus", "read_only"]:
+			node.add_theme_stylebox_override(state, button_surface(light, state))
 		if node.text in ["✕", "×", "X", "✖"]:
 			_style_header(node)
 		elif node.get_parent() is VBoxContainer and not node is OptionButton and not node is CheckButton and not node is CheckBox and node.text.length() > 2:
@@ -151,6 +196,9 @@ func apply(node: Control, light: bool) -> void:
 			node.add_theme_font_size_override("font_size", 1)
 			node.expand_icon = true
 			node.add_theme_constant_override("icon_max_width", 1)
+			var row = node.get_node_or_null("ReferenceRow")
+			if row != null and row.has_method("_sync"):
+				row._sync()
 		else:
 			node.add_theme_font_size_override("font_size", 28)
 			node.custom_minimum_size.y = maxf(node.custom_minimum_size.y, 72)

@@ -1,6 +1,7 @@
 extends RefCounted
 
 static func feedback(button: Button, result: String) -> void:
+	button.set_meta("quiz_feedback", result)
 	# Derive feedback from the existing button, preserving its complete geometry.
 	var style := button.get_theme_stylebox("normal").duplicate() as StyleBoxFlat
 	match result:

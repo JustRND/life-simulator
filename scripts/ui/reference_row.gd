@@ -118,9 +118,10 @@ func _sync() -> void:
 	if target == null:
 		return
 	_silence_target()
-	var light: bool = LifeLibrary.data.theme == "light"
+	var light: bool = LifeLibrary.data.get("theme", "dark") == "light"
 	var is_colored: bool = _is_colored_target()
-	var key := target.text + str(target.icon) + str(target.button_pressed) + str(target.get_meta("action_emoji", "")) + str(target.disabled) + str(light) + str(LifeLibrary.data.language) + str(is_colored)
+	var lang: String = str(LifeLibrary.data.get("language", "en"))
+	var key := target.text + str(target.icon) + str(target.button_pressed) + str(target.get_meta("action_emoji", "")) + str(target.disabled) + str(light) + lang + str(is_colored)
 	if key != previous:
 		previous = key
 		var lines := target.text.split("\n", false)

@@ -30,10 +30,10 @@ static func dismiss(source: Control, remove: bool = false, finished: Callable = 
 		if is_instance_valid(surface):
 			surface.offset_top = top + amount
 			surface.offset_bottom = bottom + amount
-	, 0.0, distance, 0.28).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	, 0.0, distance, preload("res://scripts/ui/ui_style.gd").CLOSE_SECONDS).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	var orig_alpha := source.modulate.a
 	if source != surface:
-		tween.parallel().tween_property(source, "modulate:a", 0.0, 0.28).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+		tween.parallel().tween_property(source, "modulate:a", 0.0, preload("res://scripts/ui/ui_style.gd").CLOSE_SECONDS).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	tween.tween_callback(func():
 		source.hide()
 		surface.offset_top = top

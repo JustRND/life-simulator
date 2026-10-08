@@ -258,7 +258,7 @@ func _style(fill: Color, border: Color, padding: int) -> StyleBoxFlat:
 	style.bg_color = fill
 	style.border_color = border
 	style.set_border_width_all(2)
-	style.set_corner_radius_all(6)
+	style.set_corner_radius_all(10)
 	style.content_margin_left = padding
 	style.content_margin_right = padding
 	style.content_margin_top = padding
@@ -271,12 +271,28 @@ func _button(text: String, parent: Node, action: Callable) -> Button:
 	button.custom_minimum_size.y = 82
 	button.add_theme_font_size_override("font_size", 28)
 	var is_light: bool = LifeLibrary.data.theme == "light"
+	var normal_sb := _style(Color("#edf3fa") if is_light else Color("#12213b"), Color("#0284c7") if is_light else Color("#40647e"), 16)
+	normal_sb.shadow_color = Color(0, 0, 0, 0.22)
+	normal_sb.shadow_size = 4
+	normal_sb.shadow_offset = Vector2(0, 3)
+
+	var hover_sb := _style(Color("#bfdbfe") if is_light else Color("#1d3353"), Color("#0369a1") if is_light else Color("#64e6ff"), 16)
+	hover_sb.shadow_color = Color(0, 0, 0, 0.28)
+	hover_sb.shadow_size = 6
+	hover_sb.shadow_offset = Vector2(0, 3)
+	hover_sb.border_color = Color("#0284c7") if is_light else Color.WHITE
+
+	var pressed_sb := _style(Color("#93c5fd") if is_light else Color("#0d1729"), Color("#000000") if is_light else Color("#64e6ff"), 16)
+	pressed_sb.shadow_color = Color(0, 0, 0, 0.18)
+	pressed_sb.shadow_size = 1
+	pressed_sb.shadow_offset = Vector2(0, 1)
+
 	button.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#64e6ff"))
 	button.add_theme_color_override("font_hover_color", Color("#0284c7") if is_light else Color("#ffffff"))
 	button.add_theme_color_override("font_pressed_color", Color("#000000") if is_light else Color("#ffffff"))
-	button.add_theme_stylebox_override("normal", _style(Color("#edf3fa") if is_light else Color("#12213b"), Color("#0284c7") if is_light else Color("#40647e"), 16))
-	button.add_theme_stylebox_override("hover", _style(Color("#bfdbfe") if is_light else Color("#1d3353"), Color("#0369a1") if is_light else Color("#64e6ff"), 16))
-	button.add_theme_stylebox_override("pressed", _style(Color("#93c5fd") if is_light else Color("#0d1729"), Color("#000000") if is_light else Color("#64e6ff"), 16))
+	button.add_theme_stylebox_override("normal", normal_sb)
+	button.add_theme_stylebox_override("hover", hover_sb)
+	button.add_theme_stylebox_override("pressed", pressed_sb)
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	parent.add_child(button)
 	button.pressed.connect(action)

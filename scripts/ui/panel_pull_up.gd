@@ -1,6 +1,6 @@
 extends RefCounted
 
-const DURATION := 0.34
+const DURATION := preload("res://scripts/ui/ui_style.gd").OPEN_SECONDS
 var _tween: Tween
 var _panel: Control
 var _top := 0.0
