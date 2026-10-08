@@ -36,9 +36,9 @@ static func date_result(player: Node, candidate: Dictionary, accepted: bool, rol
 		player.partner.merge({"status": "Girlfriend" if candidate.get("gender") == "FEMALE" else "Boyfriend", "relationship": 78, "happiness": 65, "years_together": 0, "is_alive": true}, true)
 		player.last_partner_interact_age = player.age
 		player.happiness = clampi(player.happiness + 12, 0, 100)
-		return "Your date with %s went wonderfully! You both decided to start a relationship. Happiness +12." % name
+		return "Your date with %s went wonderfully! You both decided to start a relationship." % name
 	player.happiness = clampi(player.happiness - 8, 0, 100)
-	return "Your date with %s failed to leave a good impression. There was no romantic connection. Happiness -8." % name
+	return "Your date with %s failed to leave a good impression. There was no romantic connection." % name
 
 static func propose(player: Node, gift_ids: Array, roll: float) -> String:
 	if player.is_dead or player.age < 18 or not player.has_partner() or player.get_partner_status() not in ["Boyfriend", "Girlfriend"]:
@@ -61,16 +61,16 @@ static func propose(player: Node, gift_ids: Array, roll: float) -> String:
 	player.partner["happiness"] = clampi(int(player.partner.happiness) + joy, 0, 100)
 	player.set_partner_relationship(player.get_partner_relationship() + mini(15, int(joy * 0.5)))
 	player.last_partner_interact_age = player.age
-	var intro := "You gave %s %s ($%d). Partner happiness +%d. " % [player.get_partner_name(), ", ".join(names), cost, joy]
+	var intro := "You gave %s %s ($%d). " % [player.get_partner_name(), ", ".join(names), cost]
 	var chance := clampf(float(player.get_partner_relationship()) / 100.0 + float(joy) / 300.0, 0.1, 0.95)
 	if roll < chance:
 		player.partner["status"] = "Fiancée" if player.partner.get("gender") == "FEMALE" else "Fiancé"
 		player.partner["engaged_age"] = player.age
 		player.partner["last_delay_age"] = player.age
 		player.happiness = clampi(player.happiness + 20, 0, 100)
-		return intro + "They accepted your proposal! You are engaged. You can marry from age %d. Happiness +20." % (player.age + 1)
+		return intro + "They accepted your proposal! You are engaged. You can marry from age %d." % (player.age + 1)
 	player.happiness = clampi(player.happiness - 10, 0, 100)
-	return intro + "They appreciated the gifts but were not ready to get engaged. Happiness -10."
+	return intro + "They appreciated the gifts but were not ready to get engaged."
 
 static func delay_wedding(player: Node, explicit_postpone: bool = false) -> String:
 	if player.is_dead or not engaged(player):

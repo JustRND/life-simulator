@@ -701,8 +701,33 @@ func apply_effects(effects: Dictionary) -> void:
 
 
 
+static func sanitize_stat_spoilers(text: String) -> String:
+	var s := text
+	# Remove parenthetical stat deltas, e.g. "(Health -12%, Happiness -8%)", "(Happiness +8)"
+	var reg_paren := RegEx.new()
+	reg_paren.compile("\\s*\\(\\s*(?:Health|Happiness|Smarts|Looks|Grades|Relationship|Partner happiness|Pet Health|Academic Marks|Academic sharpness)\\s*[:+-]\\s*\\d+%?(?:\\s*[,•&]\\s*(?:Health|Happiness|Smarts|Looks|Grades|Relationship|Partner happiness|Pet Health|Academic Marks|Academic sharpness)\\s*[:+-]?\\s*\\d*%?)*\\s*\\)")
+	s = reg_paren.sub(s, "", true)
+
+	# Remove unparenthesized stat delta phrases, e.g. "Smarts +2, Happiness +2."
+	var reg_stat := RegEx.new()
+	reg_stat.compile("\\b(?:Health|Happiness|Smarts|Looks|Grades|Relationship|Partner happiness|Pet Health)\\s*[:+-]\\s*\\d+%?")
+	s = reg_stat.sub(s, "", true)
+
+	# Clean up leftover comma-chains, dangling punctuation, or trailing exclamation/dots
+	var reg_cleanup := RegEx.new()
+	reg_cleanup.compile("[,;]\\s*[,;]+")
+	s = reg_cleanup.sub(s, ",", true)
+	reg_cleanup.compile("\\s*[,;]\\s*(\\.|!|\\?)")
+	s = reg_cleanup.sub(s, "$1", true)
+	reg_cleanup.compile("\\(\\s*\\)")
+	s = reg_cleanup.sub(s, "", true)
+	reg_cleanup.compile("\\s{2,}")
+	s = reg_cleanup.sub(s, " ", true)
+	return s.strip_edges()
+
+
 func add_life_log_entry(text: String, kind: String = "event") -> void:
-	var clean_text := text.strip_edges()
+	var clean_text := sanitize_stat_spoilers(text).strip_edges()
 	if clean_text == "":
 		return
 

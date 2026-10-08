@@ -41,7 +41,7 @@ func surface(light: bool, state: String = "normal") -> StyleBoxFlat:
 	return style
 
 func apply(node: Control, light: bool) -> void:
-	if node.has_meta("reference_part") or node.has_meta("theme_exempt"):
+	if node.has_meta("reference_part") or node.has_meta("market_button") or node.has_meta("theme_exempt"):
 		return
 	var cur: Node = node
 	while cur != null:
@@ -116,8 +116,10 @@ func apply(node: Control, light: bool) -> void:
 			node.add_theme_constant_override("margin_top", 20)
 			node.add_theme_constant_override("margin_bottom", 20)
 		elif str(node.name) in ["ActMargin", "RelMargin", "AssetsMargin", "BankMargin", "InfantMargin"] or node.has_meta("reference_edge"):
-			for side in ["left", "right", "top", "bottom"]:
-				node.add_theme_constant_override("margin_" + side, 0)
+			node.add_theme_constant_override("margin_left", 24)
+			node.add_theme_constant_override("margin_right", 24)
+			node.add_theme_constant_override("margin_top", 16)
+			node.add_theme_constant_override("margin_bottom", 20)
 	if node is LineEdit or node is TextEdit or node is Button:
 		for state in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus", "read_only"]:
 			node.add_theme_stylebox_override(state, surface(light, state))

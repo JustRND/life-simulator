@@ -801,14 +801,14 @@ func age_up() -> void:
 		if randf() < 0.6:
 			var dmg: int = randi_range(12, 20)
 			PlayerData.health = maxi(0, PlayerData.health - dmg)
-			add_life_event("💥 VEHICLE COLLISION: You were involved in a traffic accident! Fortunately you survived with bruises (Health -%d%%)." % dmg, "health")
+			add_life_event("💥 VEHICLE COLLISION: You were involved in a traffic accident! Fortunately you survived with bruises.", "health")
 			if PlayerData.health <= 0:
 				trigger_death("Fatal Highway Car Collision")
 				return
 		else:
 			var dmg: int = randi_range(10, 18)
 			PlayerData.health = maxi(0, PlayerData.health - dmg)
-			add_life_event("⚡ ACCIDENT: You suffered minor injuries in a sudden mishap (Health -%d%%)." % dmg, "health")
+			add_life_event("⚡ ACCIDENT: You suffered minor injuries in a sudden mishap.", "health")
 			if PlayerData.health <= 0:
 				trigger_death("Fatal Structural Collapse Accident")
 				return
@@ -883,12 +883,12 @@ func _process_yearly_smarts_decay(prev_age: int) -> void:
 			# Mediocre performance with zero study outside class: mild cognitive atrophy
 			var decay := randi_range(1, 2)
 			PlayerData.smarts = maxi(10, PlayerData.smarts - decay)
-			add_life_event("📉 Mental Slump: You did not study outside class at age %d. Your academic sharpness slipped (Smarts -%d)." % [prev_age, decay], "education")
+			add_life_event("📉 Mental Slump: You did not study outside class at age %d. Your academic sharpness slipped." % prev_age, "education")
 		else:
 			# Low grades (< 60) and zero study: significant academic deterioration
 			var decay := randi_range(2, 4)
 			PlayerData.smarts = maxi(5, PlayerData.smarts - decay)
-			add_life_event("📉 Academic Neglect: Neglecting your studies and falling behind in school at age %d caused your cognitive sharpness to deteriorate (Smarts -%d)." % [prev_age, decay], "education")
+			add_life_event("📉 Academic Neglect: Neglecting your studies and falling behind in school at age %d caused your cognitive sharpness to deteriorate." % prev_age, "education")
 	else:
 		# Adult / Non-student
 		if studied_last_year or is_intellectual:
@@ -898,7 +898,7 @@ func _process_yearly_smarts_decay(prev_age: int) -> void:
 			# Cognitive atrophy from lack of mental stimulation
 			var decay := randi_range(1, 3)
 			PlayerData.smarts = maxi(5, PlayerData.smarts - decay)
-			add_life_event("📉 Cognitive Decline: Without regular reading, study, or mental challenges at age %d, your cognitive sharpness dulled (Smarts -%d)." % [prev_age, decay], "education")
+			add_life_event("📉 Cognitive Decline: Without regular reading, study, or mental challenges at age %d, your cognitive sharpness dulled." % prev_age, "education")
 
 
 func _process_yearly_grades_decay(prev_age: int) -> void:
@@ -1016,15 +1016,16 @@ func trigger_death(cause: String) -> void:
 
 
 func add_life_event(text: String, kind: String = "event") -> void:
-	if text.strip_edges() == "":
+	var clean_text := PlayerData.sanitize_stat_spoilers(text).strip_edges()
+	if clean_text == "":
 		return
 
 	if life_feed.text.strip_edges() == "":
-		life_feed.append_text(_format_life_entry(PlayerData.age, text))
+		life_feed.append_text(_format_life_entry(PlayerData.age, clean_text))
 	else:
-		life_feed.append_text("\n\n" + _format_life_entry(PlayerData.age, text))
+		life_feed.append_text("\n\n" + _format_life_entry(PlayerData.age, clean_text))
 
-	PlayerData.add_life_log_entry(text, kind)
+	PlayerData.add_life_log_entry(clean_text, kind)
 	_scroll_timeline_to_latest.call_deferred()
 
 
@@ -1114,7 +1115,7 @@ func trigger_event() -> void:
 		return
 	if PlayerData.age >= 18 and not PlayerData.is_in_prison and not LifeLibrary.data.people.is_empty() and randf() < 0.25:
 		var person: Dictionary = LifeLibrary.data.people.pick_random()
-		add_life_event("You met %s from %s and enjoyed a friendly conversation. Happiness +2." % [person.name, person.country], "event")
+		add_life_event("You met %s from %s and enjoyed a friendly conversation." % [person.name, person.country], "event")
 		PlayerData.happiness = mini(100, PlayerData.happiness + 2)
 
 	# Chance-based event popups: Events don't always pop up every year to avoid feeling spammy.
@@ -1260,17 +1261,51 @@ func show_event_popup() -> void:
 				button.add_theme_color_override("font_focus_color", Color(1, 0.95, 0.6, 1))
 
 	var used_choice_icons: Array[String] = []
+	var choice_colors := [Color("#0284c7"), Color("#10b981"), Color("#f59e0b"), Color("#8b5cf6")]
 	for i in range(min(current_event_choices.size(), buttons.size())):
 		var choice: Dictionary = current_event_choices[i]
+		var btn: Button = buttons[i]
+		var col: Color = choice_colors[i % choice_colors.size()]
 		var choice_icon: String = preload("res://scripts/ui/action_icons.gd").for_choice(choice, used_choice_icons)
 		used_choice_icons.append(choice_icon)
-		buttons[i].set_meta("action_emoji", choice_icon)
-		var title_text := str(choice.get("text", "Choose"))
-		buttons[i].text = title_text
-		buttons[i].autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		buttons[i].add_theme_font_size_override("font_size", 24)
-		buttons[i].custom_minimum_size.y = 80
-		buttons[i].visible = true
+		btn.set_meta("action_emoji", choice_icon)
+		btn.set_meta("reference_part", true)
+		btn.text = "%s  %s" % [choice_icon, str(choice.get("text", "Choose"))]
+		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		btn.add_theme_font_size_override("font_size", 24)
+		btn.custom_minimum_size.y = 72
+		btn.visible = true
+
+		var n_sb := StyleBoxFlat.new()
+		n_sb.bg_color = col.darkened(0.18) if is_light else col.darkened(0.42)
+		n_sb.border_color = col.lightened(0.2)
+		n_sb.set_border_width_all(2)
+		n_sb.set_corner_radius_all(12)
+		n_sb.shadow_color = Color(0, 0, 0, 0.28)
+		n_sb.shadow_size = 4
+		n_sb.shadow_offset = Vector2(0, 3)
+		n_sb.content_margin_left = 20
+		n_sb.content_margin_right = 20
+		n_sb.content_margin_top = 12
+		n_sb.content_margin_bottom = 12
+		btn.add_theme_stylebox_override("normal", n_sb)
+
+		var h_sb := n_sb.duplicate() as StyleBoxFlat
+		h_sb.bg_color = col.lightened(0.08) if is_light else col.darkened(0.2)
+		h_sb.border_color = Color.WHITE
+		h_sb.shadow_size = 6
+		btn.add_theme_stylebox_override("hover", h_sb)
+
+		var p_sb := n_sb.duplicate() as StyleBoxFlat
+		p_sb.bg_color = col.darkened(0.4) if is_light else col.darkened(0.6)
+		p_sb.shadow_size = 1
+		p_sb.shadow_offset = Vector2(0, 1)
+		btn.add_theme_stylebox_override("pressed", p_sb)
+
+		btn.add_theme_color_override("font_color", Color.WHITE)
+		btn.add_theme_color_override("font_hover_color", Color.WHITE)
+		btn.add_theme_color_override("font_pressed_color", Color.WHITE)
+		btn.add_theme_color_override("font_focus_color", Color.WHITE)
 
 	if has_node("ThemeController"):
 		get_node("ThemeController").apply_subtree(event_overlay)
@@ -1427,6 +1462,10 @@ func show_new_game_screen() -> void:
 
 func hide_new_game_screen() -> void:
 	new_game_panel.visible = false
+	if action_bar != null:
+		action_bar.visible = true
+	if age_button != null:
+		age_button.visible = true
 
 
 func _on_start_game_button_pressed() -> void:
@@ -1490,6 +1529,11 @@ func _on_start_game_button_pressed() -> void:
 	PlayerData.add_milestone("Born in %s." % PlayerData.birthplace, 0, "🍼")
 
 	hide_new_game_screen()
+	show_tab("timeline")
+	if action_bar != null:
+		action_bar.visible = true
+	if age_button != null:
+		age_button.visible = true
 
 	life_feed.clear()
 
@@ -3022,37 +3066,59 @@ func _setup_parent_action_row(vbox: VBoxContainer, parent_type: String) -> void:
 			elif not is_mother and PlayerData.last_father_vitamin_shot_age == PlayerData.age:
 				is_used_this_year = true
 
+		var col := Color(act[2])
+		var is_light: bool = LifeLibrary.data.theme == "light"
+		btn.set_meta("reference_part", true)
+		btn.set_meta("market_button", true)
+
 		if is_used_this_year:
 			btn.text = act[0] + " (Used)"
 			btn.disabled = true
 			btn.tooltip_text = "Already used with your %s this year. Available again next year." % ("mother" if is_mother else "father")
-			btn.modulate = Color(0.6, 0.6, 0.6, 0.65)
+			var disabled_sb := StyleBoxFlat.new()
+			disabled_sb.bg_color = Color("#94a3b8" if is_light else "#334155")
+			disabled_sb.border_color = Color("#cbd5e1" if is_light else "#475569")
+			disabled_sb.set_border_width_all(2)
+			disabled_sb.set_corner_radius_all(10)
+			disabled_sb.content_margin_left = 18
+			disabled_sb.content_margin_right = 18
+			disabled_sb.content_margin_top = 10
+			disabled_sb.content_margin_bottom = 10
+			btn.add_theme_stylebox_override("disabled", disabled_sb)
+			btn.add_theme_stylebox_override("normal", disabled_sb)
+			btn.add_theme_color_override("font_disabled_color", Color("#e2e8f0" if is_light else "#64748b"))
 		else:
 			btn.text = act[0]
+			var normal_sb := StyleBoxFlat.new()
+			normal_sb.bg_color = col.darkened(0.18) if is_light else col.darkened(0.42)
+			normal_sb.border_color = col.lightened(0.2)
+			normal_sb.set_border_width_all(2)
+			normal_sb.set_corner_radius_all(10)
+			normal_sb.shadow_color = Color(0, 0, 0, 0.28)
+			normal_sb.shadow_size = 4
+			normal_sb.shadow_offset = Vector2(0, 3)
+			normal_sb.content_margin_left = 18
+			normal_sb.content_margin_right = 18
+			normal_sb.content_margin_top = 10
+			normal_sb.content_margin_bottom = 10
+			btn.add_theme_stylebox_override("normal", normal_sb)
 
-		btn.custom_minimum_size.y = 56
-		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.add_theme_font_size_override("font_size", 22)
-		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			var hover_sb := normal_sb.duplicate() as StyleBoxFlat
+			hover_sb.bg_color = col.lightened(0.08) if is_light else col.darkened(0.2)
+			hover_sb.border_color = Color.WHITE
+			hover_sb.shadow_size = 6
+			btn.add_theme_stylebox_override("hover", hover_sb)
 
-		var style := StyleBoxFlat.new()
-		style.bg_color = Color("#1e293b")
-		style.border_color = Color(act[2])
-		style.set_border_width_all(2)
-		style.set_corner_radius_all(6)
-		btn.add_theme_stylebox_override("normal", style)
+			var pressed_sb := normal_sb.duplicate() as StyleBoxFlat
+			pressed_sb.bg_color = col.darkened(0.4) if is_light else col.darkened(0.6)
+			pressed_sb.shadow_size = 1
+			pressed_sb.shadow_offset = Vector2(0, 1)
+			btn.add_theme_stylebox_override("pressed", pressed_sb)
 
-		var hover := style.duplicate() as StyleBoxFlat
-		hover.bg_color = Color(act[2])
-		hover.bg_color.a = 0.3
-		btn.add_theme_stylebox_override("hover", hover)
-
-		var is_light: bool = LifeLibrary.data.theme == "light"
-		btn.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#f1f5f9"))
-		if is_light:
-			style.bg_color = Color("#edf3fa")
-			hover.bg_color = Color("#bfdbfe")
-		if not is_used_this_year:
+			btn.add_theme_color_override("font_color", Color.WHITE)
+			btn.add_theme_color_override("font_hover_color", Color.WHITE)
+			btn.add_theme_color_override("font_pressed_color", Color.WHITE)
+			btn.add_theme_color_override("font_focus_color", Color.WHITE)
 			btn.pressed.connect(func(): _interact_parent(parent_type, act_key))
 		row.add_child(btn)
 
@@ -3222,7 +3288,7 @@ func _interact_parent(parent_type: String, action: String) -> void:
 				PlayerData.father_health = mini(100, PlayerData.father_health + health_boost)
 				PlayerData.father_relationship = mini(100, PlayerData.father_relationship + rel_boost)
 			PlayerData.karma = mini(100, PlayerData.karma + 3)
-			add_life_event("Applying your medical doctor credentials, you gave your %s a thorough clinical examination. Their vitals improved (+%d%% Health)." % [role, health_boost], "relationship")
+			add_life_event("Applying your medical doctor credentials, you gave your %s a thorough clinical examination. Their vitals improved." % role, "relationship")
 
 		"doctor_vitamin_shot":
 			var already_used_shot: bool = (is_mother and PlayerData.last_mother_vitamin_shot_age == PlayerData.age) or (not is_mother and PlayerData.last_father_vitamin_shot_age == PlayerData.age)
@@ -3245,7 +3311,7 @@ func _interact_parent(parent_type: String, action: String) -> void:
 					PlayerData.father_health = mini(100, PlayerData.father_health + health_boost)
 					PlayerData.father_relationship = mini(100, PlayerData.father_relationship + rel_boost)
 				PlayerData.karma = mini(100, PlayerData.karma + 2)
-				add_life_event("You administered a clinical vitamin & nutrient infusion to your %s ($30 at-cost). Health +%d%%." % [role, health_boost], "relationship")
+				add_life_event("You administered a clinical vitamin & nutrient infusion to your %s ($30 at-cost)." % role, "relationship")
 			else:
 				add_life_event("You didn't have enough funds ($30 wholesale) for the vitamin infusion.", "relationship")
 
@@ -3280,6 +3346,22 @@ func update_relationships_panel() -> void:
 		]
 		mother_status_label.add_theme_color_override("font_color", Color("#22c55e") if PlayerData.mother_health > 35 else Color("#f59e0b"))
 		if mom_vbox != null:
+			var mom_debuff_lbl := mom_vbox.get_node_or_null("MotherDebuffLabel") as Label
+			if PlayerData.mother_condition != "":
+				if mom_debuff_lbl == null:
+					mom_debuff_lbl = Label.new()
+					mom_debuff_lbl.name = "MotherDebuffLabel"
+					mom_debuff_lbl.set_meta("reference_part", true)
+					mom_debuff_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+					mom_debuff_lbl.add_theme_font_size_override("font_size", 20)
+					mom_vbox.add_child(mom_debuff_lbl)
+					mom_vbox.move_child(mom_debuff_lbl, mother_status_label.get_index() + 1)
+				mom_debuff_lbl.visible = true
+				mom_debuff_lbl.text = "⚠️ Condition: %s" % PlayerData.mother_condition
+				mom_debuff_lbl.add_theme_color_override("font_color", Color("#ef4444"))
+			elif mom_debuff_lbl != null:
+				mom_debuff_lbl.visible = false
+
 			_setup_relationship_bar(mom_vbox, "MotherRelBar", PlayerData.mother_relationship)
 			_setup_parent_action_row(mom_vbox, "mother")
 	else:
@@ -3288,6 +3370,9 @@ func update_relationships_panel() -> void:
 		mother_status_label.text = "Status: Passed Away • Rest in Peace"
 		mother_status_label.add_theme_color_override("font_color", Color("#94a3b8"))
 		if mom_vbox != null:
+			var mom_debuff_lbl := mom_vbox.get_node_or_null("MotherDebuffLabel")
+			if mom_debuff_lbl != null:
+				mom_debuff_lbl.queue_free()
 			var old_bar := mom_vbox.get_node_or_null("MotherRelBar")
 			if old_bar != null:
 				old_bar.queue_free()
@@ -3315,6 +3400,22 @@ func update_relationships_panel() -> void:
 			]
 			father_status_label.add_theme_color_override("font_color", Color("#22c55e") if PlayerData.father_health > 35 else Color("#f59e0b"))
 			if dad_vbox != null:
+				var dad_debuff_lbl := dad_vbox.get_node_or_null("FatherDebuffLabel") as Label
+				if PlayerData.father_condition != "":
+					if dad_debuff_lbl == null:
+						dad_debuff_lbl = Label.new()
+						dad_debuff_lbl.name = "FatherDebuffLabel"
+						dad_debuff_lbl.set_meta("reference_part", true)
+						dad_debuff_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+						dad_debuff_lbl.add_theme_font_size_override("font_size", 20)
+						dad_vbox.add_child(dad_debuff_lbl)
+						dad_vbox.move_child(dad_debuff_lbl, father_status_label.get_index() + 1)
+					dad_debuff_lbl.visible = true
+					dad_debuff_lbl.text = "⚠️ Condition: %s" % PlayerData.father_condition
+					dad_debuff_lbl.add_theme_color_override("font_color", Color("#ef4444"))
+				elif dad_debuff_lbl != null:
+					dad_debuff_lbl.visible = false
+
 				_setup_relationship_bar(dad_vbox, "FatherRelBar", PlayerData.father_relationship)
 				_setup_parent_action_row(dad_vbox, "father")
 		else:
@@ -3323,6 +3424,9 @@ func update_relationships_panel() -> void:
 			father_status_label.text = "Status: Passed Away • Rest in Peace"
 			father_status_label.add_theme_color_override("font_color", Color("#94a3b8"))
 			if dad_vbox != null:
+				var dad_debuff_lbl := dad_vbox.get_node_or_null("FatherDebuffLabel")
+				if dad_debuff_lbl != null:
+					dad_debuff_lbl.queue_free()
 				var old_bar := dad_vbox.get_node_or_null("FatherRelBar")
 				if old_bar != null:
 					old_bar.queue_free()
@@ -3563,28 +3667,57 @@ func _setup_partner_card_ui() -> void:
 			btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 
-			var style := StyleBoxFlat.new()
-			style.bg_color = Color("#1e293b")
-			style.border_color = Color(act[2])
-			style.set_border_width_all(2)
-			style.set_corner_radius_all(6)
-			btn.add_theme_stylebox_override("normal", style)
-
-			var hover := style.duplicate() as StyleBoxFlat
-			hover.bg_color = Color(act[2])
-			hover.bg_color.a = 0.3
-			btn.add_theme_stylebox_override("hover", hover)
+			var col := Color(act[2])
 			var is_light: bool = LifeLibrary.data.theme == "light"
-			btn.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#f1f5f9"))
-			if is_light:
-				style.bg_color = Color("#edf3fa")
-				hover.bg_color = Color("#bfdbfe")
+			btn.set_meta("reference_part", true)
+			btn.set_meta("market_button", true)
 
 			if is_locked:
 				btn.disabled = true
-				btn.modulate = Color(0.6, 0.6, 0.6, 0.65)
 				btn.tooltip_text = lock_tooltip
+				var disabled_sb := StyleBoxFlat.new()
+				disabled_sb.bg_color = Color("#94a3b8" if is_light else "#334155")
+				disabled_sb.border_color = Color("#cbd5e1" if is_light else "#475569")
+				disabled_sb.set_border_width_all(2)
+				disabled_sb.set_corner_radius_all(10)
+				disabled_sb.content_margin_left = 18
+				disabled_sb.content_margin_right = 18
+				disabled_sb.content_margin_top = 10
+				disabled_sb.content_margin_bottom = 10
+				btn.add_theme_stylebox_override("disabled", disabled_sb)
+				btn.add_theme_stylebox_override("normal", disabled_sb)
+				btn.add_theme_color_override("font_disabled_color", Color("#e2e8f0" if is_light else "#64748b"))
 			else:
+				var normal_sb := StyleBoxFlat.new()
+				normal_sb.bg_color = col.darkened(0.18) if is_light else col.darkened(0.42)
+				normal_sb.border_color = col.lightened(0.2)
+				normal_sb.set_border_width_all(2)
+				normal_sb.set_corner_radius_all(10)
+				normal_sb.shadow_color = Color(0, 0, 0, 0.28)
+				normal_sb.shadow_size = 4
+				normal_sb.shadow_offset = Vector2(0, 3)
+				normal_sb.content_margin_left = 18
+				normal_sb.content_margin_right = 18
+				normal_sb.content_margin_top = 10
+				normal_sb.content_margin_bottom = 10
+				btn.add_theme_stylebox_override("normal", normal_sb)
+
+				var hover_sb := normal_sb.duplicate() as StyleBoxFlat
+				hover_sb.bg_color = col.lightened(0.08) if is_light else col.darkened(0.2)
+				hover_sb.border_color = Color.WHITE
+				hover_sb.shadow_size = 6
+				btn.add_theme_stylebox_override("hover", hover_sb)
+
+				var pressed_sb := normal_sb.duplicate() as StyleBoxFlat
+				pressed_sb.bg_color = col.darkened(0.4) if is_light else col.darkened(0.6)
+				pressed_sb.shadow_size = 1
+				pressed_sb.shadow_offset = Vector2(0, 1)
+				btn.add_theme_stylebox_override("pressed", pressed_sb)
+
+				btn.add_theme_color_override("font_color", Color.WHITE)
+				btn.add_theme_color_override("font_hover_color", Color.WHITE)
+				btn.add_theme_color_override("font_pressed_color", Color.WHITE)
+				btn.add_theme_color_override("font_focus_color", Color.WHITE)
 				btn.pressed.connect(func(): _interact_partner(act_key))
 			act_row.add_child(btn)
 
@@ -3720,7 +3853,7 @@ func _setup_children_cards_ui() -> void:
 			cur_c["last_spend_time_age"] = PlayerData.age
 			cur_c["relationship"] = mini(100, int(cur_c.get("relationship", 80)) + randi_range(8, 14))
 			PlayerData.happiness = mini(100, PlayerData.happiness + randi_range(5, 8))
-			add_life_event("You spent heartwarming quality time with your child %s! Relationship +%d%%." % [cur_c.name, 10], "family")
+			add_life_event("You spent heartwarming quality time with your child %s!" % cur_c.name, "family")
 			update_relationships_panel()
 			update_ui()
 		)
@@ -3797,11 +3930,9 @@ func _interact_partner(action: String) -> void:
 			PlayerData.set_partner_relationship(p_rel + rel_gain)
 			PlayerData.happiness = mini(100, PlayerData.happiness + happy_gain)
 			PlayerData.last_partner_interact_age = PlayerData.age
-			add_life_event("You spent quality romantic time chatting and walking through the city with your %s, %s. Relationship +%d%%, Happiness +%d%%." % [
+			add_life_event("You spent quality romantic time chatting and walking through the city with your %s, %s." % [
 				p_status.to_lower(),
-				p_name,
-				rel_gain,
-				happy_gain
+				p_name
 			], "relationship")
 
 		"compliment":
@@ -3814,10 +3945,9 @@ func _interact_partner(action: String) -> void:
 			PlayerData.set_partner_relationship(p_rel + rel_gain)
 			PlayerData.happiness = mini(100, PlayerData.happiness + 3)
 			PlayerData.last_partner_interact_age = PlayerData.age
-			add_life_event("You gave your %s, %s, a heartfelt compliment. They blushed with joy! Relationship +%d%%." % [
+			add_life_event("You gave your %s, %s, a heartfelt compliment. They blushed with joy!" % [
 				p_status.to_lower(),
-				p_name,
-				rel_gain
+				p_name
 			], "relationship")
 
 		"gift":
@@ -3873,7 +4003,7 @@ func _interact_partner(action: String) -> void:
 				"daughter" if baby_female else "son",
 				p_name
 			], PlayerData.age, "👶")
-			add_life_event("🍼 BABY BORN! You and %s welcomed a beautiful baby %s, %s, into the world! Happiness +25, Relationship +20%%." % [
+			add_life_event("🍼 BABY BORN! You and %s welcomed a beautiful baby %s, %s, into the world!" % [
 				p_name,
 				"daughter" if baby_female else "son",
 				baby_name
@@ -4502,7 +4632,7 @@ func _process_relationships_aging() -> void:
 		elif p_rel >= 80 and delay_message.is_empty():
 			var yrs: int = int(PlayerData.partner.get("years_together", 1))
 			PlayerData.happiness = mini(100, PlayerData.happiness + 8)
-			add_life_event("❤️ ANNIVERSARY: You and %s celebrated %d %s together with a romantic candlelight dinner! (Happiness +8)" % [
+			add_life_event("❤️ ANNIVERSARY: You and %s celebrated %d %s together with a romantic candlelight dinner!" % [
 				p_name,
 				yrs,
 				"year" if yrs == 1 else "years"
@@ -4726,7 +4856,7 @@ func _show_jobs_modal() -> void:
 		cur_v.add_child(_create_cyber_button("View career ladder", Color("#38bdf8"), func(): _show_career_ladder()))
 
 		var ot_used: bool = PlayerData.last_overtime_age == PlayerData.age
-		var ot_text := "⏱️ Work Overtime (Used)\nAnnual overtime limit reached for Age %d. Age up to work extra hours next year." % PlayerData.age if ot_used else "⏱️ Work Overtime\nPut in extra hours at %s. +$%s Bonus, -5 Happiness" % [PlayerData.job_company, _format_number(maxi(150, int(PlayerData.job_salary * 0.05)))]
+		var ot_text := "⏱️ Work Overtime (Used)\nAnnual overtime limit reached for Age %d. Age up to work extra hours next year." % PlayerData.age if ot_used else "⏱️ Work Overtime\nPut in extra hours at %s. +$%s Bonus" % [PlayerData.job_company, _format_number(maxi(150, int(PlayerData.job_salary * 0.05)))]
 		var btn_ot := _create_cyber_button(ot_text, Color("#38bdf8"), func():
 			if PlayerData.last_overtime_age == PlayerData.age:
 				return
@@ -4734,7 +4864,7 @@ func _show_jobs_modal() -> void:
 			var bonus := maxi(150, int(PlayerData.job_salary * 0.05))
 			PlayerData.money += bonus
 			PlayerData.happiness = maxi(5, PlayerData.happiness - 5)
-			add_life_event("You worked late overtime at %s. Earned a hard-work bonus of $%s! (Happiness -5)." % [PlayerData.job_company, _format_number(bonus)], "job")
+			add_life_event("You worked late overtime at %s. Earned a hard-work bonus of $%s!" % [PlayerData.job_company, _format_number(bonus)], "job")
 			update_ui()
 			SaveManager.save_game()
 			_show_jobs_modal()
@@ -6413,7 +6543,7 @@ func _show_education_modal() -> void:
 				PlayerData.grades = mini(100, PlayerData.grades + g_gain)
 				PlayerData.smarts = mini(100, PlayerData.smarts + s_gain)
 				PlayerData.happiness = maxi(0, PlayerData.happiness - h_loss)
-				add_life_event("You studied diligently, completing extra credit and reviewing notes. Grades +%d%%, Smarts +%d." % [g_gain, s_gain], "education")
+				add_life_event("You studied diligently, completing extra credit and reviewing notes.", "education")
 				update_ui()
 				SaveManager.save_game()
 				_close_education_modal_and_return_to_main()
@@ -6436,9 +6566,9 @@ func _show_education_modal() -> void:
 				PlayerData.smarts = maxi(0, PlayerData.smarts - 1)
 				if randf() < 0.28:
 					PlayerData.happiness = maxi(5, PlayerData.happiness - 8)
-					add_life_event("🚨 DETENTION: A teacher caught you goofing off during class and assigned after-school detention! Grades -%d%%." % g_loss, "education")
+					add_life_event("🚨 DETENTION: A teacher caught you goofing off during class and assigned after-school detention!", "education")
 				else:
-					add_life_event("You slacked off in class, joked around with friends, and skipped homework. Grades -%d%%, Happiness +%d." % [g_loss, h_gain], "education")
+					add_life_event("You slacked off in class, joked around with friends, and skipped homework.", "education")
 				update_ui()
 				SaveManager.save_game()
 				_close_education_modal_and_return_to_main()
@@ -6463,7 +6593,7 @@ func _show_education_modal() -> void:
 					PlayerData.karma -= 20
 					PlayerData.health = maxi(5, PlayerData.health - randi_range(8, 15))
 					PlayerData.happiness = maxi(5, PlayerData.happiness - 10)
-					add_life_event("💥 RETALIATION: You tried to bully someone, but they punched you right in the nose! Health -12%.", "education")
+					add_life_event("💥 RETALIATION: You tried to bully someone, but they punched you right in the nose!", "education")
 				else:
 					PlayerData.karma -= 25
 					PlayerData.happiness = maxi(5, PlayerData.happiness - 15)
@@ -6630,7 +6760,7 @@ func _show_education_modal() -> void:
 				PlayerData.grades = mini(100, PlayerData.grades + g_gain)
 				PlayerData.smarts = mini(100, PlayerData.smarts + s_gain)
 				PlayerData.happiness = maxi(5, PlayerData.happiness - 3)
-				add_life_event("You studied late into the night preparing for %s midterms. Grades +%d%%, Smarts +%d." % [PlayerData.university_major_title, g_gain, s_gain], "education")
+				add_life_event("You studied late into the night preparing for %s midterms." % PlayerData.university_major_title, "education")
 				update_ui()
 				SaveManager.save_game()
 				_close_education_modal_and_return_to_main()
@@ -6853,7 +6983,7 @@ func _show_education_modal() -> void:
 				var s_gain := randi_range(2, 4)
 				PlayerData.smarts = mini(100, PlayerData.smarts + s_gain)
 				PlayerData.happiness = mini(100, PlayerData.happiness + randi_range(2, 4))
-				add_life_event("📖 You spent the afternoon reading science, history, and philosophy books at the public library. Knowledge broadened! (Smarts +%d)" % s_gain, "education")
+				add_life_event("📖 You spent the afternoon reading science, history, and philosophy books at the public library. Knowledge broadened!", "education")
 				update_ui()
 				SaveManager.save_game()
 				_close_education_modal_and_return_to_main()
@@ -6873,7 +7003,7 @@ func _show_education_modal() -> void:
 				var s_gain := randi_range(3, 5)
 				PlayerData.smarts = mini(100, PlayerData.smarts + s_gain)
 				PlayerData.happiness = mini(100, PlayerData.happiness + 2)
-				add_life_event("💻 You completed an intensive accredited professional skill seminar ($150). Analytical prowess sharpened! (Smarts +%d)" % s_gain, "education")
+				add_life_event("💻 You completed an intensive accredited professional skill seminar ($150). Analytical prowess sharpened!", "education")
 				update_ui()
 				SaveManager.save_game()
 				_close_education_modal_and_return_to_main()
@@ -7845,19 +7975,19 @@ func _show_education_minigame_results() -> void:
 
 	if is_course:
 		PlayerData.grades = maxi(75, PlayerData.grades)
-		add_life_event("🎓 REFRESHER COURSE COMPLETED: You passed the curriculum with %d/%d correct! Academic credentials restored to %d%% (%s)." % [sc, total_questions, PlayerData.grades, PlayerData.get_letter_grade()], "education")
+		add_life_event("🎓 REFRESHER COURSE COMPLETED: You passed the curriculum with %d/%d correct! Official credentials certified for career & university qualification." % [sc, total_questions], "education")
 	else:
 		var game_label := "Math Challenge" if game_type == "math" else "Trivia Guessing Challenge"
-		add_life_event("🎓 %s: Completed with %d/%d correct! Academic marks +%d%% (Current: %d%%), Smarts +%d." % [game_label, sc, total_questions, g_boost, PlayerData.grades, s_boost], "education")
+		add_life_event("🎓 %s: Completed with %d/%d correct! Academic credentials updated." % [game_label, sc, total_questions], "education")
 
 	update_ui()
 	SaveManager.save_game()
 
 	var rdesc := Label.new()
 	if is_course:
-		rdesc.text = "Congratulations! Your course certification is complete.\n\n• Academic Marks restored to %d%% (%s)\n• Smarts +%d\n• Official credentials certified for career & university qualification" % [PlayerData.grades, PlayerData.get_letter_grade(), s_boost]
+		rdesc.text = "Congratulations! Your course certification is complete.\n\n• Official credentials certified for career & university qualification"
 	else:
-		rdesc.text = "Great effort! Your test results have been registered into your academic transcript:\n\n• Academic Marks: +%d%% (Current: %d%%)\n• Smarts: +%d\n• Annual academic maintenance fulfilled (grades protected from degradation)" % [g_boost, PlayerData.grades, s_boost]
+		rdesc.text = "Great effort! Your test results have been registered into your academic transcript:\n\n• Annual academic maintenance fulfilled (grades protected from degradation)"
 	rdesc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	rdesc.add_theme_font_size_override("font_size", 24)
 	rdesc.add_theme_color_override("font_color", Color("#cbd5e1"))
@@ -8025,10 +8155,10 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	margin_outer.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	margin_outer.grow_vertical = Control.GROW_DIRECTION_BOTH
 	margin_outer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin_outer.add_theme_constant_override("margin_left", 0)
-	margin_outer.add_theme_constant_override("margin_right", 0)
-	margin_outer.add_theme_constant_override("margin_top", 0)
-	margin_outer.add_theme_constant_override("margin_bottom", 0)
+	margin_outer.add_theme_constant_override("margin_left", 16)
+	margin_outer.add_theme_constant_override("margin_right", 16)
+	margin_outer.add_theme_constant_override("margin_top", 16)
+	margin_outer.add_theme_constant_override("margin_bottom", 16)
 	overlay.add_child(margin_outer)
 	preload("res://scripts/ui/panel_pull_up.gd").watch(margin_outer, overlay)
 
@@ -8152,39 +8282,46 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 
 func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callable = Callable()) -> Button:
 	var btn := Button.new()
+	btn.set_meta("reference_part", true)
+	btn.set_meta("market_button", true)
 	btn.text = btn_text
 	btn.custom_minimum_size.y = 56
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	btn.add_theme_font_size_override("font_size", 23)
+	btn.add_theme_font_size_override("font_size", 22)
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 
 	var is_light: bool = LifeLibrary.data.theme == "light"
-	btn.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#f8fafc"))
-	btn.add_theme_color_override("font_hover_color", Color("#0284c7") if is_light else Color("#ffffff"))
-	btn.add_theme_color_override("font_pressed_color", Color("#000000") if is_light else Color("#ffffff"))
-	btn.add_theme_color_override("font_focus_color", Color("#0284c7") if is_light else Color("#00f0ff"))
+	var normal_sb := StyleBoxFlat.new()
+	normal_sb.bg_color = border_col.darkened(0.18) if is_light else border_col.darkened(0.42)
+	normal_sb.border_color = border_col.lightened(0.2)
+	normal_sb.set_border_width_all(2)
+	normal_sb.set_corner_radius_all(10)
+	normal_sb.shadow_color = Color(0, 0, 0, 0.28)
+	normal_sb.shadow_size = 4
+	normal_sb.shadow_offset = Vector2(0, 3)
+	normal_sb.content_margin_left = 18
+	normal_sb.content_margin_right = 18
+	normal_sb.content_margin_top = 10
+	normal_sb.content_margin_bottom = 10
+	btn.add_theme_stylebox_override("normal", normal_sb)
 
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color("#edf3fa") if is_light else Color("#111827")
-	style.border_color = border_col.darkened(0.35) if (is_light and border_col.get_luminance() > 0.45) else border_col
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(10)
-	style.content_margin_left = 20
-	style.content_margin_right = 20
-	style.content_margin_top = 14
-	style.content_margin_bottom = 14
-	btn.add_theme_stylebox_override("normal", style)
+	var hover_sb := normal_sb.duplicate() as StyleBoxFlat
+	hover_sb.bg_color = border_col.lightened(0.08) if is_light else border_col.darkened(0.2)
+	hover_sb.border_color = Color.WHITE
+	hover_sb.shadow_size = 6
+	btn.add_theme_stylebox_override("hover", hover_sb)
 
-	var hover := style.duplicate() as StyleBoxFlat
-	hover.bg_color = Color("#bfdbfe") if is_light else Color("#1f2937")
-	hover.border_color = Color("#0284c7") if is_light else Color("#ffffff")
-	btn.add_theme_stylebox_override("hover", hover)
+	var pressed_sb := normal_sb.duplicate() as StyleBoxFlat
+	pressed_sb.bg_color = border_col.darkened(0.4) if is_light else border_col.darkened(0.6)
+	pressed_sb.shadow_size = 1
+	pressed_sb.shadow_offset = Vector2(0, 1)
+	btn.add_theme_stylebox_override("pressed", pressed_sb)
 
-	var pressed := style.duplicate() as StyleBoxFlat
-	pressed.bg_color = Color("#93c5fd") if is_light else Color("#0d1729")
-	pressed.border_color = Color("#0369a1") if is_light else Color("#00f0ff")
-	btn.add_theme_stylebox_override("pressed", pressed)
+	btn.add_theme_color_override("font_color", Color.WHITE)
+	btn.add_theme_color_override("font_hover_color", Color.WHITE)
+	btn.add_theme_color_override("font_pressed_color", Color.WHITE)
+	btn.add_theme_color_override("font_focus_color", Color.WHITE)
 
 	if on_click.is_valid():
 		btn.pressed.connect(on_click)
@@ -8193,6 +8330,7 @@ func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callabl
 
 func _create_disabled_cyber_button(btn_text: String, reason: String = "") -> Button:
 	var btn := Button.new()
+	btn.set_meta("reference_part", true)
 	var clean_btn := btn_text.strip_edges()
 	var clean_reason := reason.strip_edges()
 	while clean_btn.begins_with("🔒"):
@@ -8212,18 +8350,19 @@ func _create_disabled_cyber_button(btn_text: String, reason: String = "") -> But
 	btn.disabled = true
 
 	var is_light: bool = LifeLibrary.data.theme == "light"
-	var lock_style := StyleBoxFlat.new()
-	lock_style.bg_color = Color("#e2e8f0") if is_light else Color("#0f172a")
-	lock_style.border_color = Color("#94a3b8") if is_light else Color("#334155")
-	lock_style.set_border_width_all(2)
-	lock_style.set_corner_radius_all(10)
-	lock_style.content_margin_left = 20
-	lock_style.content_margin_right = 20
-	lock_style.content_margin_top = 14
-	lock_style.content_margin_bottom = 14
-	btn.add_theme_stylebox_override("disabled", lock_style)
-	btn.add_theme_color_override("font_color", Color("#475569") if is_light else Color("#94a3b8"))
-	btn.add_theme_color_override("font_disabled_color", Color("#475569") if is_light else Color("#94a3b8"))
+	var disabled_sb := StyleBoxFlat.new()
+	disabled_sb.bg_color = Color("#94a3b8" if is_light else "#334155")
+	disabled_sb.border_color = Color("#cbd5e1" if is_light else "#475569")
+	disabled_sb.set_border_width_all(2)
+	disabled_sb.set_corner_radius_all(10)
+	disabled_sb.content_margin_left = 18
+	disabled_sb.content_margin_right = 18
+	disabled_sb.content_margin_top = 10
+	disabled_sb.content_margin_bottom = 10
+	btn.add_theme_stylebox_override("disabled", disabled_sb)
+	btn.add_theme_stylebox_override("normal", disabled_sb)
+
+	btn.add_theme_color_override("font_disabled_color", Color("#e2e8f0" if is_light else "#64748b"))
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	return btn
 
@@ -8312,9 +8451,9 @@ func _execute_gym_workout(w: Dictionary) -> bool:
 	var w_title: String = str(w.get("name", w.get("title", "Workout")))
 	var w_msg: String = str(w.get("msg", "completed your training session."))
 	if PlayerData.has_gym_membership:
-		add_life_event("🏋️ [MEMBER PASS - FREE] You visited the gym for %s and %s (Health +%d, Looks +%d, Happiness +%d)." % [w_title, w_msg, h_gain, l_gain, hap_gain], "activity")
+		add_life_event("🏋️ [MEMBER PASS - FREE] You visited the gym for %s and %s." % [w_title, w_msg], "activity")
 	else:
-		add_life_event("🏋️ You paid a $%d day pass for %s and %s (Health +%d, Looks +%d, Happiness +%d)." % [effective_fee, w_title, w_msg, h_gain, l_gain, hap_gain], "activity")
+		add_life_event("🏋️ You paid a $%d day pass for %s and %s." % [effective_fee, w_title, w_msg], "activity")
 	update_ui()
 	SaveManager.save_game()
 	_close_gym_modal_and_return_to_main()
@@ -8357,9 +8496,9 @@ func _execute_meditation(p: Dictionary) -> bool:
 	PlayerData.karma += k_gain
 	var p_title: String = str(p.get("name", p.get("title", "Meditation")))
 	if fee_val == 0:
-		add_life_event("🧘 You engaged in %s. Serenity and peace wash over your mind. Happiness +%d." % [p_title, hap_gain], "activity")
+		add_life_event("🧘 You engaged in %s. Serenity and peace wash over your mind." % p_title, "activity")
 	else:
-		add_life_event("🧘 You attended %s ($%d). Deep tranquility and spiritual rejuvenation achieved! Happiness +%d." % [p_title, fee_val, hap_gain], "activity")
+		add_life_event("🧘 You attended %s ($%d). Deep tranquility and spiritual rejuvenation achieved!" % [p_title, fee_val], "activity")
 	update_ui()
 	SaveManager.save_game()
 	_close_meditation_modal_and_return_to_main()
@@ -8883,7 +9022,7 @@ func _show_salon_modal() -> void:
 				PlayerData.last_salon_activity_age = PlayerData.age
 				PlayerData.looks = mini(100, PlayerData.looks + int(s["looks"]))
 				PlayerData.happiness = mini(100, PlayerData.happiness + int(s["hap"]))
-				add_life_event("💇 SALON MAKEOVER: You treated yourself to %s ($%d). Looks +%d%%, Happiness +%d%%!" % [s["name"], cost, s["looks"], s["hap"]], "lifestyle")
+				add_life_event("💇 SALON MAKEOVER: You treated yourself to %s ($%d)!" % [s["name"], cost], "lifestyle")
 				update_ui()
 				SaveManager.save_game()
 				salon_modal_overlay.queue_free()
@@ -8980,7 +9119,7 @@ func _show_spa_modal() -> void:
 				PlayerData.health = mini(100, PlayerData.health + int(s["health"]))
 				PlayerData.happiness = mini(100, PlayerData.happiness + int(s["hap"]))
 				PlayerData.looks = mini(100, PlayerData.looks + int(s["looks"]))
-				add_life_event("🧖 LUXURY SPA REJUVENATION: You enjoyed %s ($%d). Health +%d%%, Happiness +%d%%, Looks +%d%%!" % [s["name"], cost, s["health"], s["hap"], s["looks"]], "lifestyle")
+				add_life_event("🧖 LUXURY SPA REJUVENATION: You enjoyed %s ($%d)!" % [s["name"], cost], "lifestyle")
 				update_ui()
 				SaveManager.save_game()
 				spa_modal_overlay.queue_free()
@@ -10095,7 +10234,7 @@ func _show_doctor_modal() -> void:
 			PlayerData.money -= 150
 			PlayerData.last_doctor_vitamin_age = PlayerData.age
 			PlayerData.health = mini(100, PlayerData.health + 8)
-			add_life_event("You received a potent Vitamin & Bio-Booster injection ($150). Health +8%.", "health")
+			add_life_event("You received a potent Vitamin & Bio-Booster injection ($150).", "health")
 			update_ui()
 			SaveManager.save_game()
 			_show_doctor_modal()
@@ -10122,7 +10261,7 @@ func _show_doctor_modal() -> void:
 				var c: Dictionary = PlayerData.get_illness("cancer")
 				add_life_event("Diagnostics warning: Physician confirmed Stage %d Cancer! Chemotherapy is urgently advised." % int(c.get("stage", 1)), "health")
 			else:
-				add_life_event("Physician examination concluded ($300). Clean bill of health! Health +10%.", "health")
+				add_life_event("Physician examination concluded ($300). Clean bill of health!", "health")
 			update_ui()
 			SaveManager.save_game()
 			_show_doctor_modal()
@@ -10148,12 +10287,12 @@ func _show_doctor_modal() -> void:
 				PlayerData.looks = maxi(0, PlayerData.looks - 12)
 				PlayerData.health = maxi(0, PlayerData.health - 25)
 				PlayerData.happiness = maxi(0, PlayerData.happiness - 20)
-				add_life_event("⚠️ BOTCHED SURGERY: Surgical complications resulted in severe facial scarring and agony! Looks -12%, Health -25%, Happiness -20%.", "health")
+				add_life_event("⚠️ BOTCHED SURGERY: Surgical complications resulted in severe facial scarring and agony!", "health")
 			else:
 				PlayerData.looks = mini(100, PlayerData.looks + 20)
 				PlayerData.health = maxi(0, PlayerData.health - 12)
 				PlayerData.happiness = maxi(0, PlayerData.happiness - 8)
-				add_life_event("Aesthetic surgery successful! Looks surged by +20%, though post-op recovery is uncomfortable (Health -12%, Happiness -8%).", "health")
+				add_life_event("Aesthetic surgery successful! Your appearance has transformed, though post-op recovery is uncomfortable.", "health")
 
 			update_ui()
 			SaveManager.save_game()
@@ -10215,7 +10354,7 @@ func _show_doctor_modal() -> void:
 			PlayerData.money -= 250
 			PlayerData.last_therapy_age = PlayerData.age
 			PlayerData.happiness = mini(100, PlayerData.happiness + 20)
-			add_life_event("You attended an enlightening psychotherapy session ($250). Grief and emotional weight lifted. Happiness +20%.", "health")
+			add_life_event("You attended an enlightening psychotherapy session ($250). Grief and emotional weight lifted.", "health")
 			update_ui()
 			SaveManager.save_game()
 			_show_doctor_modal()
@@ -10238,7 +10377,7 @@ func _show_doctor_modal() -> void:
 			PlayerData.money -= 1500
 			PlayerData.last_er_age = PlayerData.age
 			PlayerData.health = mini(100, PlayerData.health + 40)
-			add_life_event("ER medical trauma team stabilized your critical vitals ($1,500). Health +40%.", "health")
+			add_life_event("ER medical trauma team stabilized your critical vitals ($1,500).", "health")
 			update_ui()
 			SaveManager.save_game()
 			_show_doctor_modal()

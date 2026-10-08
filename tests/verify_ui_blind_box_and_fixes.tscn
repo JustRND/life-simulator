@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c871239857123"]
+
+[ext_resource type="Script" path="res://tests/verify_ui_blind_box_and_fixes.gd" id="1_test"]
+
+[node name="VerifyUIBlindBoxAndFixes" type="Node"]
+script = ExtResource("1_test")

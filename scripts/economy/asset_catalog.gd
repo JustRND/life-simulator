@@ -990,21 +990,21 @@ static func use_asset(player_data: Node, instance_id: String) -> Dictionary:
 			var action_desc := ""
 			match cat:
 				CATEGORY_BICYCLES:
-					action_desc = "You went for an energizing ride on your %s through city greenways! Happiness +%d%%." % [asset.get("name", "bike"), bonus]
+					action_desc = "You went for an energizing ride on your %s through city greenways!" % asset.get("name", "bike")
 				CATEGORY_CARS, CATEGORY_MOTORCYCLES:
-					action_desc = "You took your %s out for an exhilarating joyride! Happiness +%d%%." % [asset.get("name", "ride"), bonus]
+					action_desc = "You took your %s out for an exhilarating joyride!" % asset.get("name", "ride")
 				CATEGORY_JEWELRY:
 					player_data.looks = mini(100, player_data.looks + 1)
-					action_desc = "You wore your exquisite %s to an exclusive gala! Looks +1%, Happiness +%d%%." % [asset.get("name", "jewelry"), bonus]
+					action_desc = "You wore your exquisite %s to an exclusive gala and turned every head in the room!" % asset.get("name", "jewelry")
 				CATEGORY_INSTRUMENTS:
 					player_data.smarts = mini(100, player_data.smarts + 1)
-					action_desc = "You practiced complex musical compositions on your %s! Smarts +1%, Happiness +%d%%." % [asset.get("name", "instrument"), bonus]
+					action_desc = "You practiced complex musical compositions on your %s and mastered new rhythms!" % asset.get("name", "instrument")
 				CATEGORY_AIRCRAFT:
-					action_desc = "You piloted your %s high above the cloud line! Happiness +%d%%." % [asset.get("name", "aircraft"), bonus]
+					action_desc = "You piloted your %s high above the cloud line with complete freedom!" % asset.get("name", "aircraft")
 				CATEGORY_YACHTS:
-					action_desc = "You cruised aboard your %s across sparkling coastal waters! Happiness +%d%%." % [asset.get("name", "yacht"), bonus]
+					action_desc = "You cruised aboard your %s across sparkling coastal waters!" % asset.get("name", "yacht")
 				_:
-					action_desc = "You spent a serene, luxurious weekend relaxing at your %s! Happiness +%d%%." % [asset.get("name", "residence"), bonus]
+					action_desc = "You spent a serene, luxurious weekend relaxing at your %s!" % asset.get("name", "residence")
 			return {
 				"success": true,
 				"message": action_desc

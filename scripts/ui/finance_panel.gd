@@ -257,7 +257,7 @@ func _exchange(list: VBoxContainer) -> void:
 		
 		# 2. Company Details
 		label(cv, "Owner: %s  •  Floating Shares: %d" % [c.owner, int(c.available)], 21, Color("#64748b"))
-		label(cv, "Market Activity: %d NPC buys  •  %d NPC sells" % [int(c.npc_buys), int(c.npc_sells)], 20, Color("#64748b"))
+		label(cv, "Market Activity: %d buys ---- %d sells" % [int(c.npc_buys), int(c.npc_sells)], 20, Color("#64748b"))
 		
 		if not str(c.business_uid).is_empty():
 			label(cv, "👑 Your public company • 80% controlling stake", 22, Color("#eab308"))
@@ -537,12 +537,38 @@ func _open_trade_modal(c: Dictionary, is_buy: bool) -> void:
 
 
 func _portfolio(list: VBoxContainer) -> void:
-	label(list, "📊 Blue: portfolio value • Gold: net cash invested", 21)
+	var is_light: bool = LifeLibrary.data.theme == "light"
+	
+	# Wrap graph in a dedicated card with margins to prevent clipping against tab buttons
+	var chart_card := PanelContainer.new()
+	chart_card.set_meta("reference_part", true)
+	var chart_cs := StyleBoxFlat.new()
+	chart_cs.bg_color = Color("#ffffff" if is_light else "#111827")
+	chart_cs.border_color = Color("#cbd5e1" if is_light else "#334155")
+	chart_cs.set_border_width_all(2)
+	chart_cs.set_corner_radius_all(12)
+	chart_cs.shadow_color = Color(0, 0, 0, 0.15)
+	chart_cs.shadow_size = 4
+	chart_cs.shadow_offset = Vector2(0, 2)
+	chart_card.add_theme_stylebox_override("panel", chart_cs)
+	list.add_child(chart_card)
+	
+	var chart_cm := MarginContainer.new()
+	chart_cm.add_theme_constant_override("margin_left", 18)
+	chart_cm.add_theme_constant_override("margin_right", 18)
+	chart_cm.add_theme_constant_override("margin_top", 16)
+	chart_cm.add_theme_constant_override("margin_bottom", 16)
+	chart_card.add_child(chart_cm)
+	
+	var chart_cv := VBoxContainer.new()
+	chart_cv.add_theme_constant_override("separation", 10)
+	chart_cm.add_child(chart_cv)
+	
+	label(chart_cv, "📊 Blue: portfolio value • Gold: net cash invested", 21, Color("#0284c7" if is_light else "#38bdf8"))
 	var chart := preload("res://scripts/ui/portfolio_chart.gd").new()
 	chart.history = PlayerData.finance_market.get("history", [])
-	list.add_child(chart)
+	chart_cv.add_child(chart)
 	
-	var is_light: bool = LifeLibrary.data.theme == "light"
 	var realized: int = int(PlayerData.finance_market.get("realized", 0))
 	var pnl_color := Color("#15803d" if is_light else "#34d399") if realized >= 0 else Color("#b91c1c" if is_light else "#f87171")
 	label(list, "Cumulative Realized Profit / Loss: %s" % _money(realized), 24, pnl_color)

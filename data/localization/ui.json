@@ -129,7 +129,7 @@
   "%s %d shares of %s for $%d; fee $%d.": ["%s %d saham %s senilai $%d; biaya $%d.", "%s %d акций %s на $%d; комиссия $%d."],
   "Acquired %s from %s for $%d. It is now in your business assets.": ["Mengakuisisi %s dari %s seharga $%d. Kini masuk aset usahamu.", "Компания %s приобретена у %s за $%d. Она добавлена к вашим активам."],
   "IPO approved: %s raised $%d in its treasury. You retain 80%% ownership; NPCs can trade the public 20%%.": ["IPO disetujui: %s meraih $%d untuk kasnya. Kamu tetap memiliki 80%%; NPC dapat memperdagangkan 20%% publik.", "IPO одобрено: %s привлекла $%d в казну. У вас остаётся 80%%; NPC могут торговать публичными 20%%."],
-  "%s: Smarts +%d, Happiness +%d. Mental maintenance secured for this year.": ["%s: Kecerdasan +%d, Kebahagiaan +%d. Pemeliharaan kecerdasan terjamin tahun ini.", "%s: Интеллект +%d, Счастье +%d. Защита интеллекта на этот год обеспечена."],
+  "%s completed! Mental maintenance secured for this year.": ["%s selesai! Pemeliharaan kecerdasan terjamin tahun ini.", "%s пройдено! Защита интеллекта на этот год обеспечена."],
   "BUY": ["BELI", "ПОКУПКА"],
   "SELL": ["JUAL", "ПРОДАЖА"],
   "Spend Time": ["Habiskan Waktu Bersama", "Провести время"],

@@ -34,7 +34,7 @@ static func give_gift(player: Node, index: int) -> String:
 	player.partner["happiness"] = clampi(int(player.partner.get("happiness", 50)) + int(gift.joy), 0, 100)
 	player.set_partner_relationship(player.get_partner_relationship() + int(gift.bond))
 	player.happiness = clampi(player.happiness + 4, 0, 100)
-	return "You gave %s a %s ($%d). Partner happiness +%d, relationship +%d, your happiness +4." % [player.get_partner_name(), gift.name, int(gift.cost), int(gift.joy), int(gift.bond)]
+	return "You gave %s a %s ($%d). They were delighted with the present!" % [player.get_partner_name(), gift.name, int(gift.cost)]
 
 static func wedding_quote(venue: int, style: int, guests: int) -> Dictionary:
 	if venue < 0 or venue >= VENUES.size() or style < 0 or style >= STYLES.size() or guests < 0 or guests >= GUESTS.size():
@@ -79,7 +79,7 @@ static func begin_unplanned_pregnancy(player: Node) -> String:
 	if player.father_alive and not player.father_name.is_empty() and player.father_name != "Unknown":
 		player.father_relationship = maxi(0, player.father_relationship - 8)
 	var subject: String = "You are" if carrier == "player" else mother + " is"
-	return "%s unexpectedly pregnant before marriage. The surprise leaves you anxious and strains conversations with your parents. Your happiness -12, partner happiness -8, bonds with living parents -8. The baby is expected next year." % subject
+	return "%s unexpectedly pregnant before marriage. The surprise leaves you anxious and strains conversations with your parents. The baby is expected next year." % subject
 
 static func deliver_due_baby(player: Node, baby_name: String, baby_gender: String) -> String:
 	if player.is_dead or player.pregnancy.is_empty() or player.age < int(player.pregnancy.get("due_age", player.age + 1)):

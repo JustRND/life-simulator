@@ -157,7 +157,7 @@ static func generate_profile(first_name: String, country: String, gender: String
 	if randf() < 0.14:
 		if randf() < 0.50:
 			var cancer_type: String = CANCER_CONDITIONS.pick_random()
-			mom_condition = "Cancer (" + cancer_type + ")"
+			mom_condition = cancer_type
 			mom_has_cancer = true
 			mom_health = randi_range(35, 50)
 		else:
@@ -195,7 +195,7 @@ static func generate_profile(first_name: String, country: String, gender: String
 		if randf() < 0.14:
 			if randf() < 0.50:
 				var cancer_type: String = CANCER_CONDITIONS.pick_random()
-				dad_condition = "Cancer (" + cancer_type + ")"
+				dad_condition = cancer_type
 				dad_has_cancer = true
 				dad_health = randi_range(35, 50)
 			else:

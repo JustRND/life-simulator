@@ -280,7 +280,7 @@ static func interact_pet(player_data: Node, pet_id: String, action: String) -> D
 					pet["happiness"] = mini(100, int(pet.get("happiness", 80)) + 15)
 					player_data.happiness = mini(100, player_data.happiness + 8)
 					pet[act_field] = player_data.age
-					player_data.add_life_log_entry("🎾 You spent joyous time playing and bonding with %s! Happiness +8%%." % pet_name, "activity")
+					player_data.add_life_log_entry("🎾 You spent joyous time playing and bonding with %s!" % pet_name, "activity")
 					return {"success": true, "message": "You played and cuddled with %s! %s is wagging and purring with joy." % [pet_name, pet_name]}
 				"walk":
 					if p_type in ["fish", "turtle", "snake"]:
@@ -290,7 +290,7 @@ static func interact_pet(player_data: Node, pet_id: String, action: String) -> D
 					player_data.health = mini(100, player_data.health + 4)
 					player_data.happiness = mini(100, player_data.happiness + 6)
 					pet[act_field] = player_data.age
-					player_data.add_life_log_entry("🦮 You took %s on a refreshing outdoor walk through the park! Health +4%%, Happiness +6%%." % pet_name, "activity")
+					player_data.add_life_log_entry("🦮 You took %s on a refreshing outdoor walk through the park!" % pet_name, "activity")
 					return {"success": true, "message": "You went on a scenic walk with %s! Great cardio for both of you." % pet_name}
 				"treat":
 					var treat_cost := 25
@@ -315,7 +315,7 @@ static func interact_pet(player_data: Node, pet_id: String, action: String) -> D
 					pet["health"] = mini(100, int(pet.get("health", 70)) + 30)
 					pet[act_field] = player_data.age
 					player_data.add_life_log_entry("🩺 You brought %s to the veterinarian clinic for shots and health checkups ($%d). Health restored!" % [pet_name, vet_cost], "activity")
-					return {"success": true, "message": "The veterinarian gave %s a clean bill of health! Pet Health +30%%." % pet_name}
+					return {"success": true, "message": "The veterinarian gave %s a clean bill of health! Pet vitality restored." % pet_name}
 
 	return {"success": false, "message": "Pet not found."}
 

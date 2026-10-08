@@ -27,7 +27,7 @@ static func learn(p: Node, id: String) -> String:
 		p.smarts = mini(100, p.smarts + gain)
 		p.happiness = mini(100, p.happiness + int(activity.happiness))
 		p.last_school_activity_age = p.age
-		var message := "%s: Smarts +%d, Happiness +%d. Mental maintenance secured for this year." % [activity.name, gain, activity.happiness]
+		var message := "%s completed! Mental maintenance secured for this year." % activity.name
 		p.add_life_log_entry(message, "education")
 		return message
 	return "Activity not found."
