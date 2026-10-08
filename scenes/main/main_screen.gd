@@ -178,6 +178,9 @@ func _ready() -> void:
 	var touch_scroll := preload("res://scripts/ui/touch_scroll_controller.gd").new()
 	touch_scroll.name = "TouchScrollController"
 	add_child(touch_scroll)
+	var mobile_kb := preload("res://scripts/ui/mobile_keyboard_manager.gd").new()
+	mobile_kb.name = "MobileKeyboardManager"
+	add_child(mobile_kb)
 	var pull_up = preload("res://scripts/ui/panel_pull_up.gd")
 	pull_up.watch(event_overlay.get_node("EventPanel"), event_overlay)
 	pull_up.watch(reset_confirmation_overlay.get_node("ConfirmCard"), reset_confirmation_overlay)
@@ -12655,7 +12658,15 @@ func _generate_death_narrative(cause: String) -> String:
 
 func _configure_creation() -> void:
 	name_input.max_length = 40
+	name_input.virtual_keyboard_enabled = true
+	name_input.focus_mode = Control.FOCUS_ALL
+	name_input.set_meta("is_name_input", true)
+	name_input.set_meta("mobile_kb_prompt_title", "What is your name?")
+	name_input.placeholder_text = "Tap to enter custom name"
 	name_input.focus_exited.connect(func(): name_input.text = CreationOptions.normalize_name(name_input.text))
+	var MobileKeyboardManagerRef = load("res://scripts/ui/mobile_keyboard_manager.gd")
+	if MobileKeyboardManagerRef != null:
+		MobileKeyboardManagerRef.attach_to_input(name_input, "What is your name?")
 	birthplace_input.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	birthplace_input.add_theme_constant_override("icon_max_width", 64)
 	var popup := birthplace_input.get_popup()

@@ -10,6 +10,7 @@ const FRICTION := 8.5 # Kinetic scrolling friction decay
 
 var _active_scroll: ScrollContainer = null
 var _captured_button: BaseButton = null
+var _captured_text_input: Control = null
 var _touch_start_pos := Vector2.ZERO
 var _last_touch_pos := Vector2.ZERO
 var _touch_start_time := 0
@@ -95,6 +96,7 @@ func _handle_touch_down(pos: Vector2, id: int) -> void:
 	
 	_active_scroll = _find_scroll_at(get_tree().root, pos)
 	_captured_button = _find_button_at(get_tree().root, pos)
+	_captured_text_input = _find_text_input_at(get_tree().root, pos)
 
 
 func _handle_touch_move(pos: Vector2) -> void:
@@ -112,6 +114,7 @@ func _handle_touch_move(pos: Vector2) -> void:
 			_is_swiping = true
 			_has_scrolled = true
 			_cancel_captured_button()
+			_captured_text_input = null
 			_last_touch_pos = pos
 
 	if _is_swiping:
@@ -132,6 +135,24 @@ func _handle_touch_up(pos: Vector2) -> void:
 	var now := Time.get_ticks_msec()
 	var held_duration := now - _touch_start_time
 	var moved_dist := (pos - _touch_start_pos).length()
+
+	# If the user tapped on a text input without swiping, preserve the tap and summon the virtual keyboard
+	if _captured_text_input != null and is_instance_valid(_captured_text_input) and not _is_swiping and moved_dist < SWIPE_THRESHOLD:
+		var target_input := _captured_text_input
+		_captured_text_input = null
+		_is_swiping = false
+		_has_scrolled = false
+		_touch_active = false
+		_active_scroll = null
+		_captured_button = null
+		_touch_id = -1
+		_recent_moves.clear()
+		target_input.grab_focus()
+		var MobileKeyboardManagerRef = load("res://scripts/ui/mobile_keyboard_manager.gd")
+		if MobileKeyboardManagerRef != null:
+			MobileKeyboardManagerRef.open_keyboard(target_input)
+		return
+
 	var was_swiping_or_scrolled := _is_swiping or _has_scrolled or held_duration > MAX_TAP_DURATION_MS or moved_dist >= SWIPE_THRESHOLD
 
 	if was_swiping_or_scrolled:
@@ -163,6 +184,7 @@ func _handle_touch_up(pos: Vector2) -> void:
 	_touch_active = false
 	_active_scroll = null
 	_captured_button = null
+	_captured_text_input = null
 	_touch_id = -1
 	_recent_moves.clear()
 
@@ -267,5 +289,35 @@ func _find_button_at(node: Node, pos: Vector2) -> BaseButton:
 			var rect := btn.get_global_rect()
 			if rect.has_point(pos):
 				return btn
+
+	return null
+
+
+func _find_text_input_at(node: Node, pos: Vector2) -> Control:
+	if node == null:
+		return null
+
+	if node is CanvasItem:
+		var ci := node as CanvasItem
+		if not ci.is_visible_in_tree():
+			return null
+	elif node is Window:
+		var win := node as Window
+		if not win.visible:
+			return null
+
+	# Search children in reverse (topmost child renders on top and receives input first)
+	for i in range(node.get_child_count() - 1, -1, -1):
+		var child := node.get_child(i)
+		var res := _find_text_input_at(child, pos)
+		if res != null:
+			return res
+
+	if node is LineEdit or node is TextEdit:
+		var ctrl := node as Control
+		if ctrl.is_visible_in_tree() and ctrl.focus_mode != Control.FOCUS_NONE:
+			var rect := ctrl.get_global_rect()
+			if rect.has_point(pos):
+				return ctrl
 
 	return null
