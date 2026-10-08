@@ -178,11 +178,13 @@ func _apply_node(node: Node) -> void:
 	# 3. Apply Colors
 	if is_light:
 		if node is Button:
+			node.focus_mode = Control.FOCUS_NONE
 			var base_col: Color = originals.colors.get("font_color", node.get_theme_color("font_color"))
-			node.add_theme_color_override("font_color", get_light_mode_color(base_col))
-			node.add_theme_color_override("font_hover_color", Color("#0284c7"))
+			var light_col := get_light_mode_color(base_col)
+			node.add_theme_color_override("font_color", light_col)
+			node.add_theme_color_override("font_hover_color", light_col)
 			node.add_theme_color_override("font_pressed_color", Color("#000000"))
-			node.add_theme_color_override("font_focus_color", Color("#0284c7"))
+			node.add_theme_color_override("font_focus_color", light_col)
 			node.add_theme_color_override("font_disabled_color", Color("#64748b"))
 		elif node is Label:
 			var base_col: Color = originals.colors.get("font_color", Color("#ffffff"))
@@ -199,11 +201,16 @@ func _apply_node(node: Node) -> void:
 	else:
 		# Restore Dark Mode colors
 		if node is Button:
+			node.focus_mode = Control.FOCUS_NONE
 			for key in BUTTON_COLORS:
 				if originals.colors.has(key):
 					node.add_theme_color_override(key, originals.colors[key])
 				elif node.has_theme_color_override(key):
 					node.remove_theme_color_override(key)
+			if node.has_theme_color_override("font_color"):
+				var dark_col: Color = node.get_theme_color("font_color")
+				node.add_theme_color_override("font_hover_color", dark_col)
+				node.add_theme_color_override("font_focus_color", dark_col)
 		elif node is Label:
 			if originals.colors.has("font_color"):
 				node.add_theme_color_override("font_color", originals.colors["font_color"])

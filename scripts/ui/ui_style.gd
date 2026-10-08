@@ -81,6 +81,7 @@ func apply_button(button: Button) -> void:
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 
+	button.focus_mode = Control.FOCUS_NONE
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
 		var style := original.duplicate() as StyleBoxFlat
@@ -95,16 +96,10 @@ func apply_button(button: Button) -> void:
 		style.content_margin_right = 12 if in_grid else 20
 		style.content_margin_top = 8 if in_grid else 14
 		style.content_margin_bottom = 8 if in_grid else 14
-		if state == "normal":
+		if state == "normal" or state == "hover":
 			style.shadow_color = Color(0, 0, 0, 0.25)
 			style.shadow_size = 4
 			style.shadow_offset = Vector2(0, 3)
-		elif state == "hover":
-			style.shadow_color = Color(0, 0, 0, 0.30)
-			style.shadow_size = 6
-			style.shadow_offset = Vector2(0, 3)
-			style.border_color = Color.WHITE
-			style.bg_color = style.bg_color.lightened(0.08)
 		elif state == "pressed":
 			style.shadow_color = Color(0, 0, 0, 0.18)
 			style.shadow_size = 1
@@ -118,7 +113,8 @@ func apply_button(button: Button) -> void:
 				style.border_color = Color("#94a3b8")
 		elif state == "focus":
 			style.bg_color = Color.TRANSPARENT
-			style.border_color = Color("#38bdf8")
+			style.set_border_width_all(0)
+			style.border_color = Color.TRANSPARENT
 			style.shadow_size = 0
 			style.shadow_offset = Vector2.ZERO
 
@@ -129,6 +125,8 @@ func apply_button(button: Button) -> void:
 			else:
 				var font_col: Color = Color.WHITE if style.bg_color.get_luminance() < 0.70 else readable(Color.WHITE, style.bg_color)
 				button.add_theme_color_override(key, font_col)
+				button.add_theme_color_override("font_hover_color", font_col)
+				button.add_theme_color_override("font_focus_color", font_col)
 		button.add_theme_stylebox_override(state, style)
 	if button.has_meta("quiz_feedback"):
 		preload("res://scripts/ui/quiz_button_style.gd").feedback(button, button.get_meta("quiz_feedback"))

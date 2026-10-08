@@ -175,6 +175,9 @@ func _ready() -> void:
 	var theme_controller := preload("res://scripts/ui/theme_controller.gd").new()
 	theme_controller.name = "ThemeController"
 	add_child(theme_controller)
+	var touch_scroll := preload("res://scripts/ui/touch_scroll_controller.gd").new()
+	touch_scroll.name = "TouchScrollController"
+	add_child(touch_scroll)
 	var pull_up = preload("res://scripts/ui/panel_pull_up.gd")
 	pull_up.watch(event_overlay.get_node("EventPanel"), event_overlay)
 	pull_up.watch(reset_confirmation_overlay.get_node("ConfirmCard"), reset_confirmation_overlay)

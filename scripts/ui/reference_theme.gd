@@ -47,15 +47,9 @@ func button_surface(light: bool, state: String = "normal") -> StyleBoxFlat:
 	style.content_margin_right = 24
 	style.content_margin_top = 16
 	style.content_margin_bottom = 16
-	if state == "normal":
+	if state == "normal" or state in ["hover", "hover_pressed"]:
 		style.shadow_color = Color(0, 0, 0, 0.15 if light else 0.35)
 		style.shadow_size = 4
-		style.shadow_offset = Vector2(0, 3)
-	elif state in ["hover", "hover_pressed"]:
-		style.bg_color = Color("#e2edf6") if light else Color("#263a50")
-		style.border_color = Color("#0284c7") if light else Color.WHITE
-		style.shadow_color = Color(0, 0, 0, 0.22 if light else 0.45)
-		style.shadow_size = 6
 		style.shadow_offset = Vector2(0, 3)
 	elif state == "pressed":
 		style.bg_color = Color("#cbdceb") if light else Color("#1a2938")
@@ -69,8 +63,8 @@ func button_surface(light: bool, state: String = "normal") -> StyleBoxFlat:
 		style.border_color = Color("#cbd5e1") if light else Color("#334155")
 	elif state == "focus":
 		style.bg_color = Color.TRANSPARENT
-		style.set_border_width_all(3)
-		style.border_color = Color("#127bb7") if light else Color("#8cd5ff")
+		style.set_border_width_all(0)
+		style.border_color = Color.TRANSPARENT
 		style.shadow_size = 0
 		style.shadow_offset = Vector2.ZERO
 	return style
@@ -177,6 +171,7 @@ func apply(node: Control, light: bool) -> void:
 		node.add_theme_color_override("selection_color", Color("#3c7096"))
 		node.add_theme_color_override("font_selected_color", Color.WHITE)
 	elif node is Button:
+		node.focus_mode = Control.FOCUS_NONE
 		for state in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus", "read_only"]:
 			node.add_theme_stylebox_override(state, button_surface(light, state))
 		if node.text in ["✕", "×", "X", "✖"]:
