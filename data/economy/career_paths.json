@@ -772,5 +772,811 @@
       "title": "Chief Medical Officer",
       "salary": 565000
     }
+  ],
+  "fb_mixologist": [
+    {
+      "years": 2,
+      "min_age": 23,
+      "title": "Head Beverage Alchemist",
+      "salary": 48000
+    },
+    {
+      "years": 5,
+      "min_age": 26,
+      "title": "Master Bar Director",
+      "salary": 62000
+    },
+    {
+      "years": 9,
+      "min_age": 30,
+      "title": "Nightlife Operations Partner",
+      "salary": 82000
+    },
+    {
+      "years": 14,
+      "min_age": 35,
+      "title": "Global Spirits Ambassador",
+      "salary": 110000
+    }
+  ],
+  "fb_pastry_chef": [
+    {
+      "years": 2,
+      "min_age": 20,
+      "title": "Senior Chocolatier",
+      "salary": 54000
+    },
+    {
+      "years": 5,
+      "min_age": 23,
+      "title": "Master Pastry Chef",
+      "salary": 68000
+    },
+    {
+      "years": 9,
+      "min_age": 27,
+      "title": "Executive Confectionery Director",
+      "salary": 88000
+    },
+    {
+      "years": 14,
+      "min_age": 32,
+      "title": "Celebrity Culinary Author",
+      "salary": 118000
+    }
+  ],
+  "fb_sous_chef": [
+    {
+      "years": 2,
+      "min_age": 22,
+      "title": "Chef de Cuisine",
+      "salary": 72000
+    },
+    {
+      "years": 5,
+      "min_age": 25,
+      "title": "Executive Sous Chef",
+      "salary": 90000
+    },
+    {
+      "years": 9,
+      "min_age": 29,
+      "title": "Culinary Operations Director",
+      "salary": 115000
+    },
+    {
+      "years": 14,
+      "min_age": 34,
+      "title": "Michelin Inspector Consultant",
+      "salary": 145000
+    }
+  ],
+  "fb_head_chef": [
+    {
+      "years": 2,
+      "min_age": 26,
+      "title": "Michelin-Starred Executive Chef",
+      "salary": 120000
+    },
+    {
+      "years": 5,
+      "min_age": 29,
+      "title": "Master Culinary Director",
+      "salary": 155000
+    },
+    {
+      "years": 9,
+      "min_age": 33,
+      "title": "Gastronomy Empire Partner",
+      "salary": 205000
+    },
+    {
+      "years": 14,
+      "min_age": 38,
+      "title": "International Culinary Icon",
+      "salary": 275000
+    }
+  ],
+  "fb_restaurateur": [
+    {
+      "years": 2,
+      "min_age": 29,
+      "title": "Senior Managing Partner",
+      "salary": 175000
+    },
+    {
+      "years": 5,
+      "min_age": 32,
+      "title": "Vice President of Hospitality",
+      "salary": 225000
+    },
+    {
+      "years": 9,
+      "min_age": 36,
+      "title": "Chief Hospitality Officer (CHO)",
+      "salary": 295000
+    },
+    {
+      "years": 14,
+      "min_age": 41,
+      "title": "Global Luxury Brand Chairman",
+      "salary": 385000
+    }
+  ],
+  "ret_luxury_concierge": [
+    {
+      "years": 2,
+      "min_age": 21,
+      "title": "VIP Private Client Advisor",
+      "salary": 56000
+    },
+    {
+      "years": 5,
+      "min_age": 24,
+      "title": "Luxury Salon Director",
+      "salary": 74000
+    },
+    {
+      "years": 9,
+      "min_age": 28,
+      "title": "Prestige Brand Ambassador",
+      "salary": 98000
+    },
+    {
+      "years": 14,
+      "min_age": 33,
+      "title": "High-Jewelry Division VP",
+      "salary": 135000
+    }
+  ],
+  "ret_district_manager": [
+    {
+      "years": 2,
+      "min_age": 27,
+      "title": "Senior Regional Director",
+      "salary": 115000
+    },
+    {
+      "years": 5,
+      "min_age": 30,
+      "title": "Vice President of Retail Operations",
+      "salary": 155000
+    },
+    {
+      "years": 9,
+      "min_age": 34,
+      "title": "Executive Retail VP",
+      "salary": 210000
+    },
+    {
+      "years": 14,
+      "min_age": 39,
+      "title": "Chief Commercial Officer",
+      "salary": 290000
+    }
+  ],
+  "it_ai_researcher": [
+    {
+      "years": 2,
+      "min_age": 26,
+      "title": "Principal AI Scientist",
+      "salary": 220000
+    },
+    {
+      "years": 5,
+      "min_age": 29,
+      "title": "Distinguished Research Fellow",
+      "salary": 280000
+    },
+    {
+      "years": 9,
+      "min_age": 33,
+      "title": "Vice President of Artificial Intelligence",
+      "salary": 360000
+    },
+    {
+      "years": 14,
+      "min_age": 38,
+      "title": "Chief AI Scientist & Co-Founder",
+      "salary": 470000
+    }
+  ],
+  "med_emt": [
+    {
+      "years": 2,
+      "min_age": 20,
+      "title": "Advanced Critical Care Paramedic",
+      "salary": 60000
+    },
+    {
+      "years": 5,
+      "min_age": 23,
+      "title": "Emergency Field Operations Captain",
+      "salary": 76000
+    },
+    {
+      "years": 9,
+      "min_age": 27,
+      "title": "Paramedic Battalion Commander",
+      "salary": 98000
+    },
+    {
+      "years": 14,
+      "min_age": 32,
+      "title": "Director of Emergency Medical Services",
+      "salary": 130000
+    }
+  ],
+  "med_dentist": [
+    {
+      "years": 2,
+      "min_age": 28,
+      "title": "Senior Maxillofacial Dental Surgeon",
+      "salary": 195000
+    },
+    {
+      "years": 5,
+      "min_age": 31,
+      "title": "Partner Dental Practice Director",
+      "salary": 250000
+    },
+    {
+      "years": 9,
+      "min_age": 35,
+      "title": "Orthodontics & Surgery Center Chairman",
+      "salary": 330000
+    },
+    {
+      "years": 14,
+      "min_age": 40,
+      "title": "Chief of Dental Medicine & Implants",
+      "salary": 430000
+    }
+  ],
+  "trade_plumber": [
+    {
+      "years": 2,
+      "min_age": 20,
+      "title": "Journeyman Pipefitter",
+      "salary": 66000
+    },
+    {
+      "years": 5,
+      "min_age": 23,
+      "title": "Mechanical Contractor Supervisor",
+      "salary": 82000
+    },
+    {
+      "years": 9,
+      "min_age": 27,
+      "title": "Senior Hydronic Systems Engineer",
+      "salary": 105000
+    },
+    {
+      "years": 14,
+      "min_age": 32,
+      "title": "Managing Mechanical Partner",
+      "salary": 140000
+    }
+  ],
+  "trade_architect": [
+    {
+      "years": 2,
+      "min_age": 26,
+      "title": "Senior Design Architect",
+      "salary": 125000
+    },
+    {
+      "years": 5,
+      "min_age": 29,
+      "title": "Principal Architectural Partner",
+      "salary": 165000
+    },
+    {
+      "years": 9,
+      "min_age": 33,
+      "title": "Master Urban Design Director",
+      "salary": 220000
+    },
+    {
+      "years": 14,
+      "min_age": 38,
+      "title": "Pritzker-Nominated Studio Chairman",
+      "salary": 300000
+    }
+  ],
+  "trade_civil_engineer": [
+    {
+      "years": 2,
+      "min_age": 26,
+      "title": "Senior Infrastructure Consultant",
+      "salary": 140000
+    },
+    {
+      "years": 5,
+      "min_age": 29,
+      "title": "Chief Structural Engineer",
+      "salary": 180000
+    },
+    {
+      "years": 9,
+      "min_age": 33,
+      "title": "Director of Civil Engineering",
+      "salary": 235000
+    },
+    {
+      "years": 14,
+      "min_age": 38,
+      "title": "Executive Infrastructure VP",
+      "salary": 310000
+    }
+  ],
+  "fin_bank_teller": [
+    {
+      "years": 2,
+      "min_age": 20,
+      "title": "Senior Personal Banker",
+      "salary": 45000
+    },
+    {
+      "years": 5,
+      "min_age": 23,
+      "title": "Branch Operations Manager",
+      "salary": 62000
+    },
+    {
+      "years": 9,
+      "min_age": 27,
+      "title": "Commercial Lending Director",
+      "salary": 88000
+    },
+    {
+      "years": 14,
+      "min_age": 32,
+      "title": "Regional Banking Vice President",
+      "salary": 125000
+    }
+  ],
+  "fin_accountant": [
+    {
+      "years": 2,
+      "min_age": 24,
+      "title": "Senior Audit Manager",
+      "salary": 98000
+    },
+    {
+      "years": 5,
+      "min_age": 27,
+      "title": "Tax & Advisory Partner",
+      "salary": 135000
+    },
+    {
+      "years": 9,
+      "min_age": 31,
+      "title": "Senior Equity Audit Partner",
+      "salary": 190000
+    },
+    {
+      "years": 14,
+      "min_age": 36,
+      "title": "Managing Accounting Partner",
+      "salary": 270000
+    }
+  ],
+  "fin_investment_banker": [
+    {
+      "years": 2,
+      "min_age": 24,
+      "title": "Mergers & Acquisitions Associate",
+      "salary": 155000
+    },
+    {
+      "years": 5,
+      "min_age": 27,
+      "title": "Investment Banking Vice President",
+      "salary": 225000
+    },
+    {
+      "years": 9,
+      "min_age": 31,
+      "title": "Managing Director of Global Capital",
+      "salary": 340000
+    },
+    {
+      "years": 14,
+      "min_age": 36,
+      "title": "Partner & Head of Investment Banking",
+      "salary": 520000
+    }
+  ],
+  "fin_hedge_fund_manager": [
+    {
+      "years": 2,
+      "min_age": 29,
+      "title": "Senior Portfolio Manager",
+      "salary": 350000
+    },
+    {
+      "years": 5,
+      "min_age": 32,
+      "title": "Chief Investment Officer (CIO)",
+      "salary": 500000
+    },
+    {
+      "years": 9,
+      "min_age": 36,
+      "title": "Managing General Partner",
+      "salary": 750000
+    },
+    {
+      "years": 14,
+      "min_age": 41,
+      "title": "Billionaire Fund Principal",
+      "salary": 1100000
+    }
+  ],
+  "law_police_officer": [
+    {
+      "years": 2,
+      "min_age": 23,
+      "title": "Senior Patrol Sergeant",
+      "salary": 68000
+    },
+    {
+      "years": 5,
+      "min_age": 26,
+      "title": "Police Lieutenant",
+      "salary": 86000
+    },
+    {
+      "years": 9,
+      "min_age": 30,
+      "title": "Police Precinct Captain",
+      "salary": 112000
+    },
+    {
+      "years": 14,
+      "min_age": 35,
+      "title": "Chief of Police",
+      "salary": 155000
+    }
+  ],
+  "law_paralegal": [
+    {
+      "years": 2,
+      "min_age": 21,
+      "title": "Senior Litigation Paralegal",
+      "salary": 60000
+    },
+    {
+      "years": 5,
+      "min_age": 24,
+      "title": "Lead Legal Compliance Officer",
+      "salary": 76000
+    },
+    {
+      "years": 9,
+      "min_age": 28,
+      "title": "Director of Legal Operations",
+      "salary": 98000
+    },
+    {
+      "years": 14,
+      "min_age": 33,
+      "title": "Chief Regulatory Officer",
+      "salary": 130000
+    }
+  ],
+  "law_detective": [
+    {
+      "years": 2,
+      "min_age": 26,
+      "title": "Supervising Special Agent",
+      "salary": 98000
+    },
+    {
+      "years": 5,
+      "min_age": 29,
+      "title": "Major Crimes Commander",
+      "salary": 125000
+    },
+    {
+      "years": 9,
+      "min_age": 33,
+      "title": "Deputy Director of State Investigations",
+      "salary": 165000
+    },
+    {
+      "years": 14,
+      "min_age": 38,
+      "title": "Director of National Intelligence",
+      "salary": 220000
+    }
+  ],
+  "law_attorney": [
+    {
+      "years": 2,
+      "min_age": 26,
+      "title": "Senior Litigation Partner",
+      "salary": 175000
+    },
+    {
+      "years": 5,
+      "min_age": 29,
+      "title": "Managing Law Partner",
+      "salary": 245000
+    },
+    {
+      "years": 9,
+      "min_age": 33,
+      "title": "Senior White-Collar Counsel",
+      "salary": 350000
+    },
+    {
+      "years": 14,
+      "min_age": 38,
+      "title": "Celebrity Supreme Court Litigator",
+      "salary": 500000
+    }
+  ],
+  "law_judge": [
+    {
+      "years": 2,
+      "min_age": 37,
+      "title": "Appellate Court Justice",
+      "salary": 245000
+    },
+    {
+      "years": 5,
+      "min_age": 40,
+      "title": "Presiding Supreme Court Justice",
+      "salary": 310000
+    },
+    {
+      "years": 9,
+      "min_age": 44,
+      "title": "Chief Justice of the Realm",
+      "salary": 400000
+    },
+    {
+      "years": 14,
+      "min_age": 49,
+      "title": "Chancellor of the Judiciary",
+      "salary": 520000
+    }
+  ],
+  "art_photographer": [
+    {
+      "years": 2,
+      "min_age": 20,
+      "title": "Lead Editorial Photographer",
+      "salary": 55000
+    },
+    {
+      "years": 5,
+      "min_age": 23,
+      "title": "Creative Visual Director",
+      "salary": 72000
+    },
+    {
+      "years": 9,
+      "min_age": 27,
+      "title": "Celebrity Studio Owner",
+      "salary": 98000
+    },
+    {
+      "years": 14,
+      "min_age": 32,
+      "title": "Iconic Magnum Photos Fellow",
+      "salary": 135000
+    }
+  ],
+  "art_graphic_designer": [
+    {
+      "years": 2,
+      "min_age": 23,
+      "title": "Senior Art Director",
+      "salary": 70000
+    },
+    {
+      "years": 5,
+      "min_age": 26,
+      "title": "Creative Design Lead",
+      "salary": 90000
+    },
+    {
+      "years": 9,
+      "min_age": 30,
+      "title": "Head of Creative Agency",
+      "salary": 120000
+    },
+    {
+      "years": 14,
+      "min_age": 35,
+      "title": "Executive Creative VP",
+      "salary": 165000
+    }
+  ],
+  "art_sound_producer": [
+    {
+      "years": 2,
+      "min_age": 23,
+      "title": "Senior Sound Designer",
+      "salary": 82000
+    },
+    {
+      "years": 5,
+      "min_age": 26,
+      "title": "Lead Record Producer",
+      "salary": 108000
+    },
+    {
+      "years": 9,
+      "min_age": 30,
+      "title": "Grammy-Nominated Studio Head",
+      "salary": 150000
+    },
+    {
+      "years": 14,
+      "min_age": 35,
+      "title": "Record Label Executive Director",
+      "salary": 215000
+    }
+  ],
+  "art_film_director": [
+    {
+      "years": 2,
+      "min_age": 28,
+      "title": "Studio Franchise Director",
+      "salary": 165000
+    },
+    {
+      "years": 5,
+      "min_age": 31,
+      "title": "Oscar-Nominated Producer",
+      "salary": 240000
+    },
+    {
+      "years": 9,
+      "min_age": 35,
+      "title": "Boutique Studio President",
+      "salary": 360000
+    },
+    {
+      "years": 14,
+      "min_age": 40,
+      "title": "Hollywood Studio Mogul",
+      "salary": 540000
+    }
+  ],
+  "art_fashion_designer": [
+    {
+      "years": 2,
+      "min_age": 27,
+      "title": "Parisian Runway Creative Director",
+      "salary": 180000
+    },
+    {
+      "years": 5,
+      "min_age": 30,
+      "title": "Master Haute Couturier",
+      "salary": 255000
+    },
+    {
+      "years": 9,
+      "min_age": 34,
+      "title": "Luxury Fashion House Founder",
+      "salary": 375000
+    },
+    {
+      "years": 14,
+      "min_age": 39,
+      "title": "Global Fashion Empire Chairman",
+      "salary": 550000
+    }
+  ],
+  "trans_truck_driver": [
+    {
+      "years": 2,
+      "min_age": 22,
+      "title": "Owner-Operator Trucker",
+      "salary": 58000
+    },
+    {
+      "years": 5,
+      "min_age": 25,
+      "title": "Fleet Dispatch Coordinator",
+      "salary": 74000
+    },
+    {
+      "years": 9,
+      "min_age": 29,
+      "title": "Regional Freight Operations Manager",
+      "salary": 96000
+    },
+    {
+      "years": 14,
+      "min_age": 34,
+      "title": "Vice President of Heavy Transport",
+      "salary": 132000
+    }
+  ],
+  "trans_boat_skipper": [
+    {
+      "years": 2,
+      "min_age": 23,
+      "title": "Master Offshore Vessel Captain",
+      "salary": 80000
+    },
+    {
+      "years": 5,
+      "min_age": 26,
+      "title": "Fleet Marine Superintendent",
+      "salary": 104000
+    },
+    {
+      "years": 9,
+      "min_age": 30,
+      "title": "Director of Ocean Port Operations",
+      "salary": 138000
+    },
+    {
+      "years": 14,
+      "min_age": 35,
+      "title": "Managing Maritime Fleet Partner",
+      "salary": 190000
+    }
+  ],
+  "trans_logistics_director": [
+    {
+      "years": 2,
+      "min_age": 26,
+      "title": "Senior Logistics Strategist",
+      "salary": 128000
+    },
+    {
+      "years": 5,
+      "min_age": 29,
+      "title": "Vice President of Global Cargo",
+      "salary": 168000
+    },
+    {
+      "years": 9,
+      "min_age": 33,
+      "title": "Executive Supply Chain VP",
+      "salary": 225000
+    },
+    {
+      "years": 14,
+      "min_age": 38,
+      "title": "Chief Supply Chain Officer",
+      "salary": 305000
+    }
+  ],
+  "trans_airline_pilot": [
+    {
+      "years": 2,
+      "min_age": 25,
+      "title": "Senior Widebody Long-Haul Captain",
+      "salary": 215000
+    },
+    {
+      "years": 5,
+      "min_age": 28,
+      "title": "Chief Flight Instructor & Examiner",
+      "salary": 275000
+    },
+    {
+      "years": 9,
+      "min_age": 32,
+      "title": "Director of Commercial Flight Operations",
+      "salary": 360000
+    },
+    {
+      "years": 14,
+      "min_age": 37,
+      "title": "Executive Vice President of Flight Standards",
+      "salary": 480000
+    }
   ]
 }

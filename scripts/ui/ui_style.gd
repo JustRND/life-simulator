@@ -1,3 +1,4 @@
+class_name UIStyle
 extends RefCounted
 ## Shared tokens for custom controls that retain their own layouts and accents.
 const BODY_SIZE := 28

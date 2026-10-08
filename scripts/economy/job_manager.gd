@@ -136,6 +136,22 @@ func can_apply(job: Dictionary, age: int, stats: Dictionary, education_data: Dic
 				"reason": "Requires University Degree in %s (Your Major: %s)." % [req_name, current_name]
 			}
 
+	# Required Professional License / Certification Check
+	if reqs.has("required_license"):
+		var req_lic: String = str(reqs["required_license"])
+		var has_lic: bool = false
+		if education_data.has("licenses") and education_data["licenses"] is Array:
+			has_lic = education_data["licenses"].has(req_lic)
+		elif Engine.has_singleton("PlayerData") or get_node_or_null("/root/PlayerData") != null:
+			has_lic = PlayerData.has_license(req_lic)
+		if not has_lic:
+			var lic_def: Dictionary = LicenseManager.get_license_by_id(req_lic)
+			var lic_name: String = str(lic_def.get("name", req_lic))
+			return {
+				"allowed": false,
+				"reason": "Requires %s (Available in Licensing panel)." % lic_name
+			}
+
 	if reqs.has("min_health") and int(stats.get("health", 0)) < int(reqs["min_health"]):
 		return {"allowed": false, "reason": "Requires at least %d Health." % int(reqs["min_health"])}
 	if reqs.has("min_smarts") and int(stats.get("smarts", 0)) < int(reqs["min_smarts"]):
@@ -152,6 +168,13 @@ func can_apply(job: Dictionary, age: int, stats: Dictionary, education_data: Dic
 	return {"allowed": true, "reason": "Qualified"}
 
 
+func get_category_by_id(category_id: String) -> Dictionary:
+	for cat in categories:
+		if cat is Dictionary and str(cat.get("id", "")) == category_id:
+			return cat
+	return {}
+
+
 func get_major_display_name(major_id: String) -> String:
 	match major_id.to_lower():
 		"business":
@@ -164,5 +187,32 @@ func get_major_display_name(major_id: String) -> String:
 			return "Mechanical & Electrical Engineering"
 		"arts":
 			return "Digital Arts & Interactive Media"
+		"food_science":
+			return "Food Science & Culinary Arts"
+		"law":
+			return "Legal Studies & Jurisprudence"
+		"finance":
+			return "Finance & Investment Banking"
+		"accounting":
+			return "Accounting & Forensic Audit"
+		"architecture":
+			return "Architecture & Urban Planning"
+		"film":
+			return "Film, Cinematography & Media Production"
+		"music":
+			return "Sound Engineering & Music Production"
+		"graphic_design":
+			return "Graphic Design & Visual Communication"
+		"fashion":
+			return "Fashion & Apparel Design"
+		"dentistry":
+			return "Dental Surgery & Oral Health"
+		"biotech":
+			return "Biotechnology & Genetics"
+		"environmental":
+			return "Environmental & Renewable Energy Science"
+		"logistics":
+			return "Global Logistics & Supply Chain"
 		_:
 			return major_id.capitalize()
+

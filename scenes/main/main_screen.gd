@@ -7,6 +7,7 @@ const RomanceRules = preload("res://scripts/core/romance_rules.gd")
 const RelationshipExtras = preload("res://scripts/core/relationship_extras.gd")
 const CareerProgression = preload("res://scripts/economy/career_progression.gd")
 const UndergroundProgression = preload("res://scripts/economy/underground_progression.gd")
+const UIStyle = preload("res://scripts/ui/ui_style.gd")
 
 
 var portrait: TextureRect
@@ -89,6 +90,7 @@ var overview_history_filter: String = "all"
 
 # Activities Modals
 var jobs_modal_overlay: Control = null
+var job_category_modal_overlay: Control = null
 var freelance_modal_overlay: Control = null
 var licensing_modal_overlay: Control = null
 var business_modal_overlay: Control = null
@@ -5049,14 +5051,89 @@ func _show_jobs_modal() -> void:
 
 	list.add_child(cur_card)
 
-	# Available Jobs List
-	var all_jobs: Array = JobManager.get_all_jobs()
-	for job in all_jobs:
+	# Career Hubs & Occupational Sectors
+	var sec_header := VBoxContainer.new()
+	sec_header.add_theme_constant_override("separation", 4)
+
+	var sec_title := Label.new()
+	sec_title.text = "🏢 CAREER SECTORS & OCCUPATIONAL HUBS"
+	sec_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	sec_title.add_theme_font_size_override("font_size", 24)
+	sec_title.add_theme_color_override("font_color", Color("#38bdf8"))
+	sec_header.add_child(sec_title)
+
+	var sec_desc := Label.new()
+	sec_desc.text = "Select an industry sector to view open positions, salary packages, and qualification requirements."
+	sec_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	sec_desc.add_theme_font_size_override("font_size", 20)
+	sec_desc.add_theme_color_override("font_color", Color("#94a3b8"))
+	sec_header.add_child(sec_desc)
+
+	list.add_child(sec_header)
+
+	var all_categories: Array = JobManager.get_categories()
+	for cat in all_categories:
+		if cat is not Dictionary:
+			continue
+		var cat_id: String = str(cat.get("id", ""))
+		var cat_name: String = str(cat.get("name", "Category"))
+		var cat_icon: String = str(cat.get("icon", "💼"))
+		var cat_desc_text: String = str(cat.get("description", ""))
+		var cat_color: Color = Color(cat.get("color", "#38bdf8"))
+		var cat_jobs: Array = JobManager.get_jobs_in_category(cat_id)
+
+		var btn_label := "%s %s (%d Positions)\n%s" % [cat_icon, cat_name, cat_jobs.size(), cat_desc_text]
+		var cat_btn := _create_cyber_button(btn_label, cat_color, func():
+			_show_job_category_modal(cat_id)
+		)
+		cat_btn.custom_minimum_size.y = 82
+		cat_btn.add_theme_font_size_override("font_size", 24)
+		list.add_child(cat_btn)
+
+	jobs_modal_overlay.visible = true
+
+
+func _show_job_category_modal(category_id: String) -> void:
+	if job_category_modal_overlay != null and is_instance_valid(job_category_modal_overlay):
+		job_category_modal_overlay.queue_free()
+
+	if jobs_modal_overlay != null and is_instance_valid(jobs_modal_overlay):
+		jobs_modal_overlay.queue_free()
+
+	var cat: Dictionary = JobManager.get_category_by_id(category_id)
+	var cat_name: String = str(cat.get("name", "Career Sector"))
+	var cat_icon: String = str(cat.get("icon", "💼"))
+	var cat_desc_text: String = str(cat.get("description", "Open employment opportunities."))
+	var cat_color: Color = Color(cat.get("color", "#38bdf8"))
+
+	var modal := _create_cyber_modal("%s %s" % [cat_icon, cat_name.to_upper()], cat_desc_text, cat_color)
+	job_category_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var close_btn: Button = modal.get("close_btn")
+	if close_btn != null:
+		close_btn.pressed.connect(func():
+			_show_jobs_modal()
+		)
+
+	# Back to Careers Hub Button
+	var back_btn := _create_cyber_button("← Back to All Career Sectors", cat_color, func():
+		if is_instance_valid(job_category_modal_overlay):
+			job_category_modal_overlay.queue_free()
+		_show_jobs_modal()
+	)
+	back_btn.custom_minimum_size.y = 70
+	back_btn.add_theme_font_size_override("font_size", 24)
+	list.add_child(back_btn)
+
+	# Jobs in this category
+	var category_jobs: Array = JobManager.get_jobs_in_category(category_id)
+	for job in category_jobs:
 		if job is not Dictionary:
 			continue
 
 		var card := PanelContainer.new()
-		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#1e3a5f")))
+		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(cat_color))
 
 		var m := MarginContainer.new()
 		m.add_theme_constant_override("margin_left", 20)
@@ -5073,7 +5150,7 @@ func _show_jobs_modal() -> void:
 		title_lbl.text = "%s  •  %s" % [job.get("title", "Job"), job.get("workplace", "Company")]
 		title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		title_lbl.add_theme_font_size_override("font_size", 30)
-		title_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
+		title_lbl.add_theme_color_override("font_color", cat_color)
 		vbox.add_child(title_lbl)
 
 		var salary_val: int = int(job.get("salary", 0))
@@ -5093,6 +5170,19 @@ func _show_jobs_modal() -> void:
 		if reqs.has("required_major"):
 			var m_title := JobManager.get_major_display_name(str(reqs["required_major"]))
 			req_parts.append("Major: %s" % m_title)
+		if reqs.has("required_license"):
+			var lic_def := LicenseManager.get_license_by_id(str(reqs["required_license"]))
+			req_parts.append("License: %s" % str(lic_def.get("name", reqs["required_license"])))
+		if reqs.has("min_health"):
+			req_parts.append("Min Health: %d" % int(reqs["min_health"]))
+		if reqs.has("min_smarts"):
+			req_parts.append("Min Smarts: %d" % int(reqs["min_smarts"]))
+		if reqs.has("min_looks"):
+			req_parts.append("Min Looks: %d" % int(reqs["min_looks"]))
+		if reqs.has("min_karma"):
+			req_parts.append("Min Karma: %d" % int(reqs["min_karma"]))
+		if reqs.has("max_karma"):
+			req_parts.append("Underworld Rep Required")
 
 		if not req_parts.is_empty():
 			var req_lbl := Label.new()
@@ -5114,59 +5204,42 @@ func _show_jobs_modal() -> void:
 			"education_level": PlayerData.education_level,
 			"major": PlayerData.university_major,
 			"university_name": PlayerData.university_name,
-			"degrees": PlayerData.degrees
+			"degrees": PlayerData.degrees,
+			"licenses": PlayerData.licenses
 		})
 		var is_qualified: bool = bool(eval.get("allowed", false))
 		var is_current: bool = PlayerData.job_id == str(job.get("id", ""))
 
-		var btn := Button.new()
-		btn.custom_minimum_size.y = 74
-		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		btn.add_theme_font_size_override("font_size", 26)
-
+		var btn: Button
 		if is_current:
-			btn.text = "✓ CURRENT OCCUPATION"
-			btn.disabled = true
+			btn = _create_disabled_cyber_button("✓ CURRENT OCCUPATION", "Currently employed in this position.")
+			btn.custom_minimum_size.y = 74
+			btn.add_theme_font_size_override("font_size", 26)
 			var cur_style := StyleBoxFlat.new()
 			cur_style.bg_color = Color("#0e3a2f")
 			cur_style.border_color = Color("#10b981")
 			cur_style.set_border_width_all(2)
-			cur_style.set_corner_radius_all(6)
+			cur_style.set_corner_radius_all(10)
 			btn.add_theme_stylebox_override("disabled", cur_style)
 			btn.add_theme_color_override("font_color", Color("#6ee7b7"))
 		elif is_qualified:
-			btn.text = "APPLY FOR ROLE"
-			var app_style := StyleBoxFlat.new()
-			app_style.bg_color = Color("#10b981")
-			app_style.border_color = Color("#059669")
-			app_style.set_border_width_all(2)
-			app_style.set_corner_radius_all(6)
-			btn.add_theme_stylebox_override("normal", app_style)
-			btn.add_theme_color_override("font_color", Color("#ffffff"))
 			var jid: String = str(job.get("id", ""))
-			btn.pressed.connect(func():
+			btn = _create_cyber_button("APPLY FOR ROLE", Color("#10b981"), func():
 				apply_for_job(jid)
-				_show_jobs_modal()
+				_show_job_category_modal(category_id)
 			)
+			btn.custom_minimum_size.y = 74
+			btn.add_theme_font_size_override("font_size", 26)
 		else:
-			if PlayerData.age < JobManager.minimum_age(job):
-				btn.text = "🔒 LOCKED: Requires Age %d+ (Current: %d)" % [JobManager.minimum_age(job), PlayerData.age]
-			else:
-				btn.text = "🔒 LOCKED: " + str(eval.get("reason", "Not qualified"))
-			btn.disabled = true
-			var lock_style := StyleBoxFlat.new()
-			lock_style.bg_color = Color("#1e293b")
-			lock_style.border_color = Color("#334155")
-			lock_style.set_border_width_all(2)
-			lock_style.set_corner_radius_all(6)
-			btn.add_theme_stylebox_override("disabled", lock_style)
-			btn.add_theme_color_override("font_color", Color("#94a3b8"))
+			var lock_text := "🔒 LOCKED: Requires Age %d+ (Current: %d)" % [JobManager.minimum_age(job), PlayerData.age] if PlayerData.age < JobManager.minimum_age(job) else "🔒 LOCKED: " + str(eval.get("reason", "Not qualified"))
+			btn = _create_disabled_cyber_button(lock_text, "")
+			btn.custom_minimum_size.y = 74
+			btn.add_theme_font_size_override("font_size", 26)
 
 		vbox.add_child(btn)
 		list.add_child(card)
 
-	jobs_modal_overlay.visible = true
+	job_category_modal_overlay.visible = true
 
 
 func _show_simple_popup(title_text: String, msg_text: String, border_color: Color = Color("#00f0ff")) -> void:

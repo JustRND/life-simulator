@@ -2,45 +2,80 @@
   "categories": [
     {
       "id": "fast_food",
-      "name": "Fast Food & Restaurants",
+      "name": "Food & Beverage (F&B) & Hospitality",
       "icon": "🍔",
-      "description": "Hourly food service and kitchen roles"
+      "color": "#f59e0b",
+      "description": "Culinary arts, craft mixology, kitchen brigade, and fine dining management"
     },
     {
       "id": "retail",
-      "name": "Retail & Customer Service",
+      "name": "Retail & Customer Merchandising",
       "icon": "🛍️",
-      "description": "Storefront, stocking, and sales positions"
+      "color": "#06b6d4",
+      "description": "Storefront operations, luxury client consulting, and regional retail leadership"
     },
     {
       "id": "it_tech",
-      "name": "Information Technology",
+      "name": "Information Technology & Software",
       "icon": "💻",
-      "description": "Software, systems, networks, and technical services"
+      "color": "#38bdf8",
+      "description": "Software engineering, cybersecurity, AI neural networks, and cloud architecture"
     },
     {
-      "id": "underworld_crime",
-      "name": "Underworld & Criminal Enterprise",
-      "icon": "🕶️",
-      "description": "Illicit contracts, street hustles, and syndicate operations"
+      "id": "medical_healthcare",
+      "name": "Medical & Healthcare Sciences",
+      "icon": "🩺",
+      "color": "#10b981",
+      "description": "Clinical care, trauma emergency, dental surgery, and hospital operations"
     },
     {
       "id": "trades_craft",
-      "name": "Trades & Skilled Labor",
+      "name": "Trades, Construction & Engineering",
       "icon": "🔧",
-      "description": "Hands-on technical and mechanical craftsmanship"
+      "color": "#f97316",
+      "description": "Skilled craftsmanship, plumbing, electrical systems, and architectural design"
+    },
+    {
+      "id": "finance_business",
+      "name": "Finance, Banking & Corporate",
+      "icon": "📈",
+      "color": "#14b8a6",
+      "description": "Investment banking, CPA auditing, quantitative hedge funds, and executive management"
+    },
+    {
+      "id": "legal_public_service",
+      "name": "Law, Justice & Public Safety",
+      "icon": "⚖️",
+      "color": "#6366f1",
+      "description": "Police law enforcement, litigation attorneys, district judges, and legal research"
+    },
+    {
+      "id": "arts_entertainment",
+      "name": "Creative Arts, Film & Media",
+      "icon": "🎭",
+      "color": "#ec4899",
+      "description": "Haute couture fashion, cinematography, sound engineering, and commercial photography"
+    },
+    {
+      "id": "aviation_maritime",
+      "name": "Aviation, Maritime & Logistics",
+      "icon": "✈️",
+      "color": "#3b82f6",
+      "description": "Commercial airline captaincy, luxury yacht navigation, and global logistics"
     },
     {
       "id": "entry_odd_jobs",
       "name": "Youth & Odd Jobs",
       "icon": "🚲",
-      "description": "Neighborhood tasks for teens and young beginners"
+      "color": "#84cc16",
+      "description": "Neighborhood tasks, summer gigs, and starter roles for young beginners"
     },
     {
-      "id": "medical_healthcare",
-      "name": "Medical & Healthcare",
-      "icon": "🩺",
-      "description": "Clinical practice, medical diagnosis, surgery, and patient healthcare"
+      "id": "underworld_crime",
+      "name": "Underworld & Criminal Enterprise",
+      "icon": "🕶️",
+      "color": "#ef4444",
+      "description": "Illicit contracts, street syndicates, smuggling, and underground operations"
     }
   ],
   "jobs": [
@@ -224,7 +259,7 @@
     {
       "id": "corp_executive",
       "title": "Corporate Operations Executive",
-      "category": "retail",
+      "category": "finance_business",
       "workplace": "Apex Holdings Group",
       "salary": 115000,
       "description": "Lead corporate expansion strategy, oversee quarterly balance sheets, and negotiate mergers.",
@@ -490,6 +525,451 @@
         "min_education": "University Graduate",
         "required_major": "medicine",
         "min_health": 60
+      }
+    },
+    {
+      "id": "fb_mixologist",
+      "title": "Craft Cocktail Mixologist",
+      "category": "fast_food",
+      "workplace": "Velvet Lounge & Nightclub",
+      "salary": 38000,
+      "description": "Shake artisanal botanical cocktails, curate craft spirit menus, and entertain nightlife patrons.",
+      "min_age": 21,
+      "requirements": {
+        "required_license": "license_mixologist",
+        "min_looks": 45,
+        "min_happiness": 35
+      }
+    },
+    {
+      "id": "fb_pastry_chef",
+      "title": "Artisan Bakery & Pastry Chef",
+      "category": "fast_food",
+      "workplace": "L'Etoile Patisserie",
+      "salary": 44000,
+      "description": "Laminate flaky viennoiserie, craft tiered wedding cakes, and temper dark chocolate ganache.",
+      "min_age": 18,
+      "requirements": {
+        "min_grades": 65,
+        "min_smarts": 50,
+        "min_health": 45
+      }
+    },
+    {
+      "id": "fb_sous_chef",
+      "title": "Fine Dining Sous Chef",
+      "category": "fast_food",
+      "workplace": "Lumière Michelin Bistro",
+      "salary": 58000,
+      "description": "Expedite dinner service tickets, manage kitchen prep stations, and butcher dry-aged meats.",
+      "min_age": 20,
+      "requirements": {
+        "min_health": 55,
+        "min_smarts": 60,
+        "min_grades": 70
+      }
+    },
+    {
+      "id": "fb_head_chef",
+      "title": "Executive Head Chef",
+      "category": "fast_food",
+      "workplace": "Le Petit Châteaux",
+      "salary": 92000,
+      "description": "Command the brigade de cuisine, create seasonal tasting menus, and pursue prestigious culinary stars.",
+      "min_age": 24,
+      "requirements": {
+        "min_education": "University Graduate",
+        "required_major": "food_science",
+        "min_smarts": 75,
+        "min_grades": 78
+      }
+    },
+    {
+      "id": "fb_restaurateur",
+      "title": "Hospitality Group Director",
+      "category": "fast_food",
+      "workplace": "Sterling Dining Concepts",
+      "salary": 135000,
+      "description": "Oversee upscale hospitality concepts, secure prime downtown leases, and manage investor capital.",
+      "min_age": 27,
+      "requirements": {
+        "min_education": "University Graduate",
+        "required_major": "business",
+        "min_smarts": 82,
+        "min_grades": 80
+      }
+    },
+    {
+      "id": "ret_luxury_concierge",
+      "title": "High-End Luxury Goods Consultant",
+      "category": "retail",
+      "workplace": "Maison de Luxe",
+      "salary": 42000,
+      "description": "Present diamond timepieces, haute couture leather bags, and private salon collections to VIPs.",
+      "min_age": 19,
+      "requirements": {
+        "min_looks": 65,
+        "min_happiness": 50,
+        "min_grades": 60
+      }
+    },
+    {
+      "id": "ret_district_manager",
+      "title": "Regional Retail Operations Director",
+      "category": "retail",
+      "workplace": "Apex Brands Global",
+      "salary": 88000,
+      "description": "Direct retail performance across 40 regional locations, forecast supply pipelines, and train managers.",
+      "min_age": 25,
+      "requirements": {
+        "min_education": "University Graduate",
+        "required_major": "business",
+        "min_smarts": 75,
+        "min_grades": 72
+      }
+    },
+    {
+      "id": "it_ai_researcher",
+      "title": "Lead AI Systems Engineer",
+      "category": "it_tech",
+      "workplace": "Cognitive Nexus Labs",
+      "salary": 175000,
+      "description": "Train multimodal neural networks, optimize distributed tensor clusters, and publish research papers.",
+      "min_age": 24,
+      "requirements": {
+        "min_education": "University Graduate",
+        "required_major": "it",
+        "min_smarts": 90,
+        "min_grades": 88
+      }
+    },
+    {
+      "id": "med_emt",
+      "title": "Emergency Medical Technician (EMT)",
+      "category": "medical_healthcare",
+      "workplace": "Metro Ambulance Corps",
+      "salary": 48000,
+      "description": "Respond to emergency trauma calls with sirens blaring, stabilize patients, and administer CPR.",
+      "min_age": 18,
+      "requirements": {
+        "required_license": "license_car",
+        "min_health": 65,
+        "min_smarts": 60
+      }
+    },
+    {
+      "id": "med_dentist",
+      "title": "General Dental Surgeon",
+      "category": "medical_healthcare",
+      "workplace": "BrightSmile Dental Institute",
+      "salary": 155000,
+      "description": "Perform tooth extractions, install porcelain crowns, and reconstruct dental aesthetics.",
+      "min_age": 26,
+      "requirements": {
+        "min_education": "University Graduate",
+        "required_major": "dentistry",
+        "min_smarts": 82,
+        "min_grades": 85,
+        "min_health": 50
+      }
+    },
+    {
+      "id": "trade_plumber",
+      "title": "Master Plumbing Specialist",
+      "category": "trades_craft",
+      "workplace": "AquaFlow Mechanical",
+      "salary": 54000,
+      "description": "Install high-pressure water mains, inspect municipal sewer pipes, and repair gas heating boilers.",
+      "min_age": 18,
+      "requirements": {
+        "required_license": "license_plumber",
+        "min_health": 55,
+        "min_smarts": 55
+      }
+    },
+    {
+      "id": "trade_architect",
+      "title": "Registered Project Architect",
+      "category": "trades_craft",
+      "workplace": "Vanguard Studio Architects",
+      "salary": 95000,
+      "description": "Draft structural blueprints, model futuristic skyscrapers in CAD, and oversee building construction.",
+      "min_age": 24,
+      "requirements": {
+        "min_education": "University Graduate",
+        "required_major": "architecture",
+        "min_smarts": 80,
+        "min_grades": 80
+      }
+    },
+    {
+      "id": "trade_civil_engineer",
+      "title": "Lead Structural Engineer",
+      "category": "trades_craft",
+      "workplace": "Apex Infrastructure Group",
+      "salary": 110000,
+      "description": "Calculate stress loads for suspension bridges, design subterranean transit tunnels, and seismic retrofits.",
+      "min_age": 24,
+      "requirements": {
+        "min_education": "University Graduate",
+        "required_major": "engineering",
+        "min_smarts": 82,
+        "min_grades": 82
+      }
+    },
+    {
+      "id": "fin_bank_teller",
+      "title": "Commercial Bank Teller",
+      "category": "finance_business",
+      "workplace": "Centurion First Bank",
+      "salary": 34000,
+      "description": "Process cash deposits, balance daily vault balances, and assist clients with checking accounts.",
+      "min_age": 18,
+      "requirements": {
+        "min_smarts": 55,
+        "min_grades": 65
+      }
+    },
+    {
+      "id": "fin_accountant",
+      "title": "Certified Public Accountant (CPA)",
+      "category": "finance_business",
+      "workplace": "Kensington & Finch LLP",
+      "salary": 74000,
+      "description": "Audit corporate balance sheets, file federal tax returns, and uncover forensic accounting discrepancies.",
+      "min_age": 22,
+      "requirements": {
+        "min_education": "University Graduate",
+        "required_major": "accounting",
+        "min_smarts": 70,
+        "min_grades": 75
+      }
+    },
+    {
+      "id": "fin_investment_banker",
+      "title": "Wall Street Investment Analyst",
+      "category": "finance_business",
+      "workplace": "Goldman & Sterling Capital",
+      "salary": 110000,
+      "description": "Build financial DCF valuation models, pitch pitchbooks for 9-figure IPOs, and execute acquisitions.",
+      "min_age": 22,
+      "requirements": {
+        "min_education": "University Graduate",
+        "required_major": "finance",
+        "min_smarts": 82,
+        "min_grades": 84
+      }
+    },
+    {
+      "id": "fin_hedge_fund_manager",
+      "title": "Quantitative Hedge Fund Director",
+      "category": "finance_business",
+      "workplace": "Citadel Matrix Capital",
+      "salary": 250000,
+      "description": "Deploy algorithmic high-frequency arbitrage trading models and manage billions in institutional capital.",
+      "min_age": 27,
+      "requirements": {
+        "min_education": "University Graduate",
+        "required_major": "finance",
+        "min_smarts": 90,
+        "min_grades": 90
+      }
+    },
+    {
+      "id": "law_police_officer",
+      "title": "Municipal Police Officer",
+      "category": "legal_public_service",
+      "workplace": "Metropolitan Police Dept",
+      "salary": 54000,
+      "description": "Patrol the city streets, respond to emergency dispatch calls, and protect community safety.",
+      "min_age": 21,
+      "requirements": {
+        "required_license": "license_car",
+        "min_health": 65,
+        "min_karma": 25
+      }
+    },
+    {
+      "id": "law_paralegal",
+      "title": "Corporate Legal Researcher",
+      "category": "legal_public_service",
+      "workplace": "Blackwood Legal Associates",
+      "salary": 48000,
+      "description": "Research case law precedents, draft legal discovery subpoenas, and summarize litigation briefs.",
+      "min_age": 19,
+      "requirements": {
+        "min_smarts": 65,
+        "min_grades": 70
+      }
+    },
+    {
+      "id": "law_detective",
+      "title": "Senior Crime Scene Detective",
+      "category": "legal_public_service",
+      "workplace": "Bureau of Criminal Investigation",
+      "salary": 78000,
+      "description": "Investigate unsolved homicide cases, interrogate key suspects, and gather forensic evidence.",
+      "min_age": 24,
+      "requirements": {
+        "min_smarts": 75,
+        "min_health": 60,
+        "min_karma": 25
+      }
+    },
+    {
+      "id": "law_attorney",
+      "title": "Trial Defense Attorney",
+      "category": "legal_public_service",
+      "workplace": "Vance & Sterling Law",
+      "salary": 125000,
+      "description": "Represent high-profile clients before juries, deliver closing arguments, and negotiate plea settlements.",
+      "min_age": 24,
+      "requirements": {
+        "min_education": "University Graduate",
+        "required_major": "law",
+        "min_smarts": 82,
+        "min_grades": 85
+      }
+    },
+    {
+      "id": "law_judge",
+      "title": "District Circuit Court Judge",
+      "category": "legal_public_service",
+      "workplace": "High Court of Justice",
+      "salary": 195000,
+      "description": "Preside over felony jury trials, rule on constitutional evidence motions, and hand down sentences.",
+      "min_age": 35,
+      "requirements": {
+        "min_education": "University Graduate",
+        "required_major": "law",
+        "min_smarts": 88,
+        "min_karma": 45
+      }
+    },
+    {
+      "id": "art_photographer",
+      "title": "Commercial Fashion Photographer",
+      "category": "arts_entertainment",
+      "workplace": "Vogue Vision Studios",
+      "salary": 42000,
+      "description": "Direct magazine photoshoots, adjust studio softboxes, and retouch editorial covers in post.",
+      "min_age": 18,
+      "requirements": {
+        "required_license": "license_photographer",
+        "min_looks": 50,
+        "min_grades": 60
+      }
+    },
+    {
+      "id": "art_graphic_designer",
+      "title": "Brand Identity Graphic Designer",
+      "category": "arts_entertainment",
+      "workplace": "Prism Creative Agency",
+      "salary": 54000,
+      "description": "Design sleek corporate vector logos, brand typography guidelines, and packaging artwork.",
+      "min_age": 21,
+      "requirements": {
+        "min_education": "University Graduate",
+        "required_major": "graphic_design",
+        "min_smarts": 65
+      }
+    },
+    {
+      "id": "art_sound_producer",
+      "title": "Audio Mastering Engineer",
+      "category": "arts_entertainment",
+      "workplace": "Waveform Sound Labs",
+      "salary": 65000,
+      "description": "Mix multi-track recordings, tune analog compressors, and master platinum record releases.",
+      "min_age": 21,
+      "requirements": {
+        "min_education": "University Graduate",
+        "required_major": "music",
+        "min_smarts": 65
+      }
+    },
+    {
+      "id": "art_film_director",
+      "title": "Feature Film Director",
+      "category": "arts_entertainment",
+      "workplace": "Paramount Horizon Studios",
+      "salary": 115000,
+      "description": "Block cinematic camera angles, direct A-list actors, and helm Hollywood studio blockbuster productions.",
+      "min_age": 26,
+      "requirements": {
+        "min_education": "University Graduate",
+        "required_major": "film",
+        "min_smarts": 80,
+        "min_looks": 55
+      }
+    },
+    {
+      "id": "art_fashion_designer",
+      "title": "Haute Couture Fashion Director",
+      "category": "arts_entertainment",
+      "workplace": "Atelier Royale",
+      "salary": 130000,
+      "description": "Drape luxurious fabrics, showcase runway seasonal lines in Paris, and launch designer collections.",
+      "min_age": 25,
+      "requirements": {
+        "min_education": "University Graduate",
+        "required_major": "fashion",
+        "min_looks": 70,
+        "min_smarts": 75
+      }
+    },
+    {
+      "id": "trans_truck_driver",
+      "title": "Long-Haul Logistics Driver",
+      "category": "aviation_maritime",
+      "workplace": "Overland Freightways",
+      "salary": 45000,
+      "description": "Haul heavy freight trailers across highway routes, navigate mountain passes, and hit delivery windows.",
+      "min_age": 20,
+      "requirements": {
+        "required_license": "license_car",
+        "min_health": 55
+      }
+    },
+    {
+      "id": "trans_boat_skipper",
+      "title": "Coastal Marine Vessel Skipper",
+      "category": "aviation_maritime",
+      "workplace": "Blue Horizon Charters",
+      "salary": 62000,
+      "description": "Navigate offshore nautical routes, read radar navigation tides, and captain private passenger yachts.",
+      "min_age": 21,
+      "requirements": {
+        "required_license": "license_boating",
+        "min_health": 60
+      }
+    },
+    {
+      "id": "trans_logistics_director",
+      "title": "Global Supply Chain Director",
+      "category": "aviation_maritime",
+      "workplace": "Pan-Pacific Cargo Ltd",
+      "salary": 98000,
+      "description": "Coordinate international intermodal container fleets, optimize automated port logistics, and customs clearance.",
+      "min_age": 24,
+      "requirements": {
+        "min_education": "University Graduate",
+        "required_major": "logistics",
+        "min_smarts": 78
+      }
+    },
+    {
+      "id": "trans_airline_pilot",
+      "title": "Commercial Airline Captain",
+      "category": "aviation_maritime",
+      "workplace": "Skyward International Airways",
+      "salary": 165000,
+      "description": "Pilot twin-engine passenger jets across transcontinental flights, manage cockpit avionics, and instrument landings.",
+      "min_age": 23,
+      "requirements": {
+        "required_license": "license_pilot",
+        "min_smarts": 80,
+        "min_health": 75
       }
     }
   ]

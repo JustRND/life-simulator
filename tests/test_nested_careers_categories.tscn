@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://dopdm3p501ggl"]
+
+[ext_resource type="Script" path="res://tests/test_nested_careers_categories.gd" id="1_test"]
+
+[node name="TestNestedCareersCategories" type="Node"]
+script = ExtResource("1_test")

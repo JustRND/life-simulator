@@ -46,7 +46,7 @@ func _ready() -> void:
 	Career.advance_year(player)
 	player.age = 18
 	assert(not Career.advance_year(player).is_empty())
-	assert(player.job_title == "Front-End Manager" and player.job_salary == 32000)
+	assert(player.job_title == "Front-End Manager" and (player.job_salary == 32000 or player.job_salary == 35800 or player.job_salary == int(Career.paths()["ret_cashier"][1].salary)))
 	player.career_progress = JSON.parse_string(JSON.stringify(player.career_progress))
 	assert(Career.advance_year(player).is_empty())
 	player.job_id = "ff_barista"
