@@ -886,7 +886,7 @@ static func can_purchase_asset(player_data: Node, item_id: String) -> Dictionary
 	if category == CATEGORY_CARS and not player_data.has_license("license_car"):
 		return {
 			"allowed": false,
-			"reason": "Requires Passenger Driver's License (Class C). Take the qualification exam in Activities -> Licensing first!"
+			"reason": "Requires Driver's License (Class C). Take the qualification exam in Activities -> Licensing first!"
 		}
 	if category == CATEGORY_MOTORCYCLES and not player_data.has_license("license_motorcycle"):
 		return {

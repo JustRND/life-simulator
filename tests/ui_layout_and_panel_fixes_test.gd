@@ -175,7 +175,7 @@ func test_vehicle_purchase_license_gating() -> void:
 	# 1. Car requires license_car
 	var car_eval := AssetCatalog.can_purchase_asset(PlayerData, "car_sedan")
 	assert(not bool(car_eval.get("allowed", false)), "Car purchase must be blocked without car license")
-	assert(str(car_eval.get("reason", "")).contains("Passenger Driver's License"), "Reason must mention Passenger Driver's License: %s" % car_eval.get("reason"))
+	assert(str(car_eval.get("reason", "")).contains("Driver's License"), "Reason must mention Driver's License: %s" % car_eval.get("reason"))
 
 	# 2. Motorcycle requires license_motorcycle
 	var moto_eval := AssetCatalog.can_purchase_asset(PlayerData, "moto_cruiser")

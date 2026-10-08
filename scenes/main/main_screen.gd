@@ -93,7 +93,10 @@ var jobs_modal_overlay: Control = null
 var job_category_modal_overlay: Control = null
 var freelance_modal_overlay: Control = null
 var licensing_modal_overlay: Control = null
+var license_category_modal_overlay: Control = null
+var driving_exam_modal_overlay: Control = null
 var business_modal_overlay: Control = null
+var business_category_modal_overlay: Control = null
 var education_modal_overlay: Control = null
 var university_modal_overlay: Control = null
 var shopping_modal_overlay: Control = null
@@ -2681,7 +2684,7 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		match category:
 			AssetCatalog.CATEGORY_CARS:
 				has_veh_license = PlayerData.has_license("license_car")
-				lic_required_name = "Passenger Driver's License (Class C)"
+				lic_required_name = "Driver's License (Class C)"
 			AssetCatalog.CATEGORY_MOTORCYCLES:
 				has_veh_license = PlayerData.has_license("license_motorcycle")
 				lic_required_name = "Motorcycle Operator License (Class M)"
@@ -5325,9 +5328,207 @@ func _show_simple_popup(title_text: String, msg_text: String, border_color: Colo
 # -----------------------------------------------------------------------------
 # LICENSING & STATE CERTIFICATIONS SYSTEM
 # -----------------------------------------------------------------------------
+const ROAD_SIGN_QUIZ: Array[Dictionary] = [
+	{
+		"id": "sign_stop",
+		"title": "STOP SIGN",
+		"icon": "🛑",
+		"sign_type": "REGULATORY MANDATE",
+		"bg_color": "#b91c1c",
+		"border_color": "#ffffff",
+		"text_color": "#ffffff",
+		"sign_text": "STOP",
+		"meaning": "Come to a complete stop before the stop line, crosswalk, or intersection and yield right-of-way.",
+		"distractors": [
+			"Slow down to 5 mph and roll through if intersection is clear.",
+			"Stop only if oncoming vehicles or pedestrians are actively present.",
+			"Yield right-of-way but maintaining rolling speed is permitted when turning right."
+		]
+	},
+	{
+		"id": "sign_yield",
+		"title": "YIELD / GIVE WAY SIGN",
+		"icon": "🔻",
+		"sign_type": "REGULATORY PRIORITY",
+		"bg_color": "#dc2626",
+		"border_color": "#ffffff",
+		"text_color": "#ffffff",
+		"sign_text": "YIELD",
+		"meaning": "Slow down and give right-of-way to all vehicles and pedestrians on the cross street.",
+		"distractors": [
+			"Always make a complete 3-second stop before proceeding.",
+			"Accelerate to merge before oncoming vehicles can reach your lane.",
+			"Vehicles on the merging side street have priority over highway traffic."
+		]
+	},
+	{
+		"id": "sign_no_entry",
+		"title": "DO NOT ENTER / NO ENTRY SIGN",
+		"icon": "⛔",
+		"sign_type": "REGULATORY PROHIBITION",
+		"bg_color": "#dc2626",
+		"border_color": "#ffffff",
+		"text_color": "#ffffff",
+		"sign_text": "DO NOT ENTER",
+		"meaning": "Road is closed to all vehicular traffic from this direction (one-way or restricted street).",
+		"distractors": [
+			"Authorized delivery vehicles and motorcycles may enter at any time.",
+			"Proceed with caution during non-peak daytime hours.",
+			"Entry is allowed only when following emergency vehicles."
+		]
+	},
+	{
+		"id": "sign_slippery",
+		"title": "SLIPPERY WHEN WET SIGN",
+		"icon": "🌧️",
+		"sign_type": "HAZARD WARNING",
+		"bg_color": "#ca8a04",
+		"border_color": "#000000",
+		"text_color": "#000000",
+		"sign_text": "SLIPPERY",
+		"meaning": "Roadway becomes slick during wet conditions; reduce speed and increase braking distance.",
+		"distractors": [
+			"Tire chains are mandatory at all times on this stretch of road.",
+			"Vehicle hydroplaning is impossible below 55 mph on this surface.",
+			"Flooded road ahead; vehicles must turn around immediately."
+		]
+	},
+	{
+		"id": "sign_pedestrian",
+		"title": "PEDESTRIAN & SCHOOL CROSSING",
+		"icon": "🚸",
+		"sign_type": "PEDESTRIAN SAFETY WARNING",
+		"bg_color": "#ca8a04",
+		"border_color": "#000000",
+		"text_color": "#000000",
+		"sign_text": "CROSSING",
+		"meaning": "Pedestrians or schoolchildren may be crossing ahead; be prepared to slow down or stop.",
+		"distractors": [
+			"Pedestrians must yield to oncoming motor vehicles in this zone.",
+			"Honk horn twice when approaching this area to alert pedestrians.",
+			"Pedestrian crossing is only active after sunset."
+		]
+	},
+	{
+		"id": "sign_curve",
+		"title": "SHARP CURVE / WINDING ROAD",
+		"icon": "⚠️",
+		"sign_type": "ROADWAY ALIGNMENT WARNING",
+		"bg_color": "#ca8a04",
+		"border_color": "#000000",
+		"text_color": "#000000",
+		"sign_text": "SHARP CURVE",
+		"meaning": "Sharp bend or winding curve in roadway ahead; decelerate to safe advisory speed.",
+		"distractors": [
+			"Maintain speed to carry momentum safely through the turn.",
+			"Passing and overtaking vehicles is encouraged on this bend.",
+			"Lane splits into two separate one-way lanes ahead."
+		]
+	},
+	{
+		"id": "sign_roundabout",
+		"title": "ROUNDABOUT / CIRCULAR INTERSECTION",
+		"icon": "🔄",
+		"sign_type": "INTERSECTION CONTROL",
+		"bg_color": "#0284c7",
+		"border_color": "#ffffff",
+		"text_color": "#ffffff",
+		"sign_text": "ROUNDABOUT",
+		"meaning": "Approach a traffic circle; yield right-of-way to circulating traffic already in the ring.",
+		"distractors": [
+			"Vehicles entering the roundabout always have priority over circulating traffic.",
+			"Come to a full stop before entering even if the roundabout is completely clear.",
+			"Vehicles inside the circle must stop to allow waiting cars to enter."
+		]
+	},
+	{
+		"id": "sign_no_u_turn",
+		"title": "NO U-TURN PERMITTED",
+		"icon": "🚫",
+		"sign_type": "REGULATORY PROHIBITION",
+		"bg_color": "#ffffff",
+		"border_color": "#dc2626",
+		"text_color": "#dc2626",
+		"sign_text": "NO U-TURN",
+		"meaning": "Turning around 180 degrees to reverse direction of travel is strictly prohibited.",
+		"distractors": [
+			"U-turns are permitted if no vehicles are visible within 200 feet.",
+			"Only commercial trucks are forbidden from executing a U-turn.",
+			"U-turns are permitted during green arrow light phases only."
+		]
+	},
+	{
+		"id": "sign_bike_lane",
+		"title": "BICYCLE ROUTE CROSSING",
+		"icon": "🚴",
+		"sign_type": "SHARED ROADWAY WARNING",
+		"bg_color": "#ca8a04",
+		"border_color": "#000000",
+		"text_color": "#000000",
+		"sign_text": "BIKE LANE",
+		"meaning": "Bicycle pathway crosses or shares the roadway; check blind spots and maintain 3+ feet clearance.",
+		"distractors": [
+			"Motorcycles and cars may park in the bicycle lane during daytime.",
+			"Cyclists are required to ride on the opposite side against vehicular traffic.",
+			"Motorists have exclusive right-of-way over cyclists at all intersections."
+		]
+	},
+	{
+		"id": "sign_fuel",
+		"title": "HIGHWAY SERVICE & FUEL STATION",
+		"icon": "⛽",
+		"sign_type": "MOTORIST SERVICE GUIDE",
+		"bg_color": "#1d4ed8",
+		"border_color": "#ffffff",
+		"text_color": "#ffffff",
+		"sign_text": "FUEL & EV",
+		"meaning": "Motor vehicle service, fueling station, or EV fast charging is available at this exit.",
+		"distractors": [
+			"Hazardous fuel transport trucks have exclusive lane access ahead.",
+			"Flammable materials are strictly prohibited beyond this point.",
+			"Toll booth requiring exact fuel tax payment is located ahead."
+		]
+	},
+	{
+		"id": "sign_parking",
+		"title": "AUTHORIZED PARKING ZONE",
+		"icon": "🅿️",
+		"sign_type": "PUBLIC GUIDE & PERMIT",
+		"bg_color": "#1d4ed8",
+		"border_color": "#ffffff",
+		"text_color": "#ffffff",
+		"sign_text": "PARKING",
+		"meaning": "Designated public vehicle parking facility or street parking zone.",
+		"distractors": [
+			"Stopping and idling is prohibited in this entire municipal sector.",
+			"Designated police emergency vehicle parking only.",
+			"Paid vehicle permit is required for any pedestrian walking through."
+		]
+	},
+	{
+		"id": "sign_construction",
+		"title": "ROAD WORK / CONSTRUCTION ZONE",
+		"icon": "🚧",
+		"sign_type": "CONSTRUCTION WARNING",
+		"bg_color": "#ea580c",
+		"border_color": "#000000",
+		"text_color": "#000000",
+		"sign_text": "ROAD WORK",
+		"meaning": "Highway maintenance, road crew or heavy equipment ahead; obey flaggers and speed reductions.",
+		"distractors": [
+			"Highway is permanently closed; all traffic must take an alternate interstate.",
+			"Speed limit increases to expedite clearing through the work zone.",
+			"Fines for traffic violations are waived in construction corridors."
+		]
+	}
+]
+
+
 func _show_licensing_modal() -> void:
 	if licensing_modal_overlay != null and is_instance_valid(licensing_modal_overlay):
 		licensing_modal_overlay.queue_free()
+	if license_category_modal_overlay != null and is_instance_valid(license_category_modal_overlay):
+		license_category_modal_overlay.queue_free()
 
 	var modal := _create_cyber_modal("📜 LICENSING & STATE CERTIFICATIONS", "State Boards, Trade Qualifications & Professional Permits", Color("#06b6d4"))
 	licensing_modal_overlay = modal.overlay
@@ -5354,26 +5555,87 @@ func _show_licensing_modal() -> void:
 	iv.add_child(ih)
 
 	var idesc := Label.new()
-	idesc.text = "Earn boating, driving and professional licenses here. Aviation progression: complete Flight School, then take the Pilot License exam. School completion alone does not authorize aircraft operation.\n\nAvailable Funds: $%s Cash  •  $%s Bank Savings" % [_format_number(PlayerData.money), _format_number(PlayerData.bank_savings)]
+	idesc.text = "Select a licensing sector below to review state qualifications, age criteria, and certification examinations.\n\nAvailable Funds: $%s Cash  •  $%s Bank Savings" % [
+		_format_number(PlayerData.money),
+		_format_number(PlayerData.bank_savings)
+	]
 	idesc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	idesc.add_theme_font_size_override("font_size", 22)
 	idesc.add_theme_color_override("font_color", Color("#cbd5e1"))
 	iv.add_child(idesc)
 	list.add_child(info_card)
 
-	var all_lics := LicenseManager.get_all_licenses()
-	for lic in all_lics:
-		var lic_id: String = str(lic["id"])
-		var lic_name: String = str(lic["name"])
-		var lic_icon: String = str(lic["icon"])
-		var fee: int = int(lic["fee"])
-		var min_age: int = int(lic["min_age"])
-		var unlocked: String = str(lic["unlocked_feature"])
-		var desc: String = str(lic["description"])
+	# Dedicated Category Buttons
+	var all_categories: Array = LicenseManager.get_categories()
+	for cat in all_categories:
+		if cat is not Dictionary:
+			continue
+		var cat_id: String = str(cat.get("id", ""))
+		var cat_name: String = str(cat.get("name", "License Sector"))
+		var cat_icon: String = str(cat.get("icon", "📜"))
+		var cat_desc_text: String = str(cat.get("description", ""))
+		var cat_color: Color = Color(cat.get("color", "#06b6d4"))
+		var cat_licenses: Array = LicenseManager.get_licenses_in_category(cat_id)
+
+		var btn_label := "%s %s (%d Certifications)\n%s" % [cat_icon, cat_name, cat_licenses.size(), cat_desc_text]
+		var cat_btn := _create_cyber_button(btn_label, cat_color, func():
+			_show_license_category_modal(cat_id)
+		)
+		cat_btn.custom_minimum_size.y = 82
+		cat_btn.add_theme_font_size_override("font_size", 24)
+		list.add_child(cat_btn)
+
+	licensing_modal_overlay.visible = true
+
+
+func _show_license_category_modal(category_id: String) -> void:
+	if license_category_modal_overlay != null and is_instance_valid(license_category_modal_overlay):
+		license_category_modal_overlay.queue_free()
+	if licensing_modal_overlay != null and is_instance_valid(licensing_modal_overlay):
+		licensing_modal_overlay.queue_free()
+
+	var cat: Dictionary = LicenseManager.get_category_by_id(category_id)
+	var cat_name: String = str(cat.get("name", "License Category"))
+	var cat_icon: String = str(cat.get("icon", "📜"))
+	var cat_desc_text: String = str(cat.get("description", "Certified qualifications and state licenses."))
+	var cat_color: Color = Color(cat.get("color", "#06b6d4"))
+
+	var modal := _create_cyber_modal("%s %s" % [cat_icon, cat_name.to_upper()], cat_desc_text, cat_color)
+	license_category_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var close_btn: Button = modal.get("close_btn")
+	if close_btn != null:
+		close_btn.pressed.connect(func():
+			_show_licensing_modal()
+		)
+
+	# Back button
+	var back_btn := _create_cyber_button("← Back to All Licensing Sectors", cat_color, func():
+		if is_instance_valid(license_category_modal_overlay):
+			license_category_modal_overlay.queue_free()
+		_show_licensing_modal()
+	)
+	back_btn.custom_minimum_size.y = 70
+	back_btn.add_theme_font_size_override("font_size", 24)
+	list.add_child(back_btn)
+
+	# Licenses in this category
+	var category_lics: Array = LicenseManager.get_licenses_in_category(category_id)
+	for lic in category_lics:
+		if lic is not Dictionary:
+			continue
+		var lic_id: String = str(lic.get("id", ""))
+		var lic_name: String = str(lic.get("name", ""))
+		var lic_icon: String = str(lic.get("icon", "📜"))
+		var fee: int = int(lic.get("fee", 0))
+		var min_age: int = int(lic.get("min_age", 18))
+		var unlocked: String = str(lic.get("unlocked_feature", ""))
+		var desc: String = str(lic.get("description", ""))
 
 		var card := PanelContainer.new()
 		var is_certified: bool = PlayerData.has_license(lic_id)
-		var theme_col: Color = Color("#10b981") if is_certified else Color("#0891b2")
+		var theme_col: Color = Color("#10b981") if is_certified else cat_color
 		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(theme_col))
 
 		var cm := MarginContainer.new()
@@ -5436,20 +5698,30 @@ func _show_licensing_modal() -> void:
 		else:
 			var eval := LicenseManager.can_take_license(lic_id)
 			if bool(eval.get("allowed", false)):
-				var action_text := "✈ Pay $%s & Complete Flight School" if bool(lic.get("is_course", false)) else "📜 Pay $%s & Take Qualification Exam"
-				var btn_take := _create_cyber_button(action_text % _format_number(fee), Color("#06b6d4"), func():
-					var res := LicenseManager.take_license(lic_id)
-					if bool(res.get("allowed", false)):
-						add_life_event(str(res.get("message", "License acquired!")), "milestone")
-						update_ui()
-						SaveManager.save_game()
-						_show_licensing_modal()
-					else:
-						add_life_event(str(res.get("reason", "Could not take exam.")), "activity")
-				)
-				btn_take.custom_minimum_size.y = 52
-				btn_take.add_theme_font_size_override("font_size", 22)
-				cv.add_child(btn_take)
+				# ONLY motorcycle and driver's license get the minigame
+				if lic_id == "license_motorcycle" or lic_id == "license_car":
+					var action_text := "🚦 Pay $%s & Take Driving Sign Exam" % _format_number(fee)
+					var btn_exam := _create_cyber_button(action_text, cat_color, func():
+						_start_driving_exam_minigame(lic_id, category_id)
+					)
+					btn_exam.custom_minimum_size.y = 52
+					btn_exam.add_theme_font_size_override("font_size", 22)
+					cv.add_child(btn_exam)
+				else:
+					var action_text := "✈ Pay $%s & Complete Flight School" if bool(lic.get("is_course", false)) else "📜 Pay $%s & Take Qualification Exam"
+					var btn_take := _create_cyber_button(action_text % _format_number(fee), cat_color, func():
+						var res := LicenseManager.take_license(lic_id)
+						if bool(res.get("allowed", false)):
+							add_life_event(str(res.get("message", "License acquired!")), "milestone")
+							update_ui()
+							SaveManager.save_game()
+							_show_license_category_modal(category_id)
+						else:
+							add_life_event(str(res.get("reason", "Could not take exam.")), "activity")
+					)
+					btn_take.custom_minimum_size.y = 52
+					btn_take.add_theme_font_size_override("font_size", 22)
+					cv.add_child(btn_take)
 			else:
 				var lk_btn := _create_disabled_cyber_button(str(eval.get("reason", "Ineligible to take qualification exam.")))
 				lk_btn.custom_minimum_size.y = 52
@@ -5458,7 +5730,389 @@ func _show_licensing_modal() -> void:
 
 		list.add_child(card)
 
-	licensing_modal_overlay.visible = true
+	license_category_modal_overlay.visible = true
+
+
+func _start_driving_exam_minigame(license_id: String, category_id: String = "vehicle") -> void:
+	var eval := LicenseManager.can_take_license(license_id)
+	if not bool(eval.get("allowed", false)):
+		_show_simple_popup("EXAMINATION INELIGIBLE", str(eval.get("reason", "Ineligible to take exam.")), Color("#ef4444"))
+		return
+
+	if license_category_modal_overlay != null and is_instance_valid(license_category_modal_overlay):
+		license_category_modal_overlay.queue_free()
+	if licensing_modal_overlay != null and is_instance_valid(licensing_modal_overlay):
+		licensing_modal_overlay.queue_free()
+	if driving_exam_modal_overlay != null and is_instance_valid(driving_exam_modal_overlay):
+		driving_exam_modal_overlay.queue_free()
+
+	# Pick 3 random distinct questions from ROAD_SIGN_QUIZ
+	var pool := ROAD_SIGN_QUIZ.duplicate()
+	pool.shuffle()
+	var selected_questions: Array = []
+	for i in range(mini(3, pool.size())):
+		selected_questions.append(pool[i])
+
+	var exam_state := {
+		"license_id": license_id,
+		"category_id": category_id,
+		"questions": selected_questions,
+		"q_index": 0,
+		"score": 0
+	}
+	_render_driving_exam_step(exam_state)
+
+
+func _render_driving_exam_step(exam_state: Dictionary) -> void:
+	if driving_exam_modal_overlay != null and is_instance_valid(driving_exam_modal_overlay):
+		driving_exam_modal_overlay.queue_free()
+
+	var q_idx: int = int(exam_state.get("q_index", 0))
+	var questions: Array = exam_state.get("questions", [])
+	if q_idx >= questions.size():
+		_render_driving_exam_results(exam_state)
+		return
+
+	var current_q: Dictionary = questions[q_idx]
+	var lic_def := LicenseManager.get_license_by_id(str(exam_state.get("license_id", "")))
+	var lic_name: String = str(lic_def.get("name", "Driver's License"))
+
+	var modal := _create_cyber_modal(
+		"🚦 ROAD SIGN EXAM — QUESTION %d OF %d" % [q_idx + 1, questions.size()],
+		"Demonstrate official road sign identification to qualify for your %s." % lic_name,
+		Color("#38bdf8")
+	)
+	driving_exam_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var close_btn: Button = modal.get("close_btn")
+	if close_btn != null:
+		close_btn.pressed.connect(func():
+			if is_instance_valid(driving_exam_modal_overlay):
+				driving_exam_modal_overlay.queue_free()
+			_show_license_category_modal(str(exam_state.get("category_id", "vehicle")))
+		)
+
+	# Score & Progress Tracker Bar
+	var tracker := PanelContainer.new()
+	tracker.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#38bdf8")))
+	var tm := MarginContainer.new()
+	tm.add_theme_constant_override("margin_left", 16)
+	tm.add_theme_constant_override("margin_right", 16)
+	tm.add_theme_constant_override("margin_top", 10)
+	tm.add_theme_constant_override("margin_bottom", 10)
+	tracker.add_child(tm)
+
+	var thbox := HBoxContainer.new()
+	var tlbl := Label.new()
+	tlbl.text = "📋 Progress: Question %d of %d  •  Passing Standard: 2 of 3" % [
+		q_idx + 1,
+		questions.size()
+	]
+	tlbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tlbl.add_theme_font_size_override("font_size", 21)
+	tlbl.add_theme_color_override("font_color", Color("#93c5fd"))
+	thbox.add_child(tlbl)
+
+	var score_lbl := Label.new()
+	score_lbl.text = "Current Score: %d" % int(exam_state.get("score", 0))
+	score_lbl.add_theme_font_size_override("font_size", 22)
+	score_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
+	thbox.add_child(score_lbl)
+	tm.add_child(thbox)
+	list.add_child(tracker)
+
+	# Traffic Sign Visual Card
+	var sign_card := PanelContainer.new()
+	sign_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#1e293b")))
+	var sm := MarginContainer.new()
+	sm.add_theme_constant_override("margin_left", 20)
+	sm.add_theme_constant_override("margin_right", 20)
+	sm.add_theme_constant_override("margin_top", 18)
+	sm.add_theme_constant_override("margin_bottom", 18)
+	sign_card.add_child(sm)
+
+	var sv := VBoxContainer.new()
+	sv.alignment = BoxContainer.ALIGNMENT_CENTER
+	sv.add_theme_constant_override("separation", 12)
+	sm.add_child(sv)
+
+	var stype_lbl := Label.new()
+	stype_lbl.text = "OFFICIAL TRAFFIC SIGN: [ %s ]" % str(current_q.get("sign_type", "ROAD SIGN"))
+	stype_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stype_lbl.add_theme_font_size_override("font_size", 20)
+	stype_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
+	sv.add_child(stype_lbl)
+
+	# Graphic Sign Display Container
+	var sign_box := PanelContainer.new()
+	var sign_sb := StyleBoxFlat.new()
+	sign_sb.bg_color = Color(str(current_q.get("bg_color", "#b91c1c")))
+	sign_sb.border_color = Color(str(current_q.get("border_color", "#ffffff")))
+	sign_sb.set_border_width_all(4)
+	sign_sb.set_corner_radius_all(14)
+	sign_box.add_theme_stylebox_override("panel", sign_sb)
+	sign_box.custom_minimum_size = Vector2(300, 160)
+	sign_box.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+
+	var sbm := MarginContainer.new()
+	sbm.add_theme_constant_override("margin_left", 24)
+	sbm.add_theme_constant_override("margin_right", 24)
+	sbm.add_theme_constant_override("margin_top", 16)
+	sbm.add_theme_constant_override("margin_bottom", 16)
+	sign_box.add_child(sbm)
+
+	var sbv := VBoxContainer.new()
+	sbv.alignment = BoxContainer.ALIGNMENT_CENTER
+	sbv.add_theme_constant_override("separation", 6)
+	sbm.add_child(sbv)
+
+	var icon_lbl := Label.new()
+	icon_lbl.text = str(current_q.get("icon", "🛑"))
+	icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	icon_lbl.add_theme_font_size_override("font_size", 54)
+	sbv.add_child(icon_lbl)
+
+	var sign_text_str: String = str(current_q.get("sign_text", ""))
+	if not sign_text_str.is_empty():
+		var text_lbl := Label.new()
+		text_lbl.text = sign_text_str
+		text_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		text_lbl.add_theme_font_size_override("font_size", 24)
+		text_lbl.add_theme_color_override("font_color", Color(str(current_q.get("text_color", "#ffffff"))))
+		sbv.add_child(text_lbl)
+
+	sv.add_child(sign_box)
+
+	var prompt_lbl := Label.new()
+	prompt_lbl.text = "❓ What is the legal meaning of this road sign?"
+	prompt_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	prompt_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	prompt_lbl.add_theme_font_size_override("font_size", 24)
+	prompt_lbl.add_theme_color_override("font_color", Color("#ffffff"))
+	sv.add_child(prompt_lbl)
+
+	list.add_child(sign_card)
+
+	# Feedback container placeholder
+	var feedback_container := VBoxContainer.new()
+	feedback_container.add_theme_constant_override("separation", 8)
+	list.add_child(feedback_container)
+
+	# Options Builder
+	var correct_meaning: String = str(current_q.get("meaning", ""))
+	var options_list: Array[String] = [correct_meaning]
+	var distractors: Array = current_q.get("distractors", [])
+	for d in distractors:
+		options_list.append(str(d))
+	options_list.shuffle()
+
+	var option_buttons: Array[Button] = []
+	var letters := ["A", "B", "C", "D"]
+
+	for i in range(options_list.size()):
+		var opt_text: String = options_list[i]
+		var letter_prefix: String = letters[i] if i < letters.size() else str(i + 1)
+		var btn_label := "%s)  %s" % [letter_prefix, opt_text]
+
+		var opt_btn := _create_cyber_button(btn_label, Color("#0284c7"))
+		opt_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		opt_btn.custom_minimum_size.y = 64
+		opt_btn.add_theme_font_size_override("font_size", 21)
+		opt_btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+
+		opt_btn.pressed.connect(func():
+			# Disable all option buttons immediately
+			for b in option_buttons:
+				b.disabled = true
+
+			var is_correct: bool = (opt_text == correct_meaning)
+			if is_correct:
+				exam_state["score"] = int(exam_state.get("score", 0)) + 1
+				score_lbl.text = "Current Score: %d" % int(exam_state["score"])
+
+				var win_sb := StyleBoxFlat.new()
+				win_sb.bg_color = Color("#064e3b")
+				win_sb.border_color = Color("#10b981")
+				win_sb.set_border_width_all(3)
+				win_sb.set_corner_radius_all(8)
+				opt_btn.add_theme_stylebox_override("disabled", win_sb)
+				opt_btn.add_theme_color_override("font_disabled_color", Color("#6ee7b7"))
+
+				var fb_card := PanelContainer.new()
+				fb_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#10b981")))
+				var fbm := MarginContainer.new()
+				fbm.add_theme_constant_override("margin_left", 16)
+				fbm.add_theme_constant_override("margin_right", 16)
+				fbm.add_theme_constant_override("margin_top", 12)
+				fbm.add_theme_constant_override("margin_bottom", 12)
+				fb_card.add_child(fbm)
+
+				var fb_lbl := Label.new()
+				fb_lbl.text = "✓ CORRECT ANSWER! %s" % correct_meaning
+				fb_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				fb_lbl.add_theme_font_size_override("font_size", 22)
+				fb_lbl.add_theme_color_override("font_color", Color("#6ee7b7"))
+				fbm.add_child(fb_lbl)
+				feedback_container.add_child(fb_card)
+			else:
+				var lose_sb := StyleBoxFlat.new()
+				lose_sb.bg_color = Color("#7f1d1d")
+				lose_sb.border_color = Color("#ef4444")
+				lose_sb.set_border_width_all(3)
+				lose_sb.set_corner_radius_all(8)
+				opt_btn.add_theme_stylebox_override("disabled", lose_sb)
+				opt_btn.add_theme_color_override("font_disabled_color", Color("#fca5a5"))
+
+				# Highlight the correct one
+				for b in option_buttons:
+					if b.text.contains(correct_meaning):
+						var correct_sb := StyleBoxFlat.new()
+						correct_sb.bg_color = Color("#064e3b")
+						correct_sb.border_color = Color("#10b981")
+						correct_sb.set_border_width_all(3)
+						correct_sb.set_corner_radius_all(8)
+						b.add_theme_stylebox_override("disabled", correct_sb)
+						b.add_theme_color_override("font_disabled_color", Color("#6ee7b7"))
+
+				var fb_card := PanelContainer.new()
+				fb_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#ef4444")))
+				var fbm := MarginContainer.new()
+				fbm.add_theme_constant_override("margin_left", 16)
+				fbm.add_theme_constant_override("margin_right", 16)
+				fbm.add_theme_constant_override("margin_top", 12)
+				fbm.add_theme_constant_override("margin_bottom", 12)
+				fb_card.add_child(fbm)
+
+				var fb_lbl := Label.new()
+				fb_lbl.text = "❌ INCORRECT. The correct road rule is:\n%s" % correct_meaning
+				fb_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				fb_lbl.add_theme_font_size_override("font_size", 22)
+				fb_lbl.add_theme_color_override("font_color", Color("#fca5a5"))
+				fbm.add_child(fb_lbl)
+				feedback_container.add_child(fb_card)
+
+			var is_last_q := (q_idx + 1 >= questions.size())
+			var next_text := "🏁 View Final Examination Results →" if is_last_q else "Continue to Next Question (%d of %d) →" % [q_idx + 2, questions.size()]
+			var next_btn := _create_cyber_button(next_text, Color("#10b981") if is_correct else Color("#38bdf8"), func():
+				exam_state["q_index"] = q_idx + 1
+				_render_driving_exam_step(exam_state)
+			)
+			next_btn.custom_minimum_size.y = 56
+			next_btn.add_theme_font_size_override("font_size", 22)
+			feedback_container.add_child(next_btn)
+		)
+
+		option_buttons.append(opt_btn)
+		list.add_child(opt_btn)
+
+	driving_exam_modal_overlay.visible = true
+
+
+func _render_driving_exam_results(exam_state: Dictionary) -> void:
+	if driving_exam_modal_overlay != null and is_instance_valid(driving_exam_modal_overlay):
+		driving_exam_modal_overlay.queue_free()
+
+	var score: int = int(exam_state.get("score", 0))
+	var total: int = int(exam_state.get("questions", []).size())
+	var passed: bool = (score >= 2)
+	var lic_id: String = str(exam_state.get("license_id", ""))
+	var lic_def := LicenseManager.get_license_by_id(lic_id)
+	var lic_name: String = str(lic_def.get("name", "Driver's License"))
+	var lic_icon: String = str(lic_def.get("icon", "🚗"))
+	var cat_id: String = str(exam_state.get("category_id", "vehicle"))
+
+	var theme_color := Color("#10b981") if passed else Color("#ef4444")
+	var title_text := "🎉 DRIVING EXAM PASSED!" if passed else "❌ DRIVING EXAM FAILED"
+	var subtitle_text := "Official State Department of Motor Vehicles Examination Scorecard"
+
+	var modal := _create_cyber_modal(title_text, subtitle_text, theme_color)
+	driving_exam_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var close_btn: Button = modal.get("close_btn")
+	if close_btn != null:
+		close_btn.pressed.connect(func():
+			if is_instance_valid(driving_exam_modal_overlay):
+				driving_exam_modal_overlay.queue_free()
+			_show_license_category_modal(cat_id)
+		)
+
+	var res_card := PanelContainer.new()
+	res_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(theme_color))
+	var rm := MarginContainer.new()
+	rm.add_theme_constant_override("margin_left", 24)
+	rm.add_theme_constant_override("margin_right", 24)
+	rm.add_theme_constant_override("margin_top", 20)
+	rm.add_theme_constant_override("margin_bottom", 20)
+	res_card.add_child(rm)
+
+	var rv := VBoxContainer.new()
+	rv.add_theme_constant_override("separation", 14)
+	rm.add_child(rv)
+
+	var score_header := Label.new()
+	score_header.text = "EXAMINATION SCORE: %d / %d (Passing Standard: 2/3)" % [score, total]
+	score_header.add_theme_font_size_override("font_size", 26)
+	score_header.add_theme_color_override("font_color", Color("#ffffff"))
+	rv.add_child(score_header)
+
+	if passed:
+		var grant_res := LicenseManager.take_license(lic_id)
+		if bool(grant_res.get("allowed", false)):
+			add_life_event(str(grant_res.get("message", "Earned %s!" % lic_name)), "milestone")
+			update_ui()
+			SaveManager.save_game()
+
+		var pass_desc := Label.new()
+		pass_desc.text = "Congratulations! You correctly identified the road signs and demonstrated state driving competency.\n\nYour official %s has been stamped, registered, and authorized on your public record!" % lic_name
+		pass_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		pass_desc.add_theme_font_size_override("font_size", 22)
+		pass_desc.add_theme_color_override("font_color", Color("#a7f3d0"))
+		rv.add_child(pass_desc)
+
+		var badge_lbl := Label.new()
+		badge_lbl.text = "%s  %s — Active Qualification Granted!" % [lic_icon, lic_name]
+		badge_lbl.add_theme_font_size_override("font_size", 24)
+		badge_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
+		rv.add_child(badge_lbl)
+	else:
+		var fail_desc := Label.new()
+		fail_desc.text = "You scored %d / %d. The state road bureau requires a minimum score of 2 out of 3 correct answers to certify driving qualifications.\n\nNo license fee was charged. You may review traffic signs and retake the test at any time." % [score, total]
+		fail_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		fail_desc.add_theme_font_size_override("font_size", 22)
+		fail_desc.add_theme_color_override("font_color", Color("#fca5a5"))
+		rv.add_child(fail_desc)
+
+	list.add_child(res_card)
+
+	if passed:
+		var back_btn := _create_cyber_button("✓ Return to Vehicle Licenses", Color("#10b981"), func():
+			if is_instance_valid(driving_exam_modal_overlay):
+				driving_exam_modal_overlay.queue_free()
+			_show_license_category_modal(cat_id)
+		)
+		back_btn.custom_minimum_size.y = 56
+		back_btn.add_theme_font_size_override("font_size", 22)
+		list.add_child(back_btn)
+	else:
+		var retake_btn := _create_cyber_button("🔄 Retake Examination", Color("#38bdf8"), func():
+			_start_driving_exam_minigame(lic_id, cat_id)
+		)
+		retake_btn.custom_minimum_size.y = 56
+		retake_btn.add_theme_font_size_override("font_size", 22)
+		list.add_child(retake_btn)
+
+		var exit_btn := _create_cyber_button("← Return to Vehicle Licenses", Color("#64748b"), func():
+			if is_instance_valid(driving_exam_modal_overlay):
+				driving_exam_modal_overlay.queue_free()
+			_show_license_category_modal(cat_id)
+		)
+		exit_btn.custom_minimum_size.y = 54
+		exit_btn.add_theme_font_size_override("font_size", 20)
+		list.add_child(exit_btn)
+
+	driving_exam_modal_overlay.visible = true
 
 
 # -----------------------------------------------------------------------------
@@ -5637,6 +6291,8 @@ func _show_freelance_modal() -> void:
 func _show_business_modal(initial_tab: String = "", selected_uid: String = "") -> void:
 	if business_modal_overlay != null and is_instance_valid(business_modal_overlay):
 		business_modal_overlay.queue_free()
+	if business_category_modal_overlay != null and is_instance_valid(business_category_modal_overlay):
+		business_category_modal_overlay.queue_free()
 
 	var modal := _create_cyber_modal("🏢 ENTERPRISES & COMMERCIAL VENTURES", "Found Companies, Manage Corporate Financials, Pay Taxes & Scale Ventures", Color("#f59e0b"))
 	business_modal_overlay = modal.overlay
@@ -5660,7 +6316,7 @@ func _show_business_modal(initial_tab: String = "", selected_uid: String = "") -
 	btn_tab_ent.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	tab_bar.add_child(btn_tab_ent)
 
-	var btn_tab_inc := _create_cyber_button("🚀 Incorporate (16 Types)", Color("#f59e0b") if tab == "incorporate" else Color("#475569"), func():
+	var btn_tab_inc := _create_cyber_button("🚀 Incorporate (7 Sectors)", Color("#f59e0b") if tab == "incorporate" else Color("#475569"), func():
 		_show_business_modal("incorporate", selected_uid)
 	)
 	btn_tab_inc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -5854,14 +6510,14 @@ func _render_business_tab_incorporate(list: VBoxContainer) -> void:
 	im.add_child(iv)
 
 	var ih := Label.new()
-	ih.text = "🏛️ 16 COMMERCIAL ENTERPRISE OPPORTUNITIES"
+	ih.text = "🏛️ COMMERCIAL ENTERPRISE SECTORS"
 	ih.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	ih.add_theme_font_size_override("font_size", 26)
 	ih.add_theme_color_override("font_color", Color("#fbbf24"))
 	iv.add_child(ih)
 
 	var idesc := Label.new()
-	idesc.text = "Founding a commercial enterprise requires completing a 4-year Bachelor's Degree in that specialized field at university. Startup capital initializes operations, storefronts, and working treasury.\n\nAvailable Funds: $%s Cash  •  $%s Bank" % [
+	idesc.text = "Founding a commercial enterprise requires completing a 4-year Bachelor's Degree in that specialized field at university. Startup capital initializes operations, storefronts, and working treasury.\n\nSelect a commercial sector below to explore business models and incorporation requirements.\n\nAvailable Funds: $%s Cash  •  $%s Bank" % [
 		_format_number(PlayerData.money),
 		_format_number(PlayerData.bank_savings)
 	]
@@ -5871,8 +6527,66 @@ func _render_business_tab_incorporate(list: VBoxContainer) -> void:
 	iv.add_child(idesc)
 	list.add_child(info_card)
 
-	var all_types := BusinessManager.get_all_business_types()
-	for b_def in all_types:
+	# Dedicated Sector Buttons (Matching Career & Occupations Pattern)
+	var all_categories: Array = BusinessManager.get_categories()
+	for cat in all_categories:
+		if cat is not Dictionary:
+			continue
+		var cat_id: String = str(cat.get("id", ""))
+		var cat_name: String = str(cat.get("name", "Business Sector"))
+		var cat_icon: String = str(cat.get("icon", "🏢"))
+		var cat_desc_text: String = str(cat.get("description", ""))
+		var cat_color: Color = Color(cat.get("color", "#f59e0b"))
+		var cat_businesses: Array = BusinessManager.get_businesses_in_category(cat_id)
+
+		var btn_label := "%s %s (%d Enterprises)\n%s" % [cat_icon, cat_name, cat_businesses.size(), cat_desc_text]
+		var cat_btn := _create_cyber_button(btn_label, cat_color, func():
+			_show_business_category_modal(cat_id)
+		)
+		cat_btn.custom_minimum_size.y = 82
+		cat_btn.add_theme_font_size_override("font_size", 24)
+		list.add_child(cat_btn)
+
+
+func _show_business_category_modal(category_id: String) -> void:
+	if business_category_modal_overlay != null and is_instance_valid(business_category_modal_overlay):
+		business_category_modal_overlay.queue_free()
+	if business_modal_overlay != null and is_instance_valid(business_modal_overlay):
+		business_modal_overlay.queue_free()
+
+	var cat: Dictionary = BusinessManager.get_category_by_id(category_id)
+	var cat_name: String = str(cat.get("name", "Commercial Sector"))
+	var cat_icon: String = str(cat.get("icon", "🏢"))
+	var cat_desc_text: String = str(cat.get("description", "Enterprise incorporation and commercial ventures."))
+	var cat_color: Color = Color(cat.get("color", "#f59e0b"))
+
+	var modal := _create_cyber_modal("%s %s" % [cat_icon, cat_name.to_upper()], cat_desc_text, cat_color)
+	business_category_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	var close_btn: Button = modal.get("close_btn")
+	if close_btn != null:
+		close_btn.pressed.connect(func():
+			if is_instance_valid(business_category_modal_overlay):
+				business_category_modal_overlay.queue_free()
+			_show_business_modal("incorporate")
+		)
+
+	# Back to Enterprise Sectors Button
+	var back_btn := _create_cyber_button("← Back to Enterprise Sectors", cat_color, func():
+		if is_instance_valid(business_category_modal_overlay):
+			business_category_modal_overlay.queue_free()
+		_show_business_modal("incorporate")
+	)
+	back_btn.custom_minimum_size.y = 70
+	back_btn.add_theme_font_size_override("font_size", 24)
+	list.add_child(back_btn)
+
+	# Businesses in this category
+	var category_businesses: Array = BusinessManager.get_businesses_in_category(category_id)
+	for b_def in category_businesses:
+		if b_def is not Dictionary:
+			continue
 		var b_id: String = str(b_def["id"])
 		var b_name: String = str(b_def["name"])
 		var b_icon: String = str(b_def["icon"])
@@ -5887,7 +6601,7 @@ func _render_business_tab_incorporate(list: VBoxContainer) -> void:
 		var has_degree: bool = BusinessManager.player_has_required_degree(req_maj)
 
 		var card := PanelContainer.new()
-		var border_col: Color = Color("#f59e0b") if has_degree else Color("#475569")
+		var border_col: Color = cat_color if has_degree else Color("#475569")
 		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(border_col))
 
 		var cm := MarginContainer.new()
@@ -5960,7 +6674,7 @@ func _render_business_tab_incorporate(list: VBoxContainer) -> void:
 
 				var edit_sb := StyleBoxFlat.new()
 				edit_sb.bg_color = Color("#071022")
-				edit_sb.border_color = Color("#f59e0b")
+				edit_sb.border_color = cat_color
 				edit_sb.set_border_width_all(2)
 				edit_sb.set_corner_radius_all(8)
 				edit_sb.content_margin_left = 16
@@ -5972,7 +6686,7 @@ func _render_business_tab_incorporate(list: VBoxContainer) -> void:
 				name_box.add_child(name_edit)
 				cv.add_child(name_box)
 
-				var btn_found := _create_cyber_button("🚀 Incorporate Enterprise ($%s Capital)" % _format_number(cost), Color("#f59e0b"), func():
+				var btn_found := _create_cyber_button("🚀 Incorporate Enterprise ($%s Capital)" % _format_number(cost), cat_color, func():
 					var custom_name := name_edit.text.strip_edges()
 					if custom_name.is_empty():
 						custom_name = b_name
@@ -5983,6 +6697,8 @@ func _render_business_tab_incorporate(list: VBoxContainer) -> void:
 						_show_simple_popup("🚀 ENTERPRISE INCORPORATED", "Congratulations! '%s' has been officially incorporated and registered.\n\nBusiness treasury seeded with $10,000 working capital." % registered_name, Color("#10b981"))
 						update_ui()
 						SaveManager.save_game()
+						if is_instance_valid(business_category_modal_overlay):
+							business_category_modal_overlay.queue_free()
 						_show_business_modal("financials", str(b_data.get("uid", "")))
 					else:
 						add_life_event(str(res.get("reason", "Could not incorporate.")), "activity")
@@ -6002,6 +6718,10 @@ func _render_business_tab_incorporate(list: VBoxContainer) -> void:
 			cv.add_child(lk_deg)
 
 		list.add_child(card)
+
+	business_category_modal_overlay.visible = true
+	if has_node("ThemeController"):
+		get_node("ThemeController").apply_subtree(business_category_modal_overlay)
 
 
 func _render_business_tab_financials(list: VBoxContainer, selected_uid: String) -> void:

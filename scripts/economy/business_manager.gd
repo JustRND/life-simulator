@@ -4,11 +4,64 @@ extends RefCounted
 const CORPORATE_TAX_RATE: float = 0.20
 const BUSINESS_LOAN_INTEREST_RATE: float = 0.075
 
+const CATEGORIES: Array[Dictionary] = [
+	{
+		"id": "fnb",
+		"name": "F&B BUSINESS",
+		"icon": "☕",
+		"color": "#f59e0b",
+		"description": "Artisan coffee roasteries, cafes, and gourmet food & beverage dining."
+	},
+	{
+		"id": "logistics",
+		"name": "LOGISTICS BUSINESS",
+		"icon": "📦",
+		"color": "#0284c7",
+		"description": "Wholesale freight hubs, automated supply chain distribution & container transport."
+	},
+	{
+		"id": "tech_media",
+		"name": "TECH & MEDIA BUSINESS",
+		"icon": "💻",
+		"color": "#38bdf8",
+		"description": "Full-stack AI software, creative digital design, audio recording, and film networks."
+	},
+	{
+		"id": "health_science",
+		"name": "HEALTHCARE & SCIENCE BUSINESS",
+		"icon": "🩺",
+		"color": "#10b981",
+		"description": "Private urgent care clinics, modern dental surgery, and biotech genomics laboratories."
+	},
+	{
+		"id": "finance_legal",
+		"name": "FINANCE & LEGAL BUSINESS",
+		"icon": "⚖️",
+		"color": "#eab308",
+		"description": "Corporate defense law firms, forensic accounting audits, and algorithmic hedge funds."
+	},
+	{
+		"id": "retail_services",
+		"name": "RETAIL & SERVICES BUSINESS",
+		"icon": "🏢",
+		"color": "#8b5cf6",
+		"description": "Haute couture boutiques, modernist architectural planning, and robotics engineering workshops."
+	},
+	{
+		"id": "energy",
+		"name": "ENERGY & INFRASTRUCTURE BUSINESS",
+		"icon": "⚡",
+		"color": "#14b8a6",
+		"description": "Renewable solar microgrids and megawatt battery storage utility contracts."
+	}
+]
+
 const BUSINESS_TYPES: Array[Dictionary] = [
 	{
 		"id": "biz_coffee_shop",
 		"name": "Artisan Coffee Roastery & Cyber Cafe",
 		"icon": "☕",
+		"category": "fnb",
 		"required_major": "food_science",
 		"required_degree_title": "Food Science & Culinary Arts",
 		"startup_cost": 35000,
@@ -21,6 +74,7 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"id": "biz_wholesaler",
 		"name": "Wholesale Freight Distribution & Logistics",
 		"icon": "📦",
+		"category": "logistics",
 		"required_major": "logistics",
 		"required_degree_title": "Global Logistics & Supply Chain",
 		"startup_cost": 120000,
@@ -33,6 +87,7 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"id": "biz_clothing_store",
 		"name": "Haute Couture & Streetwear Boutique",
 		"icon": "👗",
+		"category": "retail_services",
 		"required_major": "fashion",
 		"required_degree_title": "Fashion & Apparel Design",
 		"startup_cost": 65000,
@@ -45,6 +100,7 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"id": "biz_law_firm",
 		"name": "Corporate & Criminal Defense Law Firm",
 		"icon": "⚖️",
+		"category": "finance_legal",
 		"required_major": "law",
 		"required_degree_title": "Legal Studies & Jurisprudence",
 		"startup_cost": 85000,
@@ -57,6 +113,7 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"id": "biz_graphic_consultancy",
 		"name": "Graphic Design & Branding Consultancy",
 		"icon": "🎨",
+		"category": "tech_media",
 		"required_major": "graphic_design",
 		"required_degree_title": "Graphic Design & Visual Communication",
 		"startup_cost": 28000,
@@ -69,6 +126,7 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"id": "biz_medical_clinic",
 		"name": "Private Urgent Care & Medical Clinic",
 		"icon": "🩺",
+		"category": "health_science",
 		"required_major": "medicine",
 		"required_degree_title": "Pre-Med & Healthcare Sciences",
 		"startup_cost": 250000,
@@ -81,6 +139,7 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"id": "biz_software_studio",
 		"name": "Full-Stack Software & AI Development Studio",
 		"icon": "💻",
+		"category": "tech_media",
 		"required_major": "it",
 		"required_degree_title": "Cyber Security & IT",
 		"startup_cost": 75000,
@@ -93,6 +152,7 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"id": "biz_accounting_firm",
 		"name": "Certified Public Accounting & Audit Firm",
 		"icon": "📊",
+		"category": "finance_legal",
 		"required_major": "accounting",
 		"required_degree_title": "Accounting & Forensic Audit",
 		"startup_cost": 50000,
@@ -105,6 +165,7 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"id": "biz_architecture_studio",
 		"name": "Architectural & Urban Planning Studio",
 		"icon": "📐",
+		"category": "retail_services",
 		"required_major": "architecture",
 		"required_degree_title": "Architecture & Urban Planning",
 		"startup_cost": 95000,
@@ -117,6 +178,7 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"id": "biz_engineering_workshop",
 		"name": "Automotive & Robotics Engineering Workshop",
 		"icon": "⚙️",
+		"category": "retail_services",
 		"required_major": "engineering",
 		"required_degree_title": "Mechanical & Electrical Engineering",
 		"startup_cost": 110000,
@@ -129,6 +191,7 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"id": "biz_biotech_lab",
 		"name": "Biotech Synthesis & Genomics Laboratory",
 		"icon": "🧬",
+		"category": "health_science",
 		"required_major": "biotech",
 		"required_degree_title": "Biotechnology & Genetics",
 		"startup_cost": 350000,
@@ -141,6 +204,7 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"id": "biz_hedge_fund",
 		"name": "Hedge Fund & Wealth Asset Management",
 		"icon": "📈",
+		"category": "finance_legal",
 		"required_major": "finance",
 		"required_degree_title": "Finance & Investment Banking",
 		"startup_cost": 300000,
@@ -153,6 +217,7 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"id": "biz_music_studio",
 		"name": "Audio Recording & Music Production Studio",
 		"icon": "🎙️",
+		"category": "tech_media",
 		"required_major": "music",
 		"required_degree_title": "Sound Engineering & Music Production",
 		"startup_cost": 48000,
@@ -165,6 +230,7 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"id": "biz_clean_energy",
 		"name": "Renewable Energy & Solar Grid Services",
 		"icon": "⚡",
+		"category": "energy",
 		"required_major": "environmental",
 		"required_degree_title": "Environmental & Renewable Energy Science",
 		"startup_cost": 140000,
@@ -177,6 +243,7 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"id": "biz_dental_practice",
 		"name": "Modern Dental Surgery & Orthodontics",
 		"icon": "🦷",
+		"category": "health_science",
 		"required_major": "dentistry",
 		"required_degree_title": "Dental Surgery & Oral Health",
 		"startup_cost": 210000,
@@ -189,6 +256,7 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"id": "biz_film_studio",
 		"name": "Film Studio & Multimedia Broadcast Network",
 		"icon": "🎬",
+		"category": "tech_media",
 		"required_major": "film",
 		"required_degree_title": "Film, Cinematography & Media Production",
 		"startup_cost": 160000,
@@ -202,6 +270,25 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 
 static func get_all_business_types() -> Array[Dictionary]:
 	return BUSINESS_TYPES
+
+
+static func get_categories() -> Array[Dictionary]:
+	return CATEGORIES
+
+
+static func get_category_by_id(cat_id: String) -> Dictionary:
+	for cat in CATEGORIES:
+		if str(cat.get("id", "")) == cat_id:
+			return cat
+	return {}
+
+
+static func get_businesses_in_category(cat_id: String) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for b in BUSINESS_TYPES:
+		if str(b.get("category", "")) == cat_id:
+			result.append(b)
+	return result
 
 
 static func get_business_type_by_id(id: String) -> Dictionary:

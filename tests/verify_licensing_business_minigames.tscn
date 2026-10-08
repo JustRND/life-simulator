@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://dmvsignminigame01"]
+
+[ext_resource type="Script" path="res://tests/verify_licensing_business_minigames.gd" id="1_test"]
+
+[node name="VerifyLicensingBusinessMinigames" type="Node"]
+script = ExtResource("1_test")
