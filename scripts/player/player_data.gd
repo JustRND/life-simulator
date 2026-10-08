@@ -295,16 +295,160 @@ func reset_player() -> void:
 	will_recipient = "CHILDREN"
 
 
+func _extract_leading_emoji(text: String) -> Dictionary:
+	var t := text.strip_edges()
+	var emojis := [
+		"🚀", "📜", "🎓", "👶", "🍼", "💼", "🎖️", "🎖", "💍", "🏡", "✈️", "✈",
+		"🧸", "🎒", "🏫", "📘", "🎾", "🦮", "🩺", "🌈", "📱", "☑️", "⚠️", "📈",
+		"💬", "🗑️", "🏛️", "🏦", "💰", "💵", "⚖️", "✨", "🌟", "🏢", "🏆"
+	]
+	for e in emojis:
+		if t.begins_with(e):
+			var rem := t.substr(e.length()).strip_edges()
+			return {"emoji": e, "text": rem}
+	return {"emoji": "", "text": t}
+
+
+func _detect_milestone_icon(text: String) -> String:
+	var l := text.to_lower()
+	if "flight school" in l or "pilot" in l or "aviation" in l or "flight" in l:
+		return "✈️"
+	if "enterprise" in l or "founded" in l or "incorporated" in l or "business" in l:
+		return "🏢"
+	if "graduated" in l or "degree" in l or "diploma" in l or "scholarship" in l:
+		return "🎓"
+	if "kindergarten" in l:
+		return "🧸"
+	if "primary school" in l or "middle school" in l or "high school" in l or "school" in l:
+		return "🎒"
+	if "born" in l or "baby" in l or "child" in l:
+		return "🍼"
+	if "married" in l or "wedding" in l:
+		return "💍"
+	if "promoted" in l or "promotion" in l:
+		return "🎖️"
+	if "started career" in l or "started working" in l or "freelance" in l or "job" in l:
+		return "💼"
+	if "real estate" in l or "house" in l or "apartment" in l or "property" in l:
+		return "🏡"
+	if "license" in l:
+		return "📜"
+	if "passed away" in l:
+		return "🌈"
+	if "will" in l or "beneficiary" in l:
+		return "⚖️"
+	if "social media" in l or "verified" in l:
+		return "📱"
+	if "pet" in l:
+		return "🦮"
+	return "🏆"
+
+
+func is_life_milestone(entry: Dictionary) -> bool:
+	if str(entry.get("kind", "")) == "milestone":
+		return true
+
+	var txt := str(entry.get("text", "")).to_lower()
+	if "born" in txt and ("world" in txt or "parents" in txt or "hospital" in txt or "birth" in txt or "born in" in txt):
+		return true
+	if "enrolled in kindergarten" in txt or "enrolled in primary" in txt:
+		return true
+	if "entered primary school" in txt or "entered middle school" in txt or "entered high school" in txt:
+		return true
+	if "graduated from high school" in txt or "graduated from university" in txt or "graduated from" in txt:
+		return true
+	if "diploma earned" in txt or "degree:" in txt:
+		return true
+	if "enrolled at" in txt or "enrolled in university" in txt:
+		return true
+	if "started working as" in txt or "started career as" in txt:
+		return true
+	if "promoted to" in txt:
+		return true
+	if "enterprise incorporated" in txt or "founded enterprise" in txt or "founded '" in txt or "business sold" in txt:
+		return true
+	if "flight school" in txt or "license exam passed" in txt or ("earned your" in txt and "license" in txt):
+		return true
+	if "freelance roster" in txt:
+		return true
+	if "verified creator" in txt:
+		return true
+	if "married" in txt or "wedding" in txt or "welcomed baby" in txt or "gave birth" in txt:
+		return true
+	if "purchased real estate" in txt:
+		return true
+	if "passed away" in txt:
+		return true
+	if "scholarship awarded" in txt:
+		return true
+	if "released from prison" in txt:
+		return true
+	if "diagnosed with" in txt:
+		return true
+	if "cured of" in txt:
+		return true
+	if "notarized will" in txt:
+		return true
+
+	return false
+
+
 func add_milestone(m_text: String, milestone_age: int = -1, icon: String = "🏆") -> void:
+	var raw_text := m_text.strip_edges()
+	if raw_text == "":
+		return
+
 	var a: int = age if milestone_age < 0 else milestone_age
+	var extracted := _extract_leading_emoji(raw_text)
+	var final_icon := icon
+	var clean_text := str(extracted.get("text", raw_text))
+
+	if str(extracted.get("emoji", "")) != "":
+		final_icon = str(extracted.get("emoji"))
+	elif final_icon == "" or final_icon == "🏆":
+		final_icon = _detect_milestone_icon(clean_text)
+
+	var c_lower := clean_text.to_lower()
 	for m in life_milestones:
-		if m is Dictionary and str(m.get("text", "")) == m_text and int(m.get("age", -1)) == a:
-			return
+		if not (m is Dictionary):
+			continue
+		var existing_age: int = int(m.get("age", -1))
+		if existing_age == a:
+			var existing_text: String = str(m.get("text", "")).strip_edges()
+			if existing_text == clean_text or existing_text == raw_text:
+				return
+			var e_lower := existing_text.to_lower()
+			if e_lower == c_lower:
+				return
+			if ("flight school" in e_lower and "flight school" in c_lower) or \
+			   ("kindergarten" in e_lower and "kindergarten" in c_lower) or \
+			   ("high school" in e_lower and "high school" in c_lower and "graduated" in e_lower and "graduated" in c_lower):
+				return
+			if "enterprise incorporated" in c_lower and "founded" in e_lower:
+				m["text"] = clean_text
+				m["icon"] = final_icon
+				return
+			if "founded" in c_lower and "enterprise incorporated" in e_lower:
+				return
+
 	life_milestones.append({
-		"text": m_text,
+		"text": clean_text,
 		"age": a,
-		"icon": icon
+		"icon": final_icon
 	})
+
+	life_milestones.sort_custom(func(x, y):
+		return int(x.get("age", 0)) < int(y.get("age", 0))
+	)
+
+
+func sync_milestones_from_log() -> void:
+	for entry in life_log:
+		if entry is Dictionary and is_life_milestone(entry):
+			var entry_text: String = str(entry.get("text", "")).strip_edges()
+			var entry_age: int = int(entry.get("age", 0))
+			if entry_text != "":
+				add_milestone(entry_text, entry_age)
 
 
 func has_license(license_id: String) -> bool:
@@ -558,14 +702,24 @@ func apply_effects(effects: Dictionary) -> void:
 
 
 func add_life_log_entry(text: String, kind: String = "event") -> void:
-	if text.strip_edges() == "":
+	var clean_text := text.strip_edges()
+	if clean_text == "":
 		return
 
-	life_log.append({
+	if not life_log.is_empty():
+		var last_entry: Dictionary = life_log.back()
+		if int(last_entry.get("age", -1)) == age and str(last_entry.get("text", "")).strip_edges() == clean_text:
+			return
+
+	var entry := {
 		"age": age,
-		"text": text,
+		"text": clean_text,
 		"kind": kind
-	})
+	}
+	life_log.append(entry)
+
+	if is_life_milestone(entry):
+		add_milestone(clean_text, age)
 
 
 func has_seen_event(event_id: String) -> bool:

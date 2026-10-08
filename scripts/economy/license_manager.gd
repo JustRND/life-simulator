@@ -228,17 +228,15 @@ static func take_license(license_id: String) -> Dictionary:
 	var unlocked: String = str(lic.get("unlocked_feature", ""))
 	if bool(lic.get("is_course", false)):
 		var message := "You completed Flight School for $%d! You can now take the separate pilot license exam." % fee
-		PlayerData.add_life_log_entry(message, "milestone")
 		return {"allowed": true, "message": message, "license": lic}
 
-	PlayerData.add_life_log_entry("📜 LICENSE EXAM PASSED: You paid the $%d exam fee and officially earned your %s! Unlocked: %s." % [
+	var success_msg := "📜 LICENSE EXAM PASSED: You paid the $%d exam fee and officially earned your %s! Unlocked: %s." % [
 		fee,
 		lic_name,
 		unlocked
-	], "milestone")
-
+	]
 	return {
 		"allowed": true,
-		"message": "Congratulations! You passed the qualification exams and earned your %s!" % lic_name,
+		"message": success_msg,
 		"license": lic
 	}

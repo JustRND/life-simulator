@@ -11,6 +11,7 @@ func _ready() -> void:
 	test_birth_story_socioeconomic_and_cancer()
 	test_life_milestones_system()
 	test_character_profile_milestones_card()
+	test_life_log_milestones_sync_to_character_profile()
 	test_parental_money_and_anti_spam()
 	test_blind_box_no_stat_spoilers()
 	test_save_load_milestones_and_birth_fields()
@@ -129,6 +130,77 @@ func test_character_profile_milestones_card() -> void:
 
 	screen.queue_free()
 	print("   ✔ Character Profile MilestonesCard successfully verified below Finances & Net Worth.")
+
+
+func test_life_log_milestones_sync_to_character_profile() -> void:
+	print("3b. Testing Life Overview milestones synchronization into Character Profile...")
+
+	var screen = MainScreenScene.instantiate()
+	add_child(screen)
+
+	PlayerData.reset_player()
+	PlayerData.first_name = "Kai Vance"
+	PlayerData.age = 22
+	PlayerData.birthplace = ""
+	PlayerData.life_milestones.clear()
+
+	# Populate life_log with entries like the user's Kai Vance screenshot:
+	PlayerData.life_log.append({
+		"age": 19,
+		"text": "🚀 ENTERPRISE INCORPORATED: You invested $85000 to officially launch 'Vance & Associates Legal'! Business treasury initialized with $10,000 working capital.",
+		"kind": "milestone"
+	})
+	PlayerData.life_log.append({
+		"age": 20,
+		"text": "You completed Flight School for $6000! You can now take the separate pilot license exam.",
+		"kind": "milestone"
+	})
+	# Duplicate Flight School entry
+	PlayerData.life_log.append({
+		"age": 20,
+		"text": "You completed Flight School for $6000! You can now take the separate pilot license exam.",
+		"kind": "milestone"
+	})
+
+	# Call update_character_panel()
+	screen.update_character_panel()
+
+	# 1. Verify PlayerData.life_milestones was synchronized and duplicate was avoided
+	assert(PlayerData.life_milestones.size() == 2, "Milestones must sync from life_log and deduplicate; expected 2, got %d" % PlayerData.life_milestones.size())
+
+	# 2. Check content of synced milestones
+	assert(PlayerData.life_milestones[0]["age"] == 19, "First milestone must be at age 19")
+	assert(PlayerData.life_milestones[0]["icon"] == "🚀", "First milestone icon must be 🚀")
+	assert("Vance & Associates Legal" in PlayerData.life_milestones[0]["text"], "First milestone must contain enterprise name")
+
+	assert(PlayerData.life_milestones[1]["age"] == 20, "Second milestone must be at age 20")
+	assert(PlayerData.life_milestones[1]["icon"] == "✈️", "Second milestone icon must be ✈️")
+	assert("Flight School" in PlayerData.life_milestones[1]["text"], "Second milestone must contain Flight School")
+
+	# 3. Check character profile rendered list
+	var items = screen.character_milestones_list.get_children()
+	assert(items.size() == 2, "Rendered list must contain 2 milestone labels")
+	assert("🚀 Age 19:" in items[0].text, "Rendered item 0 must show 🚀 Age 19:")
+	assert("✈️ Age 20:" in items[1].text, "Rendered item 1 must show ✈️ Age 20:")
+
+	# 4. Check empty birthplace fallback
+	assert(screen.character_birthplace.text == "Born in: United States", "Empty birthplace must fallback cleanly")
+
+	# 5. Verify live addition via add_life_log_entry
+	PlayerData.age = 23
+	PlayerData.add_life_log_entry("📜 LICENSE EXAM PASSED: You paid the $4500 exam fee and officially earned your Commercial Pilot License! Unlocked: Commercial Pilot careers.", "milestone")
+	screen.update_character_panel()
+	assert(PlayerData.life_milestones.size() == 3, "New log entry with kind 'milestone' must automatically update life_milestones")
+	assert(screen.character_milestones_list.get_children().size() == 3, "Profile must now show 3 milestones")
+
+	# 6. Verify Life Overview history panel deduplication
+	screen.overview_history_filter = "milestones"
+	screen.update_history_panel()
+	var history_cards = screen.history_list.get_children()
+	assert(history_cards.size() == 3, "Overview history panel must deduplicate consecutive identical entries")
+
+	screen.queue_free()
+	print("   ✔ Life Overview milestones synchronization and deduplication into Character Profile verified.")
 
 
 func test_parental_money_and_anti_spam() -> void:

@@ -331,6 +331,8 @@ func apply_data(data: Dictionary) -> bool:
 	PlayerData.pets = Array(data.get("pets", []))
 	PlayerData.will_recipient = str(data.get("will_recipient", "CHILDREN"))
 
+	PlayerData.sync_milestones_from_log()
+
 	print("Game loaded.")
 	return true
 

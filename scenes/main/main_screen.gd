@@ -1620,36 +1620,7 @@ func _on_back_to_assets_button_pressed() -> void:
 
 
 func _is_life_milestone(entry: Dictionary) -> bool:
-	if str(entry.get("kind", "")) == "milestone":
-		return true
-
-	var txt := str(entry.get("text", "")).to_lower()
-	if "born" in txt and ("world" in txt or "parents" in txt or "hospital" in txt or "birth" in txt):
-		return true
-	if "enrolled in kindergarten" in txt:
-		return true
-	if "entered primary school" in txt or "entered middle school" in txt or "entered high school" in txt:
-		return true
-	if "graduated from high school" in txt or "graduated from university" in txt:
-		return true
-	if "diploma earned" in txt:
-		return true
-	if "enrolled at" in txt or "enrolled in university" in txt:
-		return true
-	if "started working as" in txt:
-		return true
-	if "passed away" in txt:
-		return true
-	if "scholarship awarded" in txt:
-		return true
-	if "released from prison" in txt:
-		return true
-	if "diagnosed with" in txt:
-		return true
-	if "cured of" in txt:
-		return true
-
-	return false
+	return PlayerData.is_life_milestone(entry)
 
 
 func _is_routine_event(entry: Dictionary) -> bool:
@@ -1741,6 +1712,8 @@ func update_history_panel() -> void:
 		child.queue_free()
 
 	var count := 0
+	var last_rendered_text := ""
+	var last_rendered_age := -1
 	for entry in PlayerData.life_log:
 		var is_milestone: bool = _is_life_milestone(entry)
 		var is_unique: bool = _is_unique_life_event(entry)
@@ -1751,6 +1724,13 @@ func update_history_panel() -> void:
 			continue
 		elif overview_history_filter == "all" and not (is_milestone or is_unique):
 			continue
+
+		var entry_text := str(entry.get("text", "")).strip_edges()
+		var entry_age := int(entry.get("age", 0))
+		if entry_text == last_rendered_text and entry_age == last_rendered_age:
+			continue
+		last_rendered_text = entry_text
+		last_rendered_age = entry_age
 
 		count += 1
 		var card := PanelContainer.new()
@@ -1828,12 +1808,15 @@ func update_history_panel() -> void:
 
 
 func update_character_panel() -> void:
+	PlayerData.sync_milestones_from_log()
+
 	if character_name != null:
 		character_name.text = "Name: %s" % PlayerData.first_name
 	if character_stage != null:
 		character_stage.text = "Stage: %s %s (Age %d)" % [PlayerData.get_stage_icon(), PlayerData.get_stage_name(), PlayerData.age]
 	if character_birthplace != null:
-		character_birthplace.text = "Born in: %s" % PlayerData.birthplace
+		var bp: String = PlayerData.birthplace if PlayerData.birthplace.strip_edges() != "" else "United States"
+		character_birthplace.text = "Born in: %s" % bp
 	if character_birthday != null:
 		character_birthday.text = "Birthday: %s %d • %s" % [PlayerData.birth_month, PlayerData.birth_day, PlayerData.zodiac]
 
@@ -1872,6 +1855,7 @@ func update_character_panel() -> void:
 	var m_list: VBoxContainer = character_milestones_list if character_milestones_list != null else get_node_or_null("CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/MilestonesCard/Margin/VBox/MilestonesList") as VBoxContainer
 	if m_list != null:
 		for child in m_list.get_children():
+			m_list.remove_child(child)
 			child.queue_free()
 
 		var is_light: bool = LifeLibrary.data.theme == "light"
@@ -1886,7 +1870,9 @@ func update_character_panel() -> void:
 				if m is Dictionary:
 					var m_age: int = int(m.get("age", 0))
 					var m_icon: String = str(m.get("icon", "🏆"))
-					var m_text: String = str(m.get("text", ""))
+					var m_text: String = str(m.get("text", "")).strip_edges()
+					if m_text.begins_with(m_icon):
+						m_text = m_text.substr(m_icon.length()).strip_edges()
 					var item := Label.new()
 					item.text = "%s Age %d: %s" % [m_icon, m_age, m_text]
 					item.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
