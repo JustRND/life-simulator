@@ -158,16 +158,20 @@ func _roll_modifiers_and_identity() -> void:
 
 func _build_ui() -> void:
 	overlay = ColorRect.new()
+	overlay.name = "AfterlifeMinigameOverlay"
+	overlay.set_meta("theme_exempt", true)
+	set_meta("theme_exempt", true)
 	overlay.anchors_preset = Control.PRESET_FULL_RECT
 	overlay.anchor_right = 1.0
 	overlay.anchor_bottom = 1.0
 	overlay.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	overlay.grow_vertical = Control.GROW_DIRECTION_BOTH
 	overlay.z_index = 95
-	overlay.color = Color(0.02, 0.01, 0.04, 0.98) if is_condemned else Color(0.01, 0.03, 0.06, 0.98)
+	overlay.color = Color(0.015, 0.005, 0.01, 1.0) if is_condemned else Color(0.01, 0.02, 0.04, 1.0)
 	add_child(overlay)
 
 	var screen_margin := MarginContainer.new()
+	screen_margin.set_meta("theme_exempt", true)
 	screen_margin.anchors_preset = Control.PRESET_FULL_RECT
 	screen_margin.anchor_right = 1.0
 	screen_margin.anchor_bottom = 1.0
@@ -181,11 +185,12 @@ func _build_ui() -> void:
 	preload("res://scripts/ui/panel_pull_up.gd").watch(screen_margin, overlay)
 
 	var card := PanelContainer.new()
+	card.set_meta("theme_exempt", true)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var card_style := StyleBoxFlat.new()
-	card_style.bg_color = Color("#07050d") if is_condemned else Color("#050c18")
-	card_style.border_color = Color("#f43f5e") if is_condemned else Color("#38bdf8")
+	card_style.bg_color = Color("#070205") if is_condemned else Color("#050c18")
+	card_style.border_color = Color("#dc2626") if is_condemned else Color("#38bdf8")
 	card_style.set_border_width_all(3)
 	card_style.set_corner_radius_all(16)
 	card_style.shadow_color = Color(0, 0, 0, 0.95)
@@ -194,6 +199,7 @@ func _build_ui() -> void:
 	screen_margin.add_child(card)
 
 	var card_margin := MarginContainer.new()
+	card_margin.set_meta("theme_exempt", true)
 	card_margin.add_theme_constant_override("margin_left", 26)
 	card_margin.add_theme_constant_override("margin_right", 26)
 	card_margin.add_theme_constant_override("margin_top", 24)
@@ -201,19 +207,21 @@ func _build_ui() -> void:
 	card.add_child(card_margin)
 
 	var main_v := VBoxContainer.new()
+	main_v.set_meta("theme_exempt", true)
 	main_v.add_theme_constant_override("separation", 16)
 	card_margin.add_child(main_v)
 
 	# 1. Header (Fixed at top of modal)
 	var title_lbl := Label.new()
+	title_lbl.set_meta("reference_part", true)
 	title_lbl.text = "⚖️ ASTRAL TRIBUNAL • SCALES OF SAMSARA" if is_condemned else "✨ CELESTIAL HALL • ASCENSION OF SOULS"
 	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title_lbl.add_theme_font_size_override("font_size", 30)
-	title_lbl.add_theme_color_override("font_color", Color("#f43f5e") if is_condemned else Color("#38bdf8"))
+	title_lbl.add_theme_color_override("font_color", Color("#ef4444") if is_condemned else Color("#38bdf8"))
 	main_v.add_child(title_lbl)
 
 	var sub_lbl := Label.new()
+	sub_lbl.set_meta("reference_part", true)
 	sub_lbl.text = "YOUR MORTAL LIFE HAS ENDED. THE COSMIC ARBITER WEIGHS YOUR EXISTENCE."
 	sub_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -236,8 +244,8 @@ func _build_ui() -> void:
 	# 3. The Interactive Scales of Judgment Card
 	var scale_card := PanelContainer.new()
 	var sc_style := StyleBoxFlat.new()
-	sc_style.bg_color = Color("#0b0816") if is_condemned else Color("#081528")
-	sc_style.border_color = Color("#64748b")
+	sc_style.bg_color = Color("#090204") if is_condemned else Color("#081528")
+	sc_style.border_color = Color("#7f1d1d") if is_condemned else Color("#64748b")
 	sc_style.set_border_width_all(2)
 	sc_style.set_corner_radius_all(12)
 	scale_card.add_theme_stylebox_override("panel", sc_style)
@@ -255,10 +263,11 @@ func _build_ui() -> void:
 	sc_margin.add_child(sc_v)
 
 	var sc_header := Label.new()
+	sc_header.set_meta("reference_part", true)
 	sc_header.text = "THE SACRED BALANCE OF DEEDS"
 	sc_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sc_header.add_theme_font_size_override("font_size", 22)
-	sc_header.add_theme_color_override("font_color", Color("#f59e0b"))
+	sc_header.add_theme_color_override("font_color", Color("#ef4444") if is_condemned else Color("#f59e0b"))
 	sc_v.add_child(sc_header)
 
 	# Visual representation of the scale: Two-pan header
@@ -267,18 +276,18 @@ func _build_ui() -> void:
 	sc_v.add_child(pans_row)
 
 	var left_pan := Label.new()
+	left_pan.set_meta("reference_part", true)
 	left_pan.text = "⚖️ [ Sins & Transgressions ]"
 	left_pan.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	left_pan.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	left_pan.add_theme_font_size_override("font_size", 20)
 	left_pan.add_theme_color_override("font_color", Color("#f87171"))
 	pans_row.add_child(left_pan)
 
 	var right_pan := Label.new()
+	right_pan.set_meta("reference_part", true)
 	right_pan.text = "[ Virtues & Merits ] ⚖️"
 	right_pan.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	right_pan.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	right_pan.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	right_pan.add_theme_font_size_override("font_size", 20)
 	right_pan.add_theme_color_override("font_color", Color("#4ade80"))
 	pans_row.add_child(right_pan)
@@ -286,8 +295,8 @@ func _build_ui() -> void:
 	# Dedicated Center Badge for Needle & Tipped Outcome
 	var needle_panel := PanelContainer.new()
 	var np_style := StyleBoxFlat.new()
-	np_style.bg_color = Color("#171126") if is_condemned else Color("#0d1e38")
-	np_style.border_color = Color("#475569")
+	np_style.bg_color = Color("#0e0205") if is_condemned else Color("#0d1e38")
+	np_style.border_color = Color("#991b1b") if is_condemned else Color("#475569")
 	np_style.set_border_width_all(1)
 	np_style.set_corner_radius_all(8)
 	needle_panel.add_theme_stylebox_override("panel", np_style)
@@ -301,6 +310,7 @@ func _build_ui() -> void:
 	needle_panel.add_child(npm)
 
 	scale_needle = Label.new()
+	scale_needle.set_meta("reference_part", true)
 	scale_needle.text = "• • [ BALANCING ] • •"
 	scale_needle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	scale_needle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -309,6 +319,7 @@ func _build_ui() -> void:
 	npm.add_child(scale_needle)
 
 	scale_status_lbl = Label.new()
+	scale_status_lbl.set_meta("reference_part", true)
 	scale_status_lbl.text = "Press below to place your mortal soul upon the Scales of Judgment."
 	scale_status_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	scale_status_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -318,12 +329,13 @@ func _build_ui() -> void:
 
 	# Weigh Button
 	weigh_button = Button.new()
+	weigh_button.set_meta("reference_part", true)
 	weigh_button.text = "⚖️ WEIGH MORTAL RECORD"
 	weigh_button.custom_minimum_size.y = 70
 	weigh_button.add_theme_font_size_override("font_size", 26)
 	var wb_style := StyleBoxFlat.new()
-	wb_style.bg_color = Color("#b91c1c") if is_condemned else Color("#0284c7")
-	wb_style.border_color = Color("#f87171") if is_condemned else Color("#38bdf8")
+	wb_style.bg_color = Color("#7f1d1d") if is_condemned else Color("#0284c7")
+	wb_style.border_color = Color("#ef4444") if is_condemned else Color("#38bdf8")
 	wb_style.set_border_width_all(2)
 	wb_style.set_corner_radius_all(10)
 	weigh_button.add_theme_stylebox_override("normal", wb_style)
@@ -337,8 +349,8 @@ func _build_ui() -> void:
 	verdict_panel = PanelContainer.new()
 	verdict_panel.visible = false
 	var vp_style := StyleBoxFlat.new()
-	vp_style.bg_color = Color("#07050e")
-	vp_style.border_color = Color("#f43f5e") if is_condemned else Color("#22c55e")
+	vp_style.bg_color = Color("#070205") if is_condemned else Color("#07050e")
+	vp_style.border_color = Color("#dc2626") if is_condemned else Color("#22c55e")
 	vp_style.set_border_width_all(2)
 	vp_style.set_corner_radius_all(12)
 	verdict_panel.add_theme_stylebox_override("panel", vp_style)
@@ -356,13 +368,15 @@ func _build_ui() -> void:
 	vp_margin.add_child(vp_v)
 
 	var verdict_title := Label.new()
+	verdict_title.set_meta("reference_part", true)
 	verdict_title.text = "💀 ARBITER'S VERDICT: CONDEMNED BY KARMIC DEBT" if is_condemned else "🌟 ARBITER'S VERDICT: BLESSED WITH CELESTIAL MERIT"
 	verdict_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	verdict_title.add_theme_font_size_override("font_size", 26)
-	verdict_title.add_theme_color_override("font_color", Color("#f43f5e") if is_condemned else Color("#22c55e"))
+	verdict_title.add_theme_color_override("font_color", Color("#ef4444") if is_condemned else Color("#22c55e"))
 	vp_v.add_child(verdict_title)
 
 	var verdict_decree := Label.new()
+	verdict_decree.set_meta("reference_part", true)
 	if is_condemned:
 		verdict_decree.text = "\"Mortal soul, your worldly journey was burdened with dishonor, cruelty, or transgressions. The cosmic balance demands restitution. You are condemned to immediate forced reincarnation burdened with karmic penalties. No appeals are permitted.\""
 	else:
@@ -374,6 +388,7 @@ func _build_ui() -> void:
 
 	# 4. Modifiers (Debuffs or Buffs)
 	var mod_header := Label.new()
+	mod_header.set_meta("reference_part", true)
 	mod_header.text = "⚡ IMPOSED KARMIC PENALTIES:" if is_condemned else "✨ BESTOWED COSMIC BLESSINGS:"
 	mod_header.add_theme_font_size_override("font_size", 22)
 	mod_header.add_theme_color_override("font_color", Color("#f87171") if is_condemned else Color("#38bdf8"))
@@ -385,14 +400,16 @@ func _build_ui() -> void:
 	for key in active_list:
 		var d_info: Dictionary = def_dict.get(key, {})
 		var item_card := PanelContainer.new()
+		item_card.set_meta("theme_exempt", true)
 		var item_style := StyleBoxFlat.new()
-		item_style.bg_color = Color("#110a18") if is_condemned else Color("#091728")
+		item_style.bg_color = Color("#0c0205") if is_condemned else Color("#091728")
 		item_style.border_color = Color(d_info.get("color", "#64748b"))
 		item_style.set_border_width_all(2)
 		item_style.set_corner_radius_all(8)
 		item_card.add_theme_stylebox_override("panel", item_style)
 
 		var im := MarginContainer.new()
+		im.set_meta("theme_exempt", true)
 		im.add_theme_constant_override("margin_left", 16)
 		im.add_theme_constant_override("margin_right", 16)
 		im.add_theme_constant_override("margin_top", 12)
@@ -400,16 +417,19 @@ func _build_ui() -> void:
 		item_card.add_child(im)
 
 		var iv := VBoxContainer.new()
+		iv.set_meta("theme_exempt", true)
 		iv.add_theme_constant_override("separation", 6)
 		im.add_child(iv)
 
 		var item_title := Label.new()
+		item_title.set_meta("reference_part", true)
 		item_title.text = "%s %s" % [d_info.get("icon", "•"), d_info.get("title", "Effect")]
 		item_title.add_theme_font_size_override("font_size", 22)
 		item_title.add_theme_color_override("font_color", Color(d_info.get("color", "#f87171")))
 		iv.add_child(item_title)
 
 		var item_desc := Label.new()
+		item_desc.set_meta("reference_part", true)
 		item_desc.text = str(d_info.get("desc", ""))
 		item_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		item_desc.add_theme_font_size_override("font_size", 18)
@@ -420,27 +440,34 @@ func _build_ui() -> void:
 
 	# 5. Randomized New Identity Card
 	var id_card := PanelContainer.new()
+	id_card.set_meta("theme_exempt", true)
+	id_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var id_style := StyleBoxFlat.new()
-	id_style.bg_color = Color("#0f172a")
-	id_style.border_color = Color("#38bdf8") if not is_condemned else Color("#f43f5e")
+	id_style.bg_color = Color("#070205") if is_condemned else Color("#050f1d")
+	id_style.border_color = Color("#dc2626") if is_condemned else Color("#38bdf8")
 	id_style.set_border_width_all(2)
 	id_style.set_corner_radius_all(10)
 	id_card.add_theme_stylebox_override("panel", id_style)
 	vp_v.add_child(id_card)
 
 	var idm := MarginContainer.new()
-	idm.add_theme_constant_override("margin_left", 18)
-	idm.add_theme_constant_override("margin_right", 18)
-	idm.add_theme_constant_override("margin_top", 14)
-	idm.add_theme_constant_override("margin_bottom", 14)
+	idm.set_meta("theme_exempt", true)
+	idm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	idm.add_theme_constant_override("margin_left", 20)
+	idm.add_theme_constant_override("margin_right", 20)
+	idm.add_theme_constant_override("margin_top", 16)
+	idm.add_theme_constant_override("margin_bottom", 16)
 	id_card.add_child(idm)
 
 	var id_row := HBoxContainer.new()
-	id_row.add_theme_constant_override("separation", 20)
+	id_row.set_meta("theme_exempt", true)
+	id_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	id_row.add_theme_constant_override("separation", 24)
 	idm.add_child(id_row)
 
 	# Avatar Portrait Preview
 	var av_rect := TextureRect.new()
+	av_rect.set_meta("theme_exempt", true)
 	av_rect.custom_minimum_size = Vector2(96, 96)
 	av_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	av_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -454,28 +481,43 @@ func _build_ui() -> void:
 	id_row.add_child(av_rect)
 
 	var id_info_v := VBoxContainer.new()
-	id_info_v.add_theme_constant_override("separation", 4)
+	id_info_v.set_meta("theme_exempt", true)
+	id_info_v.custom_minimum_size.x = 350
+	id_info_v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	id_info_v.add_theme_constant_override("separation", 6)
 	id_row.add_child(id_info_v)
 
 	var id_title := Label.new()
+	id_title.set_meta("reference_part", true)
 	id_title.text = "NEW MORTAL VESSEL (%s)" % ("FORCED REBIRTH" if is_condemned else "BLESSED REBIRTH")
-	id_title.add_theme_font_size_override("font_size", 18)
+	id_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	id_title.add_theme_font_size_override("font_size", 20)
 	id_title.add_theme_color_override("font_color", Color("#fbbf24"))
 	id_info_v.add_child(id_title)
 
+	var id_name := Label.new()
+	id_name.set_meta("reference_part", true)
+	id_name.text = "Name: %s" % str(reborn_identity["first_name"])
+	id_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	id_name.add_theme_font_size_override("font_size", 24)
+	id_name.add_theme_color_override("font_color", Color("#ffffff"))
+	id_info_v.add_child(id_name)
+
 	var id_details := Label.new()
-	id_details.text = "Name: %s\nGender: %s  •  Birthplace: %s  •  Ethnicity: %s" % [
-		reborn_identity["first_name"],
-		reborn_identity["gender"],
-		reborn_identity["birthplace"],
-		reborn_identity["ethnicity"].capitalize()
+	id_details.set_meta("reference_part", true)
+	id_details.text = "Gender: %s   •   Birthplace: %s   •   Ethnicity: %s" % [
+		str(reborn_identity["gender"]),
+		str(reborn_identity["birthplace"]),
+		str(reborn_identity["ethnicity"]).capitalize()
 	]
+	id_details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	id_details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	id_details.add_theme_font_size_override("font_size", 20)
-	id_details.add_theme_color_override("font_color", Color("#f8fafc"))
+	id_details.add_theme_color_override("font_color", Color("#cbd5e1"))
 	id_info_v.add_child(id_details)
 
 	var unnegotiable_note := Label.new()
+	unnegotiable_note.set_meta("reference_part", true)
 	unnegotiable_note.text = "⛔ UNMODIFIABLE & UNNEGOTIABLE: Destiny is sealed by cosmic verdict." if is_condemned else "✨ BLESSED DESTINY: Reborn with auspicious cosmic grace."
 	unnegotiable_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	unnegotiable_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -485,11 +527,12 @@ func _build_ui() -> void:
 
 	# 6. Final Rebirth Action Button
 	accept_button = Button.new()
+	accept_button.set_meta("reference_part", true)
 	accept_button.text = "⚡ ACCEPT FORCED REBIRTH" if is_condemned else "🌟 EMBARK ON BLESSED REBIRTH"
 	accept_button.custom_minimum_size.y = 80
 	accept_button.add_theme_font_size_override("font_size", 28)
 	var ab_style := StyleBoxFlat.new()
-	ab_style.bg_color = Color("#991b1b") if is_condemned else Color("#15803d")
+	ab_style.bg_color = Color("#7f1d1d") if is_condemned else Color("#15803d")
 	ab_style.border_color = Color("#ef4444") if is_condemned else Color("#22c55e")
 	ab_style.set_border_width_all(3)
 	ab_style.set_corner_radius_all(12)

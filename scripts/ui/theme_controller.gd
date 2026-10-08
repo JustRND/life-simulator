@@ -86,8 +86,22 @@ static func get_light_mode_color(original_color: Color) -> Color:
 		return c
 
 
+static func is_exempt(node: Node) -> bool:
+	var cur: Node = node
+	while cur != null:
+		if cur.has_meta("theme_exempt"):
+			return true
+		var cname: String = str(cur.name)
+		if cname == "DeathScreenOverlay" or cname == "death_screen_overlay" or cname == "AfterlifeMinigame" or cname.begins_with("DeathScreen") or cname.begins_with("Afterlife") or "Death" in cname or "Afterlife" in cname:
+			return true
+		cur = cur.get_parent()
+	return false
+
+
 func _apply_node(node: Node) -> void:
 	if not is_instance_valid(node) or not node is Control:
+		return
+	if is_exempt(node):
 		return
 	var root := get_parent()
 	if root != null and not root.is_ancestor_of(node) and node != root:

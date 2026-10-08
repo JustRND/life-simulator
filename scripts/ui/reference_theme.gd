@@ -16,6 +16,8 @@ func _init() -> void:
 func handles(node: Node, root: Node) -> bool:
 	var ancestor := node
 	while ancestor != root and ancestor != null:
+		if ancestor.has_meta("theme_exempt") or ancestor.name == "DeathScreenOverlay" or ancestor.name == "AfterlifeMinigame" or "Death" in str(ancestor.name) or "Afterlife" in str(ancestor.name):
+			return false
 		if ancestor.has_meta("reference_panel") or "Panel" in str(ancestor.name) or ancestor.name == "SettingsOverlay":
 			return true
 		ancestor = ancestor.get_parent()
@@ -39,8 +41,13 @@ func surface(light: bool, state: String = "normal") -> StyleBoxFlat:
 	return style
 
 func apply(node: Control, light: bool) -> void:
-	if node.has_meta("reference_part"):
+	if node.has_meta("reference_part") or node.has_meta("theme_exempt"):
 		return
+	var cur: Node = node
+	while cur != null:
+		if cur.has_meta("theme_exempt") or "Death" in str(cur.name) or "Afterlife" in str(cur.name):
+			return
+		cur = cur.get_parent()
 	if node is Label and node.get_parent() is VBoxContainer and not node.has_meta("reference_header_title"):
 		var text: String = node.text.strip_edges()
 		if text.length() > 4 and text.length() < 90 and not "\n" in text and not ":" in text and text == text.to_upper() and text != text.to_lower():

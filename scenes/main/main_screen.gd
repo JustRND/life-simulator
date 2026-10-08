@@ -10570,10 +10570,15 @@ func _show_death_screen(cause: String) -> void:
 	if age_button != null:
 		age_button.visible = false
 	if death_screen_overlay != null and is_instance_valid(death_screen_overlay):
+		if death_screen_overlay.get_parent() != null:
+			death_screen_overlay.get_parent().remove_child(death_screen_overlay)
 		death_screen_overlay.queue_free()
+		death_screen_overlay = null
 
 	death_screen_overlay = ColorRect.new()
-	death_screen_overlay.color = Color(0.015, 0.01, 0.03, 0.95)
+	death_screen_overlay.name = "DeathScreenOverlay"
+	death_screen_overlay.set_meta("theme_exempt", true)
+	death_screen_overlay.color = Color(0.012, 0.003, 0.006, 1.0) # pure opaque somber void
 	death_screen_overlay.anchors_preset = Control.PRESET_FULL_RECT
 	death_screen_overlay.anchor_right = 1.0
 	death_screen_overlay.anchor_bottom = 1.0
@@ -10583,52 +10588,66 @@ func _show_death_screen(cause: String) -> void:
 	add_child(death_screen_overlay)
 
 	var screen_margin := MarginContainer.new()
+	screen_margin.set_meta("theme_exempt", true)
 	screen_margin.anchors_preset = Control.PRESET_FULL_RECT
 	screen_margin.anchor_right = 1.0
 	screen_margin.anchor_bottom = 1.0
 	screen_margin.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	screen_margin.grow_vertical = Control.GROW_DIRECTION_BOTH
-	screen_margin.add_theme_constant_override("margin_left", 36)
-	screen_margin.add_theme_constant_override("margin_right", 36)
-	screen_margin.add_theme_constant_override("margin_top", 44)
-	screen_margin.add_theme_constant_override("margin_bottom", 44)
+	screen_margin.add_theme_constant_override("margin_left", 32)
+	screen_margin.add_theme_constant_override("margin_right", 32)
+	screen_margin.add_theme_constant_override("margin_top", 40)
+	screen_margin.add_theme_constant_override("margin_bottom", 40)
 	death_screen_overlay.add_child(screen_margin)
 	preload("res://scripts/ui/panel_pull_up.gd").watch(screen_margin, death_screen_overlay)
 
 	var card := PanelContainer.new()
+	card.set_meta("theme_exempt", true)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var card_style := StyleBoxFlat.new()
-	card_style.bg_color = Color("#07050d")
-	card_style.border_color = Color("#f43f5e")
+	card_style.bg_color = Color("#070204") # Abyssal void black
+	card_style.border_color = Color("#7f1d1d") # Dark somber blood red
 	card_style.set_border_width_all(3)
 	card_style.set_corner_radius_all(16)
-	card_style.shadow_color = Color(0, 0, 0, 0.95)
-	card_style.shadow_size = 28
+	card_style.shadow_color = Color(0.18, 0.01, 0.02, 0.95)
+	card_style.shadow_size = 32
 	card.add_theme_stylebox_override("panel", card_style)
 	screen_margin.add_child(card)
 
 	var margin := MarginContainer.new()
+	margin.set_meta("theme_exempt", true)
 	margin.add_theme_constant_override("margin_left", 28)
 	margin.add_theme_constant_override("margin_right", 28)
-	margin.add_theme_constant_override("margin_top", 28)
-	margin.add_theme_constant_override("margin_bottom", 28)
+	margin.add_theme_constant_override("margin_top", 26)
+	margin.add_theme_constant_override("margin_bottom", 26)
 	card.add_child(margin)
 
 	var main_v := VBoxContainer.new()
+	main_v.set_meta("theme_exempt", true)
 	main_v.add_theme_constant_override("separation", 16)
 	margin.add_child(main_v)
 
+	# Heartbeat flatline indicator
+	var flatline_lbl := Label.new()
+	flatline_lbl.set_meta("reference_part", true)
+	flatline_lbl.text = "─────── 💔 FLATLINED • PULSE CEASED ───────"
+	flatline_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	flatline_lbl.add_theme_font_size_override("font_size", 20)
+	flatline_lbl.add_theme_color_override("font_color", Color("#b91c1c"))
+	main_v.add_child(flatline_lbl)
+
 	var title_lbl := Label.new()
-	title_lbl.text = "💀 FLATLINED • REST IN PEACE 💀"
+	title_lbl.set_meta("reference_part", true)
+	title_lbl.text = "IN MEMORIAM • PASSING INTO SILENCE"
 	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title_lbl.add_theme_font_size_override("font_size", 34)
-	title_lbl.add_theme_color_override("font_color", Color("#f43f5e"))
+	title_lbl.add_theme_color_override("font_color", Color("#ef4444"))
 	main_v.add_child(title_lbl)
 
 	var sub_lbl := Label.new()
-	sub_lbl.text = "YOUR SIMULATED LIFETIME HAS COME TO AN END"
+	sub_lbl.set_meta("reference_part", true)
+	sub_lbl.text = "\"The heartbeat has stilled. All worldly triumphs and regrets fade into the quiet void.\""
 	sub_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	sub_lbl.add_theme_font_size_override("font_size", 19)
@@ -10636,35 +10655,55 @@ func _show_death_screen(cause: String) -> void:
 	main_v.add_child(sub_lbl)
 
 	var scroll := ScrollContainer.new()
+	scroll.name = "DeathScrollContainer"
+	scroll.set_meta("theme_exempt", true)
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	main_v.add_child(scroll)
 
 	var vbox := VBoxContainer.new()
+	vbox.set_meta("theme_exempt", true)
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.add_theme_constant_override("separation", 18)
 	scroll.add_child(vbox)
 
-	# Stats breakdown card
+	# 1. Memorial Record of the Deceased
 	var stats_p := PanelContainer.new()
-	stats_p.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f43f5e")))
+	stats_p.set_meta("theme_exempt", true)
+	var sp_style := StyleBoxFlat.new()
+	sp_style.bg_color = Color("#0b0407")
+	sp_style.border_color = Color("#991b1b")
+	sp_style.set_border_width_all(2)
+	sp_style.set_corner_radius_all(10)
+	stats_p.add_theme_stylebox_override("panel", sp_style)
+
 	var sp_m := MarginContainer.new()
+	sp_m.set_meta("theme_exempt", true)
 	sp_m.add_theme_constant_override("margin_left", 24)
 	sp_m.add_theme_constant_override("margin_right", 24)
-	sp_m.add_theme_constant_override("margin_top", 20)
-	sp_m.add_theme_constant_override("margin_bottom", 20)
+	sp_m.add_theme_constant_override("margin_top", 18)
+	sp_m.add_theme_constant_override("margin_bottom", 18)
 	stats_p.add_child(sp_m)
 
 	var stats_v := VBoxContainer.new()
+	stats_v.set_meta("theme_exempt", true)
 	stats_v.add_theme_constant_override("separation", 8)
 	sp_m.add_child(stats_v)
 
+	var rec_header := Label.new()
+	rec_header.set_meta("reference_part", true)
+	rec_header.text = "🪦 MEMORIAL RECORD OF THE DECEASED"
+	rec_header.add_theme_font_size_override("font_size", 20)
+	rec_header.add_theme_color_override("font_color", Color("#ef4444"))
+	stats_v.add_child(rec_header)
+
 	var name_lbl := Label.new()
+	name_lbl.set_meta("reference_part", true)
 	name_lbl.text = "Identity: %s   •   Birthplace: %s" % [PlayerData.first_name, PlayerData.birthplace]
 	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_lbl.add_theme_font_size_override("font_size", 26)
-	name_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
+	name_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
 	stats_v.add_child(name_lbl)
 
 	var clean_cause: String = cause.strip_edges()
@@ -10672,6 +10711,7 @@ func _show_death_screen(cause: String) -> void:
 		clean_cause = "Acute Medical Complications"
 
 	var age_cause_lbl := Label.new()
+	age_cause_lbl.set_meta("reference_part", true)
 	age_cause_lbl.text = "Age of Demise: %d years\nCause of Death: %s" % [PlayerData.age, clean_cause]
 	age_cause_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	age_cause_lbl.add_theme_font_size_override("font_size", 24)
@@ -10682,39 +10722,43 @@ func _show_death_screen(cause: String) -> void:
 	var total_assets: int = PlayerData.money + PlayerData.bank_savings
 	var total_debt: int = PlayerData.get_total_debt()
 	var wealth_lbl := Label.new()
+	wealth_lbl.set_meta("reference_part", true)
 	if net_worth < 0:
-		wealth_lbl.text = "Final Net Worth: -$%s\n(Assets: $%s  •  Unpaid Debt: $%s)" % [
+		wealth_lbl.text = "Final Net Worth: -$%s (Assets: $%s  •  Unpaid Debt: $%s)" % [
 			_format_number(absi(net_worth)),
 			_format_number(total_assets),
 			_format_number(total_debt)
 		]
 		wealth_lbl.add_theme_color_override("font_color", Color("#ef4444"))
 	else:
-		wealth_lbl.text = "Final Net Worth: $%s" % _format_number(net_worth)
-		wealth_lbl.add_theme_color_override("font_color", Color("#22c55e"))
+		wealth_lbl.text = "Final Worldly Wealth: $%s" % _format_number(net_worth)
+		wealth_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
 	wealth_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	wealth_lbl.add_theme_font_size_override("font_size", 24)
 	stats_v.add_child(wealth_lbl)
 
 	var career_str := "%s at %s" % [PlayerData.job_title, PlayerData.job_company] if PlayerData.job_title != "" else "Unemployed"
 	var career_lbl := Label.new()
-	career_lbl.text = "Last Occupation: %s" % career_str
+	career_lbl.set_meta("reference_part", true)
+	career_lbl.text = "Last Worldly Calling: %s" % career_str
 	career_lbl.add_theme_font_size_override("font_size", 24)
-	career_lbl.add_theme_color_override("font_color", Color("#f1f5f9"))
+	career_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
 	stats_v.add_child(career_lbl)
 
 	vbox.add_child(stats_p)
 
-	# Dedicated Coroner Report & Death Narrative Card
+	# 2. Official Coroner Certificate Card
 	var coroner_p := PanelContainer.new()
+	coroner_p.set_meta("theme_exempt", true)
 	var coroner_style := StyleBoxFlat.new()
-	coroner_style.bg_color = Color("#0c0915")
-	coroner_style.border_color = Color("#475569")
+	coroner_style.bg_color = Color("#0a0306")
+	coroner_style.border_color = Color("#7f1d1d")
 	coroner_style.set_border_width_all(2)
 	coroner_style.set_corner_radius_all(10)
 	coroner_p.add_theme_stylebox_override("panel", coroner_style)
 
 	var cp_m := MarginContainer.new()
+	cp_m.set_meta("theme_exempt", true)
 	cp_m.add_theme_constant_override("margin_left", 22)
 	cp_m.add_theme_constant_override("margin_right", 22)
 	cp_m.add_theme_constant_override("margin_top", 18)
@@ -10722,36 +10766,41 @@ func _show_death_screen(cause: String) -> void:
 	coroner_p.add_child(cp_m)
 
 	var cp_v := VBoxContainer.new()
+	cp_v.set_meta("theme_exempt", true)
 	cp_v.add_theme_constant_override("separation", 10)
 	cp_m.add_child(cp_v)
 
 	var coroner_header := Label.new()
-	coroner_header.text = "📋 OFFICIAL DEATH REPORT & CIRCUMSTANCES"
+	coroner_header.set_meta("reference_part", true)
+	coroner_header.text = "📋 OFFICIAL CORONER'S CERTIFICATE"
 	coroner_header.add_theme_font_size_override("font_size", 20)
-	coroner_header.add_theme_color_override("font_color", Color("#fbbf24"))
+	coroner_header.add_theme_color_override("font_color", Color("#ef4444"))
 	cp_v.add_child(coroner_header)
 
 	var death_desc_lbl := Label.new()
+	death_desc_lbl.set_meta("reference_part", true)
 	death_desc_lbl.text = _generate_death_narrative(clean_cause)
 	death_desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	death_desc_lbl.add_theme_font_size_override("font_size", 22)
-	death_desc_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+	death_desc_lbl.add_theme_font_size_override("font_size", 21)
+	death_desc_lbl.add_theme_color_override("font_color", Color("#e2e8f0"))
 	cp_v.add_child(death_desc_lbl)
 
 	var eulogy_header := Label.new()
+	eulogy_header.set_meta("reference_part", true)
 	eulogy_header.text = "MEMORIAL EPITAPH:"
 	eulogy_header.add_theme_font_size_override("font_size", 18)
-	eulogy_header.add_theme_color_override("font_color", Color("#94a3b8"))
+	eulogy_header.add_theme_color_override("font_color", Color("#f87171"))
 	cp_v.add_child(eulogy_header)
 
 	var epitaph_lbl := Label.new()
+	epitaph_lbl.set_meta("reference_part", true)
 	var eulogy: String = ""
 	if PlayerData.age >= 75:
-		eulogy = "\"Having walked a long, memorable journey through youth, adulthood, and twilight years, %s passed peacefully from this realm. Their deeds echo in memory.\"" % PlayerData.first_name
+		eulogy = "\"Having walked a long, weary journey through youth, adulthood, and twilight years, %s slipped into the stillness of the earth. Their deeds echo only in memory.\"" % PlayerData.first_name
 	elif PlayerData.age >= 40:
-		eulogy = "\"Cut short in the prime of life, %s left behind friends, memories, and aspirations. May their soul rest in eternal peace.\"" % PlayerData.first_name
+		eulogy = "\"Cut down in the prime of their years, %s left behind silence, unfinished dreams, and grieving loved ones. May they find peace.\"" % PlayerData.first_name
 	else:
-		eulogy = "\"Taken far too soon at age %d by tragic misfortune, %s's life was a fleeting spark that touched those who loved them.\"" % [PlayerData.age, PlayerData.first_name]
+		eulogy = "\"Taken far too soon at age %d by tragic misfortune, %s's life was a fragile ember extinguished before its dawn.\"" % [PlayerData.age, PlayerData.first_name]
 	epitaph_lbl.text = eulogy
 	epitaph_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	epitaph_lbl.add_theme_font_size_override("font_size", 20)
@@ -10760,10 +10809,18 @@ func _show_death_screen(cause: String) -> void:
 
 	vbox.add_child(coroner_p)
 
-	# Will Execution Card
+	# 3. Dispersal of Earthly Remains Card
 	var will_exec_p := PanelContainer.new()
-	will_exec_p.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f59e0b")))
+	will_exec_p.set_meta("theme_exempt", true)
+	var wp_style := StyleBoxFlat.new()
+	wp_style.bg_color = Color("#080204")
+	wp_style.border_color = Color("#7f1d1d")
+	wp_style.set_border_width_all(2)
+	wp_style.set_corner_radius_all(10)
+	will_exec_p.add_theme_stylebox_override("panel", wp_style)
+
 	var wp_m := MarginContainer.new()
+	wp_m.set_meta("theme_exempt", true)
 	wp_m.add_theme_constant_override("margin_left", 24)
 	wp_m.add_theme_constant_override("margin_right", 24)
 	wp_m.add_theme_constant_override("margin_top", 18)
@@ -10771,13 +10828,15 @@ func _show_death_screen(cause: String) -> void:
 	will_exec_p.add_child(wp_m)
 
 	var wp_v := VBoxContainer.new()
+	wp_v.set_meta("theme_exempt", true)
 	wp_v.add_theme_constant_override("separation", 10)
 	wp_m.add_child(wp_v)
 
 	var will_exec_header := Label.new()
-	will_exec_header.text = "⚖️ LAST WILL & TESTAMENT ESTATE EXECUTION"
+	will_exec_header.set_meta("reference_part", true)
+	will_exec_header.text = "⚖️ DISPERSAL OF EARTHLY REMAINS"
 	will_exec_header.add_theme_font_size_override("font_size", 22)
-	will_exec_header.add_theme_color_override("font_color", Color("#fbbf24"))
+	will_exec_header.add_theme_color_override("font_color", Color("#ef4444"))
 	wp_v.add_child(will_exec_header)
 
 	var total_estate_val: int = PlayerData.money + PlayerData.bank_savings
@@ -10796,7 +10855,8 @@ func _show_death_screen(cause: String) -> void:
 			will_recip_str = "Your Surviving Children"
 
 	var will_exec_desc := Label.new()
-	will_exec_desc.text = "In accordance with your legally notarized Last Will & Testament, your total estate valued at $%s (including $%s liquid capital and %d registered assets) has been formally transferred to %s." % [
+	will_exec_desc.set_meta("reference_part", true)
+	will_exec_desc.text = "In accordance with your legally notarized testament, your total estate valued at $%s (including $%s liquid capital and %d registered assets) has been formally transferred to %s. You carry nothing into the stillness beyond." % [
 		_format_number(total_estate_val),
 		_format_number(PlayerData.money + PlayerData.bank_savings),
 		PlayerData.owned_assets.size(),
@@ -10804,7 +10864,7 @@ func _show_death_screen(cause: String) -> void:
 	]
 	will_exec_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	will_exec_desc.add_theme_font_size_override("font_size", 20)
-	will_exec_desc.add_theme_color_override("font_color", Color("#f8fafc"))
+	will_exec_desc.add_theme_color_override("font_color", Color("#cbd5e1"))
 	wp_v.add_child(will_exec_desc)
 
 	vbox.add_child(will_exec_p)
@@ -10813,90 +10873,100 @@ func _show_death_screen(cause: String) -> void:
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	vbox.add_child(spacer)
 
-	# BAD KARMA: Forced into Afterlife Minigame (UNNEGOTIABLE)
+	# 4. Destiny & The Parting Crossing
 	if PlayerData.karma < 0:
 		var bad_karma_card := PanelContainer.new()
+		bad_karma_card.set_meta("theme_exempt", true)
 		var bkc_style := StyleBoxFlat.new()
-		bkc_style.bg_color = Color("#18060c")
-		bkc_style.border_color = Color("#f43f5e")
+		bkc_style.bg_color = Color("#140307")
+		bkc_style.border_color = Color("#dc2626")
 		bkc_style.set_border_width_all(2)
 		bkc_style.set_corner_radius_all(10)
 		bad_karma_card.add_theme_stylebox_override("panel", bkc_style)
 
 		var bm := MarginContainer.new()
+		bm.set_meta("theme_exempt", true)
 		bm.add_theme_constant_override("margin_left", 20)
 		bm.add_theme_constant_override("margin_right", 20)
-		bm.add_theme_constant_override("margin_top", 14)
-		bm.add_theme_constant_override("margin_bottom", 14)
+		bm.add_theme_constant_override("margin_top", 16)
+		bm.add_theme_constant_override("margin_bottom", 16)
 		bad_karma_card.add_child(bm)
 
 		var bv := VBoxContainer.new()
+		bv.set_meta("theme_exempt", true)
 		bv.add_theme_constant_override("separation", 8)
 		bm.add_child(bv)
 
 		var bad_header := Label.new()
-		bad_header.text = "⚖️ COSMIC TRIBUNAL SUMMONS • UNNEGOTIABLE"
+		bad_header.set_meta("reference_part", true)
+		bad_header.text = "⛓️ KUKURUDU • TRIBUNAL SUMMONS"
 		bad_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		bad_header.add_theme_font_size_override("font_size", 22)
-		bad_header.add_theme_color_override("font_color", Color("#f43f5e"))
+		bad_header.add_theme_color_override("font_color", Color("#ef4444"))
 		bv.add_child(bad_header)
 
 		var bad_desc := Label.new()
-		bad_desc.text = "Your mortal life choices accumulated severe karmic debt. The Astral Arbiter demands your immediate presence for cosmic judgment. No worldly succession or peaceful rebirth is permitted."
+		bad_desc.set_meta("reference_part", true)
+		bad_desc.text = "Your mortal lifetime was burdened by heavy karmic debt and unforgiven deeds. The cosmic scales cannot be avoided. Worldly succession is denied; the Astral Arbiter demands your immediate presence for judgment."
 		bad_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		bad_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		bad_desc.add_theme_font_size_override("font_size", 19)
-		bad_desc.add_theme_color_override("font_color", Color("#cbd5e1"))
+		bad_desc.add_theme_color_override("font_color", Color("#fca5a5"))
 		bv.add_child(bad_desc)
 
 		vbox.add_child(bad_karma_card)
 
 		var btn_afterlife := Button.new()
-		btn_afterlife.text = "⚖️ ENTER THE AFTERLIFE JUDGMENT (UNNEGOTIABLE)"
+		btn_afterlife.set_meta("theme_exempt", true)
+		btn_afterlife.text = "⚖️ DESCEND TO THE AFTERLIFE FOR JUDGMENT"
 		btn_afterlife.custom_minimum_size.y = 86
 		btn_afterlife.add_theme_font_size_override("font_size", 26)
 		var afterlife_style := StyleBoxFlat.new()
-		afterlife_style.bg_color = Color("#881337")
-		afterlife_style.border_color = Color("#f43f5e")
+		afterlife_style.bg_color = Color("#7f1d1d")
+		afterlife_style.border_color = Color("#ef4444")
 		afterlife_style.set_border_width_all(3)
 		afterlife_style.set_corner_radius_all(10)
 		btn_afterlife.add_theme_stylebox_override("normal", afterlife_style)
 		var afterlife_hover := afterlife_style.duplicate() as StyleBoxFlat
-		afterlife_hover.bg_color = Color("#9f1239")
+		afterlife_hover.bg_color = Color("#991b1b")
 		btn_afterlife.add_theme_stylebox_override("hover", afterlife_hover)
 		btn_afterlife.add_theme_color_override("font_color", Color("#ffffff"))
 		btn_afterlife.pressed.connect(_open_afterlife_minigame)
 		vbox.add_child(btn_afterlife)
 	else:
-		# GOOD KARMA: Panel with 3 Options
 		var good_karma_card := PanelContainer.new()
+		good_karma_card.set_meta("theme_exempt", true)
 		var gkc_style := StyleBoxFlat.new()
-		gkc_style.bg_color = Color("#071324")
-		gkc_style.border_color = Color("#38bdf8")
+		gkc_style.bg_color = Color("#080305")
+		gkc_style.border_color = Color("#991b1b")
 		gkc_style.set_border_width_all(2)
 		gkc_style.set_corner_radius_all(10)
 		good_karma_card.add_theme_stylebox_override("panel", gkc_style)
 
 		var gm := MarginContainer.new()
+		gm.set_meta("theme_exempt", true)
 		gm.add_theme_constant_override("margin_left", 20)
 		gm.add_theme_constant_override("margin_right", 20)
-		gm.add_theme_constant_override("margin_top", 14)
-		gm.add_theme_constant_override("margin_bottom", 14)
+		gm.add_theme_constant_override("margin_top", 16)
+		gm.add_theme_constant_override("margin_bottom", 16)
 		good_karma_card.add_child(gm)
 
 		var gv := VBoxContainer.new()
+		gv.set_meta("theme_exempt", true)
 		gv.add_theme_constant_override("separation", 8)
 		gm.add_child(gv)
 
 		var g_header := Label.new()
-		g_header.text = "✨ A LIFE OF HONOR • CHOOSE YOUR DESTINY"
+		g_header.set_meta("reference_part", true)
+		g_header.text = "🕯️ THE PARTING CROSSING • REST IN PEACE"
 		g_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		g_header.add_theme_font_size_override("font_size", 22)
-		g_header.add_theme_color_override("font_color", Color("#38bdf8"))
+		g_header.add_theme_color_override("font_color", Color("#ef4444"))
 		gv.add_child(g_header)
 
 		var g_desc := Label.new()
-		g_desc.text = "You walked with virtue and honor. You may bequeath your life earnings to your living children, ascend to the Afterlife for blessed reincarnation, or embark on a fresh new life."
+		g_desc.set_meta("reference_part", true)
+		g_desc.text = "Your earthly days have come to an end. Even as grief echoes in the silence left behind, you may choose how your legacy or spirit shall journey onward."
 		g_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		g_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		g_desc.add_theme_font_size_override("font_size", 19)
@@ -10906,46 +10976,50 @@ func _show_death_screen(cause: String) -> void:
 		vbox.add_child(good_karma_card)
 
 		var opts_v := VBoxContainer.new()
+		opts_v.set_meta("theme_exempt", true)
 		opts_v.add_theme_constant_override("separation", 12)
 		vbox.add_child(opts_v)
 
 		# Option 1: Pass Inheritance (only enabled if player has living children)
 		var has_kids := PlayerData.has_living_children()
 		var btn_inherit := Button.new()
-		btn_inherit.custom_minimum_size.y = 74
-		btn_inherit.add_theme_font_size_override("font_size", 24)
+		btn_inherit.set_meta("theme_exempt", true)
+		btn_inherit.custom_minimum_size.y = 76
+		btn_inherit.add_theme_font_size_override("font_size", 23)
 		var inh_style := StyleBoxFlat.new()
-		inh_style.bg_color = Color("#854d0e") if has_kids else Color("#334155")
-		inh_style.border_color = Color("#facc15") if has_kids else Color("#64748b")
+		inh_style.bg_color = Color("#18060a") if has_kids else Color("#0f0709")
+		inh_style.border_color = Color("#b91c1c") if has_kids else Color("#450a0a")
 		inh_style.set_border_width_all(2)
 		inh_style.set_corner_radius_all(10)
 		btn_inherit.add_theme_stylebox_override("normal", inh_style)
 		var inh_hover := inh_style.duplicate() as StyleBoxFlat
-		inh_hover.bg_color = inh_style.bg_color.lightened(0.2)
+		inh_hover.bg_color = Color("#2d0a12") if has_kids else Color("#0f0709")
 		btn_inherit.add_theme_stylebox_override("hover", inh_hover)
 		btn_inherit.add_theme_color_override("font_color", Color("#ffffff"))
 
 		if has_kids:
-			btn_inherit.text = "📜 PASS INHERITANCE TO CHILD & CONTINUE LINEAGE"
+			btn_inherit.text = "📜 CARRY ON LINEAGE (CONTINUE AS CHILD)"
 			btn_inherit.pressed.connect(_show_inheritance_selection_modal)
 		else:
 			btn_inherit.text = "📜 PASS INHERITANCE (No Living Children)"
 			btn_inherit.disabled = true
+			btn_inherit.modulate = Color(0.7, 0.7, 0.7, 0.6)
 		opts_v.add_child(btn_inherit)
 
 		# Option 2: Continue to Afterlife with Buffs
 		var btn_afterlife := Button.new()
-		btn_afterlife.text = "🌟 CONTINUE TO AFTERLIFE (REINCARNATE WITH BUFFS)"
-		btn_afterlife.custom_minimum_size.y = 74
-		btn_afterlife.add_theme_font_size_override("font_size", 24)
+		btn_afterlife.set_meta("theme_exempt", true)
+		btn_afterlife.text = "🌟 ASCEND TO THE CELESTIAL AFTERLIFE"
+		btn_afterlife.custom_minimum_size.y = 76
+		btn_afterlife.add_theme_font_size_override("font_size", 23)
 		var alt_style := StyleBoxFlat.new()
-		alt_style.bg_color = Color("#0369a1")
-		alt_style.border_color = Color("#38bdf8")
+		alt_style.bg_color = Color("#15050b")
+		alt_style.border_color = Color("#dc2626")
 		alt_style.set_border_width_all(2)
 		alt_style.set_corner_radius_all(10)
 		btn_afterlife.add_theme_stylebox_override("normal", alt_style)
 		var alt_hover := alt_style.duplicate() as StyleBoxFlat
-		alt_hover.bg_color = Color("#0284c7")
+		alt_hover.bg_color = Color("#280914")
 		btn_afterlife.add_theme_stylebox_override("hover", alt_hover)
 		btn_afterlife.add_theme_color_override("font_color", Color("#ffffff"))
 		btn_afterlife.pressed.connect(_open_afterlife_minigame)
@@ -10953,17 +11027,18 @@ func _show_death_screen(cause: String) -> void:
 
 		# Option 3: Start Fresh Playthrough
 		var btn_new_life := Button.new()
-		btn_new_life.text = "🌱 START A FRESH PLAYTHROUGH"
-		btn_new_life.custom_minimum_size.y = 74
-		btn_new_life.add_theme_font_size_override("font_size", 24)
+		btn_new_life.set_meta("theme_exempt", true)
+		btn_new_life.text = "🕊️ BEGIN A NEW MORTAL STORY"
+		btn_new_life.custom_minimum_size.y = 76
+		btn_new_life.add_theme_font_size_override("font_size", 23)
 		var new_life_style := StyleBoxFlat.new()
-		new_life_style.bg_color = Color("#15803d")
-		new_life_style.border_color = Color("#22c55e")
+		new_life_style.bg_color = Color("#0b0305")
+		new_life_style.border_color = Color("#991b1b")
 		new_life_style.set_border_width_all(2)
 		new_life_style.set_corner_radius_all(10)
 		btn_new_life.add_theme_stylebox_override("normal", new_life_style)
 		var new_life_hover := new_life_style.duplicate() as StyleBoxFlat
-		new_life_hover.bg_color = Color("#16a34a")
+		new_life_hover.bg_color = Color("#1e070c")
 		btn_new_life.add_theme_stylebox_override("hover", new_life_hover)
 		btn_new_life.add_theme_color_override("font_color", Color("#ffffff"))
 		btn_new_life.pressed.connect(_on_start_new_life_pressed)
@@ -11141,19 +11216,19 @@ func _generate_death_narrative(cause: String) -> String:
 	var age := PlayerData.age
 
 	if "cancer" in c_lower or "lymphoma" in c_lower:
-		return "At the age of %d, %s succumbed to %s after their health depleted to 0%%. The malignant illness proved fatal despite all warnings." % [age, char_name, cause]
+		return "At the fragile age of %d, %s drew their final agonizing breath, succumbing to %s. Despite endless exhausting treatments and quiet prayers, the warmth slowly departed from their weary body." % [age, char_name, cause]
 	elif "collision" in c_lower or "crash" in c_lower or "accident" in c_lower:
-		return "At the age of %d, %s lost their life in a %s. Fatal trauma instantly depleted their vital signs to 0%%." % [age, char_name, cause]
+		return "At the age of %d, %s was torn violently from this world in a tragic %s. In a single cruel instant, a lifetime of memories, laughter, and tomorrow vanished into cold, hollow silence." % [age, char_name, cause]
 	elif "surgery" in c_lower or "botched" in c_lower:
-		return "At the age of %d, %s passed away due to %s during an invasive surgical procedure." % [age, char_name, cause]
+		return "At the age of %d, %s never woke from the freezing stillness of the operating table, claimed by %s. Loved ones waited in trembling hope outside, only to be met with inconsolable grief." % [age, char_name, cause]
 	elif "cardiac" in c_lower or "heart" in c_lower:
-		return "At the age of %d, %s suffered acute heart failure caused by %s, causing their vital signs to flatline." % [age, char_name, cause]
+		return "At the age of %d, %s suffered sudden, excruciating heart failure caused by %s. As their chest seized and their vision faded to black, their pulse fell forever still." % [age, char_name, cause]
 	elif "old age" in c_lower:
-		return "%s passed away peacefully in their sleep at the age of %d from %s, concluding a long simulated lifetime." % [char_name, age, cause]
+		return "Surrounded by quiet shadows, %s closed their eyes for the last time at age %d, carried away by %s. A weary soul, tired of carrying the weight of a long lifetime, finally surrendered to eternal sleep." % [char_name, age, cause]
 	elif "exhaustion" in c_lower or "stress" in c_lower or "debt" in c_lower:
-		return "At the age of %d, %s succumbed to %s after severe financial and physical strain depleted their health to 0%%." % [age, char_name, cause]
+		return "Crushed beneath unbearable burdens and sleepless despair, %s collapsed at age %d from %s. Broken in body and spirit, the cold earth offered the only release from their unending torment." % [age, char_name, cause]
 	else:
-		return "At the age of %d, %s passed away. The primary registered cause of death is %s, which reduced their vital health to 0%%." % [age, char_name, cause]
+		return "At the age of %d, %s slipped into the quiet abyss, claimed by %s. The mortal struggle ceased, leaving behind only hollow silence, cold memories, and an empty chair that will never be filled." % [age, char_name, cause]
 
 
 func _configure_creation() -> void:
