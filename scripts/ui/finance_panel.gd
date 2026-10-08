@@ -27,6 +27,7 @@ func install(screen: Control) -> void:
 	learning.name = "LearningItem"
 	learning.text = "📚  Learning & Smarts"
 	list.add_child(learning)
+	list.move_child(learning, list.get_node("EducationActItem").get_index() + 1)
 	learning.pressed.connect(open_learning)
 	FinanceMarket.ensure.call_deferred(PlayerData)
 

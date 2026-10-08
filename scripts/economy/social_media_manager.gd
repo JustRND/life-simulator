@@ -283,7 +283,7 @@ static func buy_followers(player_data: Node, platform: String, tier: int) -> Dic
 		var purged: int = int(amount * 0.7)
 		var actual_gain: int = amount - purged
 		account["followers"] = int(account.get("followers", 0)) + actual_gain
-		player_data.add_life_log_entry("⚠️ BOT PURGE: You purchased %d bot %s on %s, but anti-spam algorithms purged %d of them! Karma -5." % [
+		player_data.add_life_log_entry("⚠️ BOT PURGE: You purchased %d bot %s on %s, but anti-spam algorithms purged %d of them!" % [
 			amount,
 			metric,
 			p_info.name,
@@ -340,12 +340,12 @@ static func troll_someone(player_data: Node, platform: String) -> Dictionary:
 		var lost: int = mini(int(account.get("followers", 0)) - 10, randi_range(50, 400))
 		if lost > 0:
 			account["followers"] = maxi(5, int(account.get("followers", 0)) - lost)
-		msg = "😈 Trolled an online influencer! You enjoyed the spicy drama (+12 Happiness, -8 Karma), but disgusted fans unfollowed you (-%d %s)." % [
+		msg = "😈 Trolled an online influencer! You enjoyed the spicy drama (+12 Happiness), but disgusted fans unfollowed you (-%d %s)." % [
 			lost,
 			metric
 		]
 	else:
-		msg = "😈 Savage Internet Roast! You ruthlessly trolled someone on %s and soaked in the replies (+12 Happiness, -8 Karma)." % p_info.name
+		msg = "😈 Savage Internet Roast! You ruthlessly trolled someone on %s and soaked in the replies (+12 Happiness)." % p_info.name
 
 	player_data.add_life_log_entry("💬 TROLLING ON %s: %s" % [p_info.name.to_upper(), msg], "event")
 

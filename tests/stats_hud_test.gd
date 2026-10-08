@@ -25,8 +25,6 @@ func _ready() -> void:
 				var label: Label = stats.find_child(stat + "Label", true, false)
 				assert(label.size.y < 60)
 				assert(label.get_node(stat + "Icon").size == Vector2(34, 34))
-			await RenderingServer.frame_post_draw
-			get_viewport().get_texture().get_image().save_png("res://work/stats-" + mode + "-" + str(window_size.y) + ".png")
 	if FileAccess.file_exists(LifeLibrary.profile_path):
 		DirAccess.remove_absolute(LifeLibrary.profile_path)
 	print("STATS_HUD_TEST_PASSED")

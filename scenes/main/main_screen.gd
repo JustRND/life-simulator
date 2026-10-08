@@ -7914,7 +7914,7 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	# Click outside card on dim backdrop to close
 	overlay.gui_input.connect(func(event: InputEvent):
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			preload("res://scripts/ui/panel_close.gd").dismiss(overlay, true)
+			preload("res://scripts/ui/panel_close.gd").dismiss(overlay, true, Callable(), card)
 	)
 
 	var margin := MarginContainer.new()
@@ -7961,7 +7961,7 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	close_style.set_border_width_all(2)
 	close_style.set_corner_radius_all(8)
 	close_btn.add_theme_stylebox_override("normal", close_style)
-	close_btn.pressed.connect(func(): preload("res://scripts/ui/panel_close.gd").dismiss(overlay, true))
+	close_btn.pressed.connect(func(): preload("res://scripts/ui/panel_close.gd").dismiss(overlay, true, Callable(), card))
 	header_row.add_child(close_btn)
 
 	var sub_lbl := Label.new()
@@ -9043,6 +9043,7 @@ func _show_social_media_modal() -> void:
 					show_tab("timeline")
 			)
 			btn_create.icon = preload("res://scripts/ui/social_platform_icons.gd").icon(p_key)
+			btn_create.set_meta("action_emoji", "")
 			btn_create.custom_minimum_size.y = 56
 			btn_create.add_theme_font_size_override("font_size", 22)
 			cv.add_child(btn_create)
@@ -10193,7 +10194,7 @@ func _show_crime_modal() -> void:
 
 	# Fictional activity outcomes use shared progression rules; prison UI stays above.
 	UndergroundProgression.normalize(PlayerData)
-	var modal := _create_cyber_modal("UNDERGROUND SYNDICATE", "Cash: $%s • Karma: %d • High-risk activities" % [_format_number(PlayerData.money), PlayerData.karma], Color("#a855f7"))
+	var modal := _create_cyber_modal("UNDERGROUND SYNDICATE", "Cash: $%s • High-risk activities" % [_format_number(PlayerData.money)], Color("#a855f7"))
 	crime_modal_overlay = modal.overlay
 	var list: VBoxContainer = modal.list
 	var status := Label.new()

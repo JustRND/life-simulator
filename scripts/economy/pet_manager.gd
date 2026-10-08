@@ -239,7 +239,7 @@ static func adopt_pet(player_data: Node, pet_spec: Dictionary, custom_name: Stri
 	var log_desc := ""
 	if price == 0:
 		player_data.karma = mini(100, player_data.karma + 6)
-		log_desc = "🐾 RESCUE ADOPTION: You adopted a loving %s (%s) from the %s for free! (+15 Happiness, +6 Karma)." % [
+		log_desc = "🐾 RESCUE ADOPTION: You adopted a loving %s (%s) from the %s for free! (+15 Happiness)." % [
 			new_pet.breed,
 			final_name,
 			new_pet.source

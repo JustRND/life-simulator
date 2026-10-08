@@ -135,7 +135,7 @@ func _achievements() -> void:
 	var view := modal("ACHIEVEMENTS", "%d / %d unlocked • Shared across your local lives" % [LifeLibrary.data.achievements.size(), LifeLibrary.ACHIEVEMENTS.size()])
 	for entry in LifeLibrary.ACHIEVEMENTS:
 		var unlocked: bool = LifeLibrary.data.achievements.has(entry[0])
-		section(view.list, ("★ " if unlocked else "◇ ") + entry[1])
+		section(view.list, ("🏆 " if unlocked else "🔒 ") + entry[1])
 		var label: Label = pages._label(entry[2] + ("\nUnlocked " + str(LifeLibrary.data.achievements[entry[0]]) if unlocked else "\nLocked"), 24)
 		view.list.add_child(label)
 

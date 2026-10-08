@@ -15,6 +15,7 @@
     "choices": [
       {
         "text": "Ride it immediately around the block",
+        "icon": "🚲",
         "description": "+4 Happiness, +2 Health",
         "type": "adventurous",
         "effects": {
@@ -26,6 +27,7 @@
       },
       {
         "text": "Give your old bicycle to a needy kid",
+        "icon": "🎁",
         "description": "+6 Happiness",
         "type": "generous",
         "effects": {
@@ -36,6 +38,7 @@
       },
       {
         "text": "Attempt a reckless ramp jump",
+        "icon": "🛫",
         "description": "-5 Health, +4 Happiness",
         "type": "reckless",
         "effects": {
@@ -47,6 +50,7 @@
       },
       {
         "text": "Sell it to a neighbor for fast cash",
+        "icon": "💵",
         "description": "+$45 Cash, -3 Happiness",
         "type": "selfish",
         "effects": {
@@ -74,6 +78,7 @@
     "choices": [
       {
         "text": "Help clean up the mess with napkins",
+        "icon": "🧻",
         "description": "+2 Smarts, +2 Happiness",
         "type": "responsible",
         "effects": {
@@ -85,6 +90,7 @@
       },
       {
         "text": "Blame the kid sitting next to you",
+        "icon": "🫵",
         "description": "+1 Happiness",
         "type": "deceitful",
         "effects": {
@@ -95,6 +101,7 @@
       },
       {
         "text": "Throw more paint and laugh hysterically",
+        "icon": "🎨",
         "description": "-2 Health (Slapped), +4 Happiness",
         "type": "chaotic",
         "effects": {
@@ -122,6 +129,7 @@
     "choices": [
       {
         "text": "Share the toys and build a sandcastle together",
+        "icon": "🏰",
         "description": "+4 Happiness, +1 Smarts",
         "type": "kind",
         "effects": {
@@ -133,6 +141,7 @@
       },
       {
         "text": "Bite their arm to reclaim the toy",
+        "icon": "🦷",
         "description": "-2 Health, -4 Happiness",
         "type": "aggressive",
         "effects": {
@@ -144,6 +153,7 @@
       },
       {
         "text": "Walk away and play on the swings",
+        "icon": "🌳",
         "description": "+2 Smarts, +2 Happiness",
         "type": "calm",
         "effects": {
@@ -170,6 +180,7 @@
     "choices": [
       {
         "text": "Punch the bully squarely in the jaw",
+        "icon": "🥊",
         "description": "-5 Health, +5 Happiness, +2 Looks",
         "type": "aggressive",
         "effects": {
@@ -182,6 +193,7 @@
       },
       {
         "text": "Report the incident to the vice principal",
+        "icon": "📣",
         "description": "+2 Smarts, -2 Happiness",
         "type": "responsible",
         "effects": {
@@ -193,6 +205,7 @@
       },
       {
         "text": "Hand over your lunch money quietly",
+        "icon": "💸",
         "description": "-$15 Cash, -5 Happiness, -2 Looks",
         "type": "submissive",
         "effects": {
@@ -204,6 +217,7 @@
       },
       {
         "text": "Outsmart them with sharp verbal wit",
+        "icon": "🧠",
         "description": "+3 Smarts, +5 Happiness, +3 Looks",
         "type": "clever",
         "effects": {
@@ -231,6 +245,7 @@
     "choices": [
       {
         "text": "Take it to the police station lost-and-found",
+        "icon": "👮",
         "description": "+5 Happiness, +$100 Reward",
         "type": "honest",
         "effects": {
@@ -242,6 +257,7 @@
       },
       {
         "text": "Pawn it quietly to an underground dealer",
+        "icon": "💰",
         "description": "+$500 Cash, +4 Happiness",
         "type": "opportunistic",
         "effects": {
@@ -253,6 +269,7 @@
       },
       {
         "text": "Wear the flashy gold watch to school",
+        "icon": "⌚",
         "description": "+4 Looks, +3 Happiness",
         "type": "flashy",
         "effects": {
@@ -280,6 +297,7 @@
     "choices": [
       {
         "text": "Bandage the puppy and convince your family to adopt it",
+        "icon": "🩹",
         "description": "+6 Happiness, -$80 Cash",
         "type": "compassionate",
         "effects": {
@@ -291,6 +309,7 @@
       },
       {
         "text": "Deliver the puppy to an animal rescue shelter",
+        "icon": "🏠",
         "description": "+3 Happiness",
         "type": "caring",
         "effects": {
@@ -301,6 +320,7 @@
       },
       {
         "text": "Ignore the animal and walk away",
+        "icon": "🚶",
         "description": "-3 Happiness",
         "type": "cold",
         "effects": {
@@ -327,6 +347,7 @@
     "choices": [
       {
         "text": "Sneak the car out and floor the gas pedal",
+        "icon": "🏎️",
         "description": "-6 Health (Scrapes), -$250 Repairs, +4 Happiness",
         "type": "reckless",
         "effects": {
@@ -339,6 +360,7 @@
       },
       {
         "text": "Drive carefully around the neighborhood and return safely",
+        "icon": "🚗",
         "description": "+5 Happiness, +2 Smarts",
         "type": "sneaky",
         "effects": {
@@ -350,6 +372,7 @@
       },
       {
         "text": "Leave the keys alone and go to bed",
+        "icon": "🛏️",
         "description": "+2 Smarts",
         "type": "wise",
         "effects": {
@@ -376,6 +399,7 @@
     "choices": [
       {
         "text": "YOLO $1,500 of your savings into the coin",
+        "icon": "🎲",
         "description": "+$3,000 Cash, +5 Happiness, -2 Smarts",
         "type": "gambler",
         "effects": {
@@ -387,6 +411,7 @@
       },
       {
         "text": "Invest a cautious $150 to test the waters",
+        "icon": "📈",
         "description": "+$450 Cash, +3 Happiness, +2 Smarts",
         "type": "measured",
         "effects": {
@@ -398,6 +423,7 @@
       },
       {
         "text": "Call it an obvious Ponzi scheme and pass",
+        "icon": "🛑",
         "description": "+3 Smarts",
         "type": "prudent",
         "effects": {
@@ -424,6 +450,7 @@
     "choices": [
       {
         "text": "Rush to the emergency room for surgery",
+        "icon": "🏥",
         "description": "+6 Health, -$250 Copay, -3 Happiness",
         "type": "lifesaving",
         "effects": {
@@ -435,6 +462,7 @@
       },
       {
         "text": "Take ibuprofen and try to sleep it off",
+        "icon": "💊",
         "description": "-7 Health, -$150 Medicine, -5 Happiness",
         "type": "negligent",
         "effects": {
@@ -446,6 +474,7 @@
       },
       {
         "text": "Call an emergency telehealth doctor for guidance",
+        "icon": "📞",
         "description": "+4 Health, -$100 Copay, +2 Smarts",
         "type": "smart",
         "effects": {
@@ -473,6 +502,7 @@
     "choices": [
       {
         "text": "Swerve hard into the concrete divider",
+        "icon": "↪️",
         "description": "-6 Health, -$350 Repairs, -4 Happiness",
         "type": "survival",
         "effects": {
@@ -484,6 +514,7 @@
       },
       {
         "text": "Slam on brakes and brace for impact",
+        "icon": "🛑",
         "description": "-8 Health, -$500 Deductible, -6 Happiness",
         "type": "bracing",
         "effects": {
@@ -495,6 +526,7 @@
       },
       {
         "text": "Accelerate through the gap with lightning reflexes",
+        "icon": "⚡",
         "description": "+$250 Insurance Bonus, +6 Happiness, +3 Smarts, -3 Health",
         "type": "heroic",
         "effects": {
@@ -523,6 +555,7 @@
     "choices": [
       {
         "text": "Blow the whistle to federal regulators",
+        "icon": "📣",
         "description": "+$3,500 Whistleblower Bounty, -5 Happiness",
         "type": "justice",
         "effects": {
@@ -534,6 +567,7 @@
       },
       {
         "text": "Accept the hush money and alter the reports",
+        "icon": "🤐",
         "description": "+$5,000 Cash, -3 Smarts",
         "type": "corrupt",
         "effects": {
@@ -545,6 +579,7 @@
       },
       {
         "text": "Resign quietly to preserve your record",
+        "icon": "🚪",
         "description": "-3 Happiness",
         "type": "clean",
         "effects": {
@@ -571,6 +606,7 @@
     "choices": [
       {
         "text": "Scratch the prize numbers carefully with a coin",
+        "icon": "🪙",
         "description": "JACKPOT: +$10,000 Cash, +8 Happiness",
         "type": "lucky",
         "effects": {
@@ -581,6 +617,7 @@
       },
       {
         "text": "Let the cashier scan the barcode directly",
+        "icon": "🏷️",
         "description": "+$250 Cash, +4 Happiness",
         "type": "quick",
         "effects": {
@@ -591,6 +628,7 @@
       },
       {
         "text": "Gift the unscratched ticket to a stranger",
+        "icon": "🎁",
         "description": "+5 Happiness",
         "type": "altruistic",
         "effects": {
@@ -617,6 +655,7 @@
     "choices": [
       {
         "text": "Accept the inheritance payout",
+        "icon": "💰",
         "description": "+$15,000 Cash, +6 Happiness",
         "type": "windfall",
         "effects": {
@@ -627,6 +666,7 @@
       },
       {
         "text": "Donate 50% to a charitable cancer hospice",
+        "icon": "🎗️",
         "description": "+$7,500 Cash, +6 Happiness",
         "type": "noble",
         "effects": {
@@ -638,6 +678,7 @@
       },
       {
         "text": "Distribute the entire fortune among poorer family members",
+        "icon": "👪",
         "description": "+8 Happiness",
         "type": "saintly",
         "effects": {
@@ -664,6 +705,7 @@
     "choices": [
       {
         "text": "Immediately hang up and report number to fraud agency",
+        "icon": "☎️",
         "description": "+3 Smarts, +3 Happiness",
         "type": "vigilant",
         "effects": {
@@ -675,6 +717,7 @@
       },
       {
         "text": "Panic and transfer $400 to the caller",
+        "icon": "💸",
         "description": "-$400 Cash, -6 Happiness, -3 Smarts",
         "type": "victimized",
         "effects": {
@@ -686,6 +729,7 @@
       },
       {
         "text": "Keep the scammer on the phone for two hours wasting their time",
+        "icon": "⏳",
         "description": "+5 Happiness, +3 Smarts",
         "type": "trolling",
         "effects": {
@@ -712,6 +756,7 @@
     "choices": [
       {
         "text": "Chew aspirin and dial emergency services (911)",
+        "icon": "🚑",
         "description": "+6 Health, -$350 Copay, -3 Happiness",
         "type": "emergency",
         "effects": {
@@ -723,6 +768,7 @@
       },
       {
         "text": "Try to lie down on the sofa and rest",
+        "icon": "🛋️",
         "description": "-8 Health, -7 Happiness (Coronary Strain)",
         "type": "fatal_risk",
         "effects": {
@@ -733,6 +779,7 @@
       },
       {
         "text": "Ask a family member to drive you to the clinic",
+        "icon": "🚗",
         "description": "-4 Health, -$150 Copay",
         "type": "family",
         "effects": {
@@ -760,6 +807,7 @@
     "choices": [
       {
         "text": "Take the plunge for viral street glory",
+        "icon": "🤸",
         "description": "-5 Health, +5 Happiness, +3 Looks",
         "type": "daredevil",
         "effects": {
@@ -772,6 +820,7 @@
       },
       {
         "text": "Refuse to jump and mock the stupidity of the dare",
+        "icon": "🙅",
         "description": "+3 Smarts, -2 Happiness",
         "type": "sensible",
         "effects": {
@@ -783,6 +832,7 @@
       },
       {
         "text": "Dare someone else to go first instead",
+        "icon": "🫵",
         "description": "+2 Smarts",
         "type": "deflecting",
         "effects": {
@@ -809,6 +859,7 @@
     "choices": [
       {
         "text": "Drink heavily and dance on the furniture",
+        "icon": "🍻",
         "description": "-6 Health, +6 Happiness, -3 Smarts",
         "type": "wild",
         "effects": {
@@ -821,6 +872,7 @@
       },
       {
         "text": "Socialize responsibly and talk to your crush",
+        "icon": "💬",
         "description": "+6 Happiness, +3 Looks",
         "type": "romantic",
         "effects": {
@@ -832,6 +884,7 @@
       },
       {
         "text": "Be the designated driver for your friends",
+        "icon": "🚗",
         "description": "+3 Smarts, +3 Happiness",
         "type": "responsible",
         "effects": {
@@ -843,6 +896,7 @@
       },
       {
         "text": "Steal liquor bottles from the liquor cabinet",
+        "icon": "🥷",
         "description": "+$100 Cash, -2 Happiness",
         "type": "criminal",
         "effects": {
@@ -870,6 +924,7 @@
     "choices": [
       {
         "text": "Accept the severance package and hunt for new jobs",
+        "icon": "💼",
         "description": "+$2,500 Severance Cash, -5 Happiness, +2 Smarts",
         "type": "severance",
         "effects": {
@@ -881,6 +936,7 @@
       },
       {
         "text": "Plead your case to the Vice President",
+        "icon": "🙏",
         "description": "+3 Smarts, -4 Happiness (If retained)",
         "type": "diplomatic",
         "effects": {
@@ -891,6 +947,7 @@
       },
       {
         "text": "Trash the breakroom in a fit of rage",
+        "icon": "💥",
         "description": "-$600 Damages, +4 Happiness",
         "type": "vengeful",
         "effects": {
@@ -918,6 +975,7 @@
     "choices": [
       {
         "text": "Undergo hip replacement surgery and physical therapy",
+        "icon": "🦴",
         "description": "+6 Health, -$500 Medical Expenses, -4 Happiness",
         "type": "surgery",
         "effects": {
@@ -929,6 +987,7 @@
       },
       {
         "text": "Refuse surgery and rely on heavy painkillers",
+        "icon": "💊",
         "description": "-6 Health, -6 Happiness, -$100 Medication",
         "type": "stubborn",
         "effects": {
@@ -940,6 +999,7 @@
       },
       {
         "text": "Move into an assisted living senior community",
+        "icon": "🏡",
         "description": "+4 Health, -$600 Facility Deposit, +4 Happiness",
         "type": "assisted",
         "effects": {
@@ -967,6 +1027,7 @@
     "choices": [
       {
         "text": "Study vocabulary flashcards every evening",
+        "icon": "📇",
         "description": "+8% Grades, +3 Smarts, -2 Happiness",
         "type": "diligent",
         "effects": {
@@ -978,6 +1039,7 @@
       },
       {
         "text": "Compete with cheerful confidence and zero preparation",
+        "icon": "🏆",
         "description": "+4% Grades, +4 Happiness",
         "type": "casual",
         "effects": {
@@ -989,6 +1051,7 @@
       },
       {
         "text": "Fake a stomach ache to skip the competition",
+        "icon": "🤒",
         "description": "-6% Grades, +3 Happiness",
         "type": "evasive",
         "effects": {
@@ -1015,7 +1078,8 @@
     "choices": [
       {
         "text": "Build an intricate solar-powered desalination model",
-        "description": "+10% Grades, +4 Smarts, +5 Karma",
+        "icon": "☀️",
+        "description": "+10% Grades, +4 Smarts",
         "type": "inventive",
         "effects": {
           "grades": 10,
@@ -1027,6 +1091,7 @@
       },
       {
         "text": "Team up with a studious classmate to build a papier-mâché volcano",
+        "icon": "🌋",
         "description": "+6% Grades, +2 Smarts, +3 Happiness",
         "type": "collaborative",
         "effects": {
@@ -1038,6 +1103,7 @@
       },
       {
         "text": "Cobble together a poster 30 minutes before judging",
+        "icon": "🖼️",
         "description": "-8% Grades, -3 Smarts",
         "type": "lazy",
         "effects": {
@@ -1065,6 +1131,7 @@
     "choices": [
       {
         "text": "Master algebraic proofs and practice previous Olympiad problem sets",
+        "icon": "📐",
         "description": "+12% Grades, +5 Smarts, +5 Happiness",
         "type": "rigorous",
         "effects": {
@@ -1076,6 +1143,7 @@
       },
       {
         "text": "Join the team casually to hang out with friends",
+        "icon": "👥",
         "description": "+6% Grades, +2 Smarts, +4 Happiness",
         "type": "social",
         "effects": {
@@ -1087,7 +1155,8 @@
       },
       {
         "text": "Sneak a formula cheat sheet into your calculator sleeve",
-        "description": "-10% Grades, -10 Karma",
+        "icon": "📝",
+        "description": "-10% Grades",
         "type": "dishonest",
         "effects": {
           "grades": -10,
@@ -1114,6 +1183,7 @@
     "choices": [
       {
         "text": "Rely on attentive lecture notes and work methodically through each question",
+        "icon": "📓",
         "description": "+8% Grades, +3 Smarts, +3 Happiness",
         "type": "focused",
         "effects": {
@@ -1125,6 +1195,7 @@
       },
       {
         "text": "Carefully deduce answers by eliminating obviously wrong options",
+        "icon": "🔍",
         "description": "+4% Grades, +1 Smarts",
         "type": "tactical",
         "effects": {
@@ -1135,6 +1206,7 @@
       },
       {
         "text": "Panic and guess randomly across the entire Scantron sheet",
+        "icon": "🎲",
         "description": "-7% Grades, -4 Happiness",
         "type": "chaotic",
         "effects": {
@@ -1161,6 +1233,7 @@
     "choices": [
       {
         "text": "Enroll in intensive weekend prep coursework and sit for the exam",
+        "icon": "📚",
         "description": "+12% Grades, +4 Smarts, -$150 Exam Fee",
         "type": "dedicated",
         "effects": {
@@ -1173,6 +1246,7 @@
       },
       {
         "text": "Sit for the exam relying on daily career experience",
+        "icon": "🎓",
         "description": "+6% Grades, +2 Smarts, -$100 Fee",
         "type": "practical",
         "effects": {
@@ -1184,6 +1258,7 @@
       },
       {
         "text": "Ignore the renewal notice and let your academic standing lapse",
+        "icon": "📭",
         "description": "-10% Grades, -2 Smarts",
         "type": "neglect",
         "effects": {

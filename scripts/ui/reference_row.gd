@@ -22,7 +22,6 @@ const DETAILS = {
 	"Business & Enterprises": ["🏢", "Build and manage your businesses"],
 	"Doctor & Healthcare": ["🩺", "Look after your health"],
 }
-const SYMBOLS = {"reading": "📚", "puzzle": "🧩", "chess": "♟", "museum": "🏛", "language": "🌐", "workshop": "🔧", "school": "🎓", "job": "💼", "business": "🏢", "stock": "📈", "buy": "🛒", "sell": "💰", "ring": "💍", "bouquet": "💐", "gift": "🎁", "marry": "💒", "flight": "✈", "pilot": "✈", "boat": "⛵", "car": "🚗", "bank": "🏦", "tax": "🧾", "loan": "💳", "save": "💾", "load": "📂", "cancel": "↩", "continue": "➜", "apply": "✓", "parent": "👥", "child": "👶", "pet": "🐾", "health": "❤", "gym": "💪", "study": "📖"}
 var target: Button
 var heading: Label
 var description: Label
@@ -90,17 +89,13 @@ func _process(_delta: float) -> void:
 
 func _sync() -> void:
 	var light: bool = LifeLibrary.data.theme == "light"
-	var key := target.text + str(target.icon) + str(target.button_pressed) + str(target.disabled) + str(light) + str(LifeLibrary.data.language)
+	var key := target.text + str(target.icon) + str(target.button_pressed) + str(target.get_meta("action_emoji", "")) + str(target.disabled) + str(light) + str(LifeLibrary.data.language)
 	if key != previous:
 		previous = key
 		var lines := target.text.split("\n", false)
 		var first := str(lines[0]) if not lines.is_empty() else ""
 		var source: String = str(target.get_meta("locale_source", target.text)).split("\n")[0].strip_edges()
-		var glyph := "◇"
-		for keyword in SYMBOLS:
-			if keyword in source.to_lower():
-				glyph = SYMBOLS[keyword]
-				break
+		var glyph: String = preload("res://scripts/ui/action_icons.gd").for_text(source)
 		if first.length() > 1 and first.unicode_at(0) > 8000:
 			var space := first.find(" ")
 			if space > 0 and space < 8:
@@ -111,6 +106,7 @@ func _sync() -> void:
 				glyph = DETAILS[title_text][0]
 				if lines.size() < 2:
 					lines.append(GameLocale.display(DETAILS[title_text][1]))
+		glyph = str(target.get_meta("action_emoji", glyph))
 		heading.text = first
 		description.text = "\n".join(lines.slice(1))
 		description.visible = not description.text.is_empty()

@@ -5,6 +5,7 @@ const BUTTON_COLORS = ["font_color", "font_hover_color", "font_pressed_color", "
 const INPUT_COLORS = ["font_color", "font_placeholder_color", "font_selected_color", "font_uneditable_color"]
 var reference_theme = preload("res://scripts/ui/reference_theme.gd").new()
 var stats_hud = preload("res://scripts/ui/stats_hud.gd").new()
+var modern_navigation = preload("res://scripts/ui/modern_navigation.gd").new()
 
 
 func _ready() -> void:
@@ -93,6 +94,9 @@ func _apply_node(node: Node) -> void:
 		return
 
 	var is_light: bool = LifeLibrary.data.theme == "light"
+	if modern_navigation.handles(node):
+		modern_navigation.apply(node, is_light)
+		return
 	if stats_hud.handles(node):
 		stats_hud.apply(node, is_light)
 		return

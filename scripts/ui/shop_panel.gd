@@ -42,10 +42,11 @@ func open_shop() -> void:
 	_close.grab_focus()
 
 func close_shop() -> void:
-	hide()
-	closed.emit()
-	if is_instance_valid(_shop_button):
-		_shop_button.grab_focus()
+	preload("res://scripts/ui/panel_close.gd").dismiss(self, false, func():
+		closed.emit()
+		if is_instance_valid(_shop_button):
+			_shop_button.grab_focus()
+	)
 
 func _input(event: InputEvent) -> void:
 	if visible and event.is_action_pressed("ui_cancel"):

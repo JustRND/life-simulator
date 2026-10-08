@@ -14,6 +14,7 @@ static func watch(panel: Control, visibility_source: Control = null) -> void:
 	var controller = load("res://scripts/ui/panel_pull_up.gd").new()
 	panel.set_meta("pull_up_controller", controller)
 	var source := visibility_source if visibility_source != null else panel
+	source.set_meta("closing_surface", panel)
 	source.visibility_changed.connect(func():
 		if source.is_visible_in_tree():
 			controller.play(panel)

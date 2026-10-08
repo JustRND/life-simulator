@@ -465,7 +465,7 @@ theme_override_constants/separation = 3
 layout_mode = 2
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
 theme_override_font_sizes/font_size = 25
-text = "HEALTH  ♥"
+text = "HEALTH"
 
 [node name="HealthBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=159880371]
 custom_minimum_size = Vector2(0, 32)
@@ -480,7 +480,7 @@ value = 80.0
 layout_mode = 2
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
 theme_override_font_sizes/font_size = 25
-text = "HAPPINESS  ☺"
+text = "HAPPINESS"
 
 [node name="HappinessBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=681471829]
 custom_minimum_size = Vector2(0, 32)
@@ -495,7 +495,7 @@ value = 75.0
 layout_mode = 2
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
 theme_override_font_sizes/font_size = 25
-text = "SMARTS  ⚡"
+text = "SMARTS"
 
 [node name="SmartsBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=2141533477]
 custom_minimum_size = Vector2(0, 32)
@@ -510,7 +510,7 @@ value = 60.0
 layout_mode = 2
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
 theme_override_font_sizes/font_size = 25
-text = "LOOKS  ✦"
+text = "LOOKS"
 
 [node name="LooksBar" type="ProgressBar" parent="SafeArea/MainColumn/StatsPanel/StatsMargin/StatsContainer" unique_id=2119674293]
 custom_minimum_size = Vector2(0, 32)

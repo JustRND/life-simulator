@@ -160,9 +160,10 @@ func _show_page(heading: String) -> void:
 
 func _close_page() -> void:
 	_clear_credentials()
-	page.hide()
-	if is_instance_valid(source_button):
-		source_button.grab_focus()
+	preload("res://scripts/ui/panel_close.gd").dismiss(page, false, func():
+		if is_instance_valid(source_button):
+			source_button.grab_focus()
+	)
 
 func _input(event: InputEvent) -> void:
 	if page != null and page.visible and event.is_action_pressed("ui_cancel"):

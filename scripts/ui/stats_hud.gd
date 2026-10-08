@@ -35,6 +35,23 @@ func apply(node: Control, light: bool) -> void:
 		node.add_theme_constant_override("separation", 4)
 	elif node is Label:
 		node.remove_meta("reference_section")
+		var stat_name := str(node.name).trim_suffix("Label")
+		if stat_name in ["Health", "Happiness", "Smarts", "Looks"]:
+			node.text = stat_name.to_upper()
+			var icon_node := node.get_node_or_null(stat_name + "Icon") as TextureRect
+			if icon_node == null:
+				icon_node = TextureRect.new()
+				icon_node.name = stat_name + "Icon"
+				node.add_child(icon_node)
+			icon_node.texture = preload("res://scripts/ui/modern_navigation.gd").icon(stat_name.to_lower())
+			icon_node.material = null
+			icon_node.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+			icon_node.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			icon_node.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			icon_node.size = Vector2(34, 34)
+			icon_node.custom_minimum_size = Vector2(34, 34)
+			icon_node.position = Vector2(4, 0)
+			icon_node.modulate = Color.WHITE
 		node.custom_minimum_size.y = 34
 		node.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		node.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -45,8 +62,16 @@ func apply(node: Control, light: bool) -> void:
 		spacing.content_margin_left = 48
 		node.add_theme_stylebox_override("normal", spacing)
 	elif node is TextureRect:
-		node.position = Vector2(0, 0)
+		var stat_kind := str(node.name).trim_suffix("Icon").to_lower()
+		node.texture = preload("res://scripts/ui/modern_navigation.gd").icon(stat_kind)
+		node.material = null
+		node.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		node.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		node.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		node.position = Vector2(4, 0)
 		node.size = Vector2(34, 34)
+		node.custom_minimum_size = Vector2(34, 34)
+		node.modulate = Color.WHITE
 	elif node is ProgressBar:
 		node.custom_minimum_size.y = 28
 		node.add_theme_font_override("font", font)

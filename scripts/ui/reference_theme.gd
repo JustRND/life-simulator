@@ -84,6 +84,9 @@ func apply(node: Control, light: bool) -> void:
 		var style := surface(light)
 		style.set_content_margin_all(0)
 		node.add_theme_stylebox_override("panel", style)
+		if node.name == "EventPanel":
+			style.set_corner_radius_all(24)
+			node.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
 	if node is VBoxContainer:
 		node.add_theme_constant_override("separation", 0 if node.has_meta("reference_menu") or str(node.name).ends_with("List") else 16)
 	if node is MarginContainer and (str(node.name).ends_with("Margin") or node.has_meta("reference_edge")):
