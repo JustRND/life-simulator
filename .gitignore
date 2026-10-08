@@ -12,3 +12,6 @@ Thumbs.db
 # Local scratch / test work
 work/
 docs/*.import
+
+# Private tracking / documentation
+*mindmap*
