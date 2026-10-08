@@ -319,7 +319,7 @@ func _show_notice() -> void:
 	var toast := PanelContainer.new()
 	toast.name = "AchievementToast"
 	toast.z_index = 200
-	toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	toast.mouse_filter = Control.MOUSE_FILTER_PASS
 	var is_light: bool = LifeLibrary.data.theme == "light"
 	toast.add_theme_stylebox_override("panel", pages._style(Color("#edf3fa") if is_light else Color("#13243a"), Color("#b45309") if is_light else Color("#ffd481"), 24))
 	main.add_child(toast)
@@ -328,11 +328,84 @@ func _show_notice() -> void:
 	toast.offset_right = -30
 	toast.offset_top = -180
 	toast.offset_bottom = -20
+
+	var margin := MarginContainer.new()
+	margin.mouse_filter = Control.MOUSE_FILTER_PASS
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_top", 14)
+	margin.add_theme_constant_override("margin_bottom", 14)
+	toast.add_child(margin)
+
+	var hbox := HBoxContainer.new()
+	hbox.mouse_filter = Control.MOUSE_FILTER_PASS
+	hbox.add_theme_constant_override("separation", 16)
+	margin.add_child(hbox)
+
 	var label: Label = pages._label("★ ACHIEVEMENT UNLOCKED\n%s — %s" % entry, 26)
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	toast.add_child(label)
+	hbox.add_child(label)
+
+	var close_btn := Button.new()
+	close_btn.name = "CloseAchievementButton"
+	close_btn.text = "✕"
+	close_btn.focus_mode = Control.FOCUS_NONE
+	close_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	close_btn.custom_minimum_size = Vector2(64, 64)
+	close_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	close_btn.size_flags_horizontal = Control.SIZE_SHRINK_END
+	close_btn.add_theme_font_size_override("font_size", 28)
+
+	var x_color: Color = Color("#b45309") if is_light else Color("#ffd481")
+	var btn_style := StyleBoxFlat.new()
+	btn_style.bg_color = Color("#000000", 0.08) if is_light else Color("#ffffff", 0.10)
+	btn_style.border_color = x_color
+	btn_style.set_border_width_all(2)
+	btn_style.set_corner_radius_all(32)
+	btn_style.content_margin_left = 12
+	btn_style.content_margin_right = 12
+	btn_style.content_margin_top = 8
+	btn_style.content_margin_bottom = 8
+
+	var btn_pressed := btn_style.duplicate() as StyleBoxFlat
+	btn_pressed.bg_color = Color("#b45309", 0.25) if is_light else Color("#ffd481", 0.25)
+
+	for state in ["normal", "hover", "focus"]:
+		close_btn.add_theme_stylebox_override(state, btn_style)
+	close_btn.add_theme_stylebox_override("pressed", btn_pressed)
+
+	close_btn.add_theme_color_override("font_color", x_color)
+	close_btn.add_theme_color_override("font_hover_color", x_color)
+	close_btn.add_theme_color_override("font_focus_color", x_color)
+	close_btn.add_theme_color_override("font_pressed_color", Color.WHITE if is_light else Color.BLACK)
+	hbox.add_child(close_btn)
+
 	var tween := toast.create_tween()
 	tween.tween_property(toast, "position:y", 24.0, 0.3).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tween.tween_interval(3.2)
-	tween.tween_property(toast, "modulate:a", 0.0, 0.3)
-	tween.tween_callback(func(): toast.queue_free(); _show_notice())
+	tween.tween_interval(3.5)
+	tween.tween_property(toast, "modulate:a", 0.0, 0.25)
+	tween.tween_callback(func():
+		if is_instance_valid(toast):
+			toast.queue_free()
+		_show_notice()
+	)
+
+	var dismiss_toast := func():
+		if not is_instance_valid(toast):
+			return
+		close_btn.disabled = true
+		if tween != null and tween.is_valid():
+			tween.kill()
+		var exit_tween := toast.create_tween()
+		exit_tween.set_parallel(true)
+		exit_tween.tween_property(toast, "modulate:a", 0.0, 0.15)
+		exit_tween.tween_property(toast, "position:y", -180.0, 0.15).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+		exit_tween.chain().tween_callback(func():
+			if is_instance_valid(toast):
+				toast.queue_free()
+			_show_notice()
+		)
+
+	close_btn.pressed.connect(dismiss_toast)

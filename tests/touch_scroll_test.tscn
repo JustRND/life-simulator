@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://d3yq8vtouchtest"]
+[gd_scene format=3 uid="uid://dxiw1tpvkhq36"]
 
 [ext_resource type="Script" path="res://tests/touch_scroll_test.gd" id="1_touch"]
 
