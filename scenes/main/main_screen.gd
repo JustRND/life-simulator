@@ -412,25 +412,25 @@ func _configure_action_bar() -> void:
 		if not menu_btn.button_up.is_connected(_on_menu_btn_up):
 			menu_btn.button_up.connect(_on_menu_btn_up)
 
-	# Configure the 4 16-bit icons on the Action Bar flanking Age Button with tactile micro-interactions
+	# Modern navigation icons retain the existing tactile interactions
 	var icon_configs := [
-		[infant_button, get_stage_icon_path(PlayerData.age), "Infant"],
-		[assets_button, "res://assets/icons/icon_assets.png", "Assets"],
-		[relationships_button, "res://assets/icons/icon_relationships.png", "Relationships"],
-		[activities_button, "res://assets/icons/icon_activities.png", "Activities"]
+		[infant_button, "life", "Infant"],
+		[assets_button, "assets", "Assets"],
+		[relationships_button, "relationships", "Relationships"],
+		[activities_button, "activities", "Activities"]
 	]
 
 	for item in icon_configs:
 		var btn: Button = item[0]
 		if btn != null:
-			if ResourceLoader.exists(item[1]):
-				btn.icon = load(item[1])
+			if item[1] != "":
+				btn.icon = preload("res://scripts/ui/modern_navigation.gd").icon(item[1])
 				btn.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 				btn.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
 				btn.expand_icon = true
-				btn.add_theme_constant_override("icon_max_width", 96)
+				btn.add_theme_constant_override("icon_max_width", 64)
 				btn.add_theme_constant_override("h_separation", 8)
-				btn.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+				btn.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 			btn.pivot_offset = Vector2(75, 105)
 			if not btn.mouse_entered.is_connected(_on_action_bar_btn_hover.bind(btn)):
 				btn.mouse_entered.connect(_on_action_bar_btn_hover.bind(btn))
@@ -1061,9 +1061,7 @@ func update_ui() -> void:
 
 	# Update InfantButton icon with age progression (Strictly stage name, never occupation)
 	if infant_button != null:
-		var stage_icon_path := get_stage_icon_path(PlayerData.age)
-		if ResourceLoader.exists(stage_icon_path):
-			infant_button.icon = load(stage_icon_path)
+		infant_button.icon = preload("res://scripts/ui/modern_navigation.gd").icon("life")
 		infant_button.text = PlayerData.get_stage_name()
 
 	# Assets Button Dimming & Tooltip Gating for Infants / Toddlers
@@ -1230,8 +1228,12 @@ func show_event_popup() -> void:
 				button.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 1))
 				button.add_theme_color_override("font_focus_color", Color(1, 0.95, 0.6, 1))
 
+	var used_choice_icons: Array[String] = []
 	for i in range(min(current_event_choices.size(), buttons.size())):
 		var choice: Dictionary = current_event_choices[i]
+		var choice_icon: String = preload("res://scripts/ui/action_icons.gd").for_choice(choice, used_choice_icons)
+		used_choice_icons.append(choice_icon)
+		buttons[i].set_meta("action_emoji", choice_icon)
 		var title_text := str(choice.get("text", "Choose"))
 		var desc_text := _format_effects_summary(choice)
 		buttons[i].text = "%s\n%s" % [title_text, desc_text]
@@ -1246,7 +1248,7 @@ func show_event_popup() -> void:
 
 func hide_event_popup() -> void:
 	if event_overlay != null:
-		event_overlay.visible = false
+		preload("res://scripts/ui/panel_close.gd").dismiss(event_overlay, false, Callable(), event_overlay.get_node_or_null("EventPanel"))
 
 
 func choose_event_option(choice_index: int) -> void:
@@ -1342,9 +1344,8 @@ func _on_settings_button_pressed() -> void:
 
 
 func _on_close_settings_button_pressed() -> void:
-	if settings_overlay != null:
-		settings_overlay.visible = false
-	show_tab("timeline")
+	panel_pull_up.cancel()
+	preload("res://scripts/ui/panel_close.gd").dismiss(settings_overlay, false, func(): show_tab("timeline"), settings_overlay.get_node("SettingsCard"))
 
 
 func _on_reset_progress_button_pressed() -> void:
@@ -1561,7 +1562,11 @@ func _on_activities_button_pressed() -> void:
 
 # Panel Close & Back handlers
 func _on_close_panel_button_pressed() -> void:
-	show_tab("timeline")
+	panel_pull_up.cancel()
+	for panel in [character_panel, infant_panel, assets_panel, bank_panel, relationships_panel, activities_panel]:
+		if panel.visible:
+			preload("res://scripts/ui/panel_close.gd").dismiss(panel, false, func(): show_tab("timeline"))
+			return
 
 
 func _on_bank_button_pressed() -> void:
@@ -1572,7 +1577,8 @@ func _on_bank_button_pressed() -> void:
 
 
 func _on_back_to_assets_button_pressed() -> void:
-	show_tab("assets")
+	panel_pull_up.cancel()
+	preload("res://scripts/ui/panel_close.gd").dismiss(bank_panel, false, func(): show_tab("assets"))
 
 
 func _is_life_milestone(entry: Dictionary) -> bool:
@@ -7908,7 +7914,7 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	# Click outside card on dim backdrop to close
 	overlay.gui_input.connect(func(event: InputEvent):
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			overlay.queue_free()
+			preload("res://scripts/ui/panel_close.gd").dismiss(overlay, true)
 	)
 
 	var margin := MarginContainer.new()
@@ -7955,7 +7961,7 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	close_style.set_border_width_all(2)
 	close_style.set_corner_radius_all(8)
 	close_btn.add_theme_stylebox_override("normal", close_style)
-	close_btn.pressed.connect(func(): overlay.queue_free())
+	close_btn.pressed.connect(func(): preload("res://scripts/ui/panel_close.gd").dismiss(overlay, true))
 	header_row.add_child(close_btn)
 
 	var sub_lbl := Label.new()
@@ -9026,7 +9032,7 @@ func _show_social_media_modal() -> void:
 			d_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
 			cv.add_child(d_lbl)
 
-			var btn_create := _create_cyber_button("✨ Launch New %s Account" % p_name, p_color, func():
+			var btn_create := _create_cyber_button("Launch New %s Account" % p_name, p_color, func():
 				var res := SocialMediaManager.create_account(PlayerData, p_key)
 				if res["success"]:
 					add_life_event(res["message"], "lifestyle")
@@ -9036,6 +9042,7 @@ func _show_social_media_modal() -> void:
 					add_life_event(res["message"], "lifestyle")
 					show_tab("timeline")
 			)
+			btn_create.icon = preload("res://scripts/ui/social_platform_icons.gd").icon(p_key)
 			btn_create.custom_minimum_size.y = 56
 			btn_create.add_theme_font_size_override("font_size", 22)
 			cv.add_child(btn_create)
@@ -11437,10 +11444,10 @@ func _configure_age_art() -> void:
 
 	var artwork := TextureRect.new()
 	artwork.name = "AgeArtwork"
-	artwork.texture = load("res://assets/icons/4x/icon_age.png")
+	artwork.texture = preload("res://scripts/ui/modern_navigation.gd").icon("age")
 	artwork.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	artwork.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	artwork.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	artwork.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	artwork.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	artwork.pivot_offset = Vector2(115, 115)
 	age_button.add_child(artwork)
