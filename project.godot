@@ -12,6 +12,7 @@ config_version=5
 
 config/name="LifeSimulatorPrototype"
 run/main_scene="uid://dtpvigdquw6gc"
+run/max_fps=120
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://icon.svg"
 
@@ -31,6 +32,11 @@ window/size/viewport_height=1920
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=1
+window/vsync/vsync_mode=0
+
+[gui]
+
+theme/custom_font="res://assets/fonts/app_font.tres"
 
 [physics]
 
@@ -40,8 +46,6 @@ window/handheld/orientation=1
 
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="mobile"
-renderer/rendering_method.web="gl_compatibility"
-
-[gui]
-
-theme/custom_font="res://assets/fonts/app_font.tres"
+textures/vram_compression/import_etc2_astc=true
+2d/snap/snap_2d_transforms_to_pixel=true
+2d/snap/snap_2d_vertices_to_pixel=true

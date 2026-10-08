@@ -180,11 +180,8 @@ func _ready() -> void:
 	pull_up.watch(reset_confirmation_overlay.get_node("ConfirmCard"), reset_confirmation_overlay)
 	pull_up.watch(new_game_panel)
 
-	# Soft UI taps, including buttons created later by modal panels.
-	if get_node_or_null("ButtonSounds") == null:
-		var sounds := preload("res://scripts/ui/button_sounds.gd").new()
-		sounds.name = "ButtonSounds"
-		add_child(sounds)
+	# Smooth high-refresh UI rendering
+	Engine.max_fps = 120
 
 	# Configure translucent, sleek scroll indicators on every page and scroll container
 	_setup_all_translucent_scrollbars()

@@ -83,9 +83,20 @@ func _label(font_size: int, bold: bool = false) -> Label:
 	result.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return result
 
+var _target_silenced := false
+var _cached_text := ""
+var _cached_pressed := false
+var _cached_disabled := false
+var _cached_icon: Texture2D = null
+var _cached_light := false
+var _cached_lang := ""
+var _cached_colored := false
+var _cached_emoji := ""
+
 func _silence_target() -> void:
-	if target == null:
+	if target == null or _target_silenced:
 		return
+	_target_silenced = true
 	for key in ["font_color", "font_hover_color", "font_pressed_color", "font_disabled_color", "font_focus_color"]:
 		target.add_theme_color_override(key, Color.TRANSPARENT)
 	for key in ["icon_normal_color", "icon_hover_color", "icon_pressed_color", "icon_disabled_color", "icon_focus_color"]:
@@ -113,59 +124,79 @@ func _ignore_mouse(node: Node) -> void:
 		_ignore_mouse(child)
 
 func _process(_delta: float) -> void:
+	if target == null or not is_visible_in_tree():
+		return
 	_sync()
 
 func _sync() -> void:
 	if target == null:
 		return
-	_silence_target()
+	if not _target_silenced:
+		_silence_target()
 	var light: bool = LifeLibrary.data.get("theme", "dark") == "light"
-	var is_colored: bool = _is_colored_target()
 	var lang: String = str(LifeLibrary.data.get("language", "en"))
-	var key := target.text + str(target.icon) + str(target.button_pressed) + str(target.get_meta("action_emoji", "")) + str(target.disabled) + str(light) + lang + str(is_colored)
-	if key != previous:
-		previous = key
-		var lines := target.text.split("\n", false)
-		var first := str(lines[0]) if not lines.is_empty() else ""
-		var source: String = str(target.get_meta("locale_source", target.text)).split("\n")[0].strip_edges()
-		var glyph: String = preload("res://scripts/ui/action_icons.gd").for_text(source)
-		if first.length() > 1 and first.unicode_at(0) > 8000:
-			var space := first.find(" ")
-			if space > 0 and space < 8:
-				glyph = first.substr(0, space)
-				first = first.substr(space + 1).strip_edges()
-		for title_text in DETAILS:
-			if source.ends_with(title_text):
-				glyph = DETAILS[title_text][0]
-				if lines.size() < 2:
-					lines.append(GameLocale.display(DETAILS[title_text][1]))
-		glyph = str(target.get_meta("action_emoji", glyph))
-		heading.text = first
-		description.text = "\n".join(lines.slice(1))
-		description.visible = not description.text.is_empty()
-		symbol.text = glyph
-		art.texture = target.icon
-		art.visible = target.icon != null
-		symbol.visible = target.icon == null
-		arrow.text = "✓" if target.toggle_mode and target.button_pressed else "›"
-		var ink: Color
-		var secondary: Color
-		if is_colored:
-			ink = Color.WHITE
-			secondary = Color("#f1f5f9")
-			if target.disabled:
-				ink = Color(1, 1, 1, 0.5)
-				secondary = ink
-		else:
-			ink = Color("#075b91") if light else Color("#a9dcff")
-			secondary = Color("#355b75") if light else Color("#c1cddd")
-			if target.disabled:
-				ink = Color("#606773") if light else Color("#9da8b8")
-				secondary = ink
-		heading.add_theme_color_override("font_color", ink)
-		description.add_theme_color_override("font_color", secondary)
-		arrow.add_theme_color_override("font_color", ink)
-		symbol.add_theme_color_override("font_color", ink)
+	var text: String = target.text
+	var pressed: bool = target.button_pressed
+	var disabled: bool = target.disabled
+	var icon_res: Texture2D = target.icon
+	var emoji_meta: String = str(target.get_meta("action_emoji", ""))
+
+	if (text == _cached_text and pressed == _cached_pressed and disabled == _cached_disabled 
+			and icon_res == _cached_icon and light == _cached_light and lang == _cached_lang 
+			and emoji_meta == _cached_emoji):
+		return
+
+	var is_colored: bool = _is_colored_target()
+	_cached_text = text
+	_cached_pressed = pressed
+	_cached_disabled = disabled
+	_cached_icon = icon_res
+	_cached_light = light
+	_cached_lang = lang
+	_cached_colored = is_colored
+	_cached_emoji = emoji_meta
+
+	var lines := target.text.split("\n", false)
+	var first := str(lines[0]) if not lines.is_empty() else ""
+	var source: String = str(target.get_meta("locale_source", target.text)).split("\n")[0].strip_edges()
+	var glyph: String = preload("res://scripts/ui/action_icons.gd").for_text(source)
+	if first.length() > 1 and first.unicode_at(0) > 8000:
+		var space := first.find(" ")
+		if space > 0 and space < 8:
+			glyph = first.substr(0, space)
+			first = first.substr(space + 1).strip_edges()
+	for title_text in DETAILS:
+		if source.ends_with(title_text):
+			glyph = DETAILS[title_text][0]
+			if lines.size() < 2:
+				lines.append(GameLocale.display(DETAILS[title_text][1]))
+	glyph = str(target.get_meta("action_emoji", glyph))
+	heading.text = first
+	description.text = "\n".join(lines.slice(1))
+	description.visible = not description.text.is_empty()
+	symbol.text = glyph
+	art.texture = target.icon
+	art.visible = target.icon != null
+	symbol.visible = target.icon == null
+	arrow.text = "✓" if target.toggle_mode and target.button_pressed else "›"
+	var ink: Color
+	var secondary: Color
+	if is_colored:
+		ink = Color.WHITE
+		secondary = Color("#f1f5f9")
+		if target.disabled:
+			ink = Color(1, 1, 1, 0.5)
+			secondary = ink
+	else:
+		ink = Color("#075b91") if light else Color("#a9dcff")
+		secondary = Color("#355b75") if light else Color("#c1cddd")
+		if target.disabled:
+			ink = Color("#606773") if light else Color("#9da8b8")
+			secondary = ink
+	heading.add_theme_color_override("font_color", ink)
+	description.add_theme_color_override("font_color", secondary)
+	arrow.add_theme_color_override("font_color", ink)
+	symbol.add_theme_color_override("font_color", ink)
 	var min_h := 160.0 if is_colored else 192.0
 	target.custom_minimum_size.y = maxf(min_h, get_combined_minimum_size().y)
 

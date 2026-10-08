@@ -8,10 +8,7 @@ var _age: AudioStreamPlayer
 var _last_press_ms: int = -1000
 
 func _ready() -> void:
-	_tap = _make_player("SoftTap", _synthesize(false))
-	_age = _make_player("AgeTap", _synthesize(true))
-	_watch_tree(get_parent())
-	get_tree().node_added.connect(_on_node_added)
+	pass
 
 func _make_player(player_name: String, sound: AudioStreamWAV) -> AudioStreamPlayer:
 	var player := AudioStreamPlayer.new()
