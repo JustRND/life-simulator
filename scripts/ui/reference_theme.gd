@@ -2,17 +2,13 @@ extends RefCounted
 
 const Row = preload("res://scripts/ui/reference_row.gd")
 const COLORS = ["font_color", "font_hover_color", "font_pressed_color", "font_disabled_color", "font_focus_color", "default_color", "font_placeholder_color"]
-var body_font := SystemFont.new()
-var bold_font := SystemFont.new()
-var title_font := SystemFont.new()
+var body_font: Font = preload("res://assets/fonts/app_font.tres")
+var bold_font: Font = preload("res://assets/fonts/app_font_bold.tres")
+var title_font: Font = preload("res://assets/fonts/app_font_bold.tres")
 var custom_style = preload("res://scripts/ui/ui_style.gd").new()
 
 func _init() -> void:
-	body_font.font_names = PackedStringArray(["Arial", "Noto Sans", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "sans-serif"])
-	bold_font.font_names = PackedStringArray(["Arial Black", "Arial", "Noto Sans", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "sans-serif"])
-	bold_font.font_weight = 900
-	title_font.font_names = body_font.font_names
-	title_font.font_weight = 700
+	pass
 
 func handles(node: Node, root: Node) -> bool:
 	var ancestor := node

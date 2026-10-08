@@ -5,14 +5,10 @@
 [ext_resource type="Texture2D" uid="uid://bv7l8jf2r62rn" path="res://assets/ui/ingame_background.png" id="3_bg"]
 [ext_resource type="Texture2D" uid="uid://oujxvj38q5k0" path="res://assets/ui/loading_icon.png" id="4_loading"]
 [ext_resource type="Shader" uid="uid://0bwcmxsuaqxt" path="res://assets/ui/background_pulse.gdshader" id="5_bg_pulse"]
-
-[sub_resource type="SystemFont" id="pixel_font"]
-font_names = PackedStringArray("Arial", "Noto Sans")
-font_weight = 700
-subpixel_positioning = 0
+[ext_resource type="FontVariation" uid="uid://cfontbold0001" path="res://assets/fonts/app_font_bold.tres" id="6_font"]
 
 [sub_resource type="Theme" id="pixel_theme"]
-default_font = SubResource("pixel_font")
+default_font = ExtResource("6_font")
 default_font_size = 28
 
 [sub_resource type="ShaderMaterial" id="BackgroundPulse"]

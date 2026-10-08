@@ -1,10 +1,9 @@
 extends RefCounted
 ## The compact HUD is not a menu: its labels must not become category bars.
-var font := SystemFont.new()
+var font: Font = preload("res://assets/fonts/app_font_bold.tres")
 
 func _init() -> void:
-	font.font_names = PackedStringArray(["Arial", "Noto Sans", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "sans-serif"])
-	font.font_weight = 700
+	pass
 
 func handles(node: Node) -> bool:
 	var ancestor := node

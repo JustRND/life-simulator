@@ -1,0 +1,10 @@
+[gd_resource type="FontVariation" format=3 uid="uid://cfontbold0001"]
+
+[ext_resource type="FontFile" uid="uid://b8bkvgy3qm5ef" path="res://assets/fonts/NotoSans-Bold.ttf" id="1_bold"]
+[ext_resource type="FontFile" uid="uid://cs4kovxwavjsm" path="res://assets/fonts/NotoEmoji-Regular.ttf" id="2_emoji"]
+[ext_resource type="FontFile" uid="uid://8jebfv3qmlpl" path="res://assets/fonts/NotoSansSymbols-Regular.ttf" id="3_symbols"]
+[ext_resource type="FontFile" uid="uid://yes88r88ml03" path="res://assets/fonts/NotoSansSymbols2-Regular.ttf" id="4_symbols2"]
+
+[resource]
+base_font = ExtResource("1_bold")
+fallbacks = [ExtResource("2_emoji"), ExtResource("3_symbols"), ExtResource("4_symbols2")]

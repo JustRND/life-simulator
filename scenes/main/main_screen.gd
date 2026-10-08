@@ -12660,6 +12660,7 @@ func _configure_creation() -> void:
 	prev_avatar_btn.name = "PrevAvatarButton"
 	prev_avatar_btn.text = " ◀ "
 	prev_avatar_btn.custom_minimum_size = Vector2(80, 80)
+	prev_avatar_btn.add_theme_font_override("font", preload("res://assets/fonts/app_font_bold.tres"))
 	prev_avatar_btn.add_theme_font_size_override("font_size", 28)
 	var arrow_style := StyleBoxFlat.new()
 	arrow_style.bg_color = Color("#1e293b")
@@ -12697,6 +12698,7 @@ func _configure_creation() -> void:
 	next_avatar_btn.name = "NextAvatarButton"
 	next_avatar_btn.text = " ▶ "
 	next_avatar_btn.custom_minimum_size = Vector2(80, 80)
+	next_avatar_btn.add_theme_font_override("font", preload("res://assets/fonts/app_font_bold.tres"))
 	next_avatar_btn.add_theme_font_size_override("font_size", 28)
 	next_avatar_btn.add_theme_stylebox_override("normal", arrow_style)
 	next_avatar_btn.add_theme_stylebox_override("hover", arrow_hover)

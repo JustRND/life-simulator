@@ -7,10 +7,11 @@ const BUTTON_HEIGHT := 80
 const RADIUS := 10
 const OPEN_SECONDS := 0.34
 const CLOSE_SECONDS := 0.28
-var font := SystemFont.new()
+var font: Font = preload("res://assets/fonts/app_font.tres")
+var bold_font: Font = preload("res://assets/fonts/app_font_bold.tres")
 
 func _init() -> void:
-	font.font_names = PackedStringArray(["Arial", "Noto Sans", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "sans-serif"])
+	pass
 
 static func contrast(a: Color, b: Color) -> float:
 	var first := a.srgb_to_linear().get_luminance()

@@ -70,13 +70,14 @@ func _ready() -> void:
 	_ignore_mouse(self)
 	_sync()
 
+static var _regular_font: Font = preload("res://assets/fonts/app_font.tres")
+static var _bold_font: Font = preload("res://assets/fonts/app_font_bold.tres")
+
 func _label(font_size: int, bold: bool = false) -> Label:
 	var result := Label.new()
 	result.set_meta("reference_part", true)
 	result.set_meta("locale_manual", true)
-	var font := SystemFont.new()
-	font.font_names = PackedStringArray(["Arial", "Noto Sans"])
-	font.font_weight = 700 if bold else 400
+	var font: Font = _bold_font if bold else _regular_font
 	result.add_theme_font_override("font", font)
 	result.add_theme_font_size_override("font_size", font_size)
 	result.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

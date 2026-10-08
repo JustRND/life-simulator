@@ -1,6 +1,6 @@
 extends RefCounted
 
-var font := SystemFont.new()
+var font: Font = preload("res://assets/fonts/app_font_bold.tres")
 static var textures: Dictionary = {}
 const STATS = {
 	"health": '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 64 64"><path d="M32 54 C30 52 10 36 10 22 C10 14 16 8 24 8 C28.5 8 31 10.5 32 12 C33 10.5 35.5 8 40 8 C48 8 54 14 54 22 C54 36 34 52 32 54 Z" fill="#10b981"/></svg>',
@@ -21,8 +21,7 @@ const PATHS = {
 }
 
 func _init() -> void:
-	font.font_names = PackedStringArray(["Arial", "Noto Sans", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "sans-serif"])
-	font.font_weight = 600
+	pass
 
 static func icon(kind: String) -> Texture2D:
 	if not textures.has(kind):
