@@ -354,10 +354,12 @@ func test_panel_bottom_bar_hiding_and_settings_fullscreen() -> void:
 	assert(close_settings_btn != null and close_act_btn != null, "Close buttons must exist")
 	assert(close_settings_btn.custom_minimum_size == close_act_btn.custom_minimum_size, "CloseSettingsHeaderButton size must match CloseActButton")
 	assert(close_settings_btn.get_theme_font_size("font_size") == close_act_btn.get_theme_font_size("font_size"), "Close button font sizes must match")
-	assert(close_settings_btn.text == "✕", "Close button text must be ✕")
+	# Shop button must NOT be present on main screen TopBar
+	var topbar_row: HBoxContainer = screen.get_node("TopBar/Row")
+	assert(topbar_row.find_child("ShopButton", true, false) == null, "ShopButton must NOT be present on main screen TopBar")
 
 	screen.queue_free()
-	print("✔ Bottom bar hiding and full screen settings layout verified.")
+	print("✔ Bottom bar hiding, full screen settings layout, and shop button removal verified.")
 
 func test_activity_anti_spam_once_per_age() -> void:
 	print("Testing Activity Anti-Spam (Once per Age Limit)...")

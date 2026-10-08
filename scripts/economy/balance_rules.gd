@@ -37,6 +37,8 @@ static func event_effects(effects: Dictionary, age: int) -> Dictionary:
 	var result := effects.duplicate(true)
 	for stat in ["health", "happiness", "smarts", "looks"]:
 		if result.has(stat):
+			if stat == "health" and int(result[stat]) <= -100:
+				continue
 			# Preserve meaningful choices while limiting extreme generic event swings.
 			result[stat] = clampi(int(result[stat]), -12, 10)
 	if result.has("money"):

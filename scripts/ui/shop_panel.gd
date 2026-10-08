@@ -44,7 +44,8 @@ func open_shop() -> void:
 func close_shop() -> void:
 	hide()
 	closed.emit()
-	_shop_button.grab_focus()
+	if is_instance_valid(_shop_button):
+		_shop_button.grab_focus()
 
 func _input(event: InputEvent) -> void:
 	if visible and event.is_action_pressed("ui_cancel"):

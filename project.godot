@@ -22,6 +22,7 @@ PlayerData="*uid://j2djogrti2b7"
 SaveManager="*uid://bnknu013vcdc"
 JobManager="*res://scripts/economy/job_manager.gd"
 LifeLibrary="*res://scripts/core/life_library.gd"
+GameLocale="*res://scripts/core/game_locale.gd"
 
 [display]
 

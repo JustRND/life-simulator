@@ -147,8 +147,7 @@ func _ready() -> void:
 	var shop := preload("res://scripts/ui/shop_panel.gd").new()
 	shop.name = "ShopPanel"
 	add_child(shop)
-	shop.install_button($TopBar/Row)
-	shop.closed.connect(func(): show_tab("timeline"))
+	shop.closed.connect(func(): show_tab("settings"))
 	var settings_pages := preload("res://scripts/ui/settings_pages.gd").new()
 	settings_pages.name = "SettingsPages"
 	add_child(settings_pages)
@@ -606,6 +605,7 @@ func age_up() -> void:
 
 	# 7e. Commercial Business Yearly Financial Simulation
 	_process_yearly_business_operations()
+	FinanceMarket.advance_year(PlayerData)
 
 	# 7f. Social Media Audience Growth & Monetization
 	var social_logs := SocialMediaManager.process_yearly_social_media(PlayerData)
@@ -1190,7 +1190,7 @@ func choose_event_option(choice_index: int) -> void:
 	var event_id: String = str(current_event.get("id", ""))
 	var current_ev_title: String = str(current_event.get("title", ""))
 
-	PlayerData.apply_effects(choice.get("effects", {}))
+	PlayerData.apply_effects(BalanceRules.event_effects(choice.get("effects", {}), PlayerData.age))
 
 	var result_text: String = str(choice.get("result", ""))
 	if current_event.has("unplanned_pregnancy"):
@@ -4199,8 +4199,8 @@ func _process_relationships_aging() -> void:
 
 	# Mother relationship decay & consequences
 	if PlayerData.mother_alive and PlayerData.mother_name != "":
-		if PlayerData.last_parent_interact_age != PlayerData.age:
-			PlayerData.mother_relationship = maxi(0, PlayerData.mother_relationship - randi_range(3, 5))
+		if PlayerData.last_parent_interact_age < PlayerData.age - 1:
+			PlayerData.mother_relationship = maxi(0, PlayerData.mother_relationship - randi_range(2, 3))
 		if PlayerData.mother_relationship < 25:
 			PlayerData.happiness = maxi(5, PlayerData.happiness - 3)
 			add_life_event("Your mother called feeling neglected and distant. Your bond is strained.", "relationship")
@@ -4212,8 +4212,8 @@ func _process_relationships_aging() -> void:
 
 	# Father relationship decay & consequences
 	if PlayerData.father_alive and PlayerData.father_name != "" and PlayerData.father_name != "Unknown":
-		if PlayerData.last_parent_interact_age != PlayerData.age:
-			PlayerData.father_relationship = maxi(0, PlayerData.father_relationship - randi_range(3, 5))
+		if PlayerData.last_parent_interact_age < PlayerData.age - 1:
+			PlayerData.father_relationship = maxi(0, PlayerData.father_relationship - randi_range(2, 3))
 		if PlayerData.father_relationship < 25:
 			PlayerData.happiness = maxi(5, PlayerData.happiness - 3)
 			add_life_event("Your father feels out of touch with you. Family bond is strained.", "relationship")
@@ -4234,8 +4234,8 @@ func _process_relationships_aging() -> void:
 		var p_status: String = PlayerData.get_partner_status()
 		var p_rel: int = PlayerData.get_partner_relationship()
 
-		if PlayerData.last_partner_interact_age != PlayerData.age:
-			p_rel = maxi(0, p_rel - randi_range(4, 7))
+		if PlayerData.last_partner_interact_age < PlayerData.age - 1:
+			p_rel = maxi(0, p_rel - randi_range(2, 4))
 			PlayerData.set_partner_relationship(p_rel)
 
 		if p_rel < 20:
@@ -4269,7 +4269,8 @@ func _process_relationships_aging() -> void:
 			var c_name: String = str(child.get("name", "Child"))
 			if c_age == 18:
 				add_life_event("🎓 Your child %s celebrated their 18th birthday and graduated into adulthood!" % c_name, "family")
-			child["relationship"] = clampi(int(child.get("relationship", 80)) - randi_range(1, 3), 0, 100)
+			if maxi(int(child.get("last_spend_time_age", -1)), int(child.get("last_gift_age", -1))) < PlayerData.age - 1:
+				child["relationship"] = clampi(int(child.get("relationship", 80)) - randi_range(1, 2), 0, 100)
 
 	# Enforce buffs & debuffs constraints on active stats
 	PlayerData.enforce_buffs_and_debuffs()
@@ -9662,7 +9663,7 @@ func _show_casino_modal() -> void:
 			PlayerData.money -= 25
 			PlayerData.casino_plays_this_year += 1
 			# 30% winning chance with house edge
-			if randf() < 0.30:
+			if randf() < 0.18:
 				var roll := randf()
 				var win := 50
 				var sym := "💎"
@@ -9738,7 +9739,7 @@ func _show_casino_modal() -> void:
 			PlayerData.casino_plays_this_year += 1
 			var syms := ["🍒", "🔔", "💎", "7️⃣", "💀"]
 			# 24% chance of 3-match
-			if randf() < 0.24:
+			if randf() < 0.04:
 				var r := randf()
 				var win_sym := "🍒"
 				var payout := 180
@@ -10476,7 +10477,13 @@ func _execute_inheritance_takeover(child: Dictionary, overlay_to_free: Control) 
 		final_amount = maxi(250, net_worth - 5000)
 		inheritance_msg = "⚖️ Probate Legal Settlement: Estate filing and attorney fees cost $5,000. $%s was secured." % _format_number(final_amount)
 
-	PlayerData.takeover_as_child(child, final_amount, PlayerData.owned_assets)
+	# Transfer businesses, shares and physical assets intact, not also as cash.
+	var estate_fees := maxi(0, net_worth - final_amount)
+	var liquid_estate := PlayerData.money + PlayerData.bank_savings - PlayerData.get_total_debt()
+	var cash_inheritance := maxi(0, liquid_estate - estate_fees)
+	var remaining_liability := maxi(0, estate_fees - liquid_estate)
+	PlayerData.takeover_as_child(child, cash_inheritance, PlayerData.owned_assets)
+	PlayerData.debt = remaining_liability
 	PlayerData.add_life_log_entry(inheritance_msg, "finance")
 
 	current_event = null
