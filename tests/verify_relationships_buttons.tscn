@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://bcn56udsnlnqw"]
+
+[ext_resource type="Script" path="res://tests/verify_relationships_buttons.gd" id="1_test"]
+
+[node name="VerifyRelationshipsButtons" type="Node"]
+script = ExtResource("1_test")

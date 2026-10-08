@@ -62,8 +62,24 @@ func apply_button(button: Button) -> void:
 	if not original is StyleBoxFlat:
 		return
 	button.add_theme_font_override("font", font)
-	button.add_theme_font_size_override("font_size", BODY_SIZE)
-	button.custom_minimum_size.y = maxf(BUTTON_HEIGHT, button.custom_minimum_size.y)
+
+	var in_grid: bool = button.get_parent() is GridContainer or button.get_parent() is HBoxContainer
+	var cur_font_size: int = button.get_theme_font_size("font_size")
+	if cur_font_size > 0 and cur_font_size < BODY_SIZE:
+		button.add_theme_font_size_override("font_size", cur_font_size)
+	else:
+		button.add_theme_font_size_override("font_size", DETAIL_SIZE if in_grid else BODY_SIZE)
+
+	if in_grid:
+		button.custom_minimum_size.y = clampf(button.custom_minimum_size.y, 48, 60)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	else:
+		button.custom_minimum_size.y = maxf(BUTTON_HEIGHT, button.custom_minimum_size.y)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
 		var style := original.duplicate() as StyleBoxFlat
@@ -74,10 +90,10 @@ func apply_button(button: Button) -> void:
 				style.border_color = existing.border_color
 		style.set_corner_radius_all(RADIUS)
 		style.set_border_width_all(2)
-		style.content_margin_left = 20
-		style.content_margin_right = 20
-		style.content_margin_top = 14
-		style.content_margin_bottom = 14
+		style.content_margin_left = 12 if in_grid else 20
+		style.content_margin_right = 12 if in_grid else 20
+		style.content_margin_top = 8 if in_grid else 14
+		style.content_margin_bottom = 8 if in_grid else 14
 		if state == "normal":
 			style.shadow_color = Color(0, 0, 0, 0.25)
 			style.shadow_size = 4

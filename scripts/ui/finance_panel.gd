@@ -56,6 +56,8 @@ func create_market_button(parent: Node, text: String, color: Color, action: Call
 	btn.text = text
 	btn.disabled = disabled
 	btn.custom_minimum_size.y = min_height
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	btn.add_theme_font_size_override("font_size", 22)
 	btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	

@@ -175,3 +175,6 @@ func _style_button(button: Button, accent: Color) -> void:
 	button.add_theme_stylebox_override("hover", hover_sb)
 	button.add_theme_stylebox_override("pressed", pressed_sb)
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	if button.name != "CloseShopButton":
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN

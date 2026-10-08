@@ -152,8 +152,10 @@ func apply(node: Control, light: bool) -> void:
 	elif node is HBoxContainer:
 		node.add_theme_constant_override("separation", maxi(16, node.get_theme_constant("separation")))
 	elif node is GridContainer:
-		node.add_theme_constant_override("h_separation", maxi(16, node.get_theme_constant("h_separation")))
-		node.add_theme_constant_override("v_separation", maxi(16, node.get_theme_constant("v_separation")))
+		node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		node.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		node.add_theme_constant_override("h_separation", maxi(12, node.get_theme_constant("h_separation")))
+		node.add_theme_constant_override("v_separation", maxi(10, node.get_theme_constant("v_separation")))
 	if node is MarginContainer:
 		var parent_name := str(node.get_parent().name) if node.get_parent() != null else ""
 		if parent_name in ["MotherCard", "FatherCard", "PartnerCard"] or parent_name.begins_with("ChildCard_"):

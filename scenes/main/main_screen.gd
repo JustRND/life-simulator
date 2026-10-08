@@ -3061,6 +3061,7 @@ func _setup_parent_action_row(vbox: VBoxContainer, parent_type: String) -> void:
 	var row := GridContainer.new()
 	row.name = row_name
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	row.add_theme_constant_override("h_separation", 12)
 	row.add_theme_constant_override("v_separation", 10)
 
@@ -3089,6 +3090,13 @@ func _setup_parent_action_row(vbox: VBoxContainer, parent_type: String) -> void:
 
 	for act in actions:
 		var btn := Button.new()
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		btn.custom_minimum_size = Vector2(100, 52)
+		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		btn.add_theme_font_size_override("font_size", 20)
+		btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
+
 		var act_key: String = act[1]
 		var is_used_this_year := false
 		if act_key == "spend_time":
@@ -3136,10 +3144,10 @@ func _setup_parent_action_row(vbox: VBoxContainer, parent_type: String) -> void:
 			disabled_sb.border_color = Color("#cbd5e1" if is_light else "#475569")
 			disabled_sb.set_border_width_all(2)
 			disabled_sb.set_corner_radius_all(10)
-			disabled_sb.content_margin_left = 18
-			disabled_sb.content_margin_right = 18
-			disabled_sb.content_margin_top = 10
-			disabled_sb.content_margin_bottom = 10
+			disabled_sb.content_margin_left = 12
+			disabled_sb.content_margin_right = 12
+			disabled_sb.content_margin_top = 8
+			disabled_sb.content_margin_bottom = 8
 			btn.add_theme_stylebox_override("disabled", disabled_sb)
 			btn.add_theme_stylebox_override("normal", disabled_sb)
 			btn.add_theme_color_override("font_disabled_color", Color("#e2e8f0" if is_light else "#64748b"))
@@ -3153,10 +3161,10 @@ func _setup_parent_action_row(vbox: VBoxContainer, parent_type: String) -> void:
 			normal_sb.shadow_color = Color(0, 0, 0, 0.28)
 			normal_sb.shadow_size = 4
 			normal_sb.shadow_offset = Vector2(0, 3)
-			normal_sb.content_margin_left = 18
-			normal_sb.content_margin_right = 18
-			normal_sb.content_margin_top = 10
-			normal_sb.content_margin_bottom = 10
+			normal_sb.content_margin_left = 12
+			normal_sb.content_margin_right = 12
+			normal_sb.content_margin_top = 8
+			normal_sb.content_margin_bottom = 8
 			btn.add_theme_stylebox_override("normal", normal_sb)
 
 			var hover_sb := normal_sb.duplicate() as StyleBoxFlat
@@ -3636,6 +3644,7 @@ func _setup_partner_card_ui() -> void:
 		var act_row := GridContainer.new()
 		act_row.columns = 2
 		act_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		act_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		act_row.add_theme_constant_override("h_separation", 12)
 		act_row.add_theme_constant_override("v_separation", 10)
 
@@ -3717,11 +3726,12 @@ func _setup_partner_card_ui() -> void:
 				lock_tooltip = "You must age up before marrying."
 
 			btn.text = button_title
-			btn.custom_minimum_size.y = 56
+			btn.custom_minimum_size = Vector2(100, 52)
 			btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			btn.add_theme_font_size_override("font_size", 22)
+			btn.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+			btn.add_theme_font_size_override("font_size", 20)
 			btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-
+			btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 			var col := Color(act[2])
 			var is_light: bool = LifeLibrary.data.theme == "light"
@@ -3736,10 +3746,10 @@ func _setup_partner_card_ui() -> void:
 				disabled_sb.border_color = Color("#cbd5e1" if is_light else "#475569")
 				disabled_sb.set_border_width_all(2)
 				disabled_sb.set_corner_radius_all(10)
-				disabled_sb.content_margin_left = 18
-				disabled_sb.content_margin_right = 18
-				disabled_sb.content_margin_top = 10
-				disabled_sb.content_margin_bottom = 10
+				disabled_sb.content_margin_left = 12
+				disabled_sb.content_margin_right = 12
+				disabled_sb.content_margin_top = 8
+				disabled_sb.content_margin_bottom = 8
 				btn.add_theme_stylebox_override("disabled", disabled_sb)
 				btn.add_theme_stylebox_override("normal", disabled_sb)
 				btn.add_theme_color_override("font_disabled_color", Color("#e2e8f0" if is_light else "#64748b"))
@@ -3752,10 +3762,10 @@ func _setup_partner_card_ui() -> void:
 				normal_sb.shadow_color = Color(0, 0, 0, 0.28)
 				normal_sb.shadow_size = 4
 				normal_sb.shadow_offset = Vector2(0, 3)
-				normal_sb.content_margin_left = 18
-				normal_sb.content_margin_right = 18
-				normal_sb.content_margin_top = 10
-				normal_sb.content_margin_bottom = 10
+				normal_sb.content_margin_left = 12
+				normal_sb.content_margin_right = 12
+				normal_sb.content_margin_top = 8
+				normal_sb.content_margin_bottom = 8
 				btn.add_theme_stylebox_override("normal", normal_sb)
 
 				var hover_sb := normal_sb.duplicate() as StyleBoxFlat
@@ -3895,6 +3905,8 @@ func _setup_children_cards_ui() -> void:
 		_setup_relationship_bar(cv, "ChildRel_%d" % i, c_rel)
 
 		var act_row := HBoxContainer.new()
+		act_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		act_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		act_row.add_theme_constant_override("separation", 12)
 
 		var child_spent: bool = int(c.get("last_spend_time_age", -1)) == PlayerData.age
@@ -3913,9 +3925,11 @@ func _setup_children_cards_ui() -> void:
 			update_relationships_panel()
 			update_ui()
 		)
-		btn_spend.custom_minimum_size.y = 54
+		btn_spend.custom_minimum_size = Vector2(100, 52)
 		btn_spend.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn_spend.add_theme_font_size_override("font_size", 22)
+		btn_spend.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		btn_spend.add_theme_font_size_override("font_size", 20)
+		btn_spend.alignment = HORIZONTAL_ALIGNMENT_CENTER
 		btn_spend.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		if child_spent:
 			btn_spend.disabled = true
@@ -3948,9 +3962,11 @@ func _setup_children_cards_ui() -> void:
 			update_relationships_panel()
 			update_ui()
 		)
-		btn_gift.custom_minimum_size.y = 54
+		btn_gift.custom_minimum_size = Vector2(100, 52)
 		btn_gift.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn_gift.add_theme_font_size_override("font_size", 22)
+		btn_gift.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		btn_gift.add_theme_font_size_override("font_size", 20)
+		btn_gift.alignment = HORIZONTAL_ALIGNMENT_CENTER
 		btn_gift.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 		if is_baby_or_toddler:
@@ -7980,6 +7996,7 @@ func _render_education_minigame_step() -> void:
 	var options_grid := GridContainer.new()
 	options_grid.columns = 2
 	options_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	options_grid.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	options_grid.add_theme_constant_override("h_separation", 14)
 	options_grid.add_theme_constant_override("v_separation", 12)
 	qv.add_child(options_grid)
@@ -7997,10 +8014,12 @@ func _render_education_minigame_step() -> void:
 	for idx in range(opts.size()):
 		var opt_text := str(opts[idx])
 		var btn := _create_cyber_button(opt_text, border_col, func(): pass)
-		btn.custom_minimum_size.y = 68
+		btn.custom_minimum_size = Vector2(100, 68)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		btn.add_theme_font_size_override("font_size", 24)
 		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 		btn.set_meta("quiz_correct", idx == int(q_data.correct))
 		var chosen_idx := idx
@@ -8410,6 +8429,7 @@ func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callabl
 	btn.text = btn_text
 	btn.custom_minimum_size.y = 56
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	btn.add_theme_font_size_override("font_size", 22)
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -8468,6 +8488,7 @@ func _create_disabled_cyber_button(btn_text: String, reason: String = "") -> But
 
 	btn.custom_minimum_size.y = 52
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	btn.add_theme_font_size_override("font_size", 21)
 	btn.disabled = true
@@ -9478,6 +9499,8 @@ func _show_social_media_modal() -> void:
 
 			var act_grid := GridContainer.new()
 			act_grid.columns = 2
+			act_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			act_grid.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 			act_grid.add_theme_constant_override("h_separation", 12)
 			act_grid.add_theme_constant_override("v_separation", 10)
 			cv.add_child(act_grid)
@@ -9492,7 +9515,8 @@ func _show_social_media_modal() -> void:
 				update_ui()
 				_show_social_media_modal()
 			)
-			btn_post.custom_minimum_size.y = 52
+			btn_post.custom_minimum_size = Vector2(100, 52)
+			btn_post.alignment = HORIZONTAL_ALIGNMENT_CENTER
 			btn_post.add_theme_font_size_override("font_size", 20)
 			if has_posted_this_year:
 				btn_post.disabled = true
@@ -9507,7 +9531,8 @@ func _show_social_media_modal() -> void:
 				update_ui()
 				_show_social_media_modal()
 			)
-			btn_verif.custom_minimum_size.y = 52
+			btn_verif.custom_minimum_size = Vector2(100, 52)
+			btn_verif.alignment = HORIZONTAL_ALIGNMENT_CENTER
 			btn_verif.add_theme_font_size_override("font_size", 20)
 			if is_verif:
 				btn_verif.disabled = true
@@ -9524,7 +9549,8 @@ func _show_social_media_modal() -> void:
 				update_ui()
 				_show_social_media_modal()
 			)
-			btn_buy_foll.custom_minimum_size.y = 52
+			btn_buy_foll.custom_minimum_size = Vector2(100, 52)
+			btn_buy_foll.alignment = HORIZONTAL_ALIGNMENT_CENTER
 			btn_buy_foll.add_theme_font_size_override("font_size", 20)
 			if has_ad_this_year:
 				btn_buy_foll.disabled = true
@@ -9542,7 +9568,8 @@ func _show_social_media_modal() -> void:
 				update_ui()
 				_show_social_media_modal()
 			)
-			btn_troll.custom_minimum_size.y = 52
+			btn_troll.custom_minimum_size = Vector2(100, 52)
+			btn_troll.alignment = HORIZONTAL_ALIGNMENT_CENTER
 			btn_troll.add_theme_font_size_override("font_size", 20)
 			if has_trolled_this_year:
 				btn_troll.disabled = true
@@ -9556,7 +9583,8 @@ func _show_social_media_modal() -> void:
 				update_ui()
 				_show_social_media_modal()
 			)
-			btn_delete.custom_minimum_size.y = 52
+			btn_delete.custom_minimum_size = Vector2(100, 52)
+			btn_delete.alignment = HORIZONTAL_ALIGNMENT_CENTER
 			btn_delete.add_theme_font_size_override("font_size", 20)
 			cv.add_child(btn_delete)
 
