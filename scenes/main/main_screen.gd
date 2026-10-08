@@ -1249,16 +1249,9 @@ func show_event_popup() -> void:
 		if button != null:
 			buttons.append(button)
 			button.visible = false
-			if is_light:
-				button.add_theme_color_override("font_color", Color("#0f172a"))
-				button.add_theme_color_override("font_hover_color", Color("#0284c7"))
-				button.add_theme_color_override("font_pressed_color", Color("#000000"))
-				button.add_theme_color_override("font_focus_color", Color("#0284c7"))
-			else:
-				button.add_theme_color_override("font_color", Color(1, 1, 1, 1))
-				button.add_theme_color_override("font_hover_color", Color(1, 0.95, 0.6, 1))
-				button.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 1))
-				button.add_theme_color_override("font_focus_color", Color(1, 0.95, 0.6, 1))
+			for font_key in ["font_color", "font_hover_color", "font_pressed_color", "font_disabled_color", "font_focus_color"]:
+				button.add_theme_color_override(font_key, Color.TRANSPARENT)
+			button.add_theme_font_size_override("font_size", 1)
 
 	var used_choice_icons: Array[String] = []
 	var choice_colors := [Color("#0284c7"), Color("#10b981"), Color("#f59e0b"), Color("#8b5cf6")]
@@ -1270,11 +1263,16 @@ func show_event_popup() -> void:
 		used_choice_icons.append(choice_icon)
 		btn.set_meta("action_emoji", choice_icon)
 		btn.set_meta("reference_part", true)
+		btn.set_meta("event_choice", true)
 		btn.text = "%s  %s" % [choice_icon, str(choice.get("text", "Choose"))]
 		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		btn.add_theme_font_size_override("font_size", 24)
-		btn.custom_minimum_size.y = 72
 		btn.visible = true
+
+		if not btn.has_node("ReferenceRow"):
+			btn.set_meta("reference_row", true)
+			var presenter := preload("res://scripts/ui/reference_row.gd").new()
+			presenter.name = "ReferenceRow"
+			btn.add_child(presenter)
 
 		var n_sb := StyleBoxFlat.new()
 		n_sb.bg_color = col.darkened(0.18) if is_light else col.darkened(0.42)
@@ -1302,10 +1300,13 @@ func show_event_popup() -> void:
 		p_sb.shadow_offset = Vector2(0, 1)
 		btn.add_theme_stylebox_override("pressed", p_sb)
 
-		btn.add_theme_color_override("font_color", Color.WHITE)
-		btn.add_theme_color_override("font_hover_color", Color.WHITE)
-		btn.add_theme_color_override("font_pressed_color", Color.WHITE)
-		btn.add_theme_color_override("font_focus_color", Color.WHITE)
+		for font_key in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_disabled_color"]:
+			btn.add_theme_color_override(font_key, Color.TRANSPARENT)
+		btn.add_theme_font_size_override("font_size", 1)
+
+		var ref_row = btn.get_node_or_null("ReferenceRow")
+		if ref_row != null and ref_row.has_method("_sync"):
+			ref_row._sync()
 
 	if has_node("ThemeController"):
 		get_node("ThemeController").apply_subtree(event_overlay)

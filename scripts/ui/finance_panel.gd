@@ -114,6 +114,8 @@ func open() -> void:
 	var modal: Dictionary = main._create_cyber_modal("FINANCE MARKET", "Prices update when you age up. NPC trading and business results move the market. Trading fee: 1%.", Color("#06b6d4"))
 	overlay = modal.overlay
 	var list: VBoxContainer = modal.list
+	list.set_meta("panel_spacing", 28)
+	list.add_theme_constant_override("separation", 28)
 	
 	# Top Financial Status Card
 	var is_light: bool = LifeLibrary.data.theme == "light"
@@ -149,6 +151,7 @@ func open() -> void:
 	
 	# Navigation Tabs with tactile button styling
 	var tabs := HBoxContainer.new()
+	tabs.name = "MarketTabs"
 	tabs.add_theme_constant_override("separation", 10)
 	list.add_child(tabs)
 	for tab in ["Exchange", "Portfolio", "My Businesses"]:
@@ -195,7 +198,8 @@ func _perform(result: String) -> void:
 
 
 func _exchange(list: VBoxContainer) -> void:
-	label(list, "8 active listings • 24 company archetypes • NPC-owned businesses can close and reopen.", 21)
+	var listings_label := label(list, "8 active listings • 24 company archetypes • NPC-owned businesses can close and reopen.", 21)
+	listings_label.name = "ActiveListings"
 	label(list, "Acquisitions need no license. Price includes a 25% control premium; shares you already own reduce the cost. Delisting returns 80% of share value; bankruptcy returns zero.", 19, Color("#64748b"))
 	
 	var is_light: bool = LifeLibrary.data.theme == "light"

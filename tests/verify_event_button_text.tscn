@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://bv8173a38173a"]
+
+[ext_resource type="Script" path="res://tests/verify_event_button_text.gd" id="1_test"]
+
+[node name="VerifyEventButtonText" type="Node"]
+script = ExtResource("1_test")

@@ -102,7 +102,14 @@ func apply(node: Control, light: bool) -> void:
 			style.set_corner_radius_all(24)
 			node.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
 	if node is VBoxContainer:
-		node.add_theme_constant_override("separation", 0 if node.has_meta("reference_menu") or str(node.name).ends_with("List") else 16)
+		# Lists also contain explanatory text and tab bars, not just menu rows.
+		# Keep a real gap so button shadows cannot cover the following label.
+		node.add_theme_constant_override("separation", maxi(20, int(node.get_meta("panel_spacing", node.get_theme_constant("separation")))))
+	elif node is HBoxContainer:
+		node.add_theme_constant_override("separation", maxi(16, node.get_theme_constant("separation")))
+	elif node is GridContainer:
+		node.add_theme_constant_override("h_separation", maxi(16, node.get_theme_constant("h_separation")))
+		node.add_theme_constant_override("v_separation", maxi(16, node.get_theme_constant("v_separation")))
 	if node is MarginContainer:
 		var parent_name := str(node.get_parent().name) if node.get_parent() != null else ""
 		if parent_name in ["MotherCard", "FatherCard", "PartnerCard"] or parent_name.begins_with("ChildCard_"):

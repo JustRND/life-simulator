@@ -78,6 +78,29 @@ func _label(font_size: int, bold: bool = false) -> Label:
 	result.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return result
 
+func _silence_target() -> void:
+	if target == null:
+		return
+	for key in ["font_color", "font_hover_color", "font_pressed_color", "font_disabled_color", "font_focus_color"]:
+		target.add_theme_color_override(key, Color.TRANSPARENT)
+	for key in ["icon_normal_color", "icon_hover_color", "icon_pressed_color", "icon_disabled_color", "icon_focus_color"]:
+		target.add_theme_color_override(key, Color.TRANSPARENT)
+	target.add_theme_font_size_override("font_size", 1)
+
+func _is_colored_target() -> bool:
+	if target == null:
+		return false
+	if target.name.begins_with("EventChoice") or (target.get_parent() != null and target.get_parent().name == "EventChoices") or target.has_meta("event_choice"):
+		return true
+	if target.has_meta("market_button") or target.has_meta("colored_button"):
+		return true
+	var sb = target.get_theme_stylebox("normal")
+	if sb is StyleBoxFlat:
+		var bg_col: Color = (sb as StyleBoxFlat).bg_color
+		if bg_col.get_luminance() < 0.65 or bg_col.s > 0.35:
+			return true
+	return false
+
 func _ignore_mouse(node: Node) -> void:
 	if node is Control:
 		node.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -88,8 +111,12 @@ func _process(_delta: float) -> void:
 	_sync()
 
 func _sync() -> void:
+	if target == null:
+		return
+	_silence_target()
 	var light: bool = LifeLibrary.data.theme == "light"
-	var key := target.text + str(target.icon) + str(target.button_pressed) + str(target.get_meta("action_emoji", "")) + str(target.disabled) + str(light) + str(LifeLibrary.data.language)
+	var is_colored: bool = _is_colored_target()
+	var key := target.text + str(target.icon) + str(target.button_pressed) + str(target.get_meta("action_emoji", "")) + str(target.disabled) + str(light) + str(LifeLibrary.data.language) + str(is_colored)
 	if key != previous:
 		previous = key
 		var lines := target.text.split("\n", false)
@@ -115,13 +142,24 @@ func _sync() -> void:
 		art.visible = target.icon != null
 		symbol.visible = target.icon == null
 		arrow.text = "✓" if target.toggle_mode and target.button_pressed else "›"
-		var ink := Color("#075b91") if light else Color("#a9dcff")
-		var secondary := Color("#355b75") if light else Color("#c1cddd")
-		if target.disabled:
-			ink = Color("#606773") if light else Color("#9da8b8")
-			secondary = ink
+		var ink: Color
+		var secondary: Color
+		if is_colored:
+			ink = Color.WHITE
+			secondary = Color("#f1f5f9")
+			if target.disabled:
+				ink = Color(1, 1, 1, 0.5)
+				secondary = ink
+		else:
+			ink = Color("#075b91") if light else Color("#a9dcff")
+			secondary = Color("#355b75") if light else Color("#c1cddd")
+			if target.disabled:
+				ink = Color("#606773") if light else Color("#9da8b8")
+				secondary = ink
 		heading.add_theme_color_override("font_color", ink)
 		description.add_theme_color_override("font_color", secondary)
 		arrow.add_theme_color_override("font_color", ink)
 		symbol.add_theme_color_override("font_color", ink)
-	target.custom_minimum_size.y = maxf(192.0, get_combined_minimum_size().y)
+	var min_h := 160.0 if is_colored else 192.0
+	target.custom_minimum_size.y = maxf(min_h, get_combined_minimum_size().y)
+

@@ -170,6 +170,18 @@ corner_radius_bottom_left = 8
 shadow_color = Color(0, 0.6, 1, 0.35)
 shadow_size = 8
 
+[sub_resource type="StyleBoxFlat" id="danger"]
+bg_color = Color(0.827, 0.118, 0.145, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.157, 0.106, 0.306, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
 [sub_resource type="StyleBoxFlat" id="event_card"]
 bg_color = Color(0.06, 0.09, 0.18, 0.98)
 border_width_left = 3
@@ -184,20 +196,8 @@ corner_radius_bottom_left = 14
 shadow_color = Color(0.01, 0.02, 0.06, 0.85)
 shadow_size = 16
 
-[sub_resource type="StyleBoxFlat" id="danger"]
-bg_color = Color(0.827, 0.118, 0.145, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.157, 0.106, 0.306, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
-
-[sub_resource type="StyleBoxFlat" id="event_choice_normal"]
-bg_color = Color(0.1, 0.28, 0.5, 1)
+[sub_resource type="StyleBoxFlat" id="confirm_keep"]
+bg_color = Color(0.286, 0.165, 0.545, 1)
 border_width_left = 3
 border_width_top = 3
 border_width_right = 3
@@ -232,18 +232,6 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxFlat" id="confirm_keep"]
-bg_color = Color(0.286, 0.165, 0.545, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.396, 0.902, 1, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
-
 [sub_resource type="StyleBoxFlat" id="primary"]
 bg_color = Color(0.255, 0.839, 0.424, 1)
 border_width_left = 5
@@ -255,6 +243,18 @@ corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="event_choice_normal"]
+bg_color = Color(0.1, 0.28, 0.5, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.396, 0.902, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [node name="MainScreen" type="Control" unique_id=1560837318]
 layout_mode = 3
@@ -622,7 +622,6 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 0.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("panel_paper")
@@ -796,28 +795,28 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
 theme_override_font_sizes/font_size = 26
 
-[node name="MilestonesCard" type="PanelContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards"]
+[node name="MilestonesCard" type="PanelContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards" unique_id=427497902]
 layout_mode = 2
 theme_override_styles/panel = SubResource("card")
 
-[node name="Margin" type="MarginContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/MilestonesCard"]
+[node name="Margin" type="MarginContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/MilestonesCard" unique_id=430046046]
 layout_mode = 2
 theme_override_constants/margin_left = 24
 theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 20
 
-[node name="VBox" type="VBoxContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/MilestonesCard/Margin"]
+[node name="VBox" type="VBoxContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/MilestonesCard/Margin" unique_id=158866220]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="CardTitle" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/MilestonesCard/Margin/VBox"]
+[node name="CardTitle" type="Label" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/MilestonesCard/Margin/VBox" unique_id=1868718863]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
 theme_override_font_sizes/font_size = 30
 text = "Life Milestones"
 
-[node name="MilestonesList" type="VBoxContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/MilestonesCard/Margin/VBox"]
+[node name="MilestonesList" type="VBoxContainer" parent="CharacterPanel/CharacterMargin/CharacterContent/CharacterScroll/ProfileCards/MilestonesCard/Margin/VBox" unique_id=1730697666]
 layout_mode = 2
 theme_override_constants/separation = 8
 
@@ -827,7 +826,6 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 0.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("panel_paper")
@@ -970,7 +968,6 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 0.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("panel_paper")
@@ -1092,7 +1089,6 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 0.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("panel_paper")
@@ -1194,7 +1190,6 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 0.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("panel_paper")
@@ -1342,7 +1337,6 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 0.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("panel_paper")
@@ -1626,7 +1620,6 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 0.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("panel_paper")
