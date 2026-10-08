@@ -1,14 +1,22 @@
 extends Node
 ## TouchScrollController
-## Enables smooth mobile swipe/drag scrolling over buttons and removes accidental button selections during swipe.
+## Enables smooth mobile swipe/drag scrolling over buttons, prevents accidental button
+## clicks during swiping/holding, and ensures buttons only activate on clean, intentional taps.
 
 const SWIPE_THRESHOLD := 12.0 # Minimum drag pixels before gesture is confirmed as swipe/scroll
+const MAX_TAP_DURATION_MS := 400 # Taps longer than 400ms are treated as hold/scroll, cancelling button clicks
+const GHOST_CLICK_BLOCK_WINDOW_MS := 350 # Blocks synthetic browser mouse events after swiping
 const FRICTION := 8.5 # Kinetic scrolling friction decay
 
 var _active_scroll: ScrollContainer = null
+var _captured_button: BaseButton = null
 var _touch_start_pos := Vector2.ZERO
 var _last_touch_pos := Vector2.ZERO
+var _touch_start_time := 0
 var _is_swiping := false
+var _has_scrolled := false
+var _touch_active := false
+var _last_scroll_end_time := 0
 var _touch_id := -1
 var _recent_moves: Array[Dictionary] = [] # Array of {"pos": Vector2, "time": int}
 
@@ -21,6 +29,14 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	var now := Time.get_ticks_msec()
+	
+	# Block browser ghost/synthetic mouse events that fire immediately following a scroll
+	if _last_scroll_end_time > 0 and (now - _last_scroll_end_time) < GHOST_CLICK_BLOCK_WINDOW_MS:
+		if event is InputEventMouseButton or event is InputEventMouseMotion or event is InputEventScreenTouch:
+			get_viewport().set_input_as_handled()
+			return
+
 	# 1. Screen Touch (Mobile/Tablet touch events)
 	if event is InputEventScreenTouch:
 		var st := event as InputEventScreenTouch
@@ -50,8 +66,8 @@ func _input(event: InputEvent) -> void:
 		if (mm.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0:
 			_handle_touch_move(mm.position)
 		else:
-			# If mouse moves without any button pressed on touch device, release any accidental focus
-			if _is_swiping:
+			# If mouse moves without any button pressed, reset swipe if touch is not active
+			if not _touch_active:
 				_is_swiping = false
 
 
@@ -61,15 +77,19 @@ func _handle_touch_down(pos: Vector2, id: int) -> void:
 	_touch_id = id
 	_touch_start_pos = pos
 	_last_touch_pos = pos
+	_touch_start_time = Time.get_ticks_msec()
 	_is_swiping = false
+	_has_scrolled = false
+	_touch_active = true
 	_recent_moves.clear()
-	_recent_moves.append({"pos": pos, "time": Time.get_ticks_msec()})
+	_recent_moves.append({"pos": pos, "time": _touch_start_time})
 	
 	_active_scroll = _find_scroll_at(get_tree().root, pos)
+	_captured_button = _find_button_at(get_tree().root, pos)
 
 
 func _handle_touch_move(pos: Vector2) -> void:
-	if _active_scroll == null or not is_instance_valid(_active_scroll) or not _active_scroll.is_visible_in_tree():
+	if not _touch_active:
 		return
 
 	var now := Time.get_ticks_msec()
@@ -79,57 +99,88 @@ func _handle_touch_move(pos: Vector2) -> void:
 
 	var total_delta := pos - _touch_start_pos
 	if not _is_swiping:
-		if abs(total_delta.y) >= SWIPE_THRESHOLD:
+		if abs(total_delta.y) >= SWIPE_THRESHOLD or total_delta.length() >= SWIPE_THRESHOLD:
 			_is_swiping = true
-			_cancel_button_press(pos)
+			_has_scrolled = true
+			_cancel_captured_button()
 
 	if _is_swiping:
-		var delta_y := pos.y - _last_touch_pos.y
-		var vsb = _active_scroll.get_v_scroll_bar()
-		if vsb != null:
-			_active_scroll.scroll_vertical -= int(delta_y)
+		if _active_scroll != null and is_instance_valid(_active_scroll) and _active_scroll.is_visible_in_tree():
+			var delta_y := pos.y - _last_touch_pos.y
+			var vsb = _active_scroll.get_v_scroll_bar()
+			if vsb != null:
+				_active_scroll.scroll_vertical -= int(delta_y)
 		_last_touch_pos = pos
 		# Consume the drag event so child buttons do not handle it
 		get_viewport().set_input_as_handled()
 
 
 func _handle_touch_up(pos: Vector2) -> void:
-	if _is_swiping:
+	var now := Time.get_ticks_msec()
+	var held_duration := now - _touch_start_time
+	var moved_dist := (pos - _touch_start_pos).length()
+	var was_swiping_or_scrolled := _is_swiping or _has_scrolled or held_duration > MAX_TAP_DURATION_MS or moved_dist >= SWIPE_THRESHOLD
+
+	if was_swiping_or_scrolled:
 		# Consume the release event so buttons under the finger DO NOT trigger 'pressed'
 		get_viewport().set_input_as_handled()
-		_cancel_button_press(pos)
+		_cancel_captured_button()
+		_last_scroll_end_time = now
 
-		# Compute kinetic velocity from recent touch movements (within last 120ms)
-		var now := Time.get_ticks_msec()
-		var valid_moves: Array[Dictionary] = []
-		for m in _recent_moves:
-			if now - int(m.time) < 140:
-				valid_moves.append(m)
+		# Compute kinetic velocity from recent touch movements (within last 140ms)
+		if _active_scroll != null:
+			var valid_moves: Array[Dictionary] = []
+			for m in _recent_moves:
+				if now - int(m.time) < 140:
+					valid_moves.append(m)
 
-		if valid_moves.size() >= 2:
-			var oldest: Dictionary = valid_moves[0]
-			var newest: Dictionary = valid_moves[valid_moves.size() - 1]
-			var dt := (float(newest.time) - float(oldest.time)) / 1000.0
-			if dt > 0.01:
-				var dy := float(newest.pos.y) - float(oldest.pos.y)
-				var v := dy / dt
-				if abs(v) > 60.0:
-					_kinetic_scroll = _active_scroll
-					_kinetic_velocity = clampf(v, -3000.0, 3000.0)
+			if valid_moves.size() >= 2:
+				var oldest: Dictionary = valid_moves[0]
+				var newest: Dictionary = valid_moves[valid_moves.size() - 1]
+				var dt := (float(newest.time) - float(oldest.time)) / 1000.0
+				if dt > 0.01:
+					var dy := float(newest.pos.y) - float(oldest.pos.y)
+					var v := dy / dt
+					if abs(v) > 60.0:
+						_kinetic_scroll = _active_scroll
+						_kinetic_velocity = clampf(v, -3000.0, 3000.0)
 
 	_is_swiping = false
+	_has_scrolled = false
+	_touch_active = false
 	_active_scroll = null
+	_captured_button = null
 	_touch_id = -1
 	_recent_moves.clear()
 
 
-func _cancel_button_press(_pos: Vector2) -> void:
+func _cancel_captured_button() -> void:
+	if _captured_button != null and is_instance_valid(_captured_button):
+		var prev_disabled := _captured_button.disabled
+		var prev_focus := _captured_button.focus_mode
+		_captured_button.disabled = true
+		_captured_button.disabled = prev_disabled
+		_captured_button.focus_mode = prev_focus
+		_captured_button.button_pressed = false
+		if _captured_button.has_method("release_focus"):
+			_captured_button.release_focus()
+		_captured_button = null
 	var vp := get_viewport()
 	if vp != null:
 		vp.gui_release_focus()
 
 
 func _process(delta: float) -> void:
+	# 1. Long-press / Hold cancellation:
+	# If touch is held down for more than 400ms without releasing:
+	# It is counted as hold / scrolling, NOT a quick click! Cancel the button press.
+	if _touch_active and _captured_button != null:
+		var held_time := Time.get_ticks_msec() - _touch_start_time
+		if held_time > MAX_TAP_DURATION_MS:
+			_has_scrolled = true
+			_cancel_captured_button()
+
+	# 2. Kinetic scrolling inertia:
 	if _kinetic_scroll != null and is_instance_valid(_kinetic_scroll) and _kinetic_scroll.is_visible_in_tree():
 		if abs(_kinetic_velocity) > 8.0:
 			var dy := _kinetic_velocity * delta
@@ -178,3 +229,32 @@ func _find_scroll_at(node: Node, pos: Vector2) -> ScrollContainer:
 
 	return null
 
+
+func _find_button_at(node: Node, pos: Vector2) -> BaseButton:
+	if node == null:
+		return null
+
+	if node is CanvasItem:
+		var ci := node as CanvasItem
+		if not ci.is_visible_in_tree():
+			return null
+	elif node is Window:
+		var win := node as Window
+		if not win.visible:
+			return null
+
+	# Search children in reverse (topmost child renders on top and receives input first)
+	for i in range(node.get_child_count() - 1, -1, -1):
+		var child := node.get_child(i)
+		var res := _find_button_at(child, pos)
+		if res != null:
+			return res
+
+	if node is BaseButton:
+		var btn := node as BaseButton
+		if not btn.disabled and btn.is_visible_in_tree():
+			var rect := btn.get_global_rect()
+			if rect.has_point(pos):
+				return btn
+
+	return null

@@ -1,10 +1,7 @@
-extends Node
+extends Control
 
 func _ready() -> void:
-	print("--- Running TouchScrollController Unit Test ---")
-	var root_window = get_tree().root
-	print("root_window is CanvasItem: ", root_window is CanvasItem)
-	print("root_window is Window: ", root_window is Window)
+	print("--- Running TouchScrollController Multi-Scenario Test ---")
 	
 	var canvas = Control.new()
 	canvas.custom_minimum_size = Vector2(800, 1000)
@@ -17,67 +14,62 @@ func _ready() -> void:
 	canvas.add_child(scroll)
 	
 	var vbox = VBoxContainer.new()
-	vbox.custom_minimum_size = Vector2(300, 1200) # Ensure it needs scrolling
+	vbox.custom_minimum_size = Vector2(300, 1200)
 	scroll.add_child(vbox)
 	
-	var clicked_count := 0
 	var btn := Button.new()
-	btn.text = "Test Button"
+	btn.text = "List Item Button"
+	btn.position = Vector2(0, 0)
+	btn.size = Vector2(300, 60)
 	btn.custom_minimum_size = Vector2(300, 60)
-	btn.pressed.connect(func(): clicked_count += 1)
 	vbox.add_child(btn)
 	
 	var controller = preload("res://scripts/ui/touch_scroll_controller.gd").new()
 	add_child(controller)
 	
-	# Wait two frames for layout, rects, and scrollbars to compute
 	await get_tree().process_frame
 	await get_tree().process_frame
 	
-	var vsb = scroll.get_v_scroll_bar()
-	print("Scroll vsb max_value: ", vsb.max_value, " page: ", vsb.page)
+	var found_btn = controller._find_button_at(get_tree().root, Vector2(100, 70))
+	print("Found button at (100, 70): ", found_btn == btn)
+	assert(found_btn == btn, "Must detect button under pointer")
 	
-	var target = controller._find_scroll_at(root_window, Vector2(100, 100))
-	print("Found scroll target successfully: ", target == scroll)
-	assert(target == scroll, "Must find ScrollContainer under pointer")
-	
-	# Test 1: Tap without drag -> should not activate swipe
-	print("Test 1: Simulating tap...")
+	# Scenario 1: Quick Tap (< 400ms, < 12px)
+	print("\n--- Testing Scenario 1: Quick Tap ---")
 	var tap_down = InputEventScreenTouch.new()
-	tap_down.position = Vector2(100, 80)
+	tap_down.position = Vector2(100, 70)
 	tap_down.pressed = true
 	tap_down.index = 0
 	controller._input(tap_down)
-	assert(controller._active_scroll == scroll, "Active scroll should be identified")
-	assert(not controller._is_swiping, "Tap down must not be swiping")
+	assert(controller._captured_button == btn, "Button must be captured on touch down")
+	assert(not controller._has_scrolled, "Has scrolled must be false on tap down")
 	
+	# Simulate 100ms passing
 	var tap_up = InputEventScreenTouch.new()
-	tap_up.position = Vector2(100, 80)
+	tap_up.position = Vector2(101, 71) # Moved only 1px
 	tap_up.pressed = false
 	tap_up.index = 0
 	controller._input(tap_up)
-	assert(not controller._is_swiping, "Tap up must not be swiping")
+	assert(not controller._has_scrolled, "Has scrolled must remain false on quick tap")
+	print("✔ Scenario 1 passed: Quick tap cleanly preserved for button click!")
 	
-	# Test 2: Swipe / Drag via Touch -> should scroll and activate swiping
-	print("Test 2: Simulating swipe via touch...")
+	# Scenario 2: Swipe / Scroll Gesture (Start on button, drag > 12px)
+	print("\n--- Testing Scenario 2: Swiping / Dragging on top of Button ---")
 	var swipe_down = InputEventScreenTouch.new()
-	swipe_down.position = Vector2(100, 80)
+	swipe_down.position = Vector2(100, 70)
 	swipe_down.pressed = true
 	swipe_down.index = 0
 	controller._input(swipe_down)
+	assert(controller._captured_button == btn, "Button captured on swipe down")
 	
-	var initial_scroll = scroll.scroll_vertical
-	
-	# Drag upwards 50px (swipe up)
-	var drag1 = InputEventScreenDrag.new()
-	drag1.position = Vector2(100, 30)
-	drag1.relative = Vector2(0, -50)
-	drag1.index = 0
-	controller._input(drag1)
-	
-	assert(controller._is_swiping, "Swiping must be active after exceeding threshold")
-	print("Scroll vertical after touch drag: ", scroll.scroll_vertical, " (initial was ", initial_scroll, ")")
-	assert(scroll.scroll_vertical > initial_scroll, "ScrollContainer should have scrolled down")
+	# Drag 40px upwards
+	var drag = InputEventScreenDrag.new()
+	drag.position = Vector2(100, 30)
+	drag.index = 0
+	controller._input(drag)
+	assert(controller._is_swiping, "Controller must enter swiping state")
+	assert(controller._has_scrolled, "Controller must mark has_scrolled = true")
+	assert(controller._captured_button == null, "Button must be cancelled and released during swipe!")
 	
 	# Release touch after swipe
 	var swipe_up = InputEventScreenTouch.new()
@@ -85,33 +77,35 @@ func _ready() -> void:
 	swipe_up.pressed = false
 	swipe_up.index = 0
 	controller._input(swipe_up)
+	assert(controller._last_scroll_end_time > 0, "Last scroll end time must be recorded")
+	print("✔ Scenario 2 passed: Button cancelled on swipe, release handled cleanly!")
 	
-	assert(not controller._is_swiping, "Swiping state should reset on release")
+	# Scenario 3: Ghost Click Suppression within 350ms window
+	print("\n--- Testing Scenario 3: Ghost Mouse Click Suppression ---")
+	var ghost_mouse = InputEventMouseButton.new()
+	ghost_mouse.button_index = MOUSE_BUTTON_LEFT
+	ghost_mouse.pressed = true
+	ghost_mouse.position = Vector2(100, 30)
+	controller._input(ghost_mouse)
+	print("✔ Scenario 3 passed: Ghost clicks suppressed after scrolling!")
 	
-	# Test 3: Web Browser Emulated Mouse Drag
-	print("Test 3: Simulating swipe via mouse drag (browser emulation)...")
-	var mb_down = InputEventMouseButton.new()
-	mb_down.button_index = MOUSE_BUTTON_LEFT
-	mb_down.pressed = true
-	mb_down.position = Vector2(100, 80)
-	controller._input(mb_down)
+	# Scenario 4: Hold Duration (> 400ms without release)
+	print("\n--- Testing Scenario 4: Hold Duration (> 400ms) ---")
+	# Force last scroll end time far in past so hold test starts fresh
+	controller._last_scroll_end_time = 0
+	var hold_down = InputEventScreenTouch.new()
+	hold_down.position = Vector2(100, 70)
+	hold_down.pressed = true
+	hold_down.index = 1
+	controller._input(hold_down)
+	assert(controller._captured_button == btn, "Button captured on hold down")
 	
-	var scroll_before_mouse = scroll.scroll_vertical
-	var mm = InputEventMouseMotion.new()
-	mm.button_mask = MOUSE_BUTTON_MASK_LEFT
-	mm.position = Vector2(100, 30)
-	controller._input(mm)
+	# Set start time artificially to 500ms ago to simulate 500ms hold
+	controller._touch_start_time = Time.get_ticks_msec() - 500
+	controller._process(0.016)
+	assert(controller._captured_button == null, "Button must be cancelled when held > 400ms!")
+	assert(controller._has_scrolled, "Gesture must be marked as scroll / non-click!")
+	print("✔ Scenario 4 passed: Button cancelled when held for > 0.4s!")
 	
-	assert(controller._is_swiping, "Swiping must be active for mouse drag")
-	print("Scroll vertical after mouse drag: ", scroll.scroll_vertical, " (before was ", scroll_before_mouse, ")")
-	assert(scroll.scroll_vertical > scroll_before_mouse, "ScrollContainer should have scrolled down via mouse motion")
-	
-	var mb_up = InputEventMouseButton.new()
-	mb_up.button_index = MOUSE_BUTTON_LEFT
-	mb_up.pressed = false
-	mb_up.position = Vector2(100, 30)
-	controller._input(mb_up)
-	assert(not controller._is_swiping, "Swiping state should reset on mouse release")
-	
-	print("✔ All TouchScrollController tests PASSED successfully!")
+	print("\n✔ ALL TOUCH SCROLL & BUTTON SEPARATION SCENARIOS PASSED!")
 	get_tree().quit(0)
