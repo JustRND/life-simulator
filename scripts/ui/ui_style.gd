@@ -10,7 +10,7 @@ const CLOSE_SECONDS := 0.28
 var font := SystemFont.new()
 
 func _init() -> void:
-	font.font_names = PackedStringArray(["Arial", "Noto Sans"])
+	font.font_names = PackedStringArray(["Arial", "Noto Sans", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "sans-serif"])
 
 static func contrast(a: Color, b: Color) -> float:
 	var first := a.srgb_to_linear().get_luminance()

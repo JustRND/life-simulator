@@ -3,7 +3,7 @@ extends RefCounted
 var font := SystemFont.new()
 
 func _init() -> void:
-	font.font_names = PackedStringArray(["Arial", "Noto Sans"])
+	font.font_names = PackedStringArray(["Arial", "Noto Sans", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "sans-serif"])
 	font.font_weight = 700
 
 func handles(node: Node) -> bool:

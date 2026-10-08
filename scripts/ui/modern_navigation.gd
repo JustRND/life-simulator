@@ -21,7 +21,7 @@ const PATHS = {
 }
 
 func _init() -> void:
-	font.font_names = PackedStringArray(["Arial", "Noto Sans"])
+	font.font_names = PackedStringArray(["Arial", "Noto Sans", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "sans-serif"])
 	font.font_weight = 600
 
 static func icon(kind: String) -> Texture2D:

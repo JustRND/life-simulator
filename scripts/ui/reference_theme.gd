@@ -8,8 +8,8 @@ var title_font := SystemFont.new()
 var custom_style = preload("res://scripts/ui/ui_style.gd").new()
 
 func _init() -> void:
-	body_font.font_names = PackedStringArray(["Arial", "Noto Sans"])
-	bold_font.font_names = PackedStringArray(["Arial Black", "Arial", "Noto Sans"])
+	body_font.font_names = PackedStringArray(["Arial", "Noto Sans", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "sans-serif"])
+	bold_font.font_names = PackedStringArray(["Arial Black", "Arial", "Noto Sans", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "sans-serif"])
 	bold_font.font_weight = 900
 	title_font.font_names = body_font.font_names
 	title_font.font_weight = 700
