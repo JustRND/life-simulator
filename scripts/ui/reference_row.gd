@@ -33,8 +33,22 @@ var art: TextureRect
 var arrow: Label
 var previous := ""
 
+func setup(btn: Button) -> void:
+	target = btn
+	if heading == null:
+		_build_ui()
+	_sync()
+
+
 func _ready() -> void:
-	target = get_parent() as Button
+	if target == null and get_parent() is Button:
+		target = get_parent() as Button
+	if heading == null:
+		_build_ui()
+	_sync()
+
+
+func _build_ui() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for side in ["left", "right"]:
 		add_theme_constant_override("margin_" + side, 32)
@@ -68,7 +82,6 @@ func _ready() -> void:
 	arrow.custom_minimum_size.x = 38
 	row.add_child(arrow)
 	_ignore_mouse(self)
-	_sync()
 
 static var _regular_font: Font = preload("res://assets/fonts/app_font.tres")
 static var _bold_font: Font = preload("res://assets/fonts/app_font_bold.tres")

@@ -30,22 +30,42 @@ func cancel() -> void:
 	if _tween != null and _tween.is_valid():
 		_tween.kill()
 	if is_instance_valid(_panel):
-		_panel.offset_top = _top
-		_panel.offset_bottom = _bottom
+		if _panel.anchor_right == 1.0 and _panel.anchor_bottom == 1.0:
+			_panel.offset_top = 0.0
+			_panel.offset_bottom = 0.0
+		else:
+			_panel.offset_top = _top
+			_panel.offset_bottom = _bottom
 	_panel = null
 
 
 func play(panel: Control) -> void:
 	cancel()
 	_panel = panel
-	_top = panel.offset_top
-	_bottom = panel.offset_bottom
-	# Move both edges equally: preserve size, anchors and the existing layout.
-	var distance := maxf(panel.get_viewport_rect().size.y - panel.global_position.y, panel.size.y)
+	var is_fullscreen: bool = (panel.anchor_right == 1.0 and panel.anchor_bottom == 1.0)
+	_top = 0.0 if is_fullscreen else panel.offset_top
+	_bottom = 0.0 if is_fullscreen else panel.offset_bottom
+	
+	var vp_size_y: float = panel.get_viewport_rect().size.y
+	if vp_size_y <= 0.0:
+		vp_size_y = 1920.0
+	var distance: float = maxf(vp_size_y - panel.global_position.y, panel.size.y)
+	if distance <= 0.0 or distance > 3000.0:
+		distance = vp_size_y
+		
 	_set_displacement(distance)
 	_tween = panel.create_tween()
 	_tween.tween_method(_set_displacement, distance, 0.0, DURATION).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_tween.tween_callback(cancel)
+	_tween.tween_callback(func():
+		if is_instance_valid(panel):
+			if is_fullscreen:
+				panel.offset_top = 0.0
+				panel.offset_bottom = 0.0
+			else:
+				panel.offset_top = _top
+				panel.offset_bottom = _bottom
+		cancel()
+	)
 
 
 func _set_displacement(distance: float) -> void:

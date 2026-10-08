@@ -20,8 +20,9 @@ static func dismiss(source: Control, remove: bool = false, finished: Callable = 
 	for button in source.find_children("*", "BaseButton", true, false):
 		buttons.append([button, button.disabled])
 		button.disabled = true
-	var top := surface.offset_top
-	var bottom := surface.offset_bottom
+	var is_fullscreen: bool = (surface.anchor_right == 1.0 and surface.anchor_bottom == 1.0)
+	var top := 0.0 if is_fullscreen else surface.offset_top
+	var bottom := 0.0 if is_fullscreen else surface.offset_bottom
 	var distance := maxf(surface.get_viewport_rect().size.y - surface.global_position.y, surface.size.y)
 	if distance < 100.0:
 		distance = 1000.0
@@ -36,8 +37,12 @@ static func dismiss(source: Control, remove: bool = false, finished: Callable = 
 		tween.parallel().tween_property(source, "modulate:a", 0.0, preload("res://scripts/ui/ui_style.gd").CLOSE_SECONDS).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	tween.tween_callback(func():
 		source.hide()
-		surface.offset_top = top
-		surface.offset_bottom = bottom
+		if is_fullscreen:
+			surface.offset_top = 0.0
+			surface.offset_bottom = 0.0
+		else:
+			surface.offset_top = top
+			surface.offset_bottom = bottom
 		source.modulate.a = orig_alpha
 		for entry in buttons:
 			if is_instance_valid(entry[0]):

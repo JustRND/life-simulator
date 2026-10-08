@@ -211,6 +211,18 @@ func _ready() -> void:
 	activities_panel.visible = false
 	timeline_panel.visible = true
 
+	# Pre-populate and build panels at startup so they render immediately with all buttons ready on first tap
+	update_assets_panel()
+	update_bank_panel()
+	update_relationships_panel()
+	update_character_panel()
+	update_infant_panel()
+	_configure_button_contrasts()
+	if has_node("ThemeController"):
+		var tc = get_node("ThemeController")
+		for p in [assets_panel, bank_panel, relationships_panel, character_panel, infant_panel, activities_panel]:
+			tc.apply_subtree(p)
+
 	if loaded and PlayerData.has_started_game:
 		hide_new_game_screen()
 		rebuild_life_feed()
@@ -1639,6 +1651,14 @@ func _on_start_game_button_pressed() -> void:
 	update_history_panel()
 	update_character_panel()
 	update_relationships_panel()
+	update_assets_panel()
+	update_bank_panel()
+	update_infant_panel()
+	_configure_button_contrasts()
+	if has_node("ThemeController"):
+		var tc = get_node("ThemeController")
+		for p in [assets_panel, bank_panel, relationships_panel, character_panel, infant_panel, activities_panel]:
+			tc.apply_subtree(p)
 
 	SaveManager.save_game()
 
@@ -1694,9 +1714,16 @@ func show_tab(tab_name: String) -> void:
 	_apply_translucent_scrollbars_recursive(self)
 	var opening_panels := {"infant": infant_panel, "assets": assets_panel, "relationships": relationships_panel, "activities": activities_panel, "character": character_panel, "bank": bank_panel}
 	if opening_panels.has(tab_name):
-		panel_pull_up.play(opening_panels[tab_name])
+		var target_panel: Control = opening_panels[tab_name]
+		target_panel.offset_top = 0.0
+		target_panel.offset_bottom = 0.0
+		target_panel.offset_left = 0.0
+		target_panel.offset_right = 0.0
+		for sc in target_panel.find_children("*", "ScrollContainer", true, false):
+			(sc as ScrollContainer).scroll_vertical = 0
 		if has_node("ThemeController"):
-			get_node("ThemeController").apply_subtree(opening_panels[tab_name])
+			get_node("ThemeController").apply_subtree(target_panel)
+		panel_pull_up.play(target_panel)
 
 
 # Avatar Button clicked -> opens Character profile panel!

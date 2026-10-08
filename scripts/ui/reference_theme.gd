@@ -177,11 +177,18 @@ func apply(node: Control, light: bool) -> void:
 		if node.text in ["✕", "×", "X", "✖"]:
 			_style_header(node)
 		elif node.get_parent() is VBoxContainer and not node is OptionButton and not node is CheckButton and not node is CheckBox and node.text.length() > 2:
-			if not node.has_meta("reference_row"):
+			var row: Node = node.get_node_or_null("ReferenceRow")
+			if not node.has_meta("reference_row") or row == null:
 				node.set_meta("reference_row", true)
 				var presenter := Row.new()
 				presenter.name = "ReferenceRow"
 				node.add_child(presenter)
+				presenter.setup(node)
+				row = presenter
+			elif row != null and row.has_method("setup"):
+				row.setup(node)
+			elif row != null and row.has_method("_sync"):
+				row._sync()
 			for key in COLORS:
 				node.add_theme_color_override(key, Color.TRANSPARENT)
 			for key in ["icon_normal_color", "icon_hover_color", "icon_pressed_color", "icon_disabled_color", "icon_focus_color"]:
@@ -189,9 +196,6 @@ func apply(node: Control, light: bool) -> void:
 			node.add_theme_font_size_override("font_size", 1)
 			node.expand_icon = true
 			node.add_theme_constant_override("icon_max_width", 1)
-			var row = node.get_node_or_null("ReferenceRow")
-			if row != null and row.has_method("_sync"):
-				row._sync()
 		else:
 			node.add_theme_font_size_override("font_size", 28)
 			node.custom_minimum_size.y = maxf(node.custom_minimum_size.y, 72)
