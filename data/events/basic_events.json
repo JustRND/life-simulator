@@ -1268,5 +1268,275 @@
         "result": "Your certification lapsed. Without active maintenance, your academic marks slipped by -10%."
       }
     ]
+  },
+  {
+    "id": "event_armed_robbery_gunpoint",
+    "min_age": 21,
+    "max_age": 99,
+    "repeatable": true,
+    "weight": 160,
+    "conditions": {
+      "requires_firearm": true
+    },
+    "title": "ROBBED AT GUNPOINT",
+    "text_variants": [
+      "While walking back from a late-night dinner through a dimly lit alley, two masked muggers step out from behind dumpsters. One aggressively racks the slide of a semi-automatic handgun and jams the cold muzzle directly against your chest: 'Empty your pockets right now or you die on this pavement!'",
+      "As you unlock your vehicle in a quiet parking lot, two armed assailants ambush you from the shadows. A hooded criminal points a black handgun straight at your forehead, shouting vicious threats and demanding everything you own."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Draw your concealed firearm and fire to neutralize the threat",
+        "icon": "🎯",
+        "description": "Neutralize robbers. -10 Happiness (severe trauma & shock), -5 Health, +10 Karma",
+        "type": "defensive",
+        "effects": {
+          "happiness": -10,
+          "health": -5,
+          "karma": 10
+        },
+        "result": "Relying on split-second muscle memory from the tactical range, you sweep your coat, draw your firearm, and return defensive fire! Caught completely off guard, the armed assailant drops his weapon as both scramble frantically down the alley. Police arrive in minutes and clear you under self-defense laws, but the harrowing brush with mortal terror leaves you shaking for weeks."
+      },
+      {
+        "text": "Surrender your wallet and phone while begging for mercy",
+        "icon": "💸",
+        "description": "-$850 Cash, -10 Happiness (humiliation & acute terror)",
+        "type": "submissive",
+        "effects": {
+          "money": -850,
+          "happiness": -10,
+          "karma": 0
+        },
+        "result": "Frozen in absolute terror, you hand over your cash, smartphone, and watch. The mugger violently pistol-whips your cheekbone before sprinting into the darkness. You survived, but the agonizing helplessness haunts your thoughts every night."
+      },
+      {
+        "text": "Lunge forward and attempt to disarm the gunman barehanded",
+        "icon": "🥋",
+        "description": "-10 Health (gunshot graze & severe beating), -10 Happiness, +5 Karma",
+        "type": "reckless",
+        "effects": {
+          "health": -10,
+          "happiness": -10,
+          "karma": 5
+        },
+        "result": "You grab for the gun barrel! The firearm discharges in a blinding flash right next to your ear! You fight tooth-and-nail, taking savage blows and a painful bullet graze before bystanders shout and scare the assailants away. You end up in emergency triage with permanent tinnitus and deep trauma."
+      }
+    ]
+  },
+  {
+    "id": "event_home_invasion_armed",
+    "min_age": 21,
+    "max_age": 99,
+    "repeatable": true,
+    "weight": 150,
+    "conditions": {
+      "requires_firearm": true
+    },
+    "title": "MIDNIGHT HOME INVASION",
+    "text_variants": [
+      "At 3:20 AM, the deafening crash of shattered patio glass violently jolts you awake. Heavy booted footsteps stomp through your living room, and a hostile voice shouts: 'Search every room! Tie up anyone you find and grab the safe!'",
+      "In the dead of night, aggressive thuds echo as your front door is kicked off its hinges. Armed intruders enter your residence whispering aggressively and sweeping flashlights across the hallway toward your bedroom."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Retrieve your defense firearm and hold a defensive position at the door",
+        "icon": "🛡️",
+        "description": "Defend home with firearm. -10 Happiness (intense post-incident stress), +10 Karma",
+        "type": "defensive",
+        "effects": {
+          "happiness": -10,
+          "health": -3,
+          "karma": 10
+        },
+        "result": "You ready your firearm, illuminate your weapon-light, and shout a commanding warning down the staircase. Staring down the barrel of an armed homeowner, the intruders panic, drop their crowbars, and scramble out through the shattered glass into a waiting getaway car. The police process the crime scene, but the terrifying breach of your sanctuary leaves you hypervigilant."
+      },
+      {
+        "text": "Cower inside the bedroom closet and whisper to emergency 911",
+        "icon": "🚪",
+        "description": "-$3,200 Stolen Property, -10 Happiness (devastating terror)",
+        "type": "submissive",
+        "effects": {
+          "money": -3200,
+          "happiness": -10,
+          "karma": 0
+        },
+        "result": "Crouched in darkness under hanging coats, you weep quietly into the phone as the criminals ransack your drawers, kick open doors, and steal family heirlooms before fleeing minutes before the squad cars pull up. The violation and fear leave you unable to sleep for months."
+      },
+      {
+        "text": "Charge out into the hallway weaponless screaming for them to leave",
+        "icon": "🗣️",
+        "description": "-10 Health (severely bludgeoned), -$1,500 Cash, -10 Happiness",
+        "type": "reckless",
+        "effects": {
+          "health": -10,
+          "money": -1500,
+          "happiness": -10,
+          "karma": 5
+        },
+        "result": "The intruders immediately overpower you, bludgeoning you repeatedly with a heavy prybar before tearing through your belongings. You regain consciousness hours later on a hospital stretcher with fractured ribs, concussions, and severe emotional scars."
+      }
+    ]
+  },
+  {
+    "id": "event_intersection_carjacking",
+    "min_age": 21,
+    "max_age": 99,
+    "repeatable": true,
+    "weight": 140,
+    "conditions": {
+      "requires_firearm": true
+    },
+    "title": "VIOLENT ARMED CARJACKING",
+    "text_variants": [
+      "While stopped at a deserted red light in an industrial district, a stolen pickup truck aggressively rear-ends you. Two masked thugs jump out armed with a sawn-off shotgun and machete, violently smashing your driver-side window to wrench you onto the street!",
+      "Traffic slows near a freeway on-ramp when an armed ambush blocks your path. Hostile carjackers surround your vehicle, brandishing weapons and battering your door handles while screaming at you to get out or get shot."
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Draw your firearm through the shattered window and repel the carjackers",
+        "icon": "💥",
+        "description": "Repel armed ambush. -10 Happiness (horrifying adrenaline shock), -8 Health, +10 Karma",
+        "type": "defensive",
+        "effects": {
+          "happiness": -10,
+          "health": -8,
+          "karma": 10
+        },
+        "result": "Acting instantly, you draw your sidearm and fire defensive rounds toward the hood and carjackers' vehicle. The attackers scatter in terror and peel away into the night. You manage to drive clear of the ambush covered in glass cuts, your pulse pounding at dangerous levels as police secure the sector."
+      },
+      {
+        "text": "Throw your hands up, surrender the car, and roll onto the pavement",
+        "icon": "🚗",
+        "description": "-$2,400 Deductible & Stolen Gear, -10 Happiness (helpless panic)",
+        "type": "submissive",
+        "effects": {
+          "money": -2400,
+          "happiness": -10,
+          "karma": 0
+        },
+        "result": "You roll onto the gritty asphalt as the carjackers throw themselves into your vehicle and floor the gas, tires screaming. You are left alone, bruised, stranded in the dark rain, overwhelmed by bitter defeat and trauma."
+      },
+      {
+        "text": "Stomp the accelerator and ram directly through their blocking vehicle",
+        "icon": "🏎️",
+        "description": "-10 Health (whiplash impact), -$1,200 Repairs, -10 Happiness",
+        "type": "reckless",
+        "effects": {
+          "health": -10,
+          "money": -1200,
+          "happiness": -10,
+          "karma": 0
+        },
+        "result": "You floor the throttle! Metal crushes into metal as your engine roars, knocking their truck aside. Airbags explode against your chest, leaving you bruised and gasping as you limp away on squealing rims, heart violently racing."
+      }
+    ]
+  },
+  {
+    "id": "event_stalker_blade_ambush",
+    "min_age": 21,
+    "max_age": 99,
+    "repeatable": true,
+    "weight": 140,
+    "conditions": {
+      "requires_firearm": true
+    },
+    "title": "DEADLY BLADE AMBUSH",
+    "text_variants": [
+      "In a subterranean concrete parking deck, an unhinged assailant lunges from behind a concrete pillar brandishing an 8-inch hunting knife, screaming psychotic threats and sprinting straight toward your throat!",
+      "While unlocking your door after dark, a shadowy figure rushes up behind you with a gleaming combat blade, shouting murderous ramblings as they prepare to plunge the weapon into your back!"
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Backpedal, unholster your firearm, and stop the lethal knife charge",
+        "icon": "🎯",
+        "description": "Stop knife attack. -10 Happiness (deep psychological distress of taking life), +12 Karma",
+        "type": "defensive",
+        "effects": {
+          "happiness": -10,
+          "karma": 12
+        },
+        "result": "You create distance with rapid backpedaling, draw your sidearm, and issue a loud command to drop the knife. The attacker lunges forward wildly, forcing you to discharge your weapon to stop the mortal threat. Security teams and paramedics converge immediately. The police corroborate the surveillance footage, completely clearing you of any wrongdoing, but taking a human life in self-defense leaves an indelible emotional scar."
+      },
+      {
+        "text": "Turn and sprint desperately toward the nearest public entrance",
+        "icon": "🏃",
+        "description": "-10 Health (deep stab & lacerations), -10 Happiness (sheer mortal terror)",
+        "type": "flee",
+        "effects": {
+          "health": -10,
+          "happiness": -10,
+          "karma": 0
+        },
+        "result": "You sprint for your life, but the crazed attacker catches you at the stairwell door, stabbing you in the back and shoulder before a janitor with a heavy mop bucket intervenes. You wake up following three hours of vascular surgery, trembling in pure horror."
+      },
+      {
+        "text": "Use your briefcase or backpack to parry the knife strikes",
+        "icon": "💼",
+        "description": "-10 Health (defensive cuts to arms), -10 Happiness, +8 Karma",
+        "type": "reckless",
+        "effects": {
+          "health": -10,
+          "happiness": -10,
+          "karma": 8
+        },
+        "result": "You raise your heavy bag as a shield. The knife shreds through fabric, slicing deeply into your forearms as you wrestle furiously until nearby security officers tackle the assailant to the floor. The violence leaves your hands trembling for days."
+      }
+    ]
+  },
+  {
+    "id": "event_active_shooter_defense",
+    "min_age": 21,
+    "max_age": 99,
+    "repeatable": true,
+    "weight": 130,
+    "conditions": {
+      "requires_firearm": true
+    },
+    "title": "ACTIVE SHOOTER AT THE COMMISSARY",
+    "text_variants": [
+      "While waiting in line at a busy downtown commercial outlet, heavy gunfire erupts at the front entrance! A heavily armed lunatic in body armor kicks through the glass doors spraying rifle bullets into the ceiling and screaming that nobody leaves alive!",
+      "A peaceful afternoon at a shopping plaza turns into a nightmare as rapid automatic rifle fire echoes across the concourse. Panicked crowds scream and stampede as an active shooter advances toward trapped civilians!"
+    ],
+    "choice_count": 3,
+    "choices": [
+      {
+        "text": "Take tactical cover, acquire sight picture, and return fire to stop the shooter",
+        "icon": "🎖️",
+        "description": "Engage shooter & save lives. -10 Happiness (severe acute PTSD), +12 Karma, +$1,000 Award",
+        "type": "heroic",
+        "effects": {
+          "happiness": -10,
+          "karma": 12,
+          "money": 1000,
+          "health": -5
+        },
+        "result": "Shielding a petrified cashier behind a structural concrete pillar, you steady your breathing, bring your firearm to bear, and deliver accurate defensive fire. The active shooter collapses, neutralized before taking innocent lives. SWAT teams breach and secure the scene. The mayor presents you with the City Medal of Valor and a civic award, but the deafening blasts and smell of sulfur haunt your nightmares for years."
+      },
+      {
+        "text": "Kick open the rear emergency exit and guide trapped bystanders outside",
+        "icon": "🚪",
+        "description": "Evacuate civilians. -10 Happiness (overwhelming panic & survivor guilt), +12 Karma",
+        "type": "defensive",
+        "effects": {
+          "happiness": -10,
+          "karma": 12
+        },
+        "result": "You slam your shoulder into the alarmed fire exit and usher dozens of terrified civilians out into the delivery alleyway to safety as sirens howl in every direction. You saved many lives, but the sheer chaos and sound of gunfire scar your memory."
+      },
+      {
+        "text": "Drop to the floor behind merchandise shelves and pray for survival",
+        "icon": "🫣",
+        "description": "-10 Happiness (crippling dread, psychological shock)",
+        "type": "submissive",
+        "effects": {
+          "happiness": -10,
+          "karma": 0
+        },
+        "result": "Curled into a ball under steel shelving with dust and debris raining onto your head, you lie paralyzed in tears as bullets tear through items overhead until tactical units finally take down the perpetrator. The crippling helplessness shatters your sense of peace."
+      }
+    ]
   }
 ]

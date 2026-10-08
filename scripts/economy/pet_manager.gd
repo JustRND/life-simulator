@@ -15,7 +15,26 @@ const DOG_BREEDS: Array[Dictionary] = [
 	{"breed": "Siberian Husky", "price": 1700, "upkeep": 360, "icon": "🐺"},
 	{"breed": "Cavalier King Charles", "price": 2100, "upkeep": 260, "icon": "🐶"},
 	{"breed": "Standard Poodle", "price": 1900, "upkeep": 300, "icon": "🐩"},
-	{"breed": "Rottweiler", "price": 1750, "upkeep": 380, "icon": "🐕"}
+	{"breed": "Rottweiler", "price": 1750, "upkeep": 380, "icon": "🐕"},
+	{"breed": "Labrador Retriever", "price": 1500, "upkeep": 310, "icon": "🐕"},
+	{"breed": "Pembroke Welsh Corgi", "price": 2200, "upkeep": 270, "icon": "🦊"},
+	{"breed": "Shiba Inu", "price": 2000, "upkeep": 290, "icon": "🐕"},
+	{"breed": "Australian Shepherd", "price": 1850, "upkeep": 340, "icon": "🐕"},
+	{"breed": "Boxer", "price": 1650, "upkeep": 330, "icon": "🐕"},
+	{"breed": "Doberman Pinscher", "price": 1950, "upkeep": 370, "icon": "🐕"},
+	{"breed": "Great Dane", "price": 2300, "upkeep": 450, "icon": "🐕"},
+	{"breed": "Beagle", "price": 1350, "upkeep": 250, "icon": "🐕"},
+	{"breed": "Border Collie", "price": 1800, "upkeep": 330, "icon": "🐕"},
+	{"breed": "Dachshund (Sausage Dog)", "price": 1450, "upkeep": 230, "icon": "🐕"},
+	{"breed": "Yorkshire Terrier", "price": 1600, "upkeep": 210, "icon": "🐶"},
+	{"breed": "Samoyed", "price": 2600, "upkeep": 380, "icon": "🐕"},
+	{"breed": "Bernese Mountain Dog", "price": 2500, "upkeep": 420, "icon": "🐕"},
+	{"breed": "Akita Inu", "price": 2250, "upkeep": 360, "icon": "🐕"},
+	{"breed": "Pomeranian", "price": 1750, "upkeep": 220, "icon": "🐶"},
+	{"breed": "Dalmatian", "price": 1900, "upkeep": 340, "icon": "🐕"},
+	{"breed": "Cane Corso", "price": 2400, "upkeep": 400, "icon": "🐕"},
+	{"breed": "Pug", "price": 1550, "upkeep": 240, "icon": "🐶"},
+	{"breed": "Boston Terrier", "price": 1650, "upkeep": 250, "icon": "🐶"}
 ]
 
 const CAT_BREEDS: Array[Dictionary] = [
@@ -25,7 +44,26 @@ const CAT_BREEDS: Array[Dictionary] = [
 	{"breed": "Siamese", "price": 1200, "upkeep": 190, "icon": "🐈"},
 	{"breed": "Bengal Leopard Cat", "price": 2300, "upkeep": 280, "icon": "🐆"},
 	{"breed": "Ragdoll", "price": 1650, "upkeep": 220, "icon": "🐱"},
-	{"breed": "Sphynx Hairless", "price": 2200, "upkeep": 240, "icon": "🐈"}
+	{"breed": "Sphynx Hairless", "price": 2200, "upkeep": 240, "icon": "🐈"},
+	{"breed": "Scottish Fold", "price": 1800, "upkeep": 210, "icon": "🐱"},
+	{"breed": "Russian Blue", "price": 1600, "upkeep": 195, "icon": "🐈"},
+	{"breed": "Abyssinian", "price": 1450, "upkeep": 205, "icon": "🐈"},
+	{"breed": "Norwegian Forest Cat", "price": 1850, "upkeep": 250, "icon": "🐈"},
+	{"breed": "Birman Sacred Cat", "price": 1550, "upkeep": 215, "icon": "🐱"},
+	{"breed": "Devon Rex", "price": 1750, "upkeep": 210, "icon": "🐱"},
+	{"breed": "Oriental Shorthair", "price": 1400, "upkeep": 190, "icon": "🐈"},
+	{"breed": "Turkish Angora", "price": 1650, "upkeep": 225, "icon": "🐈"},
+	{"breed": "American Shorthair", "price": 1100, "upkeep": 180, "icon": "🐱"},
+	{"breed": "Burmese", "price": 1350, "upkeep": 195, "icon": "🐈"},
+	{"breed": "Chartreux", "price": 1700, "upkeep": 210, "icon": "🐈"},
+	{"breed": "Siberian Forest Cat", "price": 1950, "upkeep": 260, "icon": "🐈"},
+	{"breed": "Manx Tailless Cat", "price": 1500, "upkeep": 200, "icon": "🐱"},
+	{"breed": "Somali Fox Cat", "price": 1600, "upkeep": 220, "icon": "🐈"},
+	{"breed": "Japanese Bobtail", "price": 1550, "upkeep": 200, "icon": "🐱"},
+	{"breed": "Savannah Exotic Cat", "price": 3200, "upkeep": 340, "icon": "🐆"},
+	{"breed": "Bombay Panther Cat", "price": 1450, "upkeep": 205, "icon": "🐈"},
+	{"breed": "Egyptian Mau", "price": 1800, "upkeep": 230, "icon": "🐆"},
+	{"breed": "Selkirk Rex Curly Cat", "price": 1700, "upkeep": 215, "icon": "🐱"}
 ]
 
 const PET_STORE_ANIMALS: Array[Dictionary] = [
@@ -52,7 +90,11 @@ static func get_shelter_animals(shelter_type: String) -> Array[Dictionary]:
 	var count := randi_range(4, 6)
 
 	if shelter_type == SOURCE_DOG_SHELTER:
-		var dog_mixes := ["Labrador Mix", "Terrier Mix", "Hound Mix", "Shepherd Cross", "Beagle Mix", "Collie Cross"]
+		var dog_mixes := [
+			"Labrador Mix", "Terrier Mix", "Hound Mix", "Shepherd Cross",
+			"Beagle Mix", "Collie Cross", "Corgi Mix", "Husky Cross",
+			"Boxer Mix", "Pitbull Cross", "Poodle Mix", "Spaniel Cross"
+		]
 		for i in range(count):
 			var breed_name: String = dog_mixes[randi() % dog_mixes.size()]
 			var pet_age: int = randi_range(1, 9)
@@ -72,7 +114,11 @@ static func get_shelter_animals(shelter_type: String) -> Array[Dictionary]:
 				"lifespan": 14
 			})
 	elif shelter_type == SOURCE_CAT_SHELTER:
-		var cat_mixes := ["Domestic Shorthair", "Tuxedo Cat", "Calico Tabby", "Orange Ginger Tabby", "Tortoiseshell", "Domestic Longhair"]
+		var cat_mixes := [
+			"Domestic Shorthair", "Tuxedo Cat", "Calico Tabby", "Orange Ginger Tabby",
+			"Tortoiseshell", "Domestic Longhair", "Tabby Point Cross", "Bicolor Shorthair",
+			"Silver Mackerel Tabby", "Smoke Gray Domestic"
+		]
 		for i in range(count):
 			var breed_name: String = cat_mixes[randi() % cat_mixes.size()]
 			var pet_age: int = randi_range(1, 10)

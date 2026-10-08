@@ -618,6 +618,17 @@ func get_owned_assets_by_category(category: String) -> Array[Dictionary]:
 	return list
 
 
+func has_firearm() -> bool:
+	for item in owned_assets:
+		if str(item.get("category", "")) == "firearms":
+			return true
+	return false
+
+
+func get_owned_firearms() -> Array[Dictionary]:
+	return get_owned_assets_by_category("firearms")
+
+
 func has_illness(illness_id: String) -> bool:
 	for ill in illnesses:
 		if ill is Dictionary and ill.get("id", "") == illness_id:
@@ -701,7 +712,8 @@ func get_stats() -> Dictionary:
 		"smarts": smarts,
 		"looks": looks,
 		"karma": karma,
-		"underground_completed": int(underground_progress.get("completed", 0))
+		"underground_completed": int(underground_progress.get("completed", 0)),
+		"has_firearm": has_firearm()
 	}
 
 

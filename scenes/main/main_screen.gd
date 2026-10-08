@@ -1217,6 +1217,16 @@ func trigger_event() -> void:
 			{"text": "Politely decline", "accept_date": false, "description": "Politely decline the date invitation."}]
 		show_event_popup()
 		return
+
+	# High-stakes violent confrontation events specifically for players who own firearms
+	if not PlayerData.is_dead and not PlayerData.is_in_prison and PlayerData.has_firearm() and randf() < 0.25:
+		var firearm_ev = EventManager.get_firearm_defense_event(PlayerData.age, PlayerData.event_history, PlayerData.get_stats())
+		if firearm_ev != null:
+			current_event = firearm_ev
+			current_event_choices = generate_event_choices(current_event)
+			show_event_popup()
+			return
+
 	current_event = EventManager.get_random_event(
 		PlayerData.age,
 		PlayerData.event_history,
@@ -1452,6 +1462,16 @@ func _get_death_cause_from_event(ev_id: String, ev_title: String, _choice: Dicti
 			return "Fatal Physical Trauma from Altercation"
 		"stray_kitten_rescue":
 			return "Fatal Fall from Tree"
+		"event_armed_robbery_gunpoint":
+			return "Fatal Gunshot Wound During Alleyway Armed Robbery"
+		"event_home_invasion_armed":
+			return "Fatal Trauma from Hostile Armed Home Invasion"
+		"event_intersection_carjacking":
+			return "Fatal Trauma in Violent Highway Carjacking"
+		"event_stalker_blade_ambush":
+			return "Fatal Hemorrhage from Psychopathic Stalker Knife Ambush"
+		"event_active_shooter_defense":
+			return "Killed in the Line of Action Confronting Active Mass Shooter"
 
 	if PlayerData.has_illness("cancer"):
 		return "Untreated Stage 3 Lymphoma Cancer"
@@ -2207,10 +2227,13 @@ func _render_assets_list() -> void:
 	# 6. Owned Luxury Valuables & Fine Instruments
 	_render_owned_assets_section("💎 OWNED LUXURY VALUABLES & INSTRUMENTS", [AssetCatalog.CATEGORY_JEWELRY, AssetCatalog.CATEGORY_INSTRUMENTS], Color("#f59e0b"))
 
-	# 7. Owned Pets & Animal Companions
+	# 7. Owned Firearms & Tactical Defense Arsenal
+	_render_owned_assets_section("🎯 OWNED FIREARMS & DEFENSE ARSENAL", [AssetCatalog.CATEGORY_FIREARMS], Color("#ef4444"))
+
+	# 8. Owned Pets & Animal Companions
 	_render_owned_pets_section()
 
-	# 8. Owned Commercial Enterprises (Businesses)
+	# 9. Owned Commercial Enterprises (Businesses)
 	_render_owned_businesses_section()
 
 
@@ -2514,6 +2537,8 @@ func _open_asset_marketplace_modal(category: String) -> void:
 			border_color = Color("#38bdf8")
 		AssetCatalog.CATEGORY_YACHTS:
 			border_color = Color("#2563eb")
+		AssetCatalog.CATEGORY_FIREARMS:
+			border_color = Color("#ef4444")
 
 	var modal_dict: Dictionary = _create_cyber_modal(title_text, subtitle_text, border_color)
 	var content_list: VBoxContainer = modal_dict["list"]
@@ -10125,6 +10150,12 @@ func _show_shopping_modal() -> void:
 			"title": "🛥️ Oceanking Marine & Luxury Yacht Dealers",
 			"desc": "High-performance jet skis, catamaran cruisers, offshore yachts, and mega superyachts.",
 			"color": Color("#2563eb")
+		},
+		{
+			"category": AssetCatalog.CATEGORY_FIREARMS,
+			"title": "🎯 Ironclad Defense & Tactical Armory (Gun Store)",
+			"desc": "Licensed concealed pistols, home defense shotguns, tactical carbines, and precision marksman rifles.",
+			"color": Color("#ef4444")
 		}
 	]
 

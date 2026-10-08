@@ -9,6 +9,7 @@ const CATEGORY_INSTRUMENTS := "instruments"
 const CATEGORY_PROPERTIES := "properties"
 const CATEGORY_AIRCRAFT := "aircraft"
 const CATEGORY_YACHTS := "yachts"
+const CATEGORY_FIREARMS := "firearms"
 
 const ITEMS := {
 	# =========================================================================
@@ -806,6 +807,87 @@ const ITEMS := {
 		"desc": "A multi-deck floating palace featuring a helipad, infinity pool, beach club, cinema, and dedicated maritime crew.",
 		"image_path": "",
 		"min_age": 18
+	},
+
+	# =========================================================================
+	# 🎯 FIREARMS & DEFENSE ARSENAL
+	# =========================================================================
+	"gun_pistol_compact": {
+		"id": "gun_pistol_compact",
+		"category": CATEGORY_FIREARMS,
+		"name": "Compact 9mm Concealed Carry Pistol",
+		"price": 650,
+		"upkeep": 35,
+		"happiness_bonus": 4,
+		"desc": "A lightweight polymer striker-fired 9x19mm subcompact handgun with tritium night sights. Conceals cleanly inside an IWB holster for discreet personal defense.",
+		"image_path": "res://assets/items/firearms/gun_pistol_compact.jpg",
+		"min_age": 21
+	},
+	"gun_service_handgun": {
+		"id": "gun_service_handgun",
+		"category": CATEGORY_FIREARMS,
+		"name": "Tactical Full-Frame Service Handgun",
+		"price": 950,
+		"upkeep": 50,
+		"happiness_bonus": 5,
+		"desc": "A military-grade 17-round full-size service pistol equipped with an undercut trigger guard, flared magwell, and an optic-ready slide.",
+		"image_path": "res://assets/items/firearms/gun_service_handgun.jpg",
+		"min_age": 21
+	},
+	"gun_magnum_revolver": {
+		"id": "gun_magnum_revolver",
+		"category": CATEGORY_FIREARMS,
+		"name": ".357 Combat Magnum Revolver",
+		"price": 1250,
+		"upkeep": 60,
+		"happiness_bonus": 6,
+		"desc": "A satin stainless steel heavy frame revolver chambered in .357 Magnum with a smooth double-action trigger and custom textured walnut grips.",
+		"image_path": "res://assets/items/firearms/gun_magnum_revolver.jpg",
+		"min_age": 21
+	},
+	"gun_tactical_shotgun": {
+		"id": "gun_tactical_shotgun",
+		"category": CATEGORY_FIREARMS,
+		"name": "12-Gauge Tactical Home Defense Shotgun",
+		"price": 880,
+		"upkeep": 45,
+		"happiness_bonus": 5,
+		"desc": "A rugged pump-action 12-gauge scattergun outfitted with an extended 8-round magazine tube, ghost ring sights, Picatinny heat shield, and breacher muzzle.",
+		"image_path": "res://assets/items/firearms/gun_tactical_shotgun.jpg",
+		"min_age": 21
+	},
+	"gun_defense_carbine": {
+		"id": "gun_defense_carbine",
+		"category": CATEGORY_FIREARMS,
+		"name": "5.56mm Semi-Auto Patrol Carbine",
+		"price": 1850,
+		"upkeep": 90,
+		"happiness_bonus": 7,
+		"desc": "A modular, lightweight direct-impingement carbine featuring free-float M-LOK handguards, ambidextrous controls, and a parallax-free holographic weapon sight.",
+		"image_path": "res://assets/items/firearms/gun_defense_carbine.jpg",
+		"min_age": 21
+	},
+	"gun_custom_subgun": {
+		"id": "gun_custom_subgun",
+		"category": CATEGORY_FIREARMS,
+		"name": "Personal Defense Weapon (PDW) 9mm",
+		"price": 2400,
+		"upkeep": 110,
+		"happiness_bonus": 8,
+		"desc": "A roller-delayed blowback sub-compact platform with collapsible stabilizing brace, ambidextrous selector, and quick-detach suppressor mount.",
+		"image_path": "res://assets/items/firearms/gun_custom_subgun.jpg",
+		"min_age": 21
+	},
+	"gun_precision_rifle": {
+		"id": "gun_precision_rifle",
+		"category": CATEGORY_FIREARMS,
+		"name": ".308 Long-Range Match Precision Rifle",
+		"price": 3600,
+		"upkeep": 150,
+		"happiness_bonus": 9,
+		"desc": "A blueprint bolt-action marksman rifle bedded in an aerospace aluminum chassis with a 26-inch fluted match barrel and a variable 24x magnification scope.",
+		"image_path": "res://assets/items/firearms/gun_precision_rifle.jpg",
+		"min_age": 21
 	}
 }
 
@@ -839,6 +921,8 @@ static func get_category_display_title(category: String) -> String:
 			return "✈️ AERO LUXE FLIGHT • AIRCRAFT DEALERSHIP"
 		CATEGORY_YACHTS:
 			return "🛥️ OCEANIC HORIZON • YACHT & MARINE BROKERS"
+		CATEGORY_FIREARMS:
+			return "🎯 IRONCLAD DEFENSE • TACTICAL ARMORY & GUN STORE"
 		_:
 			return "COMMERCIAL MARKETPLACE"
 
@@ -860,6 +944,8 @@ static func get_category_subtitle(category: String) -> String:
 			return "High-performance propeller aircraft, turbine helicopters, and intercontinental private jets."
 		CATEGORY_YACHTS:
 			return "Ocean power speedboats, luxury flybridge cruisers, and multi-deck sovereign megayachts."
+		CATEGORY_FIREARMS:
+			return "Licensed handguns, home defense shotguns, semi-auto patrol carbines, and precision marksman rifles."
 		_:
 			return "Browse luxury and commercial goods available for acquisition."
 
@@ -902,6 +988,11 @@ static func can_purchase_asset(player_data: Node, item_id: String) -> Dictionary
 		return {
 			"allowed": false,
 			"reason": "Requires Master Coastal Boater & Yachting License. Take the certification exam in Activities -> Licensing first!"
+		}
+	if category == CATEGORY_FIREARMS and not player_data.has_license("license_firearm"):
+		return {
+			"allowed": false,
+			"reason": "Requires Concealed Carry & Tactical Firearms License. Obtain your state permit in Activities -> Licensing first!"
 		}
 
 	var total_funds: int = player_data.money + player_data.bank_savings
@@ -1003,6 +1094,9 @@ static func use_asset(player_data: Node, instance_id: String) -> Dictionary:
 					action_desc = "You piloted your %s high above the cloud line with complete freedom!" % asset.get("name", "aircraft")
 				CATEGORY_YACHTS:
 					action_desc = "You cruised aboard your %s across sparkling coastal waters!" % asset.get("name", "yacht")
+				CATEGORY_FIREARMS:
+					player_data.smarts = mini(100, player_data.smarts + 1)
+					action_desc = "You ran tactical target transition and defensive handling drills at the range with your %s!" % asset.get("name", "firearm")
 				_:
 					action_desc = "You spent a serene, luxurious weekend relaxing at your %s!" % asset.get("name", "residence")
 			return {
@@ -1028,7 +1122,7 @@ static func process_yearly_assets(player_data: Node) -> Array[String]:
 				asset["condition"] = maxi(10, int(asset.get("condition", 100)) - 15)
 				logs.append("⚠️ Maintenance Neglect: You lacked sufficient funds to service your %s ($%d upkeep). Its condition deteriorated." % [asset.get("name", "asset"), upkeep])
 
-		# 2. Value adjustments (Vehicles depreciate, real estate/fine art/jewelry appreciate)
+		# 2. Value adjustments (Vehicles depreciate, real estate/fine art/jewelry appreciate, firearms hold strong value)
 		var cur_val: int = int(asset.get("current_value", asset.get("purchase_price", 0)))
 		var orig_price: int = int(asset.get("purchase_price", cur_val))
 		if cat in [CATEGORY_CARS, CATEGORY_MOTORCYCLES]:
@@ -1049,5 +1143,9 @@ static func process_yearly_assets(player_data: Node) -> Array[String]:
 		elif cat == CATEGORY_PROPERTIES:
 			var app: int = int(cur_val * 0.02)
 			asset["current_value"] = cur_val + app
+		elif cat == CATEGORY_FIREARMS:
+			var floor_val: int = int(orig_price * 0.75)
+			var dep: int = int(cur_val * 0.02)
+			asset["current_value"] = maxi(floor_val, cur_val - dep)
 
 	return logs

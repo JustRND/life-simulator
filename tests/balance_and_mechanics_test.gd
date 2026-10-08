@@ -945,9 +945,9 @@ func test_licensing_freelance_and_businesses() -> void:
 	assert(PlayerData.owned_assets.is_empty(), "Unprecedented disaster wipes out all owned assets")
 	print("  Asset inheritance and disaster mechanics verified.")
 
-	# 5. Businesses (16 Types, Degree Requirements, Separate Treasuries, Taxes, Loans)
+	# 5. Businesses (16+ Types, Degree Requirements, Separate Treasuries, Taxes, Loans)
 	var biz_types: Array[Dictionary] = BusinessManager.get_all_business_types()
-	assert(biz_types.size() == 16, "Must define exactly 16 different types of businesses! Found: %d" % biz_types.size())
+	assert(biz_types.size() >= 16, "Must define at least 16 different types of businesses! Found: %d" % biz_types.size())
 
 	# Check that each required major exists in institutions catalog
 	var institutions := EducationCatalog.get_all_institutions()

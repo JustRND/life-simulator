@@ -116,7 +116,40 @@ func _passes_conditions(
 		if event_history.has(excluded_event):
 			return false
 
+	if conditions.has("requires_firearm") and bool(conditions["requires_firearm"]):
+		if not bool(player_stats.get("has_firearm", false)):
+			return false
+
+	if conditions.has("has_firearm") and bool(conditions["has_firearm"]):
+		if not bool(player_stats.get("has_firearm", false)):
+			return false
+
 	return true
+
+
+func get_firearm_defense_event(
+	age: int,
+	event_history: Array,
+	player_stats: Dictionary
+):
+	if not bool(player_stats.get("has_firearm", false)):
+		return null
+
+	var valid_firearm_events: Array = []
+	for event in events:
+		var conditions: Dictionary = event.get("conditions", {})
+		if not bool(conditions.get("requires_firearm", false)) and not bool(conditions.get("has_firearm", false)):
+			continue
+		if age < int(event.get("min_age", 0)) or age > int(event.get("max_age", 120)):
+			continue
+		if not bool(event.get("repeatable", true)) and event_history.has(str(event.get("id", ""))):
+			continue
+		if _passes_conditions(event, player_stats, event_history):
+			valid_firearm_events.append(event)
+
+	if valid_firearm_events.is_empty():
+		return null
+	return _pick_weighted_event(valid_firearm_events)
 
 
 func get_random_event(
