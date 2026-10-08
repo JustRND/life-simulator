@@ -49,6 +49,7 @@ func capture_data() -> Dictionary:
 		"loan_balance": PlayerData.loan_balance,
 		"loan_interest_rate": PlayerData.loan_interest_rate,
 		"owned_assets": PlayerData.owned_assets,
+		"health_insurance": PlayerData.health_insurance,
 		"education_level": PlayerData.education_level,
 		"grades": PlayerData.grades,
 		"has_scholarship": PlayerData.has_scholarship,
@@ -267,6 +268,7 @@ func apply_data(data: Dictionary) -> bool:
 	PlayerData.active_debuffs = Array(data.get("active_debuffs", []))
 	PlayerData.active_buffs = Array(data.get("active_buffs", []))
 	PlayerData.owned_assets.clear()
+	PlayerData.health_insurance = str(data.get("health_insurance", "none"))
 	var saved_assets = data.get("owned_assets", [])
 	if saved_assets is Array:
 		for a in saved_assets:

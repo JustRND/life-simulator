@@ -3667,13 +3667,13 @@ func _setup_partner_card_ui() -> void:
 		var actions: Array = [
 			["Spend Time", "spend_time", "#0284c7"],
 			["Compliment", "compliment", "#8b5cf6"],
-			["Choose Gift", "gift", "#10b981"]
+			["🎁 Choose Gift", "gift", "#10b981"]
 		]
 
 		if p_status in ["Boyfriend", "Girlfriend"]:
 			actions.append(["💍 Propose", "propose", "#ec4899"])
 		elif p_status in ["Fiancé", "Fiancée"]:
-			actions.append(["💒 Marry", "marry", "#eab308"])
+			actions.append(["💍 Marry", "marry", "#eab308"])
 			actions.append(["Postpone", "postpone", "#8b5cf6"])
 			RomanceRules.normalize(PlayerData)
 			var engagement_note := Label.new()
@@ -3711,7 +3711,7 @@ func _setup_partner_card_ui() -> void:
 			elif act_key == "gift":
 				if PlayerData.last_partner_gift_age == PlayerData.age:
 					is_locked = true
-					button_title = "Gift (Used)"
+					button_title = "🎁 Gift (Used)"
 					lock_tooltip = "Already gave a gift to your partner this year. Available again next year."
 			elif act_key == "propose":
 				if PlayerData.last_partner_propose_age == PlayerData.age:
@@ -3954,29 +3954,13 @@ func _setup_children_cards_ui() -> void:
 		act_row.add_child(btn_spend)
 
 		var is_baby_or_toddler: bool = c_age < 5
-		var gift_text := "Gift ($50) (Used)" if child_gifted else "Gift ($50)"
+		var gift_text := "🎁 Gift (Used)" if child_gifted else "🎁 Choose Gift"
 		if is_baby_or_toddler:
-			gift_text = "Gift (Age 5+)"
+			gift_text = "🎁 Gift (Age 5+)"
 
 		var btn_gift := _create_cyber_button(gift_text, Color("#10b981"), func():
 			var idx = i
-			var cur_c: Dictionary = PlayerData.children[idx]
-			if int(cur_c.get("age", 0)) < 5:
-				add_life_event("%s is an infant/toddler and too young for gifts. Gifts unlock at Age 5 (Child stage)." % cur_c.name, "family")
-				return
-			if int(cur_c.get("last_gift_age", -1)) == PlayerData.age:
-				return
-			if PlayerData.money < 50:
-				add_life_event("You cannot afford the $50 gift for your child %s." % cur_c.name, "finance")
-				show_tab("timeline")
-				return
-			cur_c["last_gift_age"] = PlayerData.age
-			PlayerData.money -= 50
-			cur_c["relationship"] = mini(100, int(cur_c.get("relationship", 80)) + randi_range(12, 18))
-			PlayerData.happiness = mini(100, PlayerData.happiness + 6)
-			add_life_event("You bought a delightful gift for your child %s ($50)! Their eyes lit up with joy." % cur_c.name, "family")
-			update_relationships_panel()
-			update_ui()
+			_show_child_gift_modal(idx)
 		)
 		btn_gift.custom_minimum_size = Vector2(100, 52)
 		btn_gift.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -3988,7 +3972,7 @@ func _setup_children_cards_ui() -> void:
 		if is_baby_or_toddler:
 			btn_gift.disabled = true
 			btn_gift.modulate = Color(0.5, 0.5, 0.5, 0.6)
-			btn_gift.tooltip_text = "%s is an infant/toddler. Monetary gifts unlock when they turn into a Child (Age 5)." % c_name
+			btn_gift.tooltip_text = "%s is an infant/toddler. Gifts unlock when they turn into a Child (Age 5)." % c_name
 		elif child_gifted:
 			btn_gift.disabled = true
 			btn_gift.modulate = Color(0.6, 0.6, 0.6, 0.65)
@@ -4120,32 +4104,31 @@ func _finish_romance_action(message: String, kind: String = "relationship") -> v
 func _show_proposal_modal() -> void:
 	if PlayerData.is_dead or PlayerData.age < 18 or not PlayerData.has_partner() or PlayerData.get_partner_status() not in ["Boyfriend", "Girlfriend"]:
 		return
-	var modal := _create_cyber_modal("MARRIAGE PROPOSAL", "Choose one or more gifts for %s. More expensive gifts add more partner happiness, but acceptance is never guaranteed. Gifts are paid for even if the proposal is declined." % PlayerData.get_partner_name(), Color("#ec4899"))
+	var modal := _create_cyber_modal("💍 MARRIAGE PROPOSAL", "Choose one or more gifts for %s. More expensive gifts add more partner happiness, but acceptance is never guaranteed. Gifts are paid for even if the proposal is declined." % PlayerData.get_partner_name(), Color("#ec4899"))
 	romance_action_modal_overlay = modal.overlay
 	var list: VBoxContainer = modal.list
 	var selected: Array = []
 	var total := Label.new()
 	total.add_theme_font_size_override("font_size", 26)
 	total.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	var confirm := _create_cyber_button("Give gifts & propose", Color("#ec4899"), func():
+	var confirm := _create_cyber_button("💍 Propose with Gifts", Color("#ec4899"), func():
 		PlayerData.last_partner_propose_age = PlayerData.age
 		var message := RomanceRules.propose(PlayerData, selected, randf())
 		_finish_romance_action(message)
 	)
-	_apply_romance_icon(confirm, "present")
 	var refresh := func():
 		var cost := 0
 		var joy := 0
 		for id in selected:
 			cost += int(RomanceRules.GIFTS[id].cost)
 			joy += int(RomanceRules.GIFTS[id].joy)
-		total.text = "Total: $%s\nAvailable cash: $%s" % [_format_number(cost), _format_number(PlayerData.money)]
-		confirm.disabled = selected.is_empty() or cost > PlayerData.money
+		total.text = "Total: $%s\nAvailable funds: $%s" % [_format_number(cost), _format_number(PlayerData.money + PlayerData.bank_savings)]
+		confirm.disabled = selected.is_empty() or not PlayerData.can_afford(cost)
 	for id in range(RomanceRules.GIFTS.size()):
 		var gift: Dictionary = RomanceRules.GIFTS[id]
-		var gift_text := "%s • $%s" % [gift.name, _format_number(int(gift.cost))]
+		var emoji: String = str(gift.get("emoji", "🎁"))
+		var gift_text := "%s %s • $%s" % [emoji, gift.name, _format_number(int(gift.cost))]
 		var button := _create_cyber_button(gift_text, Color("#ec4899"), func(): pass)
-		_apply_romance_icon(button, ["wildflowers", "roses", "silver_ring", "diamond_ring", "platinum_ring"][id])
 		button.toggle_mode = true
 		var selected_style := StyleBoxFlat.new()
 		selected_style.bg_color = Color("#302040")
@@ -4170,52 +4153,99 @@ func _show_proposal_modal() -> void:
 		refresh.call()
 
 
-func _apply_romance_icon(button: Button, icon_name: String) -> void:
-	var path := "res://assets/ui/romance/%s.svg" % icon_name
-	if ResourceLoader.exists(path):
-		button.icon = load(path)
-		button.expand_icon = true
-		button.add_theme_constant_override("icon_max_width", 64)
-		button.add_theme_constant_override("h_separation", 18)
-		button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+func _apply_romance_icon(_button: Button, _icon_name: String) -> void:
+	# Deprecated: Emoji glyphs in button labels now match the game's theme seamlessly.
+	pass
 
 
 func _show_partner_gift_modal() -> void:
 	if PlayerData.is_dead or not PlayerData.has_partner():
 		return
-	var modal := _create_cyber_modal("A LITTLE SOMETHING", "Choose an everyday gift for %s. One gift per year; proposal gifts are separate." % PlayerData.get_partner_name(), Color("#34d399"))
+	var modal := _create_cyber_modal("🎁 A LITTLE SOMETHING", "Choose an everyday gift for %s. One gift per year; proposal gifts are separate." % PlayerData.get_partner_name(), Color("#34d399"))
 	romance_action_modal_overlay = modal.overlay
 	var list: VBoxContainer = modal.list
 	for id in range(RelationshipExtras.GIFTS.size()):
 		var gift: Dictionary = RelationshipExtras.GIFTS[id]
-		var button := _create_cyber_button("%s • $%s" % [gift.name, _format_number(int(gift.cost))], Color("#34d399"), func():
+		var emoji: String = str(gift.get("emoji", "🎁"))
+		var cost: int = int(gift.cost)
+		var button := _create_cyber_button("%s %s • $%s" % [emoji, gift.name, _format_number(cost)], Color("#34d399"), func():
 			_finish_romance_action(RelationshipExtras.give_gift(PlayerData, id))
 		)
-		_apply_romance_icon(button, str(gift.icon))
-		button.disabled = PlayerData.last_partner_gift_age == PlayerData.age or PlayerData.money < int(gift.cost)
+		button.disabled = PlayerData.last_partner_gift_age == PlayerData.age or not PlayerData.can_afford(cost)
 		list.add_child(button)
+
+
+func _show_child_gift_modal(child_index: int) -> void:
+	if child_index < 0 or child_index >= PlayerData.children.size():
+		return
+	var c: Dictionary = PlayerData.children[child_index]
+	var c_name: String = str(c.get("name", "Child"))
+	var c_age: int = int(c.get("age", 0))
+
+	if c_age < 5:
+		add_life_event("%s is an infant/toddler and too young for gifts. Gifts unlock at Age 5 (Child stage)." % c_name, "family")
+		return
+	if int(c.get("last_gift_age", -1)) == PlayerData.age:
+		add_life_event("You already gave %s a gift this year. Available again next year." % c_name, "family")
+		return
+
+	var modal := _create_cyber_modal("🎁 GIFTS FOR %s" % c_name.to_upper(), "Choose a thoughtful gift for %s (Age %d). Gifts strengthen your familial bond and bring great happiness." % [c_name, c_age], Color("#10b981"))
+	romance_action_modal_overlay = modal.overlay
+	var list: VBoxContainer = modal.list
+
+	for id in range(RelationshipExtras.CHILD_GIFTS.size()):
+		var gift: Dictionary = RelationshipExtras.CHILD_GIFTS[id]
+		var emoji: String = str(gift.get("emoji", "🎁"))
+		var cost: int = int(gift.cost)
+		var min_age: int = int(gift.get("min_age", 5))
+		var age_ok: bool = c_age >= min_age
+		var can_afford: bool = PlayerData.can_afford(cost)
+
+		var label_str: String
+		if not age_ok:
+			label_str = "%s %s • $%s (Unlocks Age %d)" % [emoji, gift.name, _format_number(cost), min_age]
+		else:
+			label_str = "%s %s • $%s" % [emoji, gift.name, _format_number(cost)]
+
+		var btn := _create_cyber_button(label_str, Color("#10b981"), func():
+			var msg := RelationshipExtras.give_child_gift(PlayerData, child_index, id)
+			if not msg.is_empty():
+				add_life_event(msg, "family")
+				update_relationships_panel()
+				update_ui()
+				SaveManager.save_game()
+				if is_instance_valid(modal.overlay):
+					modal.overlay.queue_free()
+		)
+		btn.disabled = (not age_ok) or (not can_afford)
+		if not age_ok:
+			btn.modulate = Color(0.6, 0.6, 0.6, 0.65)
+			btn.tooltip_text = "%s must be at least age %d to receive this gift." % [c_name, min_age]
+		elif not can_afford:
+			btn.modulate = Color(0.6, 0.6, 0.6, 0.65)
+			btn.tooltip_text = "Insufficient funds (Total available: $%s)." % _format_number(PlayerData.money + PlayerData.bank_savings)
+		list.add_child(btn)
 
 
 func _show_wedding_modal() -> void:
 	if not RomanceRules.can_marry(PlayerData):
 		return
-	var modal := _create_cyber_modal("PLAN YOUR WEDDING", "Choose a venue, celebration style and guest list for your wedding with %s. Each choice changes the total price and ceremony ambiance." % PlayerData.get_partner_name(), Color("#38bdf8"))
+	var modal := _create_cyber_modal("💍 PLAN YOUR WEDDING", "Choose a venue, celebration style and guest list for your wedding with %s. Each choice changes the total price and ceremony ambiance." % PlayerData.get_partner_name(), Color("#38bdf8"))
 	romance_action_modal_overlay = modal.overlay
 	var list: VBoxContainer = modal.list
 	var selected: Array[int] = [0, 0, 0]
 	var total := Label.new()
 	total.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	total.add_theme_font_size_override("font_size", 26)
-	var confirm := _create_cyber_button("Celebrate & marry", Color("#38bdf8"), func():
+	var confirm := _create_cyber_button("💍 Celebrate & Marry", Color("#38bdf8"), func():
 		var p_name: String = PlayerData.get_partner_name()
 		PlayerData.add_milestone("Married %s." % p_name, PlayerData.age, "💍")
 		_finish_romance_action(RelationshipExtras.celebrate_wedding(PlayerData, selected[0], selected[1], selected[2]), "milestone")
 	)
-	_apply_romance_icon(confirm, "diamond_ring")
 	var refresh := func():
 		var quote := RelationshipExtras.wedding_quote(selected[0], selected[1], selected[2])
-		total.text = "Total: $%s\nAvailable cash: $%s" % [_format_number(int(quote.cost)), _format_number(PlayerData.money)]
-		confirm.disabled = PlayerData.money < int(quote.cost)
+		total.text = "Total: $%s\nAvailable funds: $%s" % [_format_number(int(quote.cost)), _format_number(PlayerData.money + PlayerData.bank_savings)]
+		confirm.disabled = not PlayerData.can_afford(int(quote.cost))
 	var headings: Array[String] = ["VENUE", "CELEBRATION STYLE", "GUEST LIST"]
 	var options: Array = [RelationshipExtras.VENUES, RelationshipExtras.STYLES, RelationshipExtras.GUESTS]
 	for section in range(options.size()):
@@ -10354,9 +10384,22 @@ func _show_doctor_modal() -> void:
 	if doctor_modal_overlay != null and is_instance_valid(doctor_modal_overlay):
 		doctor_modal_overlay.queue_free()
 
-	var modal := _create_cyber_modal("🩺 ST. JUDE MEDICAL CLINIC", "Advanced Diagnostics, Surgeries & Oncology", Color("#38bdf8"))
+	var modal := _create_cyber_modal("🩺 ST. JUDE MEDICAL CLINIC", "Advanced Diagnostics, Surgeries, Oncology & Insurance", Color("#38bdf8"))
 	doctor_modal_overlay = modal.overlay
 	var list: VBoxContainer = modal.list
+
+	var is_light: bool = LifeLibrary.data.theme == "light"
+
+	var get_disc_cost = func(base_cost: int) -> int:
+		var disc: float = PlayerData.get_insurance_discount()
+		return maxi(1, int(round(float(base_cost) * (1.0 - disc))))
+
+	var get_tag = func() -> String:
+		match PlayerData.health_insurance:
+			"bronze": return " [-5% Insured]"
+			"gold": return " [-10% Insured]"
+			"platinum": return " [-25% Insured]"
+			_: return ""
 
 	# Status Card
 	var stat_card := PanelContainer.new()
@@ -10373,7 +10416,7 @@ func _show_doctor_modal() -> void:
 	stat_m.add_child(stat_v)
 
 	var health_lbl := Label.new()
-	health_lbl.text = "Current Health: %d%%   •   Cash: $%s" % [PlayerData.health, _format_number(PlayerData.money)]
+	health_lbl.text = "Current Health: %d%%   •   Cash: $%s   •   Bank: $%s" % [PlayerData.health, _format_number(PlayerData.money), _format_number(PlayerData.bank_savings)]
 	health_lbl.add_theme_font_size_override("font_size", 28)
 	health_lbl.add_theme_color_override("font_color", Color("#22c55e") if PlayerData.health > 40 else Color("#f87171"))
 	stat_v.add_child(health_lbl)
@@ -10385,29 +10428,164 @@ func _show_doctor_modal() -> void:
 		illness_lbl.add_theme_color_override("font_color", Color("#ef4444"))
 	else:
 		illness_lbl.text = "Medical Status: No active malignant illnesses detected."
-		illness_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
+		illness_lbl.add_theme_color_override("font_color", Color("#1e293b") if is_light else Color("#94a3b8"))
 	illness_lbl.add_theme_font_size_override("font_size", 24)
 	stat_v.add_child(illness_lbl)
 
 	list.add_child(stat_card)
 
+	# Health Insurance Policy Card
+	var ins_card := PanelContainer.new()
+	ins_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#6366f1")))
+	var ins_m := MarginContainer.new()
+	ins_m.add_theme_constant_override("margin_left", 24)
+	ins_m.add_theme_constant_override("margin_right", 24)
+	ins_m.add_theme_constant_override("margin_top", 18)
+	ins_m.add_theme_constant_override("margin_bottom", 18)
+	ins_card.add_child(ins_m)
+
+	var ins_v := VBoxContainer.new()
+	ins_v.add_theme_constant_override("separation", 12)
+	ins_m.add_child(ins_v)
+
+	var ins_head := Label.new()
+	ins_head.text = "🛡️ HEALTH INSURANCE POLICY"
+	ins_head.add_theme_font_size_override("font_size", 26)
+	ins_head.add_theme_color_override("font_color", Color("#312e81") if is_light else Color("#a5b4fc"))
+	ins_v.add_child(ins_head)
+
+	var ins_status := Label.new()
+	ins_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	ins_status.add_theme_font_size_override("font_size", 22)
+
+	match PlayerData.health_insurance:
+		"platinum":
+			ins_status.text = "Active Coverage: 👑 Platinum Tier (Lifetime Policy)\nBenefit: 25% discount applied across all clinic procedures."
+			ins_status.add_theme_color_override("font_color", Color("#581c87") if is_light else Color("#c084fc"))
+			ins_v.add_child(ins_status)
+		"gold":
+			ins_status.text = "Active Coverage: 🏅 Gold Tier\nBenefit: 10% discount applied across all clinic procedures."
+			ins_status.add_theme_color_override("font_color", Color("#78350f") if is_light else Color("#fbbf24"))
+			ins_v.add_child(ins_status)
+
+			var plat_diff := 25000 # 75k - 50k
+			var btn_up_plat := _create_cyber_button("👑 Upgrade to Platinum Tier • $%s (+15%% Discount)" % _format_number(plat_diff), Color("#7c3aed"), func():
+				if PlayerData.can_afford(plat_diff):
+					PlayerData.debit_funds(plat_diff)
+					PlayerData.health_insurance = "platinum"
+					add_life_event("🛡️ INSURANCE UPGRADE: Upgraded to Platinum Health Insurance ($%s)! You now receive 25%% off all medical procedures." % _format_number(plat_diff), "health")
+					update_ui()
+					SaveManager.save_game()
+					_show_doctor_modal()
+				else:
+					add_life_event("You cannot afford the Platinum insurance upgrade ($%s required)." % _format_number(plat_diff), "finance")
+			)
+			btn_up_plat.disabled = not PlayerData.can_afford(plat_diff)
+			ins_v.add_child(btn_up_plat)
+		"bronze":
+			ins_status.text = "Active Coverage: 🛡️ Bronze Tier\nBenefit: 5% discount applied across all clinic procedures."
+			ins_status.add_theme_color_override("font_color", Color("#9a3412") if is_light else Color("#fdba74"))
+			ins_v.add_child(ins_status)
+
+			var gold_diff := 30000 # 50k - 20k
+			var btn_up_gold := _create_cyber_button("🏅 Upgrade to Gold Tier • $%s (+5%% Discount)" % _format_number(gold_diff), Color("#b45309"), func():
+				if PlayerData.can_afford(gold_diff):
+					PlayerData.debit_funds(gold_diff)
+					PlayerData.health_insurance = "gold"
+					add_life_event("🛡️ INSURANCE UPGRADE: Upgraded to Gold Health Insurance ($%s)! You now receive 10%% off all medical procedures." % _format_number(gold_diff), "health")
+					update_ui()
+					SaveManager.save_game()
+					_show_doctor_modal()
+				else:
+					add_life_event("You cannot afford the Gold insurance upgrade ($%s required)." % _format_number(gold_diff), "finance")
+			)
+			btn_up_gold.disabled = not PlayerData.can_afford(gold_diff)
+			ins_v.add_child(btn_up_gold)
+
+			var plat_diff_from_bronze := 55000 # 75k - 20k
+			var btn_up_plat := _create_cyber_button("👑 Upgrade to Platinum Tier • $%s (+20%% Discount)" % _format_number(plat_diff_from_bronze), Color("#7c3aed"), func():
+				if PlayerData.can_afford(plat_diff_from_bronze):
+					PlayerData.debit_funds(plat_diff_from_bronze)
+					PlayerData.health_insurance = "platinum"
+					add_life_event("🛡️ INSURANCE UPGRADE: Upgraded to Platinum Health Insurance ($%s)! You now receive 25%% off all medical procedures." % _format_number(plat_diff_from_bronze), "health")
+					update_ui()
+					SaveManager.save_game()
+					_show_doctor_modal()
+				else:
+					add_life_event("You cannot afford the Platinum insurance upgrade ($%s required)." % _format_number(plat_diff_from_bronze), "finance")
+			)
+			btn_up_plat.disabled = not PlayerData.can_afford(plat_diff_from_bronze)
+			ins_v.add_child(btn_up_plat)
+		_: # none
+			ins_status.text = "Status: Uninsured\nEnroll in a lifetime health insurance policy to receive permanent discounts on all medical treatments."
+			ins_status.add_theme_color_override("font_color", Color("#1e293b") if is_light else Color("#cbd5e1"))
+			ins_v.add_child(ins_status)
+
+			var btn_bronze := _create_cyber_button("🛡️ Bronze Plan • $20,000 (5% Medical Discount)", Color("#c2410c"), func():
+				var cost := 20000
+				if PlayerData.can_afford(cost):
+					PlayerData.debit_funds(cost)
+					PlayerData.health_insurance = "bronze"
+					add_life_event("🛡️ HEALTH INSURANCE: Enrolled in Bronze Health Insurance ($20,000)! 5% discount active on all clinic procedures.", "health")
+					update_ui()
+					SaveManager.save_game()
+					_show_doctor_modal()
+				else:
+					add_life_event("You cannot afford Bronze Health Insurance ($20,000 required).", "finance")
+			)
+			btn_bronze.disabled = not PlayerData.can_afford(20000)
+			ins_v.add_child(btn_bronze)
+
+			var btn_gold := _create_cyber_button("🏅 Gold Plan • $50,000 (10% Medical Discount)", Color("#b45309"), func():
+				var cost := 50000
+				if PlayerData.can_afford(cost):
+					PlayerData.debit_funds(cost)
+					PlayerData.health_insurance = "gold"
+					add_life_event("🛡️ HEALTH INSURANCE: Enrolled in Gold Health Insurance ($50,000)! 10% discount active on all clinic procedures.", "health")
+					update_ui()
+					SaveManager.save_game()
+					_show_doctor_modal()
+				else:
+					add_life_event("You cannot afford Gold Health Insurance ($50,000 required).", "finance")
+			)
+			btn_gold.disabled = not PlayerData.can_afford(50000)
+			ins_v.add_child(btn_gold)
+
+			var btn_plat := _create_cyber_button("👑 Platinum Plan • $75,000 (25% Medical Discount)", Color("#7c3aed"), func():
+				var cost := 75000
+				if PlayerData.can_afford(cost):
+					PlayerData.debit_funds(cost)
+					PlayerData.health_insurance = "platinum"
+					add_life_event("🛡️ HEALTH INSURANCE: Enrolled in Platinum Health Insurance ($75,000)! 25% discount active on all clinic procedures.", "health")
+					update_ui()
+					SaveManager.save_game()
+					_show_doctor_modal()
+				else:
+					add_life_event("You cannot afford Platinum Health Insurance ($75,000 required).", "finance")
+			)
+			btn_plat.disabled = not PlayerData.can_afford(75000)
+			ins_v.add_child(btn_plat)
+
+	list.add_child(ins_card)
+
 	# Procedures:
 	# 1. Vitamin Shot
 	var vit_used: bool = PlayerData.last_doctor_vitamin_age == PlayerData.age
-	var vit_text := "💉 Vitamin & Bio-Booster Shot ($150) (Used)" if vit_used else "💉 Vitamin & Bio-Booster Shot ($150)"
+	var vit_cost: int = get_disc_cost.call(150)
+	var vit_text := "💉 Vitamin & Bio-Booster Shot ($%s%s)%s" % [_format_number(vit_cost), get_tag.call(), " (Used)" if vit_used else ""]
 	var btn_vit := _create_cyber_button(vit_text, Color("#38bdf8"), func():
 		if PlayerData.last_doctor_vitamin_age == PlayerData.age:
 			return
-		if PlayerData.money >= 150:
-			PlayerData.money -= 150
+		if PlayerData.can_afford(vit_cost):
+			PlayerData.debit_funds(vit_cost)
 			PlayerData.last_doctor_vitamin_age = PlayerData.age
 			PlayerData.health = mini(100, PlayerData.health + 8)
-			add_life_event("You received a potent Vitamin & Bio-Booster injection ($150).", "health")
+			add_life_event("You received a potent Vitamin & Bio-Booster injection ($%s)." % _format_number(vit_cost), "health")
 			update_ui()
 			SaveManager.save_game()
 			_show_doctor_modal()
 		else:
-			add_life_event("You couldn't afford a Vitamin Shot ($150 required).", "health")
+			add_life_event("You couldn't afford a Vitamin Shot ($%s required)." % _format_number(vit_cost), "health")
 	)
 	if vit_used:
 		btn_vit.disabled = true
@@ -10417,24 +10595,25 @@ func _show_doctor_modal() -> void:
 
 	# 2. General Checkup
 	var checkup_used: bool = PlayerData.last_doctor_checkup_age == PlayerData.age
-	var checkup_text := "🩺 Full Diagnostic Checkup ($300) (Used)" if checkup_used else "🩺 Full Diagnostic Checkup ($300)"
+	var checkup_cost: int = get_disc_cost.call(300)
+	var checkup_text := "🩺 Full Diagnostic Checkup ($%s%s)%s" % [_format_number(checkup_cost), get_tag.call(), " (Used)" if checkup_used else ""]
 	var btn_checkup := _create_cyber_button(checkup_text, Color("#38bdf8"), func():
 		if PlayerData.last_doctor_checkup_age == PlayerData.age:
 			return
-		if PlayerData.money >= 300:
-			PlayerData.money -= 300
+		if PlayerData.can_afford(checkup_cost):
+			PlayerData.debit_funds(checkup_cost)
 			PlayerData.last_doctor_checkup_age = PlayerData.age
 			PlayerData.health = mini(100, PlayerData.health + 10)
 			if PlayerData.has_illness("cancer"):
 				var c: Dictionary = PlayerData.get_illness("cancer")
 				add_life_event("Diagnostics warning: Physician confirmed Stage %d Cancer! Chemotherapy is urgently advised." % int(c.get("stage", 1)), "health")
 			else:
-				add_life_event("Physician examination concluded ($300). Clean bill of health!", "health")
+				add_life_event("Physician examination concluded ($%s). Clean bill of health!" % _format_number(checkup_cost), "health")
 			update_ui()
 			SaveManager.save_game()
 			_show_doctor_modal()
 		else:
-			add_life_event("You couldn't afford a Diagnostic Checkup ($300 required).", "health")
+			add_life_event("You couldn't afford a Diagnostic Checkup ($%s required)." % _format_number(checkup_cost), "health")
 	)
 	if checkup_used:
 		btn_checkup.disabled = true
@@ -10442,14 +10621,15 @@ func _show_doctor_modal() -> void:
 		btn_checkup.tooltip_text = "Annual checkup completed for Age %d (Age up to examine next year)." % PlayerData.age
 	list.add_child(btn_checkup)
 
-	# 3. Plastic Surgery
+	# 3. Plastic Surgery ($250,000 base, MAXIMIZES LOOKS to 100 on success)
 	var surgery_used: bool = PlayerData.last_plastic_surgery_age == PlayerData.age
-	var surgery_text := "✨ Aesthetic Plastic Surgery ($3,500) (Used)" if surgery_used else "✨ Aesthetic Plastic Surgery ($3,500)"
+	var surgery_cost: int = get_disc_cost.call(250000)
+	var surgery_text := "✨ Aesthetic Plastic Surgery ($%s%s)%s" % [_format_number(surgery_cost), get_tag.call(), " (Used)" if surgery_used else ""]
 	var btn_surgery := _create_cyber_button(surgery_text, Color("#ec4899"), func():
 		if PlayerData.last_plastic_surgery_age == PlayerData.age:
 			return
-		if PlayerData.money >= 3500:
-			PlayerData.money -= 3500
+		if PlayerData.can_afford(surgery_cost):
+			PlayerData.debit_funds(surgery_cost)
 			PlayerData.last_plastic_surgery_age = PlayerData.age
 			if randf() < 0.10: # 10% risk of botched surgery
 				PlayerData.looks = maxi(0, PlayerData.looks - 12)
@@ -10457,10 +10637,10 @@ func _show_doctor_modal() -> void:
 				PlayerData.happiness = maxi(0, PlayerData.happiness - 20)
 				add_life_event("⚠️ BOTCHED SURGERY: Surgical complications resulted in severe facial scarring and agony!", "health")
 			else:
-				PlayerData.looks = mini(100, PlayerData.looks + 20)
-				PlayerData.health = maxi(0, PlayerData.health - 12)
-				PlayerData.happiness = maxi(0, PlayerData.happiness - 8)
-				add_life_event("Aesthetic surgery successful! Your appearance has transformed, though post-op recovery is uncomfortable.", "health")
+				PlayerData.looks = 100 # Plastic surgery MAXIMIZES looks!
+				PlayerData.health = maxi(0, PlayerData.health - 5)
+				PlayerData.happiness = mini(100, PlayerData.happiness + 25)
+				add_life_event("✨ PERFECT SURGERY: Premier plastic surgery maximized your looks to absolute perfection (100%)!", "health")
 
 			update_ui()
 			SaveManager.save_game()
@@ -10470,7 +10650,7 @@ func _show_doctor_modal() -> void:
 			else:
 				_show_doctor_modal()
 		else:
-			add_life_event("You couldn't afford Plastic Surgery ($3,500 required).", "health")
+			add_life_event("You couldn't afford Plastic Surgery ($%s required)." % _format_number(surgery_cost), "health")
 	)
 	if surgery_used:
 		btn_surgery.disabled = true
@@ -10478,14 +10658,15 @@ func _show_doctor_modal() -> void:
 		btn_surgery.tooltip_text = "Annual cosmetic surgery completed for Age %d. Allow your body time to heal." % PlayerData.age
 	list.add_child(btn_surgery)
 
-	# 4. Chemotherapy Treatment
+	# 4. Chemotherapy Treatment ($200,000 base)
 	var chemo_used: bool = PlayerData.last_chemo_age == PlayerData.age
-	var chemo_text := "🧬 Chemotherapy Treatment ($5,000) (Used)" if chemo_used else "🧬 Chemotherapy Treatment ($5,000)"
+	var chemo_cost: int = get_disc_cost.call(200000)
+	var chemo_text := "🧬 Chemotherapy Treatment ($%s%s)%s" % [_format_number(chemo_cost), get_tag.call(), " (Used)" if chemo_used else ""]
 	var btn_chemo := _create_cyber_button(chemo_text, Color("#f43f5e"), func():
 		if PlayerData.last_chemo_age == PlayerData.age:
 			return
-		if PlayerData.money >= 5000:
-			PlayerData.money -= 5000
+		if PlayerData.can_afford(chemo_cost):
+			PlayerData.debit_funds(chemo_cost)
 			PlayerData.last_chemo_age = PlayerData.age
 			if PlayerData.has_illness("cancer"):
 				if randf() < 0.60:
@@ -10499,12 +10680,12 @@ func _show_doctor_modal() -> void:
 					PlayerData.happiness = mini(100, PlayerData.happiness + 10)
 					add_life_event("Chemotherapy stabilized your tumor growth and reduced metastasis. Continued vigilance recommended.", "health")
 			else:
-				add_life_event("The oncologist ran full scans ($5,000). No malignant tumors detected! Chemotherapy was not administered.", "health")
+				add_life_event("The oncologist ran full scans ($%s). No malignant tumors detected! Chemotherapy was not administered." % _format_number(chemo_cost), "health")
 			update_ui()
 			SaveManager.save_game()
 			_show_doctor_modal()
 		else:
-			add_life_event("You couldn't afford Chemotherapy Treatment ($5,000 required).", "health")
+			add_life_event("You couldn't afford Chemotherapy Treatment ($%s required)." % _format_number(chemo_cost), "health")
 	)
 	if chemo_used:
 		btn_chemo.disabled = true
@@ -10514,20 +10695,21 @@ func _show_doctor_modal() -> void:
 
 	# 5. Psychotherapy & Grief Counseling
 	var therapy_used: bool = PlayerData.last_therapy_age == PlayerData.age
-	var therapy_text := "🧠 Psychotherapy & Grief Counseling ($250) (Used)" if therapy_used else "🧠 Psychotherapy & Grief Counseling ($250)"
+	var therapy_cost: int = get_disc_cost.call(250)
+	var therapy_text := "🧠 Psychotherapy & Grief Counseling ($%s%s)%s" % [_format_number(therapy_cost), get_tag.call(), " (Used)" if therapy_used else ""]
 	var btn_therapy := _create_cyber_button(therapy_text, Color("#8b5cf6"), func():
 		if PlayerData.last_therapy_age == PlayerData.age:
 			return
-		if PlayerData.money >= 250:
-			PlayerData.money -= 250
+		if PlayerData.can_afford(therapy_cost):
+			PlayerData.debit_funds(therapy_cost)
 			PlayerData.last_therapy_age = PlayerData.age
 			PlayerData.happiness = mini(100, PlayerData.happiness + 20)
-			add_life_event("You attended an enlightening psychotherapy session ($250). Grief and emotional weight lifted.", "health")
+			add_life_event("You attended an enlightening psychotherapy session ($%s). Grief and emotional weight lifted." % _format_number(therapy_cost), "health")
 			update_ui()
 			SaveManager.save_game()
 			_show_doctor_modal()
 		else:
-			add_life_event("You couldn't afford Psychotherapy ($250 required).", "health")
+			add_life_event("You couldn't afford Psychotherapy ($%s required)." % _format_number(therapy_cost), "health")
 	)
 	if therapy_used:
 		btn_therapy.disabled = true
@@ -10537,20 +10719,21 @@ func _show_doctor_modal() -> void:
 
 	# 6. Emergency Trauma Care
 	var er_used: bool = PlayerData.last_er_age == PlayerData.age
-	var er_text := "🚨 Emergency ER Resuscitation ($1,500) (Used)" if er_used else "🚨 Emergency ER Resuscitation ($1,500)"
+	var er_cost: int = get_disc_cost.call(1500)
+	var er_text := "🚨 Emergency ER Resuscitation ($%s%s)%s" % [_format_number(er_cost), get_tag.call(), " (Used)" if er_used else ""]
 	var btn_er := _create_cyber_button(er_text, Color("#eab308"), func():
 		if PlayerData.last_er_age == PlayerData.age:
 			return
-		if PlayerData.money >= 1500:
-			PlayerData.money -= 1500
+		if PlayerData.can_afford(er_cost):
+			PlayerData.debit_funds(er_cost)
 			PlayerData.last_er_age = PlayerData.age
 			PlayerData.health = mini(100, PlayerData.health + 40)
-			add_life_event("ER medical trauma team stabilized your critical vitals ($1,500).", "health")
+			add_life_event("ER medical trauma team stabilized your critical vitals ($%s)." % _format_number(er_cost), "health")
 			update_ui()
 			SaveManager.save_game()
 			_show_doctor_modal()
 		else:
-			add_life_event("You couldn't afford Emergency ER care ($1,500 required).", "health")
+			add_life_event("You couldn't afford Emergency ER care ($%s required)." % _format_number(er_cost), "health")
 	)
 	if er_used:
 		btn_er.disabled = true

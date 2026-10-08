@@ -1,11 +1,11 @@
 extends RefCounted
 
 const GIFTS := [
-	{"name": "Wildflower Bouquet", "cost": 50, "joy": 4},
-	{"name": "Rose Bouquet", "cost": 150, "joy": 8},
-	{"name": "Silver Engagement Ring", "cost": 500, "joy": 12},
-	{"name": "Diamond Engagement Ring", "cost": 2500, "joy": 20},
-	{"name": "Platinum Heirloom Ring", "cost": 7500, "joy": 30}
+	{"emoji": "💐", "name": "Wildflower Bouquet", "cost": 50, "joy": 4},
+	{"emoji": "🌹", "name": "Rose Bouquet", "cost": 150, "joy": 8},
+	{"emoji": "💍", "name": "Silver Engagement Ring", "cost": 500, "joy": 12},
+	{"emoji": "💎", "name": "Diamond Engagement Ring", "cost": 2500, "joy": 20},
+	{"emoji": "👑", "name": "Platinum Heirloom Ring", "cost": 7500, "joy": 30}
 ]
 
 static func engaged(player: Node) -> bool:
@@ -54,14 +54,14 @@ static func propose(player: Node, gift_ids: Array, roll: float) -> String:
 		cost += int(GIFTS[id].cost)
 		joy += int(GIFTS[id].joy)
 		names.append(GIFTS[id].name)
-	if seen.is_empty() or player.money < cost:
+	if seen.is_empty() or not player.can_afford(cost):
 		return ""
 	normalize(player)
-	player.money -= cost
+	player.debit_funds(cost)
 	player.partner["happiness"] = clampi(int(player.partner.happiness) + joy, 0, 100)
 	player.set_partner_relationship(player.get_partner_relationship() + mini(15, int(joy * 0.5)))
 	player.last_partner_interact_age = player.age
-	var intro := "You gave %s %s ($%d). " % [player.get_partner_name(), ", ".join(names), cost]
+	var intro := "💍 You gave %s %s ($%d). " % [player.get_partner_name(), ", ".join(names), cost]
 	var chance := clampf(float(player.get_partner_relationship()) / 100.0 + float(joy) / 300.0, 0.1, 0.95)
 	if roll < chance:
 		player.partner["status"] = "Fiancée" if player.partner.get("gender") == "FEMALE" else "Fiancé"
@@ -94,13 +94,13 @@ static func delay_wedding(player: Node, explicit_postpone: bool = false) -> Stri
 	return "Your wedding with %s remains postponed. The growing uncertainty strains your bond. Relationship -%d; your happiness and partner happiness -%d." % [player.get_partner_name(), loss, sadness]
 
 static func marry(player: Node, cost: int, ceremony: String, happiness_gain: int = 35) -> String:
-	if not can_marry(player) or cost < 0 or player.money < cost:
+	if not can_marry(player) or cost < 0 or not player.can_afford(cost):
 		return ""
-	player.money -= cost
+	player.debit_funds(cost)
 	player.partner["status"] = "Wife" if player.partner.get("gender") == "FEMALE" else "Husband"
 	player.partner["married_age"] = player.age
 	player.set_partner_relationship(player.get_partner_relationship() + 20)
 	player.partner["happiness"] = clampi(int(player.partner.happiness) + happiness_gain, 0, 100)
 	player.happiness = clampi(player.happiness + happiness_gain, 0, 100)
 	player.last_partner_interact_age = player.age
-	return "MARRIED: You and %s celebrated your %s ($%d)! Both partners' happiness +%d." % [player.get_partner_name(), ceremony, cost, happiness_gain]
+	return "💍 MARRIED: You and %s celebrated your %s ($%d)! Both partners' happiness +%d." % [player.get_partner_name(), ceremony, cost, happiness_gain]

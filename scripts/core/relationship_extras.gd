@@ -1,10 +1,28 @@
 extends RefCounted
 
 const GIFTS := [
-	{"name": "Handwritten Love Letter", "cost": 10, "joy": 4, "bond": 4, "icon": "letter"},
-	{"name": "Box of Chocolates", "cost": 20, "joy": 6, "bond": 6, "icon": "chocolate"},
-	{"name": "Favorite Paperback", "cost": 30, "joy": 8, "bond": 8, "icon": "book"},
-	{"name": "Plush Keepsake", "cost": 40, "joy": 10, "bond": 10, "icon": "present"}
+	{"emoji": "💌", "name": "Handwritten Love Letter", "cost": 10, "joy": 4, "bond": 4},
+	{"emoji": "🍫", "name": "Box of Chocolates", "cost": 25, "joy": 6, "bond": 6},
+	{"emoji": "☕", "name": "Artisan Café Date", "cost": 45, "joy": 7, "bond": 7},
+	{"emoji": "📖", "name": "Favorite Paperback", "cost": 60, "joy": 8, "bond": 8},
+	{"emoji": "🧸", "name": "Plush Keepsake", "cost": 95, "joy": 10, "bond": 10},
+	{"emoji": "💐", "name": "Bouquet of Fresh Roses", "cost": 180, "joy": 14, "bond": 12},
+	{"emoji": "✨", "name": "Designer Perfume", "cost": 350, "joy": 18, "bond": 15},
+	{"emoji": "⌚", "name": "Luxury Wristwatch", "cost": 900, "joy": 22, "bond": 18},
+	{"emoji": "📱", "name": "Flagship Smartphone", "cost": 1400, "joy": 26, "bond": 22},
+	{"emoji": "💎", "name": "Diamond Pendant", "cost": 3500, "joy": 32, "bond": 26},
+	{"emoji": "🌴", "name": "Weekend Resort Getaway", "cost": 7500, "joy": 40, "bond": 32}
+]
+
+const CHILD_GIFTS := [
+	{"emoji": "🍭", "name": "Sweet Treats & Candy Bag", "cost": 15, "joy": 8, "bond": 8, "min_age": 5},
+	{"emoji": "🎨", "name": "Coloring Book & Art Kit", "cost": 30, "joy": 10, "bond": 10, "min_age": 5},
+	{"emoji": "🧸", "name": "Cuddly Stuffed Animal", "cost": 50, "joy": 12, "bond": 12, "min_age": 5},
+	{"emoji": "🎲", "name": "Board Game & Puzzle Set", "cost": 80, "joy": 15, "bond": 14, "min_age": 5},
+	{"emoji": "🚲", "name": "All-Terrain Bicycle", "cost": 250, "joy": 20, "bond": 18, "min_age": 7},
+	{"emoji": "🎮", "name": "Next-Gen Gaming Console", "cost": 500, "joy": 25, "bond": 22, "min_age": 8},
+	{"emoji": "💻", "name": "High-Performance Laptop", "cost": 1200, "joy": 30, "bond": 25, "min_age": 10},
+	{"emoji": "🚗", "name": "Reliable First Starter Car", "cost": 6000, "joy": 45, "bond": 35, "min_age": 16}
 ]
 const VENUES := [
 	{"name": "City Hall & Private Reception", "cost": 12000, "joy": 12},
@@ -26,15 +44,38 @@ static func give_gift(player: Node, index: int) -> String:
 	if player.is_dead or not player.has_partner() or player.last_partner_gift_age == player.age or index < 0 or index >= GIFTS.size():
 		return ""
 	var gift: Dictionary = GIFTS[index]
-	if player.money < int(gift.cost):
+	var cost: int = int(gift.cost)
+	if not player.can_afford(cost):
 		return ""
-	player.money -= int(gift.cost)
+	player.debit_funds(cost)
 	player.last_partner_gift_age = player.age
 	player.last_partner_interact_age = player.age
 	player.partner["happiness"] = clampi(int(player.partner.get("happiness", 50)) + int(gift.joy), 0, 100)
 	player.set_partner_relationship(player.get_partner_relationship() + int(gift.bond))
 	player.happiness = clampi(player.happiness + 4, 0, 100)
-	return "You gave %s a %s ($%d). They were delighted with the present!" % [player.get_partner_name(), gift.name, int(gift.cost)]
+	var emoji: String = gift.get("emoji", "🎁")
+	return "%s You gave %s a %s ($%d). They were delighted with the present!" % [emoji, player.get_partner_name(), gift.name, cost]
+
+static func give_child_gift(player: Node, child_index: int, gift_index: int) -> String:
+	if player.is_dead or child_index < 0 or child_index >= player.children.size() or gift_index < 0 or gift_index >= CHILD_GIFTS.size():
+		return ""
+	var child: Dictionary = player.children[child_index]
+	var gift: Dictionary = CHILD_GIFTS[gift_index]
+	var c_age: int = int(child.get("age", 0))
+	var c_name: String = str(child.get("name", "Child"))
+	if c_age < int(gift.get("min_age", 5)):
+		return ""
+	if int(child.get("last_gift_age", -1)) == player.age:
+		return ""
+	var cost: int = int(gift.cost)
+	if not player.can_afford(cost):
+		return ""
+	player.debit_funds(cost)
+	child["last_gift_age"] = player.age
+	child["relationship"] = mini(100, int(child.get("relationship", 80)) + int(gift.bond))
+	player.happiness = mini(100, player.happiness + int(gift.joy))
+	var emoji: String = gift.get("emoji", "🎁")
+	return "%s You gave %s a %s ($%d)! Their eyes lit up with joy." % [emoji, c_name, gift.name, cost]
 
 static func wedding_quote(venue: int, style: int, guests: int) -> Dictionary:
 	if venue < 0 or venue >= VENUES.size() or style < 0 or style >= STYLES.size() or guests < 0 or guests >= GUESTS.size():

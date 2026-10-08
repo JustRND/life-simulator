@@ -95,6 +95,7 @@ var tax_debt: int = 0
 var loan_balance: int = 0
 var loan_interest_rate: float = 0.08
 var owned_assets: Array[Dictionary] = []
+var health_insurance: String = "none"
 
 var education_level: String = "None"
 var grades: int = 75
@@ -239,6 +240,7 @@ func reset_player() -> void:
 	tax_debt = 0
 	loan_balance = 0
 	owned_assets.clear()
+	health_insurance = "none"
 
 	education_level = "None"
 	grades = 75
@@ -559,6 +561,46 @@ func get_total_asset_value() -> int:
 	for item in owned_assets:
 		total += int(item.get("current_value", item.get("purchase_price", 0)))
 	return total
+
+
+func can_afford(cost: int) -> bool:
+	return (money + bank_savings) >= cost
+
+
+func debit_funds(cost: int) -> bool:
+	if not can_afford(cost):
+		return false
+	if money >= cost:
+		money -= cost
+	else:
+		var rem: int = cost - money
+		money = 0
+		bank_savings -= rem
+	return true
+
+
+func get_insurance_discount() -> float:
+	match health_insurance:
+		"bronze":
+			return 0.05
+		"gold":
+			return 0.10
+		"platinum":
+			return 0.25
+		_:
+			return 0.0
+
+
+func get_insurance_tier_name() -> String:
+	match health_insurance:
+		"bronze":
+			return "Bronze"
+		"gold":
+			return "Gold"
+		"platinum":
+			return "Platinum"
+		_:
+			return "None"
 
 
 func get_net_worth() -> int:
