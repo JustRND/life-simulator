@@ -13,7 +13,7 @@ func _init() -> void:
 func handles(node: Node, root: Node) -> bool:
 	var ancestor := node
 	while ancestor != root and ancestor != null:
-		if ancestor.has_meta("theme_exempt") or ancestor.name == "DeathScreenOverlay" or ancestor.name == "AfterlifeMinigame" or "Death" in str(ancestor.name) or "Afterlife" in str(ancestor.name):
+		if ancestor.has_meta("theme_exempt") or ancestor.name == "DeathScreenOverlay" or ancestor.name == "AfterlifeMinigame" or "Death" in str(ancestor.name) or "Afterlife" in str(ancestor.name) or (str(ancestor.name).ends_with("Overlay") and ancestor.name != "SettingsOverlay") or str(ancestor.name).ends_with("Modal"):
 			return false
 		if ancestor.has_meta("reference_panel") or "Panel" in str(ancestor.name) or ancestor.name == "SettingsOverlay":
 			return true
@@ -176,7 +176,7 @@ func apply(node: Control, light: bool) -> void:
 			node.add_theme_stylebox_override(state, button_surface(light, state))
 		if node.text in ["✕", "×", "X", "✖"]:
 			_style_header(node)
-		elif node.get_parent() is VBoxContainer and not node is OptionButton and not node is CheckButton and not node is CheckBox and node.text.length() > 2:
+		elif (node.get_parent() != null and (node.get_parent().name in ["ActList", "AssetsContent", "SettingsList", "SettingsContent"] or node.has_meta("use_reference_row") or node.name == "BankButton")) and not node is OptionButton and not node is CheckButton and not node is CheckBox and node.text.length() > 2:
 			var row: Node = node.get_node_or_null("ReferenceRow")
 			if not node.has_meta("reference_row") or row == null:
 				node.set_meta("reference_row", true)
@@ -197,8 +197,8 @@ func apply(node: Control, light: bool) -> void:
 			node.expand_icon = true
 			node.add_theme_constant_override("icon_max_width", 1)
 		else:
-			node.add_theme_font_size_override("font_size", 28)
-			node.custom_minimum_size.y = maxf(node.custom_minimum_size.y, 72)
+			node.add_theme_font_size_override("font_size", 22)
+			node.custom_minimum_size.y = maxf(node.custom_minimum_size.y, 48)
 	if node.has_meta("reference_section"):
 		node.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		node.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -230,23 +230,25 @@ func _style_header(close: Button) -> void:
 	var header := close.get_parent()
 	if not header is HBoxContainer:
 		return
-	close.custom_minimum_size = Vector2(88, 88)
+	if not header.name.ends_with("HeaderRow") and not header.name.ends_with("Header"):
+		return
+	close.custom_minimum_size = Vector2(56, 56)
 	close.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	close.add_theme_font_size_override("font_size", 48)
+	close.add_theme_font_size_override("font_size", 26)
 	for key in COLORS:
 		close.add_theme_color_override(key, Color.WHITE)
 	for state in ["normal", "hover", "pressed", "focus"]:
 		var circle := StyleBoxFlat.new()
 		circle.bg_color = Color("#28333f") if state != "normal" else Color("#080c12")
-		circle.set_corner_radius_all(44)
-		circle.set_border_width_all(3)
+		circle.set_corner_radius_all(28)
+		circle.set_border_width_all(2)
 		circle.border_color = Color.WHITE
 		close.add_theme_stylebox_override(state, circle)
 	if header.has_meta("reference_header"):
 		return
 	header.set_meta("reference_header", true)
-	header.custom_minimum_size.y = 164
-	header.add_theme_constant_override("separation", 24)
+	header.custom_minimum_size.y = 72
+	header.add_theme_constant_override("separation", 16)
 	header.draw.connect(func(): header.draw_rect(Rect2(Vector2.ZERO, header.size), Color("#080c12")))
 	header.resized.connect(header.queue_redraw)
 	header.move_child(close, 0)
@@ -260,7 +262,8 @@ func _style_header(close: Button) -> void:
 			child.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			child.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			child.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			child.add_theme_font_size_override("font_size", 28)
 			apply(child, LifeLibrary.data.theme == "light")
 	var balance := Control.new()
-	balance.custom_minimum_size.x = 120
+	balance.custom_minimum_size.x = 56
 	header.add_child(balance)

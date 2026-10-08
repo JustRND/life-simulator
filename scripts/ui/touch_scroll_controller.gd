@@ -3,9 +3,9 @@ extends Node
 ## Enables smooth mobile swipe/drag scrolling over buttons, prevents accidental button
 ## clicks during swiping/holding, and ensures buttons only activate on clean, intentional taps.
 
-const SWIPE_THRESHOLD := 12.0 # Minimum drag pixels before gesture is confirmed as swipe/scroll
-const MAX_TAP_DURATION_MS := 400 # Taps longer than 400ms are treated as hold/scroll, cancelling button clicks
-const GHOST_CLICK_BLOCK_WINDOW_MS := 350 # Blocks synthetic browser mouse events after swiping
+const SWIPE_THRESHOLD := 6.0 # Highly responsive drag threshold to instantly detect scrolling
+const MAX_TAP_DURATION_MS := 220 # Taps held longer than 220ms are treated as scrolling/hold gestures
+const GHOST_CLICK_BLOCK_WINDOW_MS := 500 # Blocks synthetic browser mouse events after swiping
 const FRICTION := 8.5 # Kinetic scrolling friction decay
 
 var _active_scroll: ScrollContainer = null
@@ -18,6 +18,7 @@ var _has_scrolled := false
 var _touch_active := false
 var _last_scroll_end_time := 0
 var _touch_id := -1
+var _last_touch_event_time := 0
 var _recent_moves: Array[Dictionary] = [] # Array of {"pos": Vector2, "time": int}
 
 var _kinetic_scroll: ScrollContainer = null
@@ -39,6 +40,7 @@ func _input(event: InputEvent) -> void:
 
 	# 1. Screen Touch (Mobile/Tablet touch events)
 	if event is InputEventScreenTouch:
+		_last_touch_event_time = now
 		var st := event as InputEventScreenTouch
 		if st.pressed:
 			_handle_touch_down(st.position, st.index)
@@ -47,12 +49,16 @@ func _input(event: InputEvent) -> void:
 
 	# 2. Screen Drag (Mobile touch drag)
 	elif event is InputEventScreenDrag:
+		_last_touch_event_time = now
 		var sd := event as InputEventScreenDrag
 		if sd.index == _touch_id or _touch_id == -1:
 			_handle_touch_move(sd.position)
 
 	# 3. Mouse Button (Web / Desktop touch emulation)
 	elif event is InputEventMouseButton:
+		# If a screen touch is active or recently occurred (< 500ms), ignore synthetic mouse clicks
+		if (_touch_active and _touch_id >= 0) or (_last_touch_event_time > 0 and (now - _last_touch_event_time) < 500):
+			return
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
@@ -62,6 +68,9 @@ func _input(event: InputEvent) -> void:
 
 	# 4. Mouse Motion (Web / Desktop drag emulation)
 	elif event is InputEventMouseMotion:
+		# If a screen touch is active or recently occurred (< 500ms), ignore synthetic mouse motion
+		if (_touch_active and _touch_id >= 0) or (_last_touch_event_time > 0 and (now - _last_touch_event_time) < 500):
+			return
 		var mm := event as InputEventMouseMotion
 		if (mm.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0:
 			_handle_touch_move(mm.position)
@@ -103,6 +112,7 @@ func _handle_touch_move(pos: Vector2) -> void:
 			_is_swiping = true
 			_has_scrolled = true
 			_cancel_captured_button()
+			_last_touch_pos = pos
 
 	if _is_swiping:
 		if _active_scroll != null and is_instance_valid(_active_scroll) and _active_scroll.is_visible_in_tree():
@@ -116,6 +126,9 @@ func _handle_touch_move(pos: Vector2) -> void:
 
 
 func _handle_touch_up(pos: Vector2) -> void:
+	if not _touch_active:
+		return
+
 	var now := Time.get_ticks_msec()
 	var held_duration := now - _touch_start_time
 	var moved_dist := (pos - _touch_start_pos).length()
@@ -223,9 +236,7 @@ func _find_scroll_at(node: Node, pos: Vector2) -> ScrollContainer:
 		var sc := node as ScrollContainer
 		var rect := sc.get_global_rect()
 		if rect.has_point(pos):
-			var vsb = sc.get_v_scroll_bar()
-			if vsb != null and vsb.max_value > vsb.page:
-				return sc
+			return sc
 
 	return null
 

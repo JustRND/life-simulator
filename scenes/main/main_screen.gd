@@ -8295,7 +8295,9 @@ func _render_university_enrollment_category(list: VBoxContainer) -> void:
 
 		if is_currently_enrolled:
 			var locked_btn := Button.new()
-			locked_btn.custom_minimum_size.y = 74
+			locked_btn.set_meta("reference_part", true)
+			locked_btn.set_meta("market_button", true)
+			locked_btn.custom_minimum_size.y = 52
 			locked_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			locked_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			locked_btn.text = "🔒 OBLIGATED: Currently studying at %s (Year %d of 4)\nOnly 1 university allowed at a time. Must complete 4-year degree or drop out before enrolling." % [
@@ -8308,13 +8310,14 @@ func _render_university_enrollment_category(list: VBoxContainer) -> void:
 			lk_style.border_color = Color("#94a3b8") if is_light else Color("#475569")
 			lk_style.set_border_width_all(2)
 			lk_style.set_corner_radius_all(10)
-			lk_style.content_margin_left = 22
-			lk_style.content_margin_right = 22
-			lk_style.content_margin_top = 14
-			lk_style.content_margin_bottom = 14
+			lk_style.content_margin_left = 16
+			lk_style.content_margin_right = 16
+			lk_style.content_margin_top = 10
+			lk_style.content_margin_bottom = 10
 			locked_btn.add_theme_stylebox_override("disabled", lk_style)
+			locked_btn.add_theme_color_override("font_disabled_color", Color("#475569") if is_light else Color("#94a3b8"))
 			locked_btn.add_theme_color_override("font_color", Color("#475569") if is_light else Color("#94a3b8"))
-			locked_btn.add_theme_font_size_override("font_size", 23)
+			locked_btn.add_theme_font_size_override("font_size", 20)
 			vb.add_child(locked_btn)
 		elif is_eligible:
 			var enroll_btn := _create_cyber_button("🏛️ Enroll in %s (%s)\nReq Met: %d%% GPA & %d Smarts" % [
@@ -8344,7 +8347,9 @@ func _render_university_enrollment_category(list: VBoxContainer) -> void:
 			vb.add_child(enroll_btn)
 		else:
 			var locked_btn := Button.new()
-			locked_btn.custom_minimum_size.y = 74
+			locked_btn.set_meta("reference_part", true)
+			locked_btn.set_meta("market_button", true)
+			locked_btn.custom_minimum_size.y = 52
 			locked_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			locked_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			locked_btn.text = "🔒 LOCKED: " + str(req_eval.get("reason", "Ineligible"))
@@ -8354,13 +8359,14 @@ func _render_university_enrollment_category(list: VBoxContainer) -> void:
 			lk_style.border_color = Color("#cbd5e1") if is_light else Color("#334155")
 			lk_style.set_border_width_all(2)
 			lk_style.set_corner_radius_all(10)
-			lk_style.content_margin_left = 22
-			lk_style.content_margin_right = 22
-			lk_style.content_margin_top = 14
-			lk_style.content_margin_bottom = 14
+			lk_style.content_margin_left = 16
+			lk_style.content_margin_right = 16
+			lk_style.content_margin_top = 10
+			lk_style.content_margin_bottom = 10
 			locked_btn.add_theme_stylebox_override("disabled", lk_style)
+			locked_btn.add_theme_color_override("font_disabled_color", Color("#64748b") if is_light else Color("#94a3b8"))
 			locked_btn.add_theme_color_override("font_color", Color("#64748b") if is_light else Color("#94a3b8"))
-			locked_btn.add_theme_font_size_override("font_size", 23)
+			locked_btn.add_theme_font_size_override("font_size", 20)
 			vb.add_child(locked_btn)
 
 		list.add_child(card)
@@ -8533,7 +8539,9 @@ func _render_university_study_paths_category(list: VBoxContainer) -> void:
 			vb.add_child(btn_curr)
 		elif is_currently_enrolled:
 			var locked_btn := Button.new()
-			locked_btn.custom_minimum_size.y = 56
+			locked_btn.set_meta("reference_part", true)
+			locked_btn.set_meta("market_button", true)
+			locked_btn.custom_minimum_size.y = 50
 			locked_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			locked_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			locked_btn.text = "🔒 Currently Enrolled at %s (Must graduate or drop out before taking this study path)" % PlayerData.university_name
@@ -8543,13 +8551,14 @@ func _render_university_study_paths_category(list: VBoxContainer) -> void:
 			lk_style.border_color = Color("#94a3b8") if is_light else Color("#475569")
 			lk_style.set_border_width_all(2)
 			lk_style.set_corner_radius_all(10)
-			lk_style.content_margin_left = 20
-			lk_style.content_margin_right = 20
-			lk_style.content_margin_top = 12
-			lk_style.content_margin_bottom = 12
+			lk_style.content_margin_left = 16
+			lk_style.content_margin_right = 16
+			lk_style.content_margin_top = 10
+			lk_style.content_margin_bottom = 10
 			locked_btn.add_theme_stylebox_override("disabled", lk_style)
+			locked_btn.add_theme_color_override("font_disabled_color", Color("#475569") if is_light else Color("#94a3b8"))
 			locked_btn.add_theme_color_override("font_color", Color("#475569") if is_light else Color("#94a3b8"))
-			locked_btn.add_theme_font_size_override("font_size", 22)
+			locked_btn.add_theme_font_size_override("font_size", 20)
 			vb.add_child(locked_btn)
 		else:
 			var req_eval: Dictionary = EducationCatalog.can_enroll(inst, PlayerData.grades, PlayerData.smarts)
@@ -8561,7 +8570,9 @@ func _render_university_study_paths_category(list: VBoxContainer) -> void:
 				vb.add_child(btn_apply)
 			else:
 				var locked_btn := Button.new()
-				locked_btn.custom_minimum_size.y = 56
+				locked_btn.set_meta("reference_part", true)
+				locked_btn.set_meta("market_button", true)
+				locked_btn.custom_minimum_size.y = 50
 				locked_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 				locked_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 				locked_btn.text = "🔒 LOCKED: " + str(req_eval.get("reason", "Ineligible"))
@@ -8571,13 +8582,14 @@ func _render_university_study_paths_category(list: VBoxContainer) -> void:
 				lk_style.border_color = Color("#cbd5e1") if is_light else Color("#334155")
 				lk_style.set_border_width_all(2)
 				lk_style.set_corner_radius_all(10)
-				lk_style.content_margin_left = 20
-				lk_style.content_margin_right = 20
-				lk_style.content_margin_top = 12
-				lk_style.content_margin_bottom = 12
+				lk_style.content_margin_left = 16
+				lk_style.content_margin_right = 16
+				lk_style.content_margin_top = 10
+				lk_style.content_margin_bottom = 10
 				locked_btn.add_theme_stylebox_override("disabled", lk_style)
+				locked_btn.add_theme_color_override("font_disabled_color", Color("#64748b") if is_light else Color("#94a3b8"))
 				locked_btn.add_theme_color_override("font_color", Color("#64748b") if is_light else Color("#94a3b8"))
-				locked_btn.add_theme_font_size_override("font_size", 22)
+				locked_btn.add_theme_font_size_override("font_size", 20)
 				vb.add_child(locked_btn)
 
 		list.add_child(card)
@@ -9082,7 +9094,7 @@ func _create_activity_modal_base(title_text: String, subtitle_text: String = "",
 
 func _create_cyber_modal(title_text: String, subtitle_text: String, border_color: Color) -> Dictionary:
 	var overlay := ColorRect.new()
-	overlay.set_meta("reference_panel", true)
+	overlay.set_meta("theme_exempt", true)
 	overlay.color = Color(0.012, 0.035, 0.07, 0.88)
 	overlay.anchors_preset = Control.PRESET_FULL_RECT
 	overlay.anchor_right = 1.0
@@ -9136,21 +9148,22 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	margin.set_meta("reference_edge", true)
 	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	margin.add_theme_constant_override("margin_left", 28)
-	margin.add_theme_constant_override("margin_right", 28)
-	margin.add_theme_constant_override("margin_top", 24)
-	margin.add_theme_constant_override("margin_bottom", 24)
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_bottom", 16)
 	card.add_child(margin)
 
 	var main_vbox := VBoxContainer.new()
 	main_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	main_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	main_vbox.add_theme_constant_override("separation", 18)
+	main_vbox.add_theme_constant_override("separation", 14)
 	margin.add_child(main_vbox)
 
 	# Header row
 	var header_row := HBoxContainer.new()
 	header_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header_row.add_theme_constant_override("separation", 12)
 	main_vbox.add_child(header_row)
 
 	var title_lbl := Label.new()
@@ -9161,15 +9174,16 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	if is_light and title_col.get_luminance() > 0.35:
 		title_col = Color("#0369a1")
 	title_lbl.add_theme_color_override("font_color", title_col)
-	title_lbl.add_theme_font_size_override("font_size", 34)
+	title_lbl.add_theme_font_size_override("font_size", 26)
 	title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	header_row.add_child(title_lbl)
 
 	var close_btn := Button.new()
 	close_btn.set_meta("reference_part", true)
 	close_btn.text = "✕"
-	close_btn.custom_minimum_size = Vector2(72, 60)
-	close_btn.add_theme_font_size_override("font_size", 30)
+	close_btn.custom_minimum_size = Vector2(56, 48)
+	close_btn.size_flags_horizontal = Control.SIZE_SHRINK_END
+	close_btn.add_theme_font_size_override("font_size", 22)
 	close_btn.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#e2e8f0"))
 	close_btn.add_theme_color_override("font_hover_color", Color("#f43f5e"))
 	var close_style := StyleBoxFlat.new()
@@ -9196,7 +9210,7 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	sub_lbl.text = subtitle_text
 	sub_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sub_lbl.add_theme_color_override("font_color", Color("#475569") if is_light else Color("#94a3b8"))
-	sub_lbl.add_theme_font_size_override("font_size", 22)
+	sub_lbl.add_theme_font_size_override("font_size", 20)
 	sub_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	main_vbox.add_child(sub_lbl)
 

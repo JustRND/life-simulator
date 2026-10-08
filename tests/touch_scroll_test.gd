@@ -89,8 +89,8 @@ func _ready() -> void:
 	controller._input(ghost_mouse)
 	print("✔ Scenario 3 passed: Ghost clicks suppressed after scrolling!")
 	
-	# Scenario 4: Hold Duration (> 400ms without release)
-	print("\n--- Testing Scenario 4: Hold Duration (> 400ms) ---")
+	# Scenario 4: Hold Duration (> 220ms without release)
+	print("\n--- Testing Scenario 4: Hold Duration (> 220ms) ---")
 	# Force last scroll end time far in past so hold test starts fresh
 	controller._last_scroll_end_time = 0
 	var hold_down = InputEventScreenTouch.new()
@@ -100,12 +100,30 @@ func _ready() -> void:
 	controller._input(hold_down)
 	assert(controller._captured_button == btn, "Button captured on hold down")
 	
-	# Set start time artificially to 500ms ago to simulate 500ms hold
-	controller._touch_start_time = Time.get_ticks_msec() - 500
+	# Set start time artificially to 300ms ago to simulate 300ms hold
+	controller._touch_start_time = Time.get_ticks_msec() - 300
 	controller._process(0.016)
-	assert(controller._captured_button == null, "Button must be cancelled when held > 400ms!")
+	assert(controller._captured_button == null, "Button must be cancelled when held > 220ms!")
 	assert(controller._has_scrolled, "Gesture must be marked as scroll / non-click!")
-	print("✔ Scenario 4 passed: Button cancelled when held for > 0.4s!")
+	print("✔ Scenario 4 passed: Button cancelled when held for > 0.22s!")
+	
+	# Scenario 5: Synthetic Mouse Deduplication during active touch session
+	print("\n--- Testing Scenario 5: Synthetic Mouse Deduplication ---")
+	controller._touch_active = true
+	controller._touch_id = 0
+	controller._is_swiping = true
+	controller._has_scrolled = true
+	controller._captured_button = null
+	
+	var synth_mouse_down = InputEventMouseButton.new()
+	synth_mouse_down.button_index = MOUSE_BUTTON_LEFT
+	synth_mouse_down.pressed = true
+	synth_mouse_down.position = Vector2(100, 70)
+	controller._input(synth_mouse_down)
+	
+	assert(controller._captured_button == null, "Synthetic mouse must NOT recapture button during active touch session")
+	assert(controller._is_swiping, "Synthetic mouse must NOT reset _is_swiping flag")
+	print("✔ Scenario 5 passed: Synthetic mouse events safely deduplicated!")
 	
 	print("\n✔ ALL TOUCH SCROLL & BUTTON SEPARATION SCENARIOS PASSED!")
 	get_tree().quit(0)

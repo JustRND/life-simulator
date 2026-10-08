@@ -51,35 +51,35 @@ func _ready() -> void:
 func _build_ui() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for side in ["left", "right"]:
-		add_theme_constant_override("margin_" + side, 32)
+		add_theme_constant_override("margin_" + side, 20)
 	for side in ["top", "bottom"]:
-		add_theme_constant_override("margin_" + side, 24)
+		add_theme_constant_override("margin_" + side, 10)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 28)
+	row.add_theme_constant_override("separation", 16)
 	add_child(row)
 	art = TextureRect.new()
-	art.custom_minimum_size = Vector2(82, 82)
+	art.custom_minimum_size = Vector2(46, 46)
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	row.add_child(art)
-	symbol = _label(68)
-	symbol.custom_minimum_size.x = 82
+	symbol = _label(36)
+	symbol.custom_minimum_size.x = 46
 	symbol.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	row.add_child(symbol)
 	var words := VBoxContainer.new()
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	words.add_theme_constant_override("separation", 8)
+	words.add_theme_constant_override("separation", 4)
 	row.add_child(words)
-	heading = _label(44, true)
+	heading = _label(26, true)
 	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	words.add_child(heading)
-	description = _label(34)
+	description = _label(20)
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	words.add_child(description)
-	arrow = _label(58)
-	arrow.custom_minimum_size.x = 38
+	arrow = _label(26)
+	arrow.custom_minimum_size.x = 22
 	row.add_child(arrow)
 	_ignore_mouse(self)
 
@@ -210,6 +210,6 @@ func _sync() -> void:
 	description.add_theme_color_override("font_color", secondary)
 	arrow.add_theme_color_override("font_color", ink)
 	symbol.add_theme_color_override("font_color", ink)
-	var min_h := 160.0 if is_colored else 192.0
+	var min_h := 74.0 if is_colored else 84.0
 	target.custom_minimum_size.y = maxf(min_h, get_combined_minimum_size().y)
 
