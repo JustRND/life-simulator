@@ -23,7 +23,7 @@ static func learn(p: Node, id: String) -> String:
 		p.money -= int(activity.cost)
 		p.learning_activities[id] = p.age
 		# Gradual improvement near the cap, while any activity prevents yearly decay.
-		var gain := int(activity.smarts) if p.smarts < 85 else maxi(1, int(activity.smarts) / 2)
+		var gain := int(activity.smarts) if p.smarts < 85 else maxi(1, int(float(activity.smarts) / 2.0))
 		p.smarts = mini(100, p.smarts + gain)
 		p.happiness = mini(100, p.happiness + int(activity.happiness))
 		p.last_school_activity_age = p.age
@@ -56,3 +56,22 @@ static func salary(base: int, category: String) -> int:
 	elif base > 150000:
 		factor = 0.92
 	return int(round(base * factor / 100.0)) * 100
+
+
+static func normalize_salary(p: Node) -> void:
+	if int(p.finance_market.get("balance_version", 0)) >= 1:
+		return
+	p.finance_market.balance_version = 1
+	var job: Dictionary = JobManager.get_job_by_id(p.job_id)
+	if job.is_empty():
+		return
+	var rank := int(p.career_progress.get("rank", 0))
+	var ladder: Array = load("res://scripts/economy/career_progression.gd").paths().get(p.job_id, [])
+	p.job_salary = int(ladder[rank - 1].salary) if rank > 0 and rank <= ladder.size() else int(job.salary)
+
+
+static func maintained_parent(p: Node, parent: String) -> bool:
+	for activity in ["spend_time", "compliment", "pay_meds", "doctor_checkup", "vitamin_shot"]:
+		if int(p.get("last_%s_%s_age" % [parent, activity])) >= p.age - 1:
+			return true
+	return false

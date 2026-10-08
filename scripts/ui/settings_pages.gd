@@ -112,11 +112,12 @@ func _build_page() -> void:
 	get_parent().add_child(page)
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.offset_left = 0
-	page.offset_top = 260.0
+	page.offset_top = 0.0
 	page.offset_right = 0
 	page.offset_bottom = 0
 	page.z_index = 91
-	page.add_theme_stylebox_override("panel", _style(Color(0.055, 0.085, 0.17, 0.98), Color("#244872"), 36))
+	var is_light: bool = LifeLibrary.data.theme == "light"
+	page.add_theme_stylebox_override("panel", _style(Color("#edf3fa") if is_light else Color(0.055, 0.085, 0.17, 0.98), Color("#0284c7") if is_light else Color("#244872"), 36))
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 24)
 	page.add_child(column)
@@ -206,8 +207,10 @@ func _field(caption: String, secret: bool) -> LineEdit:
 	input.max_length = 254 if not secret else 128
 	input.custom_minimum_size.y = 78
 	input.add_theme_font_size_override("font_size", 28)
-	input.add_theme_color_override("font_color", Color("#f1f5ff"))
-	input.add_theme_stylebox_override("normal", _style(Color("#12213b"), Color("#40647e"), 16))
+	var is_light: bool = LifeLibrary.data.theme == "light"
+	input.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#f1f5ff"))
+	input.add_theme_color_override("placeholder_color", Color("#64748b"))
+	input.add_theme_stylebox_override("normal", _style(Color("#edf3fa") if is_light else Color("#12213b"), Color("#0284c7") if is_light else Color("#40647e"), 16))
 	body.add_child(input)
 	return input
 
@@ -244,7 +247,8 @@ func _label(text: String, font_size: int) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.add_theme_color_override("font_color", Color("#aee4f5"))
+	var is_light: bool = LifeLibrary.data.theme == "light"
+	label.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#aee4f5"))
 	label.add_theme_font_size_override("font_size", font_size)
 	return label
 
@@ -265,10 +269,13 @@ func _button(text: String, parent: Node, action: Callable) -> Button:
 	button.text = text
 	button.custom_minimum_size.y = 82
 	button.add_theme_font_size_override("font_size", 28)
-	button.add_theme_color_override("font_color", Color("#64e6ff"))
-	button.add_theme_stylebox_override("normal", _style(Color("#12213b"), Color("#40647e"), 16))
-	button.add_theme_stylebox_override("hover", _style(Color("#1d3353"), Color("#64e6ff"), 16))
-	button.add_theme_stylebox_override("pressed", _style(Color("#0d1729"), Color("#64e6ff"), 16))
+	var is_light: bool = LifeLibrary.data.theme == "light"
+	button.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#64e6ff"))
+	button.add_theme_color_override("font_hover_color", Color("#0284c7") if is_light else Color("#ffffff"))
+	button.add_theme_color_override("font_pressed_color", Color("#000000") if is_light else Color("#ffffff"))
+	button.add_theme_stylebox_override("normal", _style(Color("#edf3fa") if is_light else Color("#12213b"), Color("#0284c7") if is_light else Color("#40647e"), 16))
+	button.add_theme_stylebox_override("hover", _style(Color("#bfdbfe") if is_light else Color("#1d3353"), Color("#0369a1") if is_light else Color("#64e6ff"), 16))
+	button.add_theme_stylebox_override("pressed", _style(Color("#93c5fd") if is_light else Color("#0d1729"), Color("#000000") if is_light else Color("#64e6ff"), 16))
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	parent.add_child(button)
 	button.pressed.connect(action)

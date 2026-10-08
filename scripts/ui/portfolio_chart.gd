@@ -7,6 +7,7 @@ func _ready() -> void:
 	custom_minimum_size.y = 270
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	resized.connect(queue_redraw)
+	GameLocale.changed.connect(queue_redraw)
 
 
 func _draw() -> void:
@@ -19,12 +20,14 @@ func _draw() -> void:
 	if history.is_empty():
 		return
 	var upper := 1.0
+	var lower := 0.0
 	for point in history:
 		upper = maxf(upper, maxf(float(point.value), float(point.invested)))
+		lower = minf(lower, minf(float(point.value), float(point.invested)))
 	for key in ["value", "invested"]:
 		var points := PackedVector2Array()
 		for i in history.size():
-			points.append(Vector2(rect.position.x + rect.size.x * i / maxf(1, history.size() - 1), rect.end.y - rect.size.y * maxf(0, float(history[i][key])) / upper))
+			points.append(Vector2(rect.position.x + rect.size.x * i / maxf(1, history.size() - 1), rect.end.y - rect.size.y * (float(history[i][key]) - lower) / (upper - lower)))
 		var color := Color("#0891b2") if key == "value" else Color("#d99b25")
 		if points.size() > 1:
 			draw_polyline(points, color, 3, true)

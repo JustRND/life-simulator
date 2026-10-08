@@ -20,6 +20,7 @@ func install(screen: Control, settings_pages: Node) -> void:
 		if child is Control:
 			child.hide()
 	var menu := VBoxContainer.new()
+	menu.set_meta("reference_menu", true)
 	menu.add_theme_constant_override("separation", 16)
 	content.add_child(menu)
 	var title: Label = main.settings_overlay.find_child("SettingsTitle", true, false)
@@ -55,7 +56,10 @@ func install(screen: Control, settings_pages: Node) -> void:
 
 func section(parent: Node, text: String) -> Label:
 	var label: Label = pages._label(text, 26)
-	label.add_theme_color_override("font_color", Color("#ffd481"))
+	if parent.has_meta("reference_menu"):
+		label.set_meta("reference_section", true)
+	var is_light: bool = LifeLibrary.data.theme == "light"
+	label.add_theme_color_override("font_color", Color("#b45309") if is_light else Color("#ffd481"))
 	parent.add_child(label)
 	return label
 
@@ -155,11 +159,12 @@ func country_picker(parent: Node) -> OptionButton:
 
 
 func _style_input(control: Control) -> void:
-	control.add_theme_stylebox_override("normal", pages._style(Color("#12213b"), Color("#40647e"), 16))
-	control.add_theme_stylebox_override("pressed", pages._style(Color("#244767"), Color("#64e6ff"), 16))
-	control.add_theme_stylebox_override("hover", pages._style(Color("#1d3353"), Color("#64e6ff"), 16))
-	control.add_theme_stylebox_override("focus", pages._style(Color(0, 0, 0, 0), Color("#ffd481"), 0))
-	control.add_theme_color_override("font_color", Color("#aee4f5"))
+	var is_light: bool = LifeLibrary.data.theme == "light"
+	control.add_theme_stylebox_override("normal", pages._style(Color("#edf3fa") if is_light else Color("#12213b"), Color("#0284c7") if is_light else Color("#40647e"), 16))
+	control.add_theme_stylebox_override("pressed", pages._style(Color("#93c5fd") if is_light else Color("#244767"), Color("#0369a1") if is_light else Color("#64e6ff"), 16))
+	control.add_theme_stylebox_override("hover", pages._style(Color("#bfdbfe") if is_light else Color("#1d3353"), Color("#0284c7") if is_light else Color("#64e6ff"), 16))
+	control.add_theme_stylebox_override("focus", pages._style(Color(0, 0, 0, 0), Color("#b45309") if is_light else Color("#ffd481"), 0))
+	control.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#aee4f5"))
 	control.add_theme_font_size_override("font_size", 26)
 
 
@@ -246,7 +251,7 @@ func _people() -> void:
 
 
 func _settings() -> void:
-	var view := modal("SETTINGS", "Audio preferences are saved on this device.")
+	var view := modal("SETTINGS", "Audio, language and currency preferences are saved on this device.")
 	var audio := CheckButton.new()
 	audio.text = "Mute sound"
 	audio.button_pressed = AudioServer.is_bus_mute(0)
@@ -258,6 +263,30 @@ func _settings() -> void:
 		LifeLibrary.data.muted = value
 		LifeLibrary.persist()
 	)
+	section(view.list, "Language")
+	var language := OptionButton.new()
+	for title in ["English", "Bahasa Indonesia", "Русский"]:
+		language.add_item(title)
+	language.select(maxi(0, ["en", "id", "ru"].find(GameLocale.language())))
+	_style_input(language)
+	language.custom_minimum_size.y = 76
+	view.list.add_child(language)
+	section(view.list, "Currency")
+	var currency := OptionButton.new()
+	for code in GameLocale.CURRENCIES:
+		currency.add_item(code)
+	currency.select(maxi(0, GameLocale.CURRENCIES.keys().find(str(LifeLibrary.data.get("currency", "USD")))))
+	_style_input(currency)
+	currency.custom_minimum_size.y = 76
+	view.list.add_child(currency)
+	section(view.list, "Currencies use fixed fictional display rates. Switching currency does not change your wealth.")
+	section(view.list, "Interface localization: English, Indonesian and Russian. Legacy story text may remain in English.")
+	var status := section(view.list, "")
+	button(view.list, "Apply Preferences", func():
+		var success := GameLocale.set_preferences(["en", "id", "ru"][language.selected], currency.get_item_text(currency.selected))
+		status.text = "Preferences saved." if success else "Could not save preferences."
+		main.update_ui()
+	)
 
 
 func _themes() -> void:
@@ -266,7 +295,10 @@ func _themes() -> void:
 		button(view.list, mode.capitalize() + (" • Selected" if LifeLibrary.data.theme == mode else ""), func():
 			LifeLibrary.data.theme = mode
 			LifeLibrary.persist()
-			main.get_node("ThemeController").apply_theme()
+			if main.has_node("ThemeController"):
+				main.get_node("ThemeController").apply_theme()
+			main.rebuild_life_feed()
+			main.update_ui()
 			view.overlay.queue_free()
 			_themes()
 		)
@@ -288,7 +320,8 @@ func _show_notice() -> void:
 	toast.name = "AchievementToast"
 	toast.z_index = 200
 	toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	toast.add_theme_stylebox_override("panel", pages._style(Color("#13243a"), Color("#ffd481"), 24))
+	var is_light: bool = LifeLibrary.data.theme == "light"
+	toast.add_theme_stylebox_override("panel", pages._style(Color("#edf3fa") if is_light else Color("#13243a"), Color("#b45309") if is_light else Color("#ffd481"), 24))
 	main.add_child(toast)
 	toast.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	toast.offset_left = 30

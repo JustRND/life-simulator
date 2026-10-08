@@ -6,6 +6,7 @@ const CURRENCIES = {"USD": [1.0, "$", 2], "IDR": [16000.0, "Rp ", 0], "EUR": [0.
 var catalog: Dictionary = {}
 var templates: Array = []
 var dollar_pattern := RegEx.new()
+var display_cache: Dictionary = {}
 
 
 func _ready() -> void:
@@ -27,7 +28,7 @@ func _ready() -> void:
 		var regex := RegEx.new()
 		regex.compile(expression.replace("%%", "%"))
 		templates.append({"regex": regex, "translations": [tokens.sub(catalog[source][0], "%s", true), tokens.sub(catalog[source][1], "%s", true)]})
-	dollar_pattern.compile("\\$([0-9][0-9,]*(?:\\.[0-9]+)?)([kKmMbB]?)")
+	dollar_pattern.compile("\\$([+-]?[0-9][0-9,]*(?:\\.[0-9]+)?)([kKmMbB]?)")
 
 
 func _escape(text: String) -> String:
@@ -83,8 +84,19 @@ func money(value: float, code: String = "") -> String:
 
 
 func display(source: String, convert_currency: bool = true) -> String:
+	var cache_key := "%s|%s|%s|%s" % [language(), LifeLibrary.data.get("currency", "USD"), convert_currency, source]
+	if display_cache.has(cache_key):
+		return str(display_cache[cache_key])
+	if display_cache.size() > 4000:
+		display_cache.clear()
 	var result := translate(source)
+	if result == source and source.contains("\n"):
+		var lines := source.split("\n")
+		for i in lines.size():
+			lines[i] = translate(lines[i])
+		result = "\n".join(lines)
 	if not convert_currency or str(LifeLibrary.data.get("currency", "USD")) == "USD":
+		display_cache[cache_key] = result
 		return result
 	var matches := dollar_pattern.search_all(result)
 	matches.reverse()
@@ -95,6 +107,7 @@ func display(source: String, convert_currency: bool = true) -> String:
 		elif suffix == "m": number *= 1000000
 		elif suffix == "b": number *= 1000000000
 		result = result.left(item.get_start()) + money(number) + result.substr(item.get_end())
+	display_cache[cache_key] = result
 	return result
 
 

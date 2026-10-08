@@ -94,9 +94,12 @@ func _build() -> void:
 	offers.add_theme_constant_override("separation", 22)
 	scroll.add_child(offers)
 	for offer in OFFERS:
-		var accent := Color(offer[4])
 		var card := PanelContainer.new()
-		card.add_theme_stylebox_override("panel", _style(Color("#111e34"), accent, 24))
+		var accent := Color(offer[4])
+		var is_light: bool = LifeLibrary.data.theme == "light"
+		var card_bg: Color = Color("#edf3fa") if is_light else Color("#111e34")
+		var card_border: Color = accent.darkened(0.35) if (is_light and accent.get_luminance() > 0.40) else accent
+		card.add_theme_stylebox_override("panel", _style(card_bg, card_border, 24))
 		offers.add_child(card)
 		var content := VBoxContainer.new()
 		content.add_theme_constant_override("separation", 12)
@@ -122,7 +125,14 @@ func _label(value: String, font_size: int, tint: Color) -> Label:
 	label.text = value
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_color", tint)
+	var is_light: bool = LifeLibrary.data.theme == "light"
+	var text_color: Color = tint
+	if is_light:
+		if tint.get_luminance() > 0.65:
+			text_color = Color("#0f172a") if tint.s < 0.2 else Color("#0284c7")
+		elif tint.get_luminance() > 0.40:
+			text_color = Color("#475569") if tint.s < 0.2 else tint.darkened(0.35)
+	label.add_theme_color_override("font_color", text_color)
 	return label
 
 func _style(fill: Color, border: Color, padding: int) -> StyleBoxFlat:
@@ -138,11 +148,13 @@ func _style(fill: Color, border: Color, padding: int) -> StyleBoxFlat:
 	return style
 
 func _style_button(button: Button, accent: Color) -> void:
+	var is_light: bool = LifeLibrary.data.theme == "light"
+	var dark_accent: Color = accent.darkened(0.35) if (is_light and accent.get_luminance() > 0.40) else accent
 	button.add_theme_font_size_override("font_size", 26)
-	button.add_theme_color_override("font_color", accent)
-	button.add_theme_color_override("font_hover_color", Color.WHITE)
-	button.add_theme_color_override("font_pressed_color", Color.WHITE)
-	button.add_theme_stylebox_override("normal", _style(Color("#12213b"), accent.darkened(0.4), 12))
-	button.add_theme_stylebox_override("hover", _style(Color("#1d3353"), accent, 12))
-	button.add_theme_stylebox_override("pressed", _style(Color("#0d1729"), accent, 12))
+	button.add_theme_color_override("font_color", Color("#0f172a") if is_light else accent)
+	button.add_theme_color_override("font_hover_color", Color("#0284c7") if is_light else Color.WHITE)
+	button.add_theme_color_override("font_pressed_color", Color("#000000") if is_light else Color.WHITE)
+	button.add_theme_stylebox_override("normal", _style(Color("#edf3fa") if is_light else Color("#12213b"), dark_accent, 12))
+	button.add_theme_stylebox_override("hover", _style(Color("#bfdbfe") if is_light else Color("#1d3353"), Color("#0284c7") if is_light else accent, 12))
+	button.add_theme_stylebox_override("pressed", _style(Color("#93c5fd") if is_light else Color("#0d1729"), Color("#0369a1") if is_light else accent, 12))
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND

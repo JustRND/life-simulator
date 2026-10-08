@@ -4,6 +4,7 @@ extends RefCounted
 # 24 reusable business archetypes. Every reopening gets a new issuer ID and owner.
 const SECTORS = ["Robotics", "Solar", "Logistics", "Coffee", "Software", "Biotech", "Fashion", "Architecture", "Audio", "Accounting", "Dental", "Medicine", "Cloud", "Batteries", "Freight", "Food", "Games", "Genomics", "Textiles", "Housing", "Media", "Analytics", "Wellness", "Diagnostics"]
 const PREFIXES = ["Aurora", "Cedar", "Atlas", "Neon", "Lotus", "Orion", "Pixel", "Summit", "Terra", "Nova", "Silver", "Horizon", "Cobalt", "Willow", "Vega", "Maple", "Coral", "Amber", "River", "Lunar", "Pine", "Prism", "Echo", "Bright"]
+const TYPE_IDS = ["engineering_workshop", "clean_energy", "wholesaler", "coffee_shop", "software_studio", "biotech_lab", "clothing_store", "architecture_studio", "music_studio", "accounting_firm", "dental_practice", "medical_clinic", "software_studio", "clean_energy", "wholesaler", "coffee_shop", "software_studio", "biotech_lab", "clothing_store", "architecture_studio", "film_studio", "accounting_firm", "medical_clinic", "biotech_lab"]
 const SHARES := 100000
 const FLOAT := 20000
 const MAX_ACTIVE := 8
@@ -45,8 +46,7 @@ static func _fill(p: Node) -> void:
 
 static func _open(p: Node, archetype: int) -> Dictionary:
 	p.finance_market.serial = int(p.finance_market.serial) + 1
-	var types := BusinessManager.get_all_business_types()
-	var def: Dictionary = types[archetype % types.size()]
+	var def: Dictionary = BusinessManager.get_business_type_by_id("biz_" + TYPE_IDS[archetype])
 	var country: String = preload("res://scripts/core/creation_options.gd").COUNTRIES.pick_random()[0]
 	var price := snappedf(randf_range(6.0, 55.0), 0.01)
 	var company := {"uid": "market_%d" % int(p.finance_market.serial), "archetype": archetype,
@@ -55,6 +55,12 @@ static func _open(p: Node, archetype: int) -> Dictionary:
 		"type_id": str(def.id), "active": true, "price": price, "previous": price, "available": FLOAT,
 		"npc_buys": 0, "npc_sells": 0, "performance": 0.0, "business_uid": "", "opened_age": p.age}
 	p.finance_market.issuers.append(company)
+	# Seed real NPC positions so both buying and selling occur from the first year.
+	for trader in p.finance_market.traders:
+		var initial := mini(400, maxi(0, int(float(trader.cash) / price)))
+		trader.positions[company.uid] = initial
+		trader.cash = float(trader.cash) - initial * price
+		company.available = int(company.available) - initial
 	return company
 
 
@@ -85,7 +91,7 @@ static func _eligible(p: Node) -> bool:
 static func trade(p: Node, uid: String, quantity: int, buying: bool) -> String:
 	ensure(p)
 	var c := issuer(p, uid)
-	if not _eligible(p) or c.is_empty() or not c.active or quantity < 1 or quantity > 10000:
+	if not _eligible(p) or c.is_empty() or not c.active or quantity < 1 or quantity > (10000 if buying else FLOAT):
 		return "Trade unavailable. Adults outside prison may trade 1–10,000 shares."
 	if not str(c.business_uid).is_empty():
 		return "Your controlling stake is managed through My Businesses."
@@ -150,6 +156,8 @@ static func acquire(p: Node, uid: String) -> String:
 	p.finance_market.cash_flow = int(p.finance_market.cash_flow) - int(old.get("quantity", 0)) * float(c.price)
 	p.finance_market.holdings.erase(uid)
 	c.active = false
+	for trader in p.finance_market.traders:
+		trader.cash = float(trader.cash) + int(trader.positions.get(uid, 0)) * float(c.price)
 	_retire_positions(p, uid)
 	_fill(p)
 	record(p)
@@ -176,6 +184,8 @@ static func request_ipo(p: Node, business: Dictionary) -> String:
 		return "No listing slot available. Sell a holding to free an NPC listing slot."
 	var retired: Dictionary = candidates.pick_random()
 	retired.active = false
+	for trader in p.finance_market.traders:
+		trader.cash = float(trader.cash) + int(trader.positions.get(retired.uid, 0)) * float(retired.price)
 	_retire_positions(p, retired.uid)
 	p.finance_market.serial = int(p.finance_market.serial) + 1
 	var price := snappedf(maxf(1.0, float(business.get("valuation", 100000)) / SHARES), 0.01)
@@ -197,6 +207,14 @@ static func release_business(p: Node, business: Dictionary) -> void:
 	if not c.is_empty():
 		c.business_uid = ""
 		c.owner = preload("res://scripts/core/name_catalog.gd").random_name("United States", randf() < 0.5)
+
+
+static func distribute_dividend(p: Node, business: Dictionary, amount: int) -> void:
+	var uid: String = str(business.get("listing_uid", ""))
+	if uid.is_empty():
+		return
+	for trader in p.finance_market.get("traders", []):
+		trader.cash = float(trader.cash) + float(amount) * int(trader.positions.get(uid, 0)) / SHARES
 
 
 static func _retire_positions(p: Node, uid: String) -> void:

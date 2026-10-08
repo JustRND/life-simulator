@@ -483,6 +483,7 @@ static func withdraw_owner_dividend(b: Dictionary, amount: int) -> Dictionary:
 	# Listed businesses distribute the public 20% to outside shareholders.
 	var owner_amount := int(amount * float(b.get("owner_fraction", 1.0)))
 	PlayerData.money += owner_amount
+	load("res://scripts/economy/finance_market.gd").distribute_dividend(PlayerData, b, amount)
 
 	PlayerData.add_life_log_entry("💰 OWNER DIVIDEND: You withdrew $%d from %s into your personal pocket cash." % [
 		owner_amount,
@@ -544,7 +545,10 @@ static func liquidate_business(biz_uid: String) -> Dictionary:
 	if net_proceeds > 0:
 		PlayerData.money += net_proceeds
 	else:
-		PlayerData.money = maxi(0, PlayerData.money + net_proceeds)
+		var liability := -net_proceeds
+		var paid := mini(PlayerData.money, liability)
+		PlayerData.money -= paid
+		PlayerData.debt += liability - paid
 
 	var b_name: String = str(b.get("name", "Enterprise"))
 	PlayerData.owned_businesses.remove_at(found_idx)
