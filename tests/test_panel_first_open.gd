@@ -2,6 +2,7 @@ extends Node
 
 func _ready() -> void:
 	print("--- Starting Panel First Open Verification Test ---")
+	get_window().size = Vector2i(450, 850)
 	var main_scene = load("res://scenes/main/main_screen.tscn")
 	var main = main_scene.instantiate()
 	add_child(main)
@@ -54,6 +55,17 @@ func _ready() -> void:
 	
 	await get_tree().create_timer(0.4).timeout
 	assert(is_equal_approx(main.activities_panel.offset_top, 0.0), "ActivitiesPanel offset_top must rest at 0.0")
+	var edu := act_list.get_node("EducationActItem") as Button
+	assert(edu.custom_minimum_size.y <= 140.0, "EducationActItem custom_minimum_size.y (%f) must not exceed 140px on first open" % edu.custom_minimum_size.y)
+	assert(edu.size.y <= 140.0, "EducationActItem size.y (%f) must not exceed 140px on first open" % edu.size.y)
+	
+	# Close and open again
+	main._on_close_panel_button_pressed()
+	await get_tree().create_timer(0.4).timeout
+	main.show_tab("activities")
+	await get_tree().create_timer(0.4).timeout
+	assert(edu.custom_minimum_size.y <= 140.0, "EducationActItem custom_minimum_size.y must remain compact on second open")
+	assert(edu.size.y <= 140.0, "EducationActItem size.y must remain compact on second open")
 	
 	# 3. Test opening RelationshipsPanel for the first time
 	print("Testing RelationshipsPanel first open...")

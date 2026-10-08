@@ -105,6 +105,7 @@ var _cached_light := false
 var _cached_lang := ""
 var _cached_colored := false
 var _cached_emoji := ""
+var _cached_width := 0.0
 
 func _silence_target() -> void:
 	if target == null or _target_silenced:
@@ -153,10 +154,11 @@ func _sync() -> void:
 	var disabled: bool = target.disabled
 	var icon_res: Texture2D = target.icon
 	var emoji_meta: String = str(target.get_meta("action_emoji", ""))
+	var cur_w: float = target.size.x
 
 	if (text == _cached_text and pressed == _cached_pressed and disabled == _cached_disabled 
 			and icon_res == _cached_icon and light == _cached_light and lang == _cached_lang 
-			and emoji_meta == _cached_emoji):
+			and emoji_meta == _cached_emoji and abs(cur_w - _cached_width) < 4.0):
 		return
 
 	var is_colored: bool = _is_colored_target()
@@ -168,6 +170,7 @@ func _sync() -> void:
 	_cached_lang = lang
 	_cached_colored = is_colored
 	_cached_emoji = emoji_meta
+	_cached_width = cur_w
 
 	var lines := target.text.split("\n", false)
 	var first := str(lines[0]) if not lines.is_empty() else ""
@@ -211,5 +214,8 @@ func _sync() -> void:
 	arrow.add_theme_color_override("font_color", ink)
 	symbol.add_theme_color_override("font_color", ink)
 	var min_h := 74.0 if is_colored else 84.0
-	target.custom_minimum_size.y = maxf(min_h, get_combined_minimum_size().y)
+	if cur_w < 150.0:
+		target.custom_minimum_size.y = min_h
+	else:
+		target.custom_minimum_size.y = clampf(get_combined_minimum_size().y, min_h, 110.0)
 
