@@ -42,7 +42,7 @@ func _ready() -> void:
 
 func check_boxes(node: Node) -> void:
 	if node is BoxContainer and node.is_visible_in_tree():
-		var previous: Control
+		var previous: Control = null
 		for child in node.get_children():
 			if not child is Control or not child.visible or child.is_set_as_top_level():
 				continue

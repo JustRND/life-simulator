@@ -21,6 +21,9 @@ const DETAILS = {
 	"Licensing & Certifications": ["📜", "Train and earn new qualifications"],
 	"Business & Enterprises": ["🏢", "Build and manage your businesses"],
 	"Doctor & Healthcare": ["🩺", "Look after your health"],
+	"BANKING": ["🏦", "Checking, savings and loans"],
+	"First National Pixel Bank": ["🏦", "Checking, savings and loans"],
+	"Bank & Loans": ["🏦", "Checking, savings and loans"],
 }
 var target: Button
 var heading: Label
@@ -44,6 +47,7 @@ func _ready() -> void:
 	art.custom_minimum_size = Vector2(82, 82)
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	row.add_child(art)
 	symbol = _label(68)
 	symbol.custom_minimum_size.x = 82

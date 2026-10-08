@@ -443,18 +443,71 @@ func _configure_action_bar() -> void:
 				btn.button_up.connect(_on_action_bar_btn_up.bind(btn))
 
 	# Configure Bank icon on BankButton in AssetsPanel
-	if bank_button != null and ResourceLoader.exists("res://assets/icons/icon_bank.png"):
-		bank_button.icon = load("res://assets/icons/icon_bank.png")
-		bank_button.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		bank_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
-		bank_button.expand_icon = true
-		bank_button.add_theme_constant_override("icon_max_width", 100)
-		bank_button.add_theme_constant_override("h_separation", 24)
-		bank_button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	if bank_button != null:
+		bank_button.icon = null
 
-	if bank_header_icon != null and ResourceLoader.exists("res://assets/icons/icon_bank.png"):
-		bank_header_icon.texture = load("res://assets/icons/icon_bank.png")
-		bank_header_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	if bank_header_icon != null:
+		var bank_svg := """<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f2b48"/>
+      <stop offset="60%" stop-color="#091b30"/>
+      <stop offset="100%" stop-color="#040c17"/>
+    </linearGradient>
+    <linearGradient id="rimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#0369a1"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde047"/>
+      <stop offset="50%" stop-color="#eab308"/>
+      <stop offset="100%" stop-color="#ca8a04"/>
+    </linearGradient>
+    <linearGradient id="marbleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+    <linearGradient id="roofGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+  <rect x="12" y="12" width="232" height="232" rx="64" fill="url(#bgGrad)"/>
+  <rect x="14" y="14" width="228" height="228" rx="62" fill="none" stroke="url(#rimGrad)" stroke-width="4.5"/>
+  <rect x="22" y="22" width="212" height="212" rx="54" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-opacity="0.25"/>
+  <g filter="url(#shadow)">
+    <path d="M 44 94 L 128 44 L 212 94 Z" fill="url(#roofGrad)"/>
+    <rect x="40" y="94" width="176" height="14" rx="4" fill="#f8fafc"/>
+    <rect x="44" y="108" width="168" height="6" rx="2" fill="#94a3b8"/>
+    <circle cx="128" cy="74" r="13" fill="url(#goldGrad)"/>
+    <circle cx="128" cy="74" r="10" fill="none" stroke="#fef08a" stroke-width="1.5"/>
+    <path d="M 128 67 V 81 M 125 70 C 125 68 131 68 131 71 C 131 74 125 74 125 77 C 125 80 131 80 131 78" 
+          fill="none" stroke="#78350f" stroke-width="1.8" stroke-linecap="round"/>
+    <rect x="58" y="114" width="22" height="62" rx="4" fill="url(#marbleGrad)"/>
+    <rect x="56" y="114" width="26" height="5" rx="2" fill="#e2e8f0"/>
+    <rect x="56" y="171" width="26" height="5" rx="2" fill="#94a3b8"/>
+    <rect x="98" y="114" width="22" height="62" rx="4" fill="url(#marbleGrad)"/>
+    <rect x="96" y="114" width="26" height="5" rx="2" fill="#e2e8f0"/>
+    <rect x="96" y="171" width="26" height="5" rx="2" fill="#94a3b8"/>
+    <rect x="136" y="114" width="22" height="62" rx="4" fill="url(#marbleGrad)"/>
+    <rect x="134" y="114" width="26" height="5" rx="2" fill="#e2e8f0"/>
+    <rect x="134" y="171" width="26" height="5" rx="2" fill="#94a3b8"/>
+    <rect x="176" y="114" width="22" height="62" rx="4" fill="url(#marbleGrad)"/>
+    <rect x="174" y="114" width="26" height="5" rx="2" fill="#e2e8f0"/>
+    <rect x="174" y="171" width="26" height="5" rx="2" fill="#94a3b8"/>
+    <rect x="42" y="176" width="172" height="12" rx="3" fill="#f8fafc"/>
+    <rect x="34" y="188" width="188" height="14" rx="4" fill="#cbd5e1"/>
+    <rect x="34" y="200" width="188" height="3" rx="1.5" fill="#64748b"/>
+  </g>
+</svg>"""
+		var b_img := Image.new()
+		if b_img.load_svg_from_string(bank_svg, 1.0) == OK:
+			bank_header_icon.texture = ImageTexture.create_from_image(b_img)
+		bank_header_icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 
 
 func get_stage_icon_path(age: int) -> String:
@@ -7876,42 +7929,25 @@ func _render_education_minigame_step() -> void:
 		btn.add_theme_font_size_override("font_size", 24)
 		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
+		btn.set_meta("quiz_correct", idx == int(q_data.correct))
 		var chosen_idx := idx
 		btn.pressed.connect(func():
 			for b in option_buttons:
-				b.disabled = true
+				preload("res://scripts/ui/quiz_button_style.gd").feedback(b, "neutral")
 
 			if chosen_idx == int(q_data.correct):
 				education_minigame_state["score"] = int(education_minigame_state["score"]) + 1
 				feedback_lbl.text = "✅ Correct! (+5% Academic Marks earned)"
-				feedback_lbl.add_theme_color_override("font_color", Color("#34d399"))
-				var win_style := StyleBoxFlat.new()
-				win_style.bg_color = Color("#064e3b")
-				win_style.border_color = Color("#10b981")
-				win_style.set_border_width_all(3)
-				win_style.set_corner_radius_all(8)
-				btn.add_theme_stylebox_override("disabled", win_style)
-				btn.add_theme_color_override("font_color", Color("#6ee7b7"))
+				feedback_lbl.add_theme_color_override("font_color", Color("#086449") if LifeLibrary.data.theme == "light" else Color("#6ee7b7"))
+				preload("res://scripts/ui/quiz_button_style.gd").feedback(btn, "correct")
 			else:
 				feedback_lbl.text = "❌ Incorrect! The correct answer was: %s" % str(q_data.correct_answer)
-				feedback_lbl.add_theme_color_override("font_color", Color("#f87171"))
-				var err_style := StyleBoxFlat.new()
-				err_style.bg_color = Color("#450a0a")
-				err_style.border_color = Color("#ef4444")
-				err_style.set_border_width_all(3)
-				err_style.set_corner_radius_all(8)
-				btn.add_theme_stylebox_override("disabled", err_style)
-				btn.add_theme_color_override("font_color", Color("#fca5a5"))
+				feedback_lbl.add_theme_color_override("font_color", Color("#a51d35") if LifeLibrary.data.theme == "light" else Color("#fda4af"))
+				preload("res://scripts/ui/quiz_button_style.gd").feedback(btn, "incorrect")
 
 				if int(q_data.correct) < option_buttons.size():
 					var correct_btn: Button = option_buttons[int(q_data.correct)]
-					var win_style := StyleBoxFlat.new()
-					win_style.bg_color = Color("#064e3b")
-					win_style.border_color = Color("#10b981")
-					win_style.set_border_width_all(3)
-					win_style.set_corner_radius_all(8)
-					correct_btn.add_theme_stylebox_override("disabled", win_style)
-					correct_btn.add_theme_color_override("font_color", Color("#6ee7b7"))
+					preload("res://scripts/ui/quiz_button_style.gd").feedback(correct_btn, "correct")
 
 			next_btn.visible = true
 		)
