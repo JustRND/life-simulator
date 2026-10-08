@@ -381,12 +381,12 @@ theme_override_font_sizes/font_size = 28
 text = "🍼 Infant"
 
 [node name="BalanceLabel" type="Label" parent="ProfileStrip/ProfileMargin/ProfileRow" unique_id=1720170167]
-custom_minimum_size = Vector2(250, 96)
+custom_minimum_size = Vector2(260, 96)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.255, 0.839, 0.424, 1)
-theme_override_font_sizes/font_size = 24
-text = "💳 $0
-FUNDS"
+theme_override_font_sizes/font_size = 20
+text = "💵 $0 CASH
+🏦 $0 BANK BALANCE"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -1174,7 +1174,7 @@ stretch_mode = 5
 layout_mode = 2
 theme_override_colors/font_color = Color(0.396, 0.902, 1, 1)
 theme_override_font_sizes/font_size = 36
-text = "Checking Account: $0"
+text = "Cash: $0 • Bank Balance: $0"
 horizontal_alignment = 1
 
 [node name="BankStatusLabel" type="Label" parent="BankPanel/BankMargin/BankContent/BankScroll/BankList/BankCard/Margin/VBox" unique_id=76950939]

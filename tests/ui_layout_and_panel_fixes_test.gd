@@ -18,7 +18,7 @@ func _ready() -> void:
 	get_tree().quit(0)
 
 func test_funds_counter_theme() -> void:
-	print("Testing Funds Counter Theme...")
+	print("Testing Cash and Bank Balance Counter Theme...")
 	var screen = MainScreenScene.instantiate()
 	add_child(screen)
 
@@ -34,9 +34,9 @@ func test_funds_counter_theme() -> void:
 	PlayerData.money = 420
 	PlayerData.bank_savings = 580
 	screen.update_ui()
-	assert(balance_lbl.text.contains("💳 $1,000"), "BalanceLabel must show formatted total with icon: %s" % balance_lbl.text)
-	assert(balance_lbl.text.contains("FUNDS"), "BalanceLabel must show FUNDS caption: %s" % balance_lbl.text)
-	print("✔ Funds counter theme verified.")
+	assert(balance_lbl.text.contains("💵 $420 CASH"), "BalanceLabel must show CASH caption and amount: %s" % balance_lbl.text)
+	assert(balance_lbl.text.contains("🏦 $580") and (balance_lbl.text.contains("BANK BALANCE") or balance_lbl.text.contains("BANK")), "BalanceLabel must show BANK caption and amount: %s" % balance_lbl.text)
+	print("✔ Cash and Bank Balance counter theme verified.")
 	screen.queue_free()
 
 func test_duplicate_text_prevention() -> void:
@@ -317,10 +317,7 @@ func test_panel_bottom_bar_hiding_and_settings_fullscreen() -> void:
 		assert(screen.age_button.visible == false, "AgeButton must be HIDDEN when %s panel is open" % p)
 
 		# Returning to timeline restores the bottom row
-		if p == "settings":
-			screen._on_close_settings_button_pressed()
-		else:
-			screen._on_close_panel_button_pressed()
+		screen.show_tab("timeline")
 		assert(screen.action_bar.visible == true, "ActionBar must be RESTORED after closing %s panel" % p)
 		assert(screen.age_button.visible == true, "AgeButton must be RESTORED after closing %s panel" % p)
 

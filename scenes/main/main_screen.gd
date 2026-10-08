@@ -286,9 +286,16 @@ func _configure_ui() -> void:
 		bal_sb.shadow_size = 8
 		balance_label.add_theme_stylebox_override("normal", bal_sb)
 		balance_label.add_theme_color_override("font_color", Color("#34d399"))
-		balance_label.add_theme_font_size_override("font_size", 24)
+		balance_label.add_theme_font_size_override("font_size", 20)
+		balance_label.custom_minimum_size = Vector2(260, 96)
 		balance_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		balance_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		balance_label.mouse_filter = Control.MOUSE_FILTER_STOP
+		balance_label.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		balance_label.gui_input.connect(func(event: InputEvent) -> void:
+			if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+				show_tab("bank")
+		)
 
 	life_feed.scroll_following = true
 	life_feed.get_v_scroll_bar().changed.connect(_scroll_after_layout)
@@ -1125,7 +1132,16 @@ func update_ui() -> void:
 	_update_portrait()
 	name_label.text = PlayerData.first_name
 	phase_label.text = "%s %s" % [PlayerData.get_stage_icon(), PlayerData.get_stage_name()]
-	balance_label.text = "💳 $%s\nFUNDS" % _format_number(PlayerData.money + PlayerData.bank_savings)
+	var bank_title := "BANK BALANCE" if _format_number(PlayerData.bank_savings).length() <= 7 else "BANK"
+	balance_label.text = "💵 $%s CASH\n🏦 $%s %s" % [
+		_format_number(PlayerData.money),
+		_format_number(PlayerData.bank_savings),
+		bank_title
+	]
+	balance_label.tooltip_text = "Cash (Wallet): $%s\nBank Balance (Savings): $%s\nClick to view Bank & Savings" % [
+		_format_number(PlayerData.money),
+		_format_number(PlayerData.bank_savings)
+	]
 
 	if nationality_flag != null and PlayerData.birthplace != "":
 		nationality_flag.texture = CreationOptions.get_flag_for_country(PlayerData.birthplace)
@@ -2746,7 +2762,7 @@ func load_style_box_cyber_card(border_col: Color = Color("#22d3ee")) -> StyleBox
 
 
 func update_bank_panel() -> void:
-	bank_checking_label.text = "Checking (Cash): $%s   •   Savings: $%s" % [
+	bank_checking_label.text = "Cash: $%s   •   Bank Balance: $%s" % [
 		_format_number(PlayerData.money),
 		_format_number(PlayerData.bank_savings)
 	]
@@ -2783,7 +2799,7 @@ func update_bank_panel() -> void:
 	sv.add_child(sav_title)
 
 	var sav_bal := Label.new()
-	sav_bal.text = "• Savings Balance: $%s  (Protected for Inheritance)\n• Pocket Cash: $%s" % [
+	sav_bal.text = "• Bank Balance: $%s  (Protected for Inheritance)\n• Cash: $%s" % [
 		_format_number(PlayerData.bank_savings),
 		_format_number(PlayerData.money)
 	]
@@ -2792,7 +2808,7 @@ func update_bank_panel() -> void:
 	sv.add_child(sav_bal)
 
 	var dep_title := Label.new()
-	dep_title.text = "Deposit Cash into Savings Account:"
+	dep_title.text = "Deposit Cash into Bank Balance:"
 	dep_title.add_theme_font_size_override("font_size", 22)
 	dep_title.add_theme_color_override("font_color", Color("#38bdf8"))
 	sv.add_child(dep_title)
@@ -2814,7 +2830,7 @@ func update_bank_panel() -> void:
 	dep_row.add_child(btn_dep_all)
 
 	var wth_title := Label.new()
-	wth_title.text = "Withdraw Cash from Savings Account:"
+	wth_title.text = "Withdraw from Bank Balance to Cash:"
 	wth_title.add_theme_font_size_override("font_size", 22)
 	wth_title.add_theme_color_override("font_color", Color("#fbbf24"))
 	sv.add_child(wth_title)
@@ -3012,7 +3028,7 @@ func _deposit_money(amount: int) -> void:
 		return
 	PlayerData.money -= actual
 	PlayerData.bank_savings += actual
-	add_life_event("You deposited $%s into your high-yield bank savings account." % _format_number(actual), "finance")
+	add_life_event("You deposited $%s cash into your bank balance." % _format_number(actual), "finance")
 	update_ui()
 	update_bank_panel()
 	SaveManager.save_game()
@@ -3023,11 +3039,11 @@ func _withdraw_money(amount: int) -> void:
 		return
 	var actual := mini(amount, PlayerData.bank_savings)
 	if actual <= 0:
-		add_life_event("You do not have any funds in your savings account to withdraw.", "finance")
+		add_life_event("You do not have any funds in your bank balance to withdraw.", "finance")
 		return
 	PlayerData.bank_savings -= actual
 	PlayerData.money += actual
-	add_life_event("You withdrew $%s from your bank savings account." % _format_number(actual), "finance")
+	add_life_event("You withdrew $%s from your bank balance into cash." % _format_number(actual), "finance")
 	update_ui()
 	update_bank_panel()
 	SaveManager.save_game()
@@ -10032,7 +10048,7 @@ func _show_will_modal() -> void:
 	var total_estate: int = PlayerData.money + PlayerData.bank_savings + total_assets_val
 
 	var val_lbl := Label.new()
-	val_lbl.text = "🏛️ TOTAL ESTIMATED ESTATE VALUE: $%s\n💵 Liquid Funds: $%s Cash + $%s Bank   •   🏰 Asset Portfolio: $%s (%d Assets)" % [
+	val_lbl.text = "🏛️ TOTAL ESTIMATED ESTATE VALUE: $%s\n💵 Liquid Funds: $%s Cash + $%s Bank (Converts to Bank Balance upon inheritance)   •   🏰 Asset Portfolio: $%s (%d Assets)" % [
 		_format_number(total_estate),
 		_format_number(PlayerData.money),
 		_format_number(PlayerData.bank_savings),
@@ -10065,7 +10081,7 @@ func _show_will_modal() -> void:
 		{
 			"id": "CHILDREN",
 			"title": "👶 All to Surviving Children",
-			"desc": "Bequeath 100% of all cash, bank savings, vehicles, and real property equally among your surviving children.",
+			"desc": "Bequeath 100% of all cash (converted to bank balance), bank savings, vehicles, and real property equally among your surviving children.",
 			"color": Color("#38bdf8")
 		},
 		{
@@ -11610,20 +11626,20 @@ func _execute_inheritance_takeover(child: Dictionary, overlay_to_free: Control) 
 
 	if roll < 0.50:
 		final_amount = net_worth
-		inheritance_msg = "✨ Seamless Succession: 100% of the estate ($%s) was transferred without dispute." % _format_number(final_amount)
+		inheritance_msg = "✨ Seamless Succession: 100% of the estate ($%s) was transferred without dispute into your bank balance." % _format_number(final_amount)
 	elif roll < 0.75:
 		final_amount = int(net_worth * 0.85)
-		inheritance_msg = "🏛️ Estate Tax Levy: State tax authorities collected 15% inheritance tax. $%s was deposited." % _format_number(final_amount)
+		inheritance_msg = "🏛️ Estate Tax Levy: State tax authorities collected 15% inheritance tax. $%s was deposited into your bank balance." % _format_number(final_amount)
 	else:
 		final_amount = maxi(250, net_worth - 5000)
-		inheritance_msg = "⚖️ Probate Legal Settlement: Estate filing and attorney fees cost $5,000. $%s was secured." % _format_number(final_amount)
+		inheritance_msg = "⚖️ Probate Legal Settlement: Estate filing and attorney fees cost $5,000. $%s was secured into your bank balance." % _format_number(final_amount)
 
 	# Transfer businesses, shares and physical assets intact, not also as cash.
 	var estate_fees := maxi(0, net_worth - final_amount)
 	var liquid_estate := PlayerData.money + PlayerData.bank_savings - PlayerData.get_total_debt()
-	var cash_inheritance := maxi(0, liquid_estate - estate_fees)
+	var bank_inheritance := maxi(0, liquid_estate - estate_fees)
 	var remaining_liability := maxi(0, estate_fees - liquid_estate)
-	PlayerData.takeover_as_child(child, cash_inheritance, PlayerData.owned_assets)
+	PlayerData.takeover_as_child(child, bank_inheritance, PlayerData.owned_assets)
 	PlayerData.debt = remaining_liability
 	PlayerData.add_life_log_entry(inheritance_msg, "finance")
 

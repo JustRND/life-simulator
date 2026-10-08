@@ -674,6 +674,9 @@ func apply_effects(effects: Dictionary) -> void:
 		grades = clamp(grades + int(effects.get("grades", 0)), 0, 100)
 		last_school_activity_age = age
 
+	if effects.has("bank_savings"):
+		bank_savings = maxi(0, bank_savings + int(effects.get("bank_savings", 0)))
+
 	var delta_money: int = int(effects.get("money", 0))
 	if delta_money >= 0:
 		money += delta_money
@@ -924,7 +927,8 @@ func start_reincarnated_life(identity: Dictionary, debuffs: Array, buffs: Array)
 		money = 0
 		bank_savings = 0
 	elif "silver_spoon" in active_buffs:
-		money = randi_range(100000, 150000)
+		money = 0
+		bank_savings = randi_range(100000, 150000)
 	else:
 		money = 0
 
@@ -968,8 +972,8 @@ func takeover_as_child(child: Dictionary, inherited_money: int, inherited_assets
 	happiness = int(child.get("happiness", 75))
 	smarts = int(child.get("smarts", 65))
 	looks = int(child.get("looks", 65))
-	money = maxi(0, inherited_money)
-	bank_savings = 0
+	money = 0
+	bank_savings = maxi(0, inherited_money)
 	debt = 0
 	tax_debt = 0
 	karma = 0
@@ -1001,4 +1005,4 @@ func takeover_as_child(child: Dictionary, inherited_money: int, inherited_assets
 		education_level = "None"
 
 	var asset_text := " and %d property/vehicle assets" % owned_assets.size() if owned_assets.size() > 0 else ""
-	add_life_log_entry("📜 LEGACY: You inherited your late parent %s's estate ($%d%s) and continue the family bloodline at age %d." % [prev_parent_name, money, asset_text, age], "event")
+	add_life_log_entry("📜 LEGACY: You inherited your late parent %s's estate ($%d deposited into your Bank Balance%s) and continue the family bloodline at age %d." % [prev_parent_name, bank_savings, asset_text, age], "event")

@@ -76,11 +76,12 @@ func _ready() -> void:
 	PlayerData.start_reincarnated_life(blessed_identity, [], test_buffs)
 	assert(PlayerData.first_name == "Blessed Soul", "Name updated")
 	assert(PlayerData.active_buffs == test_buffs, "Buffs saved")
-	assert(PlayerData.money >= 100000, "Silver spoon buff gave money")
+	assert(PlayerData.bank_savings >= 100000, "Silver spoon buff gave bank savings")
+	assert(PlayerData.money == 0, "Silver spoon trust fund deposited into bank balance")
 	assert(PlayerData.smarts >= 100, "Super smarts buff enforced")
 	assert(PlayerData.mother_relationship == 100, "Golden pedigree buff enforced")
-	print("✔ Test 6: Reincarnated life under Good Karma verified (Money: $%d, Smarts: %d)" % [
-		PlayerData.money, PlayerData.smarts
+	print("✔ Test 6: Reincarnated life under Good Karma verified (Bank Savings: $%d, Smarts: %d)" % [
+		PlayerData.bank_savings, PlayerData.smarts
 	])
 
 	# Test 7: Inheritance Takeover
@@ -100,11 +101,12 @@ func _ready() -> void:
 	PlayerData.takeover_as_child(heir, parent_net_worth)
 	assert(PlayerData.first_name == "Alexander", "Took over as child Alexander")
 	assert(PlayerData.age == 22, "Age is heir age (22)")
-	assert(PlayerData.money == 250000, "Inherited money matches")
+	assert(PlayerData.bank_savings == 250000, "Inherited money deposited into bank balance")
+	assert(PlayerData.money == 0, "No straight cash received on inheritance")
 	assert(PlayerData.education_level == "High School Graduate", "Education matches adult child")
 	assert(not PlayerData.is_dead, "Child is alive")
-	print("✔ Test 7: Inheritance succession verified (Name: %s, Age: %d, Inherited: $%d)" % [
-		PlayerData.first_name, PlayerData.age, PlayerData.money
+	print("✔ Test 7: Inheritance succession verified (Name: %s, Age: %d, Bank Savings: $%d, Cash: $%d)" % [
+		PlayerData.first_name, PlayerData.age, PlayerData.bank_savings, PlayerData.money
 	])
 
 	# Test 8: Save and Load with Children & Modifiers

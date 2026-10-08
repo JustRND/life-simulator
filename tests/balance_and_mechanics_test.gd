@@ -928,6 +928,7 @@ func test_licensing_freelance_and_businesses() -> void:
 	PlayerData.takeover_as_child(heir, 50000, PlayerData.owned_assets)
 	assert(PlayerData.first_name == "Kai Vance", "Player name updated to heir")
 	assert(PlayerData.owned_assets.size() == 2, "Heir must inherit all owned property and vehicle assets!")
+	assert(PlayerData.bank_savings == 50000 and PlayerData.money == 0, "Inherited money must go into bank_savings and not straight cash")
 
 	# Asset disaster simulation
 	var assets_before_disaster: int = PlayerData.owned_assets.size()

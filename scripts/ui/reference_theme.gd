@@ -163,15 +163,15 @@ func apply(node: Control, light: bool) -> void:
 			node.add_theme_constant_override("margin_right", 32)
 			node.add_theme_constant_override("margin_top", 20)
 			node.add_theme_constant_override("margin_bottom", 20)
-		elif "Card" in parent_name:
-			node.add_theme_constant_override("margin_left", 32)
-			node.add_theme_constant_override("margin_right", 32)
-			node.add_theme_constant_override("margin_top", 20)
-			node.add_theme_constant_override("margin_bottom", 20)
 		elif str(node.name) in ["ActMargin", "RelMargin", "AssetsMargin", "BankMargin", "InfantMargin", "CharacterMargin", "SettingsMargin", "ConfirmMargin"] or node.has_meta("reference_edge"):
 			node.add_theme_constant_override("margin_left", 24)
 			node.add_theme_constant_override("margin_right", 24)
 			node.add_theme_constant_override("margin_top", 16)
+			node.add_theme_constant_override("margin_bottom", 20)
+		elif "Card" in parent_name:
+			node.add_theme_constant_override("margin_left", 32)
+			node.add_theme_constant_override("margin_right", 32)
+			node.add_theme_constant_override("margin_top", 20)
 			node.add_theme_constant_override("margin_bottom", 20)
 	if node is LineEdit or node is TextEdit:
 		for state in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus", "read_only"]:

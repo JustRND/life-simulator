@@ -84,7 +84,7 @@ func _ready() -> void:
 	check(PlayerData.owned_businesses.size() == 1 and FinanceMarket.active(PlayerData).size() == 8, "Business and exchange persist")
 	var shares_before: int = FinanceMarket.portfolio_value(PlayerData)
 	PlayerData.takeover_as_child({"name": "Test Heir", "age": 20}, 1234, [])
-	check(PlayerData.money == 1234 and PlayerData.owned_businesses.size() == 1, "Heir receives intact businesses, not duplicate cash")
+	check(PlayerData.bank_savings == 1234 and PlayerData.money == 0 and PlayerData.owned_businesses.size() == 1, "Heir receives bank balance and intact businesses, not duplicate cash")
 	check(FinanceMarket.portfolio_value(PlayerData) == shares_before, "Heir receives portfolio")
 	check(int(PlayerData.finance_market.last_age) == 20, "Inherited market clock rebased")
 	var result := BusinessManager.liquidate_business(PlayerData.owned_businesses[0].uid)

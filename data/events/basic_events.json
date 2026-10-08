@@ -656,25 +656,25 @@
       {
         "text": "Accept the inheritance payout",
         "icon": "💰",
-        "description": "+$15,000 Cash, +6 Happiness",
+        "description": "+$15,000 Bank Balance, +6 Happiness",
         "type": "windfall",
         "effects": {
-          "money": 15000,
+          "bank_savings": 15000,
           "happiness": 6
         },
-        "result": "The probate funds cleared into your account: ,500 in liquid assets! Your net worth soared."
+        "result": "The probate funds cleared directly into your bank balance: $15,000 deposited! Your savings soared."
       },
       {
         "text": "Donate 50% to a charitable cancer hospice",
         "icon": "🎗️",
-        "description": "+$7,500 Cash, +6 Happiness",
+        "description": "+$7,500 Bank Balance, +7 Karma, +6 Happiness",
         "type": "noble",
         "effects": {
-          "money": 7500,
+          "bank_savings": 7500,
           "karma": 7,
           "happiness": 6
         },
-        "result": "You kept half and donated the rest to charity. Your generosity made regional news headlines."
+        "result": "You had $7,500 deposited into your bank balance and donated the rest to charity. Your generosity made regional news headlines."
       },
       {
         "text": "Distribute the entire fortune among poorer family members",

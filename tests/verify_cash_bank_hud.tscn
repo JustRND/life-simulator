@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c85hndk382lq1"]
+
+[ext_resource type="Script" path="res://tests/verify_cash_bank_hud.gd" id="1_test"]
+
+[node name="VerifyCashBankHUD" type="Node"]
+script = ExtResource("1_test")
