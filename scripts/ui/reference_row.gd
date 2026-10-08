@@ -217,5 +217,5 @@ func _sync() -> void:
 	if cur_w < 150.0:
 		target.custom_minimum_size.y = min_h
 	else:
-		target.custom_minimum_size.y = clampf(get_combined_minimum_size().y, min_h, 110.0)
+		target.custom_minimum_size.y = clampf(get_combined_minimum_size().y, min_h, 240.0)
 
