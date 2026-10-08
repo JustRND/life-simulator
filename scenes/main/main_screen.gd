@@ -92,6 +92,7 @@ var freelance_modal_overlay: Control = null
 var licensing_modal_overlay: Control = null
 var business_modal_overlay: Control = null
 var education_modal_overlay: Control = null
+var university_modal_overlay: Control = null
 var shopping_modal_overlay: Control = null
 var mind_body_modal_overlay: Control = null
 var social_media_modal_overlay: Control = null
@@ -6526,153 +6527,41 @@ func _show_education_modal() -> void:
 
 		list.add_child(uni_active)
 
-	# Enroll in University Institutions (High School Graduates, Dropouts, & University Graduates seeking another study path)
+	# -------------------------------------------------------------
+	# UNIVERSITY ENROLLMENT & STUDY PATHS (DEDICATED BUTTON)
+	# -------------------------------------------------------------
+	var uni_header := Label.new()
+	uni_header.text = "🏛️ UNIVERSITY ENROLLMENT & STUDY PATHS"
+	uni_header.add_theme_font_size_override("font_size", 28)
+	uni_header.add_theme_color_override("font_color", Color("#38bdf8"))
+	list.add_child(uni_header)
+
 	var can_view_uni_catalog: bool = PlayerData.age >= 18 and (PlayerData.education_level in ["High School", "High School Graduate", "University Graduate", "University Dropout", "University Student"])
 	if can_view_uni_catalog:
-		var uni_header := Label.new()
-		uni_header.text = "🏛️ UNIVERSITY ENROLLMENT & STUDY PATHS"
-		uni_header.add_theme_font_size_override("font_size", 30)
-		uni_header.add_theme_color_override("font_color", Color("#38bdf8"))
-		list.add_child(uni_header)
+		var uni_btn_desc := ""
+		if PlayerData.education_level == "University Student":
+			uni_btn_desc = "Currently enrolled at %s (Year %d of 4) • View enrollment status, course catalog & study paths >" % [
+				PlayerData.university_name,
+				maxi(1, PlayerData.university_years + 1)
+			]
+		elif PlayerData.degrees.size() > 0:
+			uni_btn_desc = "%d Degree(s) Conferred (Alumnus) • Explore new university majors & career study paths >" % PlayerData.degrees.size()
+		elif PlayerData.education_level == "High School Dropout":
+			uni_btn_desc = "Browse accredited institutions & degree study paths (GED required to enroll) >"
+		else:
+			uni_btn_desc = "Browse accredited institutions, admission prerequisites, tuitions & career trajectories >"
 
-		var uni_sub := Label.new()
-		uni_sub.text = "Choose an institution and major. Characters may only enroll in one university at a time and are obligated to study for 4 years. After graduating, you can take another study path!"
-		uni_sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		uni_sub.add_theme_font_size_override("font_size", 23)
-		uni_sub.add_theme_color_override("font_color", Color("#cbd5e1"))
-		list.add_child(uni_sub)
-
-		var is_currently_enrolled: bool = (PlayerData.education_level == "University Student")
-
-		var institutions: Array = EducationCatalog.get_all_institutions()
-		for inst in institutions:
-			if not (inst is Dictionary):
-				continue
-			var col := Color(str(inst.get("theme_color", "#38bdf8")))
-			var card := PanelContainer.new()
-			card.add_theme_stylebox_override("panel", load_style_box_cyber_card(col))
-
-			var m := MarginContainer.new()
-			m.add_theme_constant_override("margin_left", 22)
-			m.add_theme_constant_override("margin_right", 22)
-			m.add_theme_constant_override("margin_top", 18)
-			m.add_theme_constant_override("margin_bottom", 18)
-			card.add_child(m)
-
-			var vb := VBoxContainer.new()
-			vb.add_theme_constant_override("separation", 10)
-			m.add_child(vb)
-
-			var inst_title := Label.new()
-			inst_title.text = "%s  %s" % [str(inst.get("icon", "🏛️")), str(inst.get("name", ""))]
-			inst_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			inst_title.add_theme_font_size_override("font_size", 28)
-			inst_title.add_theme_color_override("font_color", col)
-			vb.add_child(inst_title)
-
-			var inst_tagline := Label.new()
-			inst_tagline.text = str(inst.get("tagline", ""))
-			inst_tagline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			inst_tagline.add_theme_font_size_override("font_size", 23)
-			inst_tagline.add_theme_color_override("font_color", Color("#93c5fd"))
-			vb.add_child(inst_tagline)
-
-			var inst_major := Label.new()
-			inst_major.text = "🎓 Major: %s  •  %s" % [str(inst.get("major_title", "")), str(inst.get("degree_title", ""))]
-			inst_major.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			inst_major.add_theme_font_size_override("font_size", 25)
-			inst_major.add_theme_color_override("font_color", Color("#f8fafc"))
-			vb.add_child(inst_major)
-
-			var inst_careers := Label.new()
-			var c_list: Array = inst.get("unlocked_careers", [])
-			inst_careers.text = "🎯 Unlocks Careers: %s" % ", ".join(c_list)
-			inst_careers.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			inst_careers.add_theme_font_size_override("font_size", 23)
-			inst_careers.add_theme_color_override("font_color", Color("#34d399"))
-			vb.add_child(inst_careers)
-
-			var inst_desc := Label.new()
-			inst_desc.text = str(inst.get("description", ""))
-			inst_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			inst_desc.add_theme_font_size_override("font_size", 22)
-			inst_desc.add_theme_color_override("font_color", Color("#cbd5e1"))
-			vb.add_child(inst_desc)
-
-			var tuition_amount: int = int(inst.get("tuition", 12000))
-			var tuition_text := "Free (Scholarship Active)" if PlayerData.has_scholarship else "$%s / yr" % _format_number(tuition_amount)
-			var req_eval: Dictionary = EducationCatalog.can_enroll(inst, PlayerData.grades, PlayerData.smarts)
-			var is_eligible: bool = bool(req_eval.get("allowed", false))
-
-			if is_currently_enrolled:
-				var locked_btn := Button.new()
-				locked_btn.custom_minimum_size.y = 74
-				locked_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-				locked_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-				locked_btn.text = "🔒 OBLIGATED: Currently studying at %s (Year %d of 4)\nOnly 1 university allowed at a time. Must complete 4-year degree or drop out before enrolling." % [
-					PlayerData.university_name,
-					maxi(1, PlayerData.university_years + 1)
-				]
-				locked_btn.disabled = true
-				var lk_style := StyleBoxFlat.new()
-				lk_style.bg_color = Color("#181f2f")
-				lk_style.border_color = Color("#475569")
-				lk_style.set_border_width_all(2)
-				lk_style.set_corner_radius_all(10)
-				lk_style.content_margin_left = 22
-				lk_style.content_margin_right = 22
-				lk_style.content_margin_top = 14
-				lk_style.content_margin_bottom = 14
-				locked_btn.add_theme_stylebox_override("disabled", lk_style)
-				locked_btn.add_theme_color_override("font_color", Color("#94a3b8"))
-				locked_btn.add_theme_font_size_override("font_size", 23)
-				vb.add_child(locked_btn)
-			elif is_eligible:
-				var enroll_btn := _create_cyber_button("🏛️ Enroll in %s (%s)\nReq Met: %d%% GPA & %d Smarts" % [
-					str(inst.get("major_title", "")),
-					tuition_text,
-					int(inst.get("min_grades", 60)),
-					int(inst.get("min_smarts", 50))
-				], col, func():
-					PlayerData.education_level = "University Student"
-					PlayerData.university_name = str(inst.get("name", ""))
-					PlayerData.university_major = str(inst.get("major", ""))
-					PlayerData.university_major_title = str(inst.get("major_title", ""))
-					PlayerData.university_degree = str(inst.get("degree_title", ""))
-					PlayerData.university_tuition = tuition_amount
-					PlayerData.university_years = 0
-					add_life_event("🏛️ You enrolled at %s majoring in %s! Complete 4 years to earn your %s." % [
-						PlayerData.university_name,
-						PlayerData.university_major_title,
-						PlayerData.university_degree
-					], "milestone")
-					update_ui()
-					SaveManager.save_game()
-					_close_education_modal_and_return_to_main()
-				)
-				vb.add_child(enroll_btn)
-			else:
-				var locked_btn := Button.new()
-				locked_btn.custom_minimum_size.y = 74
-				locked_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-				locked_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-				locked_btn.text = "🔒 LOCKED: " + str(req_eval.get("reason", "Ineligible"))
-				locked_btn.disabled = true
-				var lk_style := StyleBoxFlat.new()
-				lk_style.bg_color = Color("#181f2f")
-				lk_style.border_color = Color("#334155")
-				lk_style.set_border_width_all(2)
-				lk_style.set_corner_radius_all(10)
-				lk_style.content_margin_left = 22
-				lk_style.content_margin_right = 22
-				lk_style.content_margin_top = 14
-				lk_style.content_margin_bottom = 14
-				locked_btn.add_theme_stylebox_override("disabled", lk_style)
-				locked_btn.add_theme_color_override("font_color", Color("#94a3b8"))
-				locked_btn.add_theme_font_size_override("font_size", 23)
-				vb.add_child(locked_btn)
-
-			list.add_child(card)
+		var btn_uni := _create_cyber_button("🏛️ University Enrollment & Study Paths\n%s" % uni_btn_desc, Color("#38bdf8"), func():
+			_show_university_modal("enrollment")
+		)
+		btn_uni.custom_minimum_size.y = 80
+		list.add_child(btn_uni)
+	else:
+		var btn_uni_locked := _create_disabled_cyber_button(
+			"🏛️ University Enrollment & Study Paths\nBrowse accredited institutions, admission prerequisites, tuitions & career trajectories",
+			"Unlocks at Age 18 upon high school graduation (or GED equivalency)."
+		)
+		list.add_child(btn_uni_locked)
 
 	# Dropout Overview Card & GED option
 	if PlayerData.education_level == "High School Dropout":
@@ -6850,6 +6739,613 @@ func _show_education_modal() -> void:
 		list.add_child(lib_card)
 
 	education_modal_overlay.visible = true
+
+
+func _show_university_modal(initial_tab: String = "enrollment") -> void:
+	if university_modal_overlay != null and is_instance_valid(university_modal_overlay):
+		university_modal_overlay.queue_free()
+
+	var tab: String = initial_tab if initial_tab in ["enrollment", "study_paths"] else "enrollment"
+
+	var modal := _create_cyber_modal("🏛️ UNIVERSITY & STUDY PATHS", "Accredited Institutions, Degree Tracks & Career Trajectories", Color("#38bdf8"))
+	university_modal_overlay = modal.overlay
+	university_modal_overlay.z_index = 85
+	var list: VBoxContainer = modal.list
+
+	var is_light: bool = LifeLibrary.data.theme == "light"
+
+	# Top Category Tab Bar (Pinned above scroll container)
+	var tab_bar := HBoxContainer.new()
+	tab_bar.add_theme_constant_override("separation", 12)
+	tab_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var btn_tab_enroll := _create_cyber_button("🏛️ Enrollment List", Color("#38bdf8") if tab == "enrollment" else Color("#475569"), func():
+		_show_university_modal("enrollment")
+	)
+	btn_tab_enroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_tab_enroll.custom_minimum_size.y = 52
+	btn_tab_enroll.add_theme_font_size_override("font_size", 21)
+	btn_tab_enroll.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_apply_category_tab_styling(btn_tab_enroll, tab == "enrollment", is_light)
+	tab_bar.add_child(btn_tab_enroll)
+
+	var btn_tab_paths := _create_cyber_button("📜 Study Paths", Color("#38bdf8") if tab == "study_paths" else Color("#475569"), func():
+		_show_university_modal("study_paths")
+	)
+	btn_tab_paths.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_tab_paths.custom_minimum_size.y = 52
+	btn_tab_paths.add_theme_font_size_override("font_size", 21)
+	btn_tab_paths.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_apply_category_tab_styling(btn_tab_paths, tab == "study_paths", is_light)
+	tab_bar.add_child(btn_tab_paths)
+
+	modal.vbox.add_child(tab_bar)
+	modal.vbox.move_child(tab_bar, 2)
+
+	# Content based on selected tab
+	match tab:
+		"enrollment":
+			_render_university_enrollment_category(list)
+		"study_paths":
+			_render_university_study_paths_category(list)
+
+	if has_node("ThemeController"):
+		get_node("ThemeController").apply_subtree(university_modal_overlay)
+
+	university_modal_overlay.visible = true
+
+
+func _apply_category_tab_styling(btn: Button, is_active: bool, is_light: bool) -> void:
+	var style := StyleBoxFlat.new()
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(10)
+	style.content_margin_left = 16
+	style.content_margin_right = 16
+	style.content_margin_top = 10
+	style.content_margin_bottom = 10
+
+	if is_active:
+		style.bg_color = Color("#bae6fd") if is_light else Color("#0c4a6e")
+		style.border_color = Color("#0284c7") if is_light else Color("#38bdf8")
+		btn.add_theme_color_override("font_color", Color("#0369a1") if is_light else Color("#f0f9ff"))
+	else:
+		style.bg_color = Color("#f1f5f9") if is_light else Color("#0f172a")
+		style.border_color = Color("#cbd5e1") if is_light else Color("#334155")
+		btn.add_theme_color_override("font_color", Color("#64748b") if is_light else Color("#94a3b8"))
+
+	btn.add_theme_stylebox_override("normal", style)
+	var hover := style.duplicate() as StyleBoxFlat
+	hover.bg_color = Color("#93c5fd") if is_light else Color("#1e3a5f")
+	btn.add_theme_stylebox_override("hover", hover)
+
+
+func _render_university_enrollment_category(list: VBoxContainer) -> void:
+	var is_light: bool = LifeLibrary.data.theme == "light"
+
+	# Academic Credentials & Standing Summary Card
+	var summary_card := PanelContainer.new()
+	summary_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#38bdf8")))
+	var sm := MarginContainer.new()
+	sm.add_theme_constant_override("margin_left", 24)
+	sm.add_theme_constant_override("margin_right", 24)
+	sm.add_theme_constant_override("margin_top", 18)
+	sm.add_theme_constant_override("margin_bottom", 18)
+	summary_card.add_child(sm)
+
+	var sv := VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 10)
+	sm.add_child(sv)
+
+	var status_lbl := Label.new()
+	status_lbl.text = "🏫 Academic Status: %s" % PlayerData.get_education_display_string()
+	status_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	status_lbl.add_theme_font_size_override("font_size", 28)
+	status_lbl.add_theme_color_override("font_color", Color("#0284c7") if is_light else Color("#38bdf8"))
+	sv.add_child(status_lbl)
+
+	var g_color := Color("#16a34a") if is_light else Color("#22c55e")
+	if PlayerData.grades < 65:
+		g_color = Color("#dc2626") if is_light else Color("#f87171")
+	elif PlayerData.grades < 80:
+		g_color = Color("#0284c7") if is_light else Color("#38bdf8")
+
+	var grade_lbl := Label.new()
+	grade_lbl.text = "📊 Current Marks / GPA: %d%% (%s)   •   🧠 Smarts: %d" % [
+		PlayerData.grades,
+		PlayerData.get_letter_grade(),
+		PlayerData.smarts
+	]
+	grade_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	grade_lbl.add_theme_font_size_override("font_size", 24)
+	grade_lbl.add_theme_color_override("font_color", g_color)
+	sv.add_child(grade_lbl)
+
+	var schol_lbl := Label.new()
+	if PlayerData.has_scholarship:
+		schol_lbl.text = "🏆 University Scholarship: 100% Full-Ride Tuition Waiver Active"
+		schol_lbl.add_theme_color_override("font_color", Color("#059669") if is_light else Color("#34d399"))
+	else:
+		schol_lbl.text = "🏆 University Scholarship: None (Standard annual tuition applies)"
+		schol_lbl.add_theme_color_override("font_color", Color("#475569") if is_light else Color("#94a3b8"))
+	schol_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	schol_lbl.add_theme_font_size_override("font_size", 23)
+	sv.add_child(schol_lbl)
+
+	var funds_lbl := Label.new()
+	var total_avail: int = PlayerData.money + PlayerData.bank_savings
+	funds_lbl.text = "💳 Financial Capital: Cash $%s   •   Bank Savings: $%s (Total: $%s)" % [
+		_format_number(PlayerData.money),
+		_format_number(PlayerData.bank_savings),
+		_format_number(total_avail)
+	]
+	funds_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	funds_lbl.add_theme_font_size_override("font_size", 23)
+	funds_lbl.add_theme_color_override("font_color", Color("#334155") if is_light else Color("#cbd5e1"))
+	sv.add_child(funds_lbl)
+
+	list.add_child(summary_card)
+
+	# Active University Student Status Card (if currently enrolled)
+	var is_currently_enrolled: bool = (PlayerData.education_level == "University Student")
+	if is_currently_enrolled:
+		var uni_active := PanelContainer.new()
+		uni_active.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#0284c7") if is_light else Color("#00f0ff")))
+		var um := MarginContainer.new()
+		um.add_theme_constant_override("margin_left", 24)
+		um.add_theme_constant_override("margin_right", 24)
+		um.add_theme_constant_override("margin_top", 18)
+		um.add_theme_constant_override("margin_bottom", 18)
+		uni_active.add_child(um)
+
+		var uv := VBoxContainer.new()
+		uv.add_theme_constant_override("separation", 14)
+		um.add_child(uv)
+
+		var u_title := Label.new()
+		u_title.text = "🏛️ ACTIVE UNIVERSITY ENROLLMENT (OBLIGATED 4 YEARS)"
+		u_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		u_title.add_theme_font_size_override("font_size", 28)
+		u_title.add_theme_color_override("font_color", Color("#0284c7") if is_light else Color("#00f0ff"))
+		uv.add_child(u_title)
+
+		var u_inst := Label.new()
+		var yr_current: int = maxi(1, PlayerData.university_years + 1)
+		u_inst.text = "Institution: %s\nMajor: %s   •   Degree in Progress: %s\nProgress: Completed %d of 4 Years (Currently in Year %d)" % [
+			PlayerData.university_name,
+			PlayerData.university_major_title,
+			PlayerData.university_degree,
+			PlayerData.university_years,
+			yr_current
+		]
+		u_inst.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		u_inst.add_theme_font_size_override("font_size", 24)
+		u_inst.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#f8fafc"))
+		uv.add_child(u_inst)
+
+		var t_info := Label.new()
+		var t_cost: int = PlayerData.university_tuition if PlayerData.university_tuition > 0 else 12000
+		t_info.text = "Annual Tuition: Free (Scholarship Active)" if PlayerData.has_scholarship else "Annual Tuition: $%s / yr" % _format_number(t_cost)
+		t_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		t_info.add_theme_font_size_override("font_size", 23)
+		t_info.add_theme_color_override("font_color", Color("#059669") if is_light else Color("#34d399") if PlayerData.has_scholarship else (Color("#b45309") if is_light else Color("#fbbf24")))
+		uv.add_child(t_info)
+
+		var has_done_study: bool = (PlayerData.last_school_activity_age == PlayerData.age)
+		if has_done_study:
+			uv.add_child(_create_disabled_cyber_button("📖 Intensive Major Coursework Study\nHit the library and master course exams. Grades +2-4%, Smarts +2-4", "Completed for Age %d (Age up to study again next year)" % PlayerData.age))
+		else:
+			var btn_study_uni := _create_cyber_button("📖 Intensive Major Coursework Study\nHit the library and master course exams. Grades +2-4%, Smarts +2-4", Color("#38bdf8"), func():
+				if PlayerData.last_school_activity_age == PlayerData.age:
+					return
+				PlayerData.last_school_activity_age = PlayerData.age
+				var g_gain := randi_range(2, 4)
+				var s_gain := randi_range(2, 4)
+				PlayerData.grades = mini(100, PlayerData.grades + g_gain)
+				PlayerData.smarts = mini(100, PlayerData.smarts + s_gain)
+				PlayerData.happiness = maxi(5, PlayerData.happiness - 3)
+				add_life_event("You studied late into the night preparing for %s midterms. Grades +%d%%, Smarts +%d." % [PlayerData.university_major_title, g_gain, s_gain], "education")
+				update_ui()
+				SaveManager.save_game()
+				_show_university_modal("enrollment")
+			)
+			uv.add_child(btn_study_uni)
+
+		if PlayerData.university_years < 1:
+			var btn_drop_locked := _create_disabled_cyber_button(
+				"🚪 Drop Out of University",
+				"OBLIGATED: You are currently completing Year 1. Dropping out unlocks after completing Year 1 (Years 1-3)."
+			)
+			uv.add_child(btn_drop_locked)
+		elif PlayerData.university_years in [1, 2, 3]:
+			var btn_drop_uni := _create_cyber_button(
+				"🚪 Drop Out of University (Completed Year %d of 4)\nAbandon degree in %s. Stop tuition and enter workforce or take another path later." % [
+					PlayerData.university_years,
+					PlayerData.university_major_title
+				],
+				Color("#ef4444"),
+				func():
+					var u_name := PlayerData.university_name
+					var m_name := PlayerData.university_major_title
+					var yrs := PlayerData.university_years
+					PlayerData.education_level = "University Dropout"
+					PlayerData.university_years = 0
+					PlayerData.university_name = ""
+					PlayerData.university_major = ""
+					PlayerData.university_major_title = ""
+					PlayerData.university_degree = ""
+					PlayerData.university_tuition = 0
+					add_life_event("🚪 You made the choice to drop out of %s after completing %d year(s) in %s. You can enter the workforce or enroll in another study path in the future." % [u_name, yrs, m_name], "education")
+					update_ui()
+					SaveManager.save_game()
+					_show_university_modal("enrollment")
+			)
+			uv.add_child(btn_drop_uni)
+
+		list.add_child(uni_active)
+
+	# Institutions Catalog
+	var cat_header := Label.new()
+	cat_header.text = "🏛️ ACCREDITED INSTITUTIONS & ENROLLMENT"
+	cat_header.add_theme_font_size_override("font_size", 30)
+	cat_header.add_theme_color_override("font_color", Color("#0284c7") if is_light else Color("#38bdf8"))
+	list.add_child(cat_header)
+
+	var cat_sub := Label.new()
+	cat_sub.text = "Choose an accredited institution and major. Characters may only enroll in one university at a time and are obligated to study for 4 years. After graduating, you can take another study path!"
+	cat_sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	cat_sub.add_theme_font_size_override("font_size", 23)
+	cat_sub.add_theme_color_override("font_color", Color("#475569") if is_light else Color("#cbd5e1"))
+	list.add_child(cat_sub)
+
+	var institutions: Array = EducationCatalog.get_all_institutions()
+	for inst in institutions:
+		if not (inst is Dictionary):
+			continue
+		var raw_col := Color(str(inst.get("theme_color", "#38bdf8")))
+		var col := raw_col.darkened(0.35) if (is_light and raw_col.get_luminance() > 0.45) else raw_col
+		var card := PanelContainer.new()
+		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(col))
+
+		var m := MarginContainer.new()
+		m.add_theme_constant_override("margin_left", 22)
+		m.add_theme_constant_override("margin_right", 22)
+		m.add_theme_constant_override("margin_top", 18)
+		m.add_theme_constant_override("margin_bottom", 18)
+		card.add_child(m)
+
+		var vb := VBoxContainer.new()
+		vb.add_theme_constant_override("separation", 10)
+		m.add_child(vb)
+
+		var inst_title := Label.new()
+		inst_title.text = "%s  %s" % [str(inst.get("icon", "🏛️")), str(inst.get("name", ""))]
+		inst_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		inst_title.add_theme_font_size_override("font_size", 28)
+		inst_title.add_theme_color_override("font_color", col)
+		vb.add_child(inst_title)
+
+		var inst_tagline := Label.new()
+		inst_tagline.text = str(inst.get("tagline", ""))
+		inst_tagline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		inst_tagline.add_theme_font_size_override("font_size", 23)
+		inst_tagline.add_theme_color_override("font_color", Color("#0369a1") if is_light else Color("#93c5fd"))
+		vb.add_child(inst_tagline)
+
+		var inst_major := Label.new()
+		inst_major.text = "🎓 Major: %s  •  %s" % [str(inst.get("major_title", "")), str(inst.get("degree_title", ""))]
+		inst_major.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		inst_major.add_theme_font_size_override("font_size", 25)
+		inst_major.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#f8fafc"))
+		vb.add_child(inst_major)
+
+		var inst_careers := Label.new()
+		var c_list: Array = inst.get("unlocked_careers", [])
+		inst_careers.text = "🎯 Unlocks Careers: %s" % ", ".join(c_list)
+		inst_careers.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		inst_careers.add_theme_font_size_override("font_size", 23)
+		inst_careers.add_theme_color_override("font_color", Color("#059669") if is_light else Color("#34d399"))
+		vb.add_child(inst_careers)
+
+		var inst_desc := Label.new()
+		inst_desc.text = str(inst.get("description", ""))
+		inst_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		inst_desc.add_theme_font_size_override("font_size", 22)
+		inst_desc.add_theme_color_override("font_color", Color("#334155") if is_light else Color("#cbd5e1"))
+		vb.add_child(inst_desc)
+
+		var tuition_amount: int = int(inst.get("tuition", 12000))
+		var tuition_text := "Free (Scholarship Active)" if PlayerData.has_scholarship else "$%s / yr" % _format_number(tuition_amount)
+		var req_eval: Dictionary = EducationCatalog.can_enroll(inst, PlayerData.grades, PlayerData.smarts)
+		var is_eligible: bool = bool(req_eval.get("allowed", false))
+
+		if is_currently_enrolled:
+			var locked_btn := Button.new()
+			locked_btn.custom_minimum_size.y = 74
+			locked_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			locked_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			locked_btn.text = "🔒 OBLIGATED: Currently studying at %s (Year %d of 4)\nOnly 1 university allowed at a time. Must complete 4-year degree or drop out before enrolling." % [
+				PlayerData.university_name,
+				maxi(1, PlayerData.university_years + 1)
+			]
+			locked_btn.disabled = true
+			var lk_style := StyleBoxFlat.new()
+			lk_style.bg_color = Color("#e2e8f0") if is_light else Color("#181f2f")
+			lk_style.border_color = Color("#94a3b8") if is_light else Color("#475569")
+			lk_style.set_border_width_all(2)
+			lk_style.set_corner_radius_all(10)
+			lk_style.content_margin_left = 22
+			lk_style.content_margin_right = 22
+			lk_style.content_margin_top = 14
+			lk_style.content_margin_bottom = 14
+			locked_btn.add_theme_stylebox_override("disabled", lk_style)
+			locked_btn.add_theme_color_override("font_color", Color("#475569") if is_light else Color("#94a3b8"))
+			locked_btn.add_theme_font_size_override("font_size", 23)
+			vb.add_child(locked_btn)
+		elif is_eligible:
+			var enroll_btn := _create_cyber_button("🏛️ Enroll in %s (%s)\nReq Met: %d%% GPA & %d Smarts" % [
+				str(inst.get("major_title", "")),
+				tuition_text,
+				int(inst.get("min_grades", 60)),
+				int(inst.get("min_smarts", 50))
+			], col, func():
+				PlayerData.education_level = "University Student"
+				PlayerData.university_name = str(inst.get("name", ""))
+				PlayerData.university_major = str(inst.get("major", ""))
+				PlayerData.university_major_title = str(inst.get("major_title", ""))
+				PlayerData.university_degree = str(inst.get("degree_title", ""))
+				PlayerData.university_tuition = tuition_amount
+				PlayerData.university_years = 0
+				add_life_event("🏛️ You enrolled at %s majoring in %s! Complete 4 years to earn your %s." % [
+					PlayerData.university_name,
+					PlayerData.university_major_title,
+					PlayerData.university_degree
+				], "milestone")
+				update_ui()
+				SaveManager.save_game()
+				_show_university_modal("enrollment")
+				if education_modal_overlay != null and is_instance_valid(education_modal_overlay):
+					_show_education_modal()
+			)
+			vb.add_child(enroll_btn)
+		else:
+			var locked_btn := Button.new()
+			locked_btn.custom_minimum_size.y = 74
+			locked_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			locked_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			locked_btn.text = "🔒 LOCKED: " + str(req_eval.get("reason", "Ineligible"))
+			locked_btn.disabled = true
+			var lk_style := StyleBoxFlat.new()
+			lk_style.bg_color = Color("#e2e8f0") if is_light else Color("#181f2f")
+			lk_style.border_color = Color("#cbd5e1") if is_light else Color("#334155")
+			lk_style.set_border_width_all(2)
+			lk_style.set_corner_radius_all(10)
+			lk_style.content_margin_left = 22
+			lk_style.content_margin_right = 22
+			lk_style.content_margin_top = 14
+			lk_style.content_margin_bottom = 14
+			locked_btn.add_theme_stylebox_override("disabled", lk_style)
+			locked_btn.add_theme_color_override("font_color", Color("#64748b") if is_light else Color("#94a3b8"))
+			locked_btn.add_theme_font_size_override("font_size", 23)
+			vb.add_child(locked_btn)
+
+		list.add_child(card)
+
+
+func _render_university_study_paths_category(list: VBoxContainer) -> void:
+	var is_light: bool = LifeLibrary.data.theme == "light"
+
+	# Orientation / Summary Card
+	var summary_card := PanelContainer.new()
+	summary_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#10b981")))
+	var sm := MarginContainer.new()
+	sm.add_theme_constant_override("margin_left", 24)
+	sm.add_theme_constant_override("margin_right", 24)
+	sm.add_theme_constant_override("margin_top", 18)
+	sm.add_theme_constant_override("margin_bottom", 18)
+	summary_card.add_child(sm)
+
+	var sv := VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 10)
+	sm.add_child(sv)
+
+	var p_title := Label.new()
+	p_title.text = "📜 ACADEMIC STUDY PATHS & CAREER TRAJECTORIES"
+	p_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	p_title.add_theme_font_size_override("font_size", 28)
+	p_title.add_theme_color_override("font_color", Color("#059669") if is_light else Color("#34d399"))
+	sv.add_child(p_title)
+
+	var p_desc := Label.new()
+	p_desc.text = "Higher education unlocks high-earning professional careers. Completing a 4-year degree permanently confers the degree and qualifies you for its corporate, tech, medical, and specialized jobs. Characters are free to take multiple study paths throughout their lifetime!"
+	p_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	p_desc.add_theme_font_size_override("font_size", 23)
+	p_desc.add_theme_color_override("font_color", Color("#334155") if is_light else Color("#cbd5e1"))
+	sv.add_child(p_desc)
+
+	list.add_child(summary_card)
+
+	# Completed Degrees Summary Card (if any)
+	if PlayerData.degrees.size() > 0:
+		var deg_card := PanelContainer.new()
+		deg_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#38bdf8")))
+		var dm := MarginContainer.new()
+		dm.add_theme_constant_override("margin_left", 24)
+		dm.add_theme_constant_override("margin_right", 24)
+		dm.add_theme_constant_override("margin_top", 18)
+		dm.add_theme_constant_override("margin_bottom", 18)
+		deg_card.add_child(dm)
+
+		var dv := VBoxContainer.new()
+		dv.add_theme_constant_override("separation", 10)
+		dm.add_child(dv)
+
+		var deg_header := Label.new()
+		deg_header.text = "🎓 CONFERRED DEGREES & ALUMNUS HONORS (%d)" % PlayerData.degrees.size()
+		deg_header.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		deg_header.add_theme_font_size_override("font_size", 26)
+		deg_header.add_theme_color_override("font_color", Color("#0284c7") if is_light else Color("#38bdf8"))
+		dv.add_child(deg_header)
+
+		for d_idx in range(PlayerData.degrees.size()):
+			var deg_item: Dictionary = PlayerData.degrees[d_idx]
+			var d_lbl := Label.new()
+			d_lbl.text = "• Degree #%d: %s in %s @ %s (Graduated Age %d)" % [
+				d_idx + 1,
+				str(deg_item.get("degree", "Bachelor's Degree")),
+				str(deg_item.get("major_title", "Major")),
+				str(deg_item.get("university", "University")),
+				int(deg_item.get("year_graduated", PlayerData.age))
+			]
+			d_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			d_lbl.add_theme_font_size_override("font_size", 23)
+			d_lbl.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#f8fafc"))
+			dv.add_child(d_lbl)
+
+		list.add_child(deg_card)
+
+	# All Study Paths
+	var institutions: Array = EducationCatalog.get_all_institutions()
+	for inst in institutions:
+		if not (inst is Dictionary):
+			continue
+		var raw_col := Color(str(inst.get("theme_color", "#38bdf8")))
+		var col := raw_col.darkened(0.35) if (is_light and raw_col.get_luminance() > 0.45) else raw_col
+		var card := PanelContainer.new()
+		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(col))
+
+		var m := MarginContainer.new()
+		m.add_theme_constant_override("margin_left", 22)
+		m.add_theme_constant_override("margin_right", 22)
+		m.add_theme_constant_override("margin_top", 18)
+		m.add_theme_constant_override("margin_bottom", 18)
+		card.add_child(m)
+
+		var vb := VBoxContainer.new()
+		vb.add_theme_constant_override("separation", 10)
+		m.add_child(vb)
+
+		var path_title := Label.new()
+		path_title.text = "%s  %s Track" % [str(inst.get("icon", "📜")), str(inst.get("major_title", "Major"))]
+		path_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		path_title.add_theme_font_size_override("font_size", 28)
+		path_title.add_theme_color_override("font_color", col)
+		vb.add_child(path_title)
+
+		var path_deg := Label.new()
+		path_deg.text = "📜 Conferred Degree: %s" % str(inst.get("degree_title", ""))
+		path_deg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		path_deg.add_theme_font_size_override("font_size", 24)
+		path_deg.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#f8fafc"))
+		vb.add_child(path_deg)
+
+		var path_inst := Label.new()
+		path_inst.text = "🏛️ Offered by: %s (%s)" % [str(inst.get("name", "")), str(inst.get("tagline", ""))]
+		path_inst.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		path_inst.add_theme_font_size_override("font_size", 22)
+		path_inst.add_theme_color_override("font_color", Color("#0369a1") if is_light else Color("#93c5fd"))
+		vb.add_child(path_inst)
+
+		var path_req := Label.new()
+		path_req.text = "📋 Admission Prerequisites: %d%% Minimum GPA   •   %d Smarts" % [
+			int(inst.get("min_grades", 60)),
+			int(inst.get("min_smarts", 50))
+		]
+		path_req.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		path_req.add_theme_font_size_override("font_size", 22)
+		path_req.add_theme_color_override("font_color", Color("#d97706") if is_light else Color("#fbbf24"))
+		vb.add_child(path_req)
+
+		var path_careers := Label.new()
+		var c_list: Array = inst.get("unlocked_careers", [])
+		path_careers.text = "🎯 Career Trajectory (Job Market Unlocks):\n  • " + "\n  • ".join(c_list)
+		path_careers.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		path_careers.add_theme_font_size_override("font_size", 23)
+		path_careers.add_theme_color_override("font_color", Color("#059669") if is_light else Color("#34d399"))
+		vb.add_child(path_careers)
+
+		var path_desc := Label.new()
+		path_desc.text = str(inst.get("description", ""))
+		path_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		path_desc.add_theme_font_size_override("font_size", 22)
+		path_desc.add_theme_color_override("font_color", Color("#334155") if is_light else Color("#cbd5e1"))
+		vb.add_child(path_desc)
+
+		# Check completion status
+		var is_deg_completed: bool = false
+		for d in PlayerData.degrees:
+			if str(d.get("major", "")).to_lower() == str(inst.get("major", "")).to_lower():
+				is_deg_completed = true
+				break
+
+		var is_currently_studying_this: bool = (PlayerData.education_level == "University Student" and PlayerData.university_major.to_lower() == str(inst.get("major", "")).to_lower())
+		var is_currently_enrolled: bool = (PlayerData.education_level == "University Student")
+
+		if is_deg_completed:
+			var btn_jobs := _create_cyber_button("✅ Degree Conferred • View Unlocked Careers in Job Market >", Color("#10b981"), func():
+				if university_modal_overlay != null and is_instance_valid(university_modal_overlay):
+					university_modal_overlay.queue_free()
+					university_modal_overlay = null
+				if education_modal_overlay != null and is_instance_valid(education_modal_overlay):
+					education_modal_overlay.queue_free()
+					education_modal_overlay = null
+				_show_jobs_modal()
+			)
+			vb.add_child(btn_jobs)
+		elif is_currently_studying_this:
+			var btn_curr := _create_cyber_button("📖 Current Active Major Track (Year %d of 4) • Manage Enrollment >" % maxi(1, PlayerData.university_years + 1), Color("#00f0ff"), func():
+				_show_university_modal("enrollment")
+			)
+			vb.add_child(btn_curr)
+		elif is_currently_enrolled:
+			var locked_btn := Button.new()
+			locked_btn.custom_minimum_size.y = 56
+			locked_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			locked_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			locked_btn.text = "🔒 Currently Enrolled at %s (Must graduate or drop out before taking this study path)" % PlayerData.university_name
+			locked_btn.disabled = true
+			var lk_style := StyleBoxFlat.new()
+			lk_style.bg_color = Color("#e2e8f0") if is_light else Color("#181f2f")
+			lk_style.border_color = Color("#94a3b8") if is_light else Color("#475569")
+			lk_style.set_border_width_all(2)
+			lk_style.set_corner_radius_all(10)
+			lk_style.content_margin_left = 20
+			lk_style.content_margin_right = 20
+			lk_style.content_margin_top = 12
+			lk_style.content_margin_bottom = 12
+			locked_btn.add_theme_stylebox_override("disabled", lk_style)
+			locked_btn.add_theme_color_override("font_color", Color("#475569") if is_light else Color("#94a3b8"))
+			locked_btn.add_theme_font_size_override("font_size", 22)
+			vb.add_child(locked_btn)
+		else:
+			var req_eval: Dictionary = EducationCatalog.can_enroll(inst, PlayerData.grades, PlayerData.smarts)
+			var is_eligible: bool = bool(req_eval.get("allowed", false))
+			if is_eligible:
+				var btn_apply := _create_cyber_button("🏛️ View & Enroll in this Study Path at %s >" % str(inst.get("name", "")), col, func():
+					_show_university_modal("enrollment")
+				)
+				vb.add_child(btn_apply)
+			else:
+				var locked_btn := Button.new()
+				locked_btn.custom_minimum_size.y = 56
+				locked_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				locked_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				locked_btn.text = "🔒 LOCKED: " + str(req_eval.get("reason", "Ineligible"))
+				locked_btn.disabled = true
+				var lk_style := StyleBoxFlat.new()
+				lk_style.bg_color = Color("#e2e8f0") if is_light else Color("#181f2f")
+				lk_style.border_color = Color("#cbd5e1") if is_light else Color("#334155")
+				lk_style.set_border_width_all(2)
+				lk_style.set_corner_radius_all(10)
+				lk_style.content_margin_left = 20
+				lk_style.content_margin_right = 20
+				lk_style.content_margin_top = 12
+				lk_style.content_margin_bottom = 12
+				locked_btn.add_theme_stylebox_override("disabled", lk_style)
+				locked_btn.add_theme_color_override("font_color", Color("#64748b") if is_light else Color("#94a3b8"))
+				locked_btn.add_theme_font_size_override("font_size", 22)
+				vb.add_child(locked_btn)
+
+		list.add_child(card)
 
 
 var education_minigame_overlay: ColorRect = null
@@ -7589,6 +8085,9 @@ func _create_disabled_cyber_button(btn_text: String, reason: String = "") -> But
 
 
 func _close_education_modal_and_return_to_main() -> void:
+	if university_modal_overlay != null and is_instance_valid(university_modal_overlay):
+		university_modal_overlay.queue_free()
+		university_modal_overlay = null
 	if education_modal_overlay != null and is_instance_valid(education_modal_overlay):
 		education_modal_overlay.queue_free()
 		education_modal_overlay = null

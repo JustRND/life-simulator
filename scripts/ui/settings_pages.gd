@@ -60,7 +60,7 @@ func install(overlay: Control) -> void:
 	var card := overlay.get_node("SettingsCard") as Control
 	card.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	card.offset_left = 0
-	card.offset_top = 260.0
+	card.offset_top = 0.0
 	card.offset_right = 0
 	card.offset_bottom = 0
 	var margin := card.get_node("SettingsMargin")
