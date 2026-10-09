@@ -251,7 +251,7 @@ func _people() -> void:
 
 
 func _settings() -> void:
-	var view := modal("SETTINGS", "Audio, language and currency preferences are saved on this device.")
+	var view := modal("SETTINGS", "Audio and language preferences are saved on this device.")
 	var audio := CheckButton.new()
 	audio.text = "Mute sound"
 	audio.button_pressed = AudioServer.is_bus_mute(0)
@@ -271,19 +271,10 @@ func _settings() -> void:
 	_style_input(language)
 	language.custom_minimum_size.y = 76
 	view.list.add_child(language)
-	section(view.list, "Currency")
-	var currency := OptionButton.new()
-	for code in GameLocale.CURRENCIES:
-		currency.add_item(code)
-	currency.select(maxi(0, GameLocale.CURRENCIES.keys().find(str(LifeLibrary.data.get("currency", "USD")))))
-	_style_input(currency)
-	currency.custom_minimum_size.y = 76
-	view.list.add_child(currency)
-	section(view.list, "Currencies use fixed fictional display rates. Switching currency does not change your wealth.")
 	section(view.list, "Interface localization: English, Indonesian and Russian. Legacy story text may remain in English.")
 	var status := section(view.list, "")
 	button(view.list, "Apply Preferences", func():
-		var success := GameLocale.set_preferences(["en", "id", "ru"][language.selected], currency.get_item_text(currency.selected))
+		var success := GameLocale.set_preferences(["en", "id", "ru"][language.selected], "USD")
 		status.text = "Preferences saved." if success else "Could not save preferences."
 		main.update_ui()
 	)

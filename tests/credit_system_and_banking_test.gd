@@ -234,9 +234,12 @@ func _ready() -> void:
 	# -------------------------------------------------------------
 	# 3f. DEBT CONVERSION & CARD DEACTIVATION ON DEFAULT
 	# -------------------------------------------------------------
-	# Charge $15,000 advance:
-	PlayerData.draw_credit_card_advance(15000)
-	check(PlayerData.credit_card_balance == 15000, "Drew $15,000 advance on card")
+	# Verify cash advance is strictly prohibited (anti-loophole policy)
+	var cash_adv_blocked := PlayerData.draw_credit_card_advance(15000)
+	check(not cash_adv_blocked, "Converting credit card limit to cash is strictly prohibited")
+	# Charge legitimate purchase onto card:
+	PlayerData.charge_credit_card(15000)
+	check(PlayerData.credit_card_balance == 15000, "Charged $15,000 purchase onto card")
 	
 	# Character goes broke (unable to pay minimum 10% back to bank):
 	PlayerData.money = 0

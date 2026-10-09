@@ -111,16 +111,14 @@ func display(source: String, convert_currency: bool = true) -> String:
 	return result
 
 
-func set_preferences(lang: String, currency: String) -> bool:
-	if lang not in ["en", "id", "ru"] or not CURRENCIES.has(currency):
+func set_preferences(lang: String, _currency: String = "USD") -> bool:
+	if lang not in ["en", "id", "ru"]:
 		return false
 	var previous_lang := language()
-	var previous_currency: String = str(LifeLibrary.data.get("currency", "USD"))
 	LifeLibrary.data.language = lang
-	LifeLibrary.data.currency = currency
+	LifeLibrary.data.currency = "USD"
 	if not LifeLibrary.persist():
 		LifeLibrary.data.language = previous_lang
-		LifeLibrary.data.currency = previous_currency
 		return false
 	changed.emit()
 	return true

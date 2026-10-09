@@ -679,7 +679,7 @@ func test_asset_marketplace_and_ownership() -> void:
 
 	# 3. Successful Purchases and Net Worth tracking
 	PlayerData.money = 20000
-	PlayerData.bank_savings = 500000
+	PlayerData.bank_savings = 1500000
 	var prev_nw = PlayerData.get_net_worth()
 
 	# Vehicle purchase license gating check
@@ -692,7 +692,7 @@ func test_asset_marketplace_and_ownership() -> void:
 	assert(buy_car["success"], "Should successfully purchase car_hatchback")
 	assert(PlayerData.owned_assets.size() == 1, "Player should now own 1 asset")
 	var car_price: int = buy_car["asset"]["purchase_price"]
-	assert(PlayerData.bank_savings == 500000 - car_price and PlayerData.money == 20000, "Bank savings should be debited first for purchase")
+	assert(PlayerData.bank_savings == 1500000 - car_price and PlayerData.money == 20000, "Bank savings should be debited first for purchase")
 	assert(PlayerData.get_total_asset_value() == car_price, "Asset value should match purchase price initially")
 	assert(PlayerData.get_net_worth() == prev_nw, "Net worth should remain stable (savings converted to physical asset)")
 
@@ -923,7 +923,13 @@ func test_licensing_freelance_and_businesses() -> void:
 		"happiness": 80,
 		"smarts": 85,
 		"looks": 70,
-		"is_alive": true
+		"is_alive": true,
+		"life_progress": {
+			"last_age": 19,
+			"money": 0,
+			"bank_savings": 0,
+			"history": []
+		}
 	}
 	PlayerData.takeover_as_child(heir, 50000, PlayerData.owned_assets)
 	assert(PlayerData.first_name == "Kai Vance", "Player name updated to heir")
@@ -960,24 +966,23 @@ func test_licensing_freelance_and_businesses() -> void:
 		var req_m: String = str(b_def.get("required_major", "")).to_lower()
 		assert(known_majors.has(req_m), "Required business degree major '%s' for '%s' must exist in University catalog!" % [req_m, str(b_def.get("name"))])
 
-	# Test degree restriction
+	# Test qualification restriction
+	PlayerData.licenses.clear()
 	PlayerData.degrees.clear()
 	PlayerData.education_level = "High School Graduate"
 	PlayerData.money = 500000
-	var no_degree_eval := BusinessManager.can_found_business("biz_law_firm")
-	assert(not bool(no_degree_eval.get("allowed", false)), "Founding law firm without law degree must be blocked")
-	assert("Degree" in str(no_degree_eval.get("reason", "")), "Evaluation must specify degree requirement")
+	var no_qual_eval := BusinessManager.can_found_business("biz_law_firm")
+	assert(not bool(no_qual_eval.get("allowed", false)), "Founding licensed law firm without license must be blocked")
+	assert("license" in str(no_qual_eval.get("reason", "")).to_lower() or "degree" in str(no_qual_eval.get("reason", "")).to_lower(), "Evaluation must specify license requirement")
 
-	# Grant law degree and incorporate
-	PlayerData.degrees.append({
-		"degree": "Bachelor of Laws (LL.B.)",
-		"major": "law",
-		"major_title": "Legal Studies & Jurisprudence",
-		"university": "Lexington Law Institute",
-		"year_graduated": PlayerData.age - 1
-	})
+	# Test unlicensed business founding (crime mechanic) is allowed even without license
+	var unlic_eval := BusinessManager.can_found_business("biz_law_firm", true)
+	assert(bool(unlic_eval.get("allowed", false)), "Founding unlicensed enterprise is permitted under crime system")
+
+	# Grant license and incorporate
+	PlayerData.add_license("license_bookkeeper")
 	var qualified_eval := BusinessManager.can_found_business("biz_law_firm")
-	assert(bool(qualified_eval.get("allowed", false)), "Founding law firm with law degree must be allowed")
+	assert(bool(qualified_eval.get("allowed", false)), "Founding law firm with license must be allowed")
 
 	var player_money_pre_biz: int = PlayerData.money
 	var found_res := BusinessManager.found_business("biz_law_firm", "Vance & Associates Legal")

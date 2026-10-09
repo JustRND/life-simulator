@@ -11,7 +11,7 @@ const DETAILS = {
 	"Achievements": ["🏆", "Explore your milestones"],
 	"Custom Cities": ["🏙", "Add your own places to the world"],
 	"Custom People": ["👤", "Create people to meet in your life"],
-	"Settings": ["⚙", "Sound, language and currency"],
+	"Settings": ["⚙", "Sound and language preferences"],
 	"Themes": ["◐", "Choose a light or dark appearance"],
 	"Education & School": ["🎓", "Study and develop your potential"],
 	"Careers & Jobs": ["💼", "Find work and build your career"],

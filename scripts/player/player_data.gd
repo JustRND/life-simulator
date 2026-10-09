@@ -479,6 +479,10 @@ func grant_license(license_id: String) -> void:
 		licenses.append(license_id)
 
 
+func add_license(license_id: String) -> void:
+	grant_license(license_id)
+
+
 func has_degree(major_or_title: String) -> bool:
 	var target := major_or_title.to_lower()
 	if education_level == "University Graduate":
@@ -908,11 +912,15 @@ func deactivate_credit_card_on_default() -> Dictionary:
 	}
 
 
-func draw_credit_card_advance(amount: int) -> bool:
+func draw_credit_card_advance(_amount: int) -> bool:
+	# STRICT POLICY: Converting credit card limit into cash or liquid savings is prohibited
+	return false
+
+
+func charge_credit_card(amount: int) -> bool:
 	if not has_credit_card or amount <= 0 or amount > get_credit_card_available():
 		return false
 	credit_card_balance += amount
-	bank_savings += amount
 	if float(credit_card_balance) / float(maxi(1, credit_card_limit)) > 0.8:
 		modify_credit_score(-5)
 	return true

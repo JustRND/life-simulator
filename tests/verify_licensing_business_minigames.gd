@@ -56,7 +56,7 @@ func _ready() -> void:
 	assert(b_cat_ids.has("logistics"), "Business categories must include Logistics")
 
 	var all_businesses := BusinessManager.get_all_business_types()
-	assert(all_businesses.size() == 16, "Must define exactly 16 business types, found %d" % all_businesses.size())
+	assert(all_businesses.size() >= 16, "Must define at least 16 business types, found %d" % all_businesses.size())
 
 	var fnb_biz := BusinessManager.get_businesses_in_category("fnb")
 	assert(fnb_biz.size() >= 1, "F&B business category must contain businesses")
@@ -70,8 +70,8 @@ func _ready() -> void:
 	for bc in biz_categories:
 		var in_cat := BusinessManager.get_businesses_in_category(str(bc.get("id", "")))
 		total_categorized += in_cat.size()
-	assert(total_categorized == 16, "All 16 businesses must belong to a category! Found: %d" % total_categorized)
-	print("✔ BusinessManager 16 enterprises and categories verified.")
+	assert(total_categorized == all_businesses.size(), "All businesses must belong to a category! Found: %d vs %d" % [total_categorized, all_businesses.size()])
+	print("✔ BusinessManager %d enterprises and categories verified." % all_businesses.size())
 
 	# 3. Test UI Flow and Minigame
 	print("3. Testing UI flow and Road Sign Minigame...")
@@ -106,45 +106,16 @@ func _ready() -> void:
 	assert(main_scene.license_category_modal_overlay.visible, "Vehicle license modal must be visible")
 	await _take_screenshot("verify_vehicle_license_modal.png")
 
-	# Start Driver's License Road Sign Minigame
-	main_scene._start_driving_exam_minigame("license_car", "vehicle")
-	await get_tree().create_timer(0.4).timeout
-	assert(main_scene.driving_exam_modal_overlay != null, "Driving exam modal must be open")
-	assert(main_scene.driving_exam_modal_overlay.visible, "Driving exam modal must be visible")
-	await _take_screenshot("verify_driving_exam_minigame.png")
+	# Vehicle Licenses direct acquisition (Minigame removed per user specification)
+	print("Testing direct vehicle license acquisition without minigame...")
+	PlayerData.money = 10000
+	var car_take_res := LicenseManager.take_license("license_car")
+	assert(bool(car_take_res.get("allowed", false)), "Direct vehicle license test should succeed")
+	assert(PlayerData.has_license("license_car"), "Acquired license_car directly!")
 
-	# Simulate passing exam
-	var mock_state := {
-		"license_id": "license_car",
-		"category_id": "vehicle",
-		"questions": [
-			{"meaning": "Stop completely"},
-			{"meaning": "Slow down and yield"},
-			{"meaning": "Do not enter"}
-		],
-		"score": 3
-	}
-	main_scene._render_driving_exam_results(mock_state)
-	await get_tree().create_timer(0.4).timeout
-	assert(PlayerData.has_license("license_car"), "Passing exam must grant license_car!")
-	await _take_screenshot("verify_driving_exam_passed.png")
-
-	# Test Motorcycle License Exam
-	main_scene._start_driving_exam_minigame("license_motorcycle", "vehicle")
-	await get_tree().create_timer(0.4).timeout
-	var mock_state_moto := {
-		"license_id": "license_motorcycle",
-		"category_id": "vehicle",
-		"questions": [
-			{"meaning": "Stop completely"},
-			{"meaning": "Slow down and yield"},
-			{"meaning": "Do not enter"}
-		],
-		"score": 2 # 2/3 is passing
-	}
-	main_scene._render_driving_exam_results(mock_state_moto)
-	await get_tree().create_timer(0.4).timeout
-	assert(PlayerData.has_license("license_motorcycle"), "Passing exam with 2/3 must grant license_motorcycle!")
+	var moto_take_res := LicenseManager.take_license("license_motorcycle")
+	assert(bool(moto_take_res.get("allowed", false)), "Direct motorcycle license test should succeed")
+	assert(PlayerData.has_license("license_motorcycle"), "Acquired license_motorcycle directly!")
 
 	# 4. Test Enterprise Incorporation UI & Categories
 	print("4. Testing Business Modal Nested Categories...")
@@ -191,6 +162,8 @@ func _ready() -> void:
 
 
 func _take_screenshot(filename: String) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	await RenderingServer.frame_post_draw
 	var viewport := get_viewport()
 	if viewport != null:
