@@ -240,10 +240,10 @@ func _sync() -> void:
 			ink = Color(1, 1, 1, 0.5)
 			secondary = ink
 	else:
-		ink = Color("#075b91") if light else Color("#a9dcff")
-		secondary = Color("#355b75") if light else Color("#c1cddd")
+		ink = Color("#0f172a") if light else Color("#a9dcff")
+		secondary = Color("#334155") if light else Color("#c1cddd")
 		if target.disabled:
-			ink = Color("#606773") if light else Color("#9da8b8")
+			ink = Color("#64748b") if light else Color("#9da8b8")
 			secondary = ink
 	heading.add_theme_color_override("font_color", ink)
 	description.add_theme_color_override("font_color", secondary)
@@ -253,5 +253,5 @@ func _sync() -> void:
 	if cur_w < 150.0:
 		target.custom_minimum_size.y = min_h
 	else:
-		target.custom_minimum_size.y = clampf(get_combined_minimum_size().y, min_h, 240.0)
+		target.custom_minimum_size.y = clampf(get_combined_minimum_size().y, min_h, 136.0)
 

@@ -308,10 +308,13 @@ func _themes() -> void:
 		button(view.list, mode.capitalize() + (" • Selected" if LifeLibrary.data.theme == mode else ""), func():
 			LifeLibrary.data.theme = mode
 			LifeLibrary.persist()
-			if main.has_node("ThemeController"):
-				main.get_node("ThemeController").apply_theme()
-			main.rebuild_life_feed()
-			main.update_ui()
+			if main.has_method("on_theme_changed"):
+				main.on_theme_changed()
+			else:
+				if main.has_node("ThemeController"):
+					main.get_node("ThemeController").apply_theme()
+				main.rebuild_life_feed()
+				main.update_ui()
 			view.overlay.queue_free()
 			_themes()
 		)

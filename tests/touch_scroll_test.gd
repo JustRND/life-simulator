@@ -89,8 +89,8 @@ func _ready() -> void:
 	controller._input(ghost_mouse)
 	print("✔ Scenario 3 passed: Ghost clicks suppressed after scrolling!")
 	
-	# Scenario 4: Hold Duration (> 220ms without release)
-	print("\n--- Testing Scenario 4: Hold Duration (> 220ms) ---")
+	# Scenario 4: Hold Duration (> 650ms without release)
+	print("\n--- Testing Scenario 4: Hold Duration (> 650ms) ---")
 	# Force last scroll end time far in past so hold test starts fresh
 	controller._last_scroll_end_time = 0
 	var hold_down = InputEventScreenTouch.new()
@@ -100,12 +100,12 @@ func _ready() -> void:
 	controller._input(hold_down)
 	assert(controller._captured_button == btn, "Button captured on hold down")
 	
-	# Set start time artificially to 300ms ago to simulate 300ms hold
-	controller._touch_start_time = Time.get_ticks_msec() - 300
+	# Set start time artificially to 700ms ago to simulate 700ms hold
+	controller._touch_start_time = Time.get_ticks_msec() - 700
 	controller._process(0.016)
-	assert(controller._captured_button == null, "Button must be cancelled when held > 220ms!")
+	assert(controller._captured_button == null, "Button must be cancelled when held > 650ms!")
 	assert(controller._has_scrolled, "Gesture must be marked as scroll / non-click!")
-	print("✔ Scenario 4 passed: Button cancelled when held for > 0.22s!")
+	print("✔ Scenario 4 passed: Button cancelled when held for > 0.65s!")
 	
 	# Scenario 5: Synthetic Mouse Deduplication during active touch session
 	print("\n--- Testing Scenario 5: Synthetic Mouse Deduplication ---")

@@ -117,6 +117,8 @@ func _apply_node(node: Node) -> void:
 	if reference_theme.handles(node, root):
 		reference_theme.apply(node, is_light)
 		return
+	if node.has_meta("reference_part") or node.has_meta("market_button") or node.has_meta("event_choice"):
+		return
 
 	# 1. Capture dark originals if not yet recorded
 	if not node.has_meta("dark_theme_originals"):

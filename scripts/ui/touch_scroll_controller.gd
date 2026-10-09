@@ -3,9 +3,9 @@ extends Node
 ## Enables smooth mobile swipe/drag scrolling over buttons, prevents accidental button
 ## clicks during swiping/holding, and ensures buttons only activate on clean, intentional taps.
 
-const SWIPE_THRESHOLD := 6.0 # Highly responsive drag threshold to instantly detect scrolling
-const MAX_TAP_DURATION_MS := 220 # Taps held longer than 220ms are treated as scrolling/hold gestures
-const GHOST_CLICK_BLOCK_WINDOW_MS := 500 # Blocks synthetic browser mouse events after swiping
+const SWIPE_THRESHOLD := 16.0 # Natural touch slop threshold (prevents micro-shifts from cancelling taps)
+const MAX_TAP_DURATION_MS := 650 # Intentional long-press threshold for gestures
+const GHOST_CLICK_BLOCK_WINDOW_MS := 400 # Blocks synthetic browser mouse events after swiping
 const FRICTION := 8.5 # Kinetic scrolling friction decay
 
 var _active_scroll: ScrollContainer = null
@@ -31,12 +31,28 @@ func _ready() -> void:
 	set_process(false)
 
 
+func reset_state() -> void:
+	_touch_active = false
+	_is_swiping = false
+	_has_scrolled = false
+	_captured_button = null
+	_captured_text_input = null
+	_active_scroll = null
+	_kinetic_scroll = null
+	_kinetic_velocity = 0.0
+	_last_scroll_end_time = 0
+	_touch_id = -1
+	_recent_moves.clear()
+	set_process(false)
+
+
 func _input(event: InputEvent) -> void:
 	var now := Time.get_ticks_msec()
 	
-	# Block browser ghost/synthetic mouse events that fire immediately following a scroll
+	# Block browser ghost/synthetic mouse events that fire immediately following a scroll.
+	# Note: Real screen touches (InputEventScreenTouch) are NEVER synthetic and must never be swallowed here.
 	if _last_scroll_end_time > 0 and (now - _last_scroll_end_time) < GHOST_CLICK_BLOCK_WINDOW_MS:
-		if event is InputEventMouseButton or event is InputEventMouseMotion or event is InputEventScreenTouch:
+		if event is InputEventMouseButton or event is InputEventMouseMotion:
 			get_viewport().set_input_as_handled()
 			return
 
@@ -83,6 +99,7 @@ func _input(event: InputEvent) -> void:
 
 
 func _handle_touch_down(pos: Vector2, id: int) -> void:
+	preload("res://scripts/ui/panel_pull_up.gd").finish_all_active()
 	set_process(true)
 	_kinetic_velocity = 0.0
 	_kinetic_scroll = null
@@ -155,7 +172,7 @@ func _handle_touch_up(pos: Vector2) -> void:
 			MobileKeyboardManagerRef.open_keyboard(target_input)
 		return
 
-	var was_swiping_or_scrolled := _is_swiping or _has_scrolled or held_duration > MAX_TAP_DURATION_MS or moved_dist >= SWIPE_THRESHOLD
+	var was_swiping_or_scrolled := _is_swiping or _has_scrolled or moved_dist >= SWIPE_THRESHOLD or held_duration > MAX_TAP_DURATION_MS
 
 	if was_swiping_or_scrolled:
 		# Consume the release event so buttons under the finger DO NOT trigger 'pressed'

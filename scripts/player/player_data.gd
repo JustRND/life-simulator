@@ -764,16 +764,23 @@ func get_credit_rating() -> String:
 
 
 func get_credit_score_color() -> Color:
+	var is_light: bool = false
+	var lib = Engine.get_singleton("LifeLibrary") if Engine.has_singleton("LifeLibrary") else null
+	if lib != null and lib.data != null:
+		is_light = lib.data.get("theme", "dark") == "light"
+	elif has_node("/root/LifeLibrary"):
+		is_light = get_node("/root/LifeLibrary").data.get("theme", "dark") == "light"
+
 	if credit_score >= 800:
-		return Color("#10b981")
+		return Color("#15803d") if is_light else Color("#10b981")
 	elif credit_score >= 740:
-		return Color("#22c55e")
+		return Color("#16a34a") if is_light else Color("#22c55e")
 	elif credit_score >= 670:
-		return Color("#38bdf8")
+		return Color("#0284c7") if is_light else Color("#38bdf8")
 	elif credit_score >= 580:
-		return Color("#f59e0b")
+		return Color("#b45309") if is_light else Color("#f59e0b")
 	else:
-		return Color("#ef4444")
+		return Color("#dc2626") if is_light else Color("#ef4444")
 
 
 func get_credit_card_available() -> int:

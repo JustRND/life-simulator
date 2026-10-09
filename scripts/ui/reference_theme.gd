@@ -13,9 +13,9 @@ func _init() -> void:
 func handles(node: Node, root: Node) -> bool:
 	var ancestor := node
 	while ancestor != root and ancestor != null:
-		if ancestor.has_meta("theme_exempt") or ancestor.name == "DeathScreenOverlay" or ancestor.name == "AfterlifeMinigame" or "Death" in str(ancestor.name) or "Afterlife" in str(ancestor.name) or (str(ancestor.name).ends_with("Overlay") and ancestor.name != "SettingsOverlay") or str(ancestor.name).ends_with("Modal"):
+		if ancestor.has_meta("theme_exempt") or ancestor.name == "DeathScreenOverlay" or ancestor.name == "AfterlifeMinigame" or "Death" in str(ancestor.name) or "Afterlife" in str(ancestor.name) or ancestor.name == "NewGamePanel" or (str(ancestor.name).ends_with("Overlay") and ancestor.name != "SettingsOverlay") or str(ancestor.name).ends_with("Modal"):
 			return false
-		if ancestor.has_meta("reference_panel") or "Panel" in str(ancestor.name) or ancestor.name == "SettingsOverlay":
+		if ancestor.has_meta("reference_panel") or ancestor.name in ["ActivitiesPanel", "AssetsPanel", "BankPanel", "RelationshipsPanel", "CharacterPanel", "InfantPanel", "SettingsOverlay"]:
 			return true
 		ancestor = ancestor.get_parent()
 	return false
@@ -80,10 +80,12 @@ func apply(node: Control, light: bool) -> void:
 	if node.has_meta("reference_part") or node.has_meta("market_button"):
 		custom_style.apply_custom(node, light)
 		return
-	if node is Label and node.get_parent() is VBoxContainer and not node.has_meta("reference_header_title"):
-		var text: String = node.text.strip_edges()
-		if text.length() > 4 and text.length() < 90 and not "\n" in text and not ":" in text and text == text.to_upper() and text != text.to_lower():
-			node.set_meta("reference_section", true)
+	if node is Label and not node.has_meta("reference_header_title"):
+		var p = node.get_parent()
+		if p != null and (p.name == "ActList" or p.has_meta("reference_menu")):
+			var text: String = node.text.strip_edges()
+			if text.length() > 2 and text.length() < 90 and not "\n" in text and not ":" in text and text == text.to_upper() and text != text.to_lower():
+				node.set_meta("reference_section", true)
 	if node.name == "ActList" and not node.has_meta("reference_categories"):
 		node.set_meta("reference_categories", true)
 		for entry in [["EducationActItem", "CAREER & EDUCATION"], ["DoctorItem", "HEALTH & LIFESTYLE"], ["ShoppingActItem", "PERSONAL LIFE"]]:
@@ -202,27 +204,41 @@ func apply(node: Control, light: bool) -> void:
 	if node.has_meta("reference_section"):
 		node.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		node.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		node.custom_minimum_size.y = 60
+		node.custom_minimum_size.y = 52
 		node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		node.add_theme_font_override("font", bold_font)
-		node.add_theme_font_size_override("font_size", 30)
-		node.add_theme_color_override("font_color", Color.WHITE)
+		node.add_theme_font_size_override("font_size", 26)
 		var bar := StyleBoxFlat.new()
-		bar.bg_color = Color("#666e78") if light else Color("#3c4858")
+		bar.content_margin_left = 16
+		bar.content_margin_right = 16
+		bar.content_margin_top = 8
+		bar.content_margin_bottom = 8
+		bar.set_corner_radius_all(6)
+		if light:
+			bar.bg_color = Color("#0f172a") # Crisp dark navy banner for high contrast in light mode
+			node.add_theme_color_override("font_color", Color.WHITE)
+		else:
+			bar.bg_color = Color("#263342") # Sleek slate banner in dark mode
+			node.add_theme_color_override("font_color", Color.WHITE)
 		node.add_theme_stylebox_override("normal", bar)
 	if node.has_meta("reference_header_title"):
 		node.add_theme_font_override("font", bold_font)
-		node.add_theme_font_size_override("font_size", 52)
-		node.add_theme_color_override("font_color", Color.WHITE)
+		node.add_theme_font_size_override("font_size", 34)
+		node.add_theme_color_override("font_color", Color("#0f172a") if light else Color.WHITE)
 		node.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	if node is Button and node.get_parent().has_meta("reference_header") and not node.text in ["✕", "×", "X", "✖"]:
-		# Secondary navigation, such as Back to Assets, belongs to the dark header.
+		# Secondary navigation, such as Back to Assets, belongs to the header.
 		node.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var nav_ink: Color = Color("#0f172a") if light else Color.WHITE
 		for key in COLORS:
-			node.add_theme_color_override(key, Color.WHITE)
+			node.add_theme_color_override(key, nav_ink)
 		for state in ["normal", "hover", "pressed"]:
-			var nav_style := surface(false, state)
-			nav_style.bg_color = Color("#080c12") if state == "normal" else Color("#263a50")
+			var nav_style := surface(light, state)
+			if light:
+				nav_style.bg_color = Color("#edf3fa") if state == "normal" else Color("#dbeafe")
+				nav_style.border_color = Color("#94a3b8")
+			else:
+				nav_style.bg_color = Color("#080c12") if state == "normal" else Color("#263a50")
 			nav_style.border_width_bottom = 0
 			node.add_theme_stylebox_override(state, nav_style)
 
@@ -232,24 +248,38 @@ func _style_header(close: Button) -> void:
 		return
 	if not header.name.ends_with("HeaderRow") and not header.name.ends_with("Header"):
 		return
+	var light: bool = LifeLibrary.data.get("theme", "dark") == "light"
 	close.custom_minimum_size = Vector2(56, 56)
 	close.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	close.add_theme_font_size_override("font_size", 26)
 	for key in COLORS:
-		close.add_theme_color_override(key, Color.WHITE)
+		close.add_theme_color_override(key, Color("#0f172a") if light else Color.WHITE)
+	close.add_theme_color_override("font_hover_color", Color("#f43f5e"))
+	close.add_theme_color_override("font_pressed_color", Color("#dc2626"))
 	for state in ["normal", "hover", "pressed", "focus"]:
 		var circle := StyleBoxFlat.new()
-		circle.bg_color = Color("#28333f") if state != "normal" else Color("#080c12")
+		if light:
+			circle.bg_color = Color("#dbeafe") if state != "normal" else Color("#ffffff")
+			circle.border_color = Color("#64748b")
+		else:
+			circle.bg_color = Color("#28333f") if state != "normal" else Color("#080c12")
+			circle.border_color = Color.WHITE
 		circle.set_corner_radius_all(28)
 		circle.set_border_width_all(2)
-		circle.border_color = Color.WHITE
 		close.add_theme_stylebox_override(state, circle)
 	if header.has_meta("reference_header"):
+		header.queue_redraw()
+		for child in header.get_children():
+			if child is Label and child.has_meta("reference_header_title"):
+				child.add_theme_color_override("font_color", Color("#0f172a") if light else Color.WHITE)
 		return
 	header.set_meta("reference_header", true)
 	header.custom_minimum_size.y = 72
 	header.add_theme_constant_override("separation", 16)
-	header.draw.connect(func(): header.draw_rect(Rect2(Vector2.ZERO, header.size), Color("#080c12")))
+	header.draw.connect(func():
+		var is_lt: bool = LifeLibrary.data.get("theme", "dark") == "light"
+		header.draw_rect(Rect2(Vector2.ZERO, header.size), Color("#edf3fa") if is_lt else Color("#080c12"))
+	)
 	header.resized.connect(header.queue_redraw)
 	header.move_child(close, 0)
 	var gutter := Control.new()
@@ -262,8 +292,9 @@ func _style_header(close: Button) -> void:
 			child.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			child.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			child.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			child.add_theme_font_size_override("font_size", 28)
-			apply(child, LifeLibrary.data.theme == "light")
+			child.add_theme_font_size_override("font_size", 32)
+			child.add_theme_color_override("font_color", Color("#0f172a") if light else Color.WHITE)
+			apply(child, light)
 	var balance := Control.new()
 	balance.custom_minimum_size.x = 56
 	header.add_child(balance)

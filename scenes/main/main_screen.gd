@@ -259,6 +259,27 @@ func _ready() -> void:
 		_start_loading_animation()
 
 
+func on_theme_changed() -> void:
+	if has_node("ThemeController"):
+		get_node("ThemeController").apply_theme()
+	_configure_ui()
+	_configure_button_contrasts()
+	_update_creation_theme()
+	update_ui()
+	rebuild_life_feed()
+	update_character_panel()
+	update_relationships_panel()
+	update_assets_panel()
+	update_bank_panel()
+	update_infant_panel()
+	update_history_panel()
+	if has_node("ThemeController"):
+		var tc = get_node("ThemeController")
+		for p in [assets_panel, bank_panel, relationships_panel, character_panel, infant_panel, activities_panel]:
+			if p != null and is_instance_valid(p):
+				tc.apply_subtree(p)
+
+
 func _connect_runtime_signals() -> void:
 	if avatar_button != null and not avatar_button.pressed.is_connected(_on_avatar_button_pressed):
 		avatar_button.pressed.connect(_on_avatar_button_pressed)
@@ -292,10 +313,11 @@ func _configure_ui() -> void:
 	if disclaimer_card != null:
 		disclaimer_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#00f0ff")))
 
+	var is_light: bool = LifeLibrary.data.theme == "light"
 	if balance_label != null:
 		var bal_sb := StyleBoxFlat.new()
-		bal_sb.bg_color = Color(0.035, 0.08, 0.16, 0.95)
-		bal_sb.border_color = Color("#10b981")
+		bal_sb.bg_color = Color("#edf3fa") if is_light else Color(0.035, 0.08, 0.16, 0.95)
+		bal_sb.border_color = Color("#15803d") if is_light else Color("#10b981")
 		bal_sb.border_width_left = 2
 		bal_sb.border_width_top = 2
 		bal_sb.border_width_right = 2
@@ -308,23 +330,25 @@ func _configure_ui() -> void:
 		bal_sb.content_margin_right = 18
 		bal_sb.content_margin_top = 8
 		bal_sb.content_margin_bottom = 8
-		bal_sb.shadow_color = Color(0.06, 0.72, 0.51, 0.25)
+		bal_sb.shadow_color = Color(0, 0, 0, 0.12 if is_light else 0.25)
 		bal_sb.shadow_size = 8
 		balance_label.add_theme_stylebox_override("normal", bal_sb)
-		balance_label.add_theme_color_override("font_color", Color("#34d399"))
+		balance_label.add_theme_color_override("font_color", Color("#15803d") if is_light else Color("#34d399"))
 		balance_label.add_theme_font_size_override("font_size", 20)
 		balance_label.custom_minimum_size = Vector2(260, 96)
 		balance_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		balance_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		balance_label.mouse_filter = Control.MOUSE_FILTER_STOP
-		balance_label.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		balance_label.gui_input.connect(func(event: InputEvent) -> void:
-			if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-				show_tab("bank")
-		)
+		if not balance_label.has_meta("gui_connected"):
+			balance_label.set_meta("gui_connected", true)
+			balance_label.gui_input.connect(func(event: InputEvent) -> void:
+				if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+					show_tab("bank")
+			)
 
 	life_feed.scroll_following = true
-	life_feed.get_v_scroll_bar().changed.connect(_scroll_after_layout)
+	if not life_feed.get_v_scroll_bar().changed.is_connected(_scroll_after_layout):
+		life_feed.get_v_scroll_bar().changed.connect(_scroll_after_layout)
 	name_label.add_theme_font_size_override("font_size", 40)
 	phase_label.add_theme_font_size_override("font_size", 26)
 	life_feed.add_theme_font_size_override("normal_font_size", 28)
@@ -338,17 +362,17 @@ func _configure_ui() -> void:
 		life_margin.add_theme_constant_override("margin_bottom", 24)
 
 	var page := StyleBoxFlat.new()
-	page.bg_color = Color(0.055, 0.085, 0.17, 0.98)
+	page.bg_color = Color("#f8fafc") if is_light else Color(0.055, 0.085, 0.17, 0.98)
 	page.border_width_left = 3
 	page.border_width_top = 3
 	page.border_width_right = 3
 	page.border_width_bottom = 3
-	page.border_color = Color(0.22, 0.65, 0.95, 0.95)
+	page.border_color = Color("#0284c7") if is_light else Color(0.22, 0.65, 0.95, 0.95)
 	page.corner_radius_top_left = 12
 	page.corner_radius_top_right = 12
 	page.corner_radius_bottom_right = 12
 	page.corner_radius_bottom_left = 12
-	page.shadow_color = Color(0.02, 0.05, 0.12, 0.7)
+	page.shadow_color = Color(0, 0, 0, 0.12 if is_light else 0.7)
 	page.shadow_size = 14
 	character_panel.add_theme_stylebox_override("panel", page)
 	infant_panel.add_theme_stylebox_override("panel", page)
@@ -371,6 +395,15 @@ func _configure_button_contrasts() -> void:
 	if act_list != null:
 		for child in act_list.get_children():
 			if child is Button:
+				# If button has ReferenceRow presenter, do not overwrite button font_color with opaque color,
+				# keep it transparent so native button text doesn't clash with ReferenceRow presenter.
+				if child.has_node("ReferenceRow"):
+					for key in ["font_color", "font_hover_color", "font_pressed_color", "font_disabled_color", "font_focus_color"]:
+						child.add_theme_color_override(key, Color.TRANSPARENT)
+					var r = child.get_node("ReferenceRow")
+					if r.has_method("_sync"):
+						r._sync()
+					continue
 				if not child.has_meta("dark_theme_originals"):
 					child.set_meta("dark_theme_originals", {
 						"styles": {},
@@ -389,22 +422,29 @@ func _configure_button_contrasts() -> void:
 				child.add_theme_color_override("font_disabled_color", disabled_col)
 
 	if bank_button != null:
-		if not bank_button.has_meta("dark_theme_originals"):
-			bank_button.set_meta("dark_theme_originals", {
-				"styles": {},
-				"colors": {
-					"font_color": Color("#f1f5f9"),
-					"font_hover_color": Color("#00f0ff"),
-					"font_pressed_color": Color("#ffffff"),
-					"font_focus_color": Color("#00f0ff"),
-					"font_disabled_color": Color("#94a3b8")
-				}
-			})
-		bank_button.add_theme_color_override("font_color", font_col)
-		bank_button.add_theme_color_override("font_hover_color", hover_col)
-		bank_button.add_theme_color_override("font_pressed_color", pressed_col)
-		bank_button.add_theme_color_override("font_focus_color", focus_col)
-		bank_button.add_theme_color_override("font_disabled_color", disabled_col)
+		if bank_button.has_node("ReferenceRow"):
+			for key in ["font_color", "font_hover_color", "font_pressed_color", "font_disabled_color", "font_focus_color"]:
+				bank_button.add_theme_color_override(key, Color.TRANSPARENT)
+			var r = bank_button.get_node("ReferenceRow")
+			if r.has_method("_sync"):
+				r._sync()
+		else:
+			if not bank_button.has_meta("dark_theme_originals"):
+				bank_button.set_meta("dark_theme_originals", {
+					"styles": {},
+					"colors": {
+						"font_color": Color("#f1f5f9"),
+						"font_hover_color": Color("#00f0ff"),
+						"font_pressed_color": Color("#ffffff"),
+						"font_focus_color": Color("#00f0ff"),
+						"font_disabled_color": Color("#94a3b8")
+					}
+				})
+			bank_button.add_theme_color_override("font_color", font_col)
+			bank_button.add_theme_color_override("font_hover_color", hover_col)
+			bank_button.add_theme_color_override("font_pressed_color", pressed_col)
+			bank_button.add_theme_color_override("font_focus_color", focus_col)
+			bank_button.add_theme_color_override("font_disabled_color", disabled_col)
 
 	var back_assets_btn := get_node_or_null("BankPanel/BankMargin/BankContent/BankHeaderRow/BackToAssetsButton") as Button
 	if back_assets_btn != null:
@@ -1169,8 +1209,10 @@ func rebuild_life_feed() -> void:
 
 func _format_life_entry(entry_age: int, text: String) -> String:
 	var heading := GameLocale.translate("Age: %d year" if entry_age == 1 else "Age: %d years") % entry_age
-	var age_color: String = "#0284c7" if LifeLibrary.data.theme == "light" else "#38bdf8"
-	return "[color=%s][b]%s[/b][/color]\n%s" % [age_color, heading, GameLocale.display(text)]
+	var is_light: bool = LifeLibrary.data.theme == "light"
+	var age_color: String = "#0284c7" if is_light else "#38bdf8"
+	var body_color: String = "#0f172a" if is_light else "#e2e8f0"
+	return "[color=%s][b]%s[/b][/color]\n[color=%s]%s[/color]" % [age_color, heading, body_color, GameLocale.display(text)]
 
 
 func _scroll_timeline_to_latest() -> void:
@@ -1460,6 +1502,7 @@ func show_event_popup() -> void:
 			var presenter := preload("res://scripts/ui/reference_row.gd").new()
 			presenter.name = "ReferenceRow"
 			btn.add_child(presenter)
+			presenter.setup(btn)
 
 		var n_sb := StyleBoxFlat.new()
 		n_sb.bg_color = col.darkened(0.18) if is_light else col.darkened(0.42)
@@ -1655,6 +1698,7 @@ func show_new_game_screen() -> void:
 	if validation_label != null:
 		validation_label.text = ""
 
+	_update_creation_theme()
 	new_game_panel.visible = true
 
 
@@ -1761,6 +1805,10 @@ func show_tab(tab_name: String) -> void:
 		else:
 			add_life_event("🧸 Restricted: You are %d years old. Financial assets and wealth management unlock at age 5 (Childhood)—advance age to grow up!" % PlayerData.age, "finance")
 		return
+
+	var touch_controller = get_node_or_null("TouchScrollController")
+	if touch_controller != null and touch_controller.has_method("reset_state"):
+		touch_controller.reset_state()
 
 	panel_pull_up.cancel()
 	# Keep the main screen underneath the entering panel to avoid an empty flash.
@@ -2701,6 +2749,7 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		AssetCatalog.CATEGORY_FIREARMS:
 			border_color = Color("#ef4444")
 
+	var is_light: bool = LifeLibrary.data.theme == "light"
 	var modal_dict: Dictionary = _create_cyber_modal(title_text, subtitle_text, border_color)
 	var content_list: VBoxContainer = modal_dict["list"]
 	var overlay: Control = modal_dict["overlay"]
@@ -2722,7 +2771,7 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		_format_number(PlayerData.money + PlayerData.bank_savings)
 	]
 	bal_lbl.add_theme_font_size_override("font_size", 22)
-	bal_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
+	bal_lbl.add_theme_color_override("font_color", Color("#0369a1") if is_light else Color("#38bdf8"))
 	bal_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	bm.add_child(bal_lbl)
 	content_list.add_child(bal_card)
@@ -2740,11 +2789,11 @@ func _open_asset_marketplace_modal(category: String) -> void:
 
 		var card := PanelContainer.new()
 		var card_style := StyleBoxFlat.new()
-		card_style.bg_color = Color("#070e1c")
-		card_style.border_color = border_color.darkened(0.2)
+		card_style.bg_color = Color("#edf3fa") if is_light else Color("#070e1c")
+		card_style.border_color = border_color.darkened(0.35) if is_light else border_color.darkened(0.2)
 		card_style.set_border_width_all(2)
 		card_style.set_corner_radius_all(14)
-		card_style.shadow_color = Color(0, 0, 0, 0.5)
+		card_style.shadow_color = Color(0, 0, 0, 0.15 if is_light else 0.5)
 		card_style.shadow_size = 8
 		card.add_theme_stylebox_override("panel", card_style)
 		content_list.add_child(card)
@@ -2767,7 +2816,7 @@ func _open_asset_marketplace_modal(category: String) -> void:
 
 		var img_frame := PanelContainer.new()
 		var img_frame_style := StyleBoxFlat.new()
-		img_frame_style.bg_color = Color("#030712")
+		img_frame_style.bg_color = Color("#e2edf8") if is_light else Color("#030712")
 		img_frame_style.border_color = border_color.darkened(0.35)
 		img_frame_style.set_border_width_all(2)
 		img_frame_style.set_corner_radius_all(14)
@@ -2807,14 +2856,14 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		item_name_lbl.text = item_name
 		item_name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		item_name_lbl.add_theme_font_size_override("font_size", 28)
-		item_name_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+		item_name_lbl.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#f8fafc"))
 		item_name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		row_name_price.add_child(item_name_lbl)
 
 		var price_label := Label.new()
 		price_label.text = "$%s" % _format_number(price)
 		price_label.add_theme_font_size_override("font_size", 30)
-		price_label.add_theme_color_override("font_color", Color("#4ade80"))
+		price_label.add_theme_color_override("font_color", Color("#15803d") if is_light else Color("#4ade80"))
 		price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		row_name_price.add_child(price_label)
 
@@ -2827,7 +2876,7 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		upkeep_lbl.text = "Annual Upkeep: $%s/yr" % _format_number(upkeep)
 		upkeep_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		upkeep_lbl.add_theme_font_size_override("font_size", 22)
-		upkeep_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
+		upkeep_lbl.add_theme_color_override("font_color", Color("#0369a1") if is_light else Color("#38bdf8"))
 		row_upkeep_perk.add_child(upkeep_lbl)
 
 		var perk_word := "Performance"
@@ -2848,7 +2897,7 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		var perk_lbl := Label.new()
 		perk_lbl.text = "%s Lifestyle Asset" % perk_word
 		perk_lbl.add_theme_font_size_override("font_size", 22)
-		perk_lbl.add_theme_color_override("font_color", Color("#f472b6"))
+		perk_lbl.add_theme_color_override("font_color", Color("#db2777") if is_light else Color("#f472b6"))
 		perk_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		row_upkeep_perk.add_child(perk_lbl)
 
@@ -2856,7 +2905,7 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		var desc_lbl := Label.new()
 		desc_lbl.text = desc
 		desc_lbl.add_theme_font_size_override("font_size", 21)
-		desc_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+		desc_lbl.add_theme_color_override("font_color", Color("#334155") if is_light else Color("#cbd5e1"))
 		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(desc_lbl)
 
@@ -2890,10 +2939,10 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		req_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		if not is_of_age:
 			req_lbl.text = "⚠️ Legal Requirement: Minimum Age %d+ Required (You are Age %d)" % [min_age, PlayerData.age]
-			req_lbl.add_theme_color_override("font_color", Color("#f87171"))
+			req_lbl.add_theme_color_override("font_color", Color("#dc2626") if is_light else Color("#f87171"))
 		elif not has_veh_license:
 			req_lbl.text = "🔒 License Requirement: %s Required (❌ Not Certified • Visit Licensing Bureau in Activities)" % lic_required_name
-			req_lbl.add_theme_color_override("font_color", Color("#f87171"))
+			req_lbl.add_theme_color_override("font_color", Color("#dc2626") if is_light else Color("#f87171"))
 		elif not can_afford_any:
 			if PlayerData.has_credit_card:
 				req_lbl.text = "⚠️ Financial Requirement: $%s Required • Short on Funds ($%s avail) & Credit ($%s avail)" % [
@@ -2908,7 +2957,7 @@ func _open_asset_marketplace_modal(category: String) -> void:
 					_format_number(shortage),
 					_format_number(total_available)
 				]
-			req_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
+			req_lbl.add_theme_color_override("font_color", Color("#b45309") if is_light else Color("#fbbf24"))
 		else:
 			var lic_status := " • License Certified" if lic_required_name != "" else ""
 			if PlayerData.has_credit_card:
@@ -2920,7 +2969,7 @@ func _open_asset_marketplace_modal(category: String) -> void:
 				]
 			else:
 				req_lbl.text = "✅ Requirements Met: Age %d+ Verified%s • Available Funds: $%s" % [min_age, lic_status, _format_number(total_available)]
-			req_lbl.add_theme_color_override("font_color", Color("#34d399"))
+			req_lbl.add_theme_color_override("font_color", Color("#15803d") if is_light else Color("#34d399"))
 		cv.add_child(req_lbl)
 
 		# 6. PURCHASE ACTION BUTTONS
@@ -3024,6 +3073,9 @@ func _open_asset_marketplace_modal(category: String) -> void:
 
 			cv.add_child(btn_buy)
 
+	if has_node("ThemeController"):
+		get_node("ThemeController").apply_subtree(content_list)
+
 
 func load_style_box_cyber_card(border_col: Color = Color("#22d3ee")) -> StyleBoxFlat:
 	var is_light: bool = LifeLibrary.data.theme == "light"
@@ -3038,17 +3090,20 @@ func load_style_box_cyber_card(border_col: Color = Color("#22d3ee")) -> StyleBox
 
 
 func update_bank_panel() -> void:
+	var is_light: bool = LifeLibrary.data.theme == "light"
 	bank_checking_label.text = "Cash: $%s   •   Bank Balance: $%s\n🎯 Credit Score: %d (%s)" % [
 		_format_number(PlayerData.money),
 		_format_number(PlayerData.bank_savings),
 		PlayerData.credit_score,
 		PlayerData.get_credit_rating()
 	]
+	bank_checking_label.add_theme_color_override("font_color", Color("#0284c7") if is_light else Color(0.396, 0.902, 1, 1))
+	var bank_status_lbl := get_node_or_null("BankPanel/BankMargin/BankContent/BankScroll/BankList/BankCard/Margin/VBox/BankStatusLabel") as Label
+	if bank_status_lbl != null:
+		bank_status_lbl.add_theme_color_override("font_color", Color("#475569") if is_light else Color(0.68, 0.78, 0.9, 1))
 
 	if bank_list == null:
 		return
-
-	var is_light: bool = LifeLibrary.data.theme == "light"
 
 	# Remove any previous dynamic cards added to bank_list (keep the first BankCard intact)
 	for i in range(bank_list.get_child_count() - 1, 0, -1):
@@ -3088,7 +3143,7 @@ func update_bank_panel() -> void:
 	var dep_title := Label.new()
 	dep_title.text = "Deposit Cash into Bank Balance:"
 	dep_title.add_theme_font_size_override("font_size", 22)
-	dep_title.add_theme_color_override("font_color", Color("#38bdf8"))
+	dep_title.add_theme_color_override("font_color", Color("#0284c7") if is_light else Color("#38bdf8"))
 	sv.add_child(dep_title)
 
 	var dep_row := HBoxContainer.new()
@@ -3121,7 +3176,7 @@ func update_bank_panel() -> void:
 	var wth_title := Label.new()
 	wth_title.text = "Withdraw from Bank Balance to Cash:"
 	wth_title.add_theme_font_size_override("font_size", 22)
-	wth_title.add_theme_color_override("font_color", Color("#fbbf24"))
+	wth_title.add_theme_color_override("font_color", Color("#b45309") if is_light else Color("#fbbf24"))
 	sv.add_child(wth_title)
 
 	var wth_row := HBoxContainer.new()
@@ -3155,7 +3210,7 @@ func update_bank_panel() -> void:
 
 	# 2. Debt & Loan Summary Card
 	var summary_card := PanelContainer.new()
-	summary_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#38bdf8")))
+	summary_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#0284c7") if is_light else Color("#38bdf8")))
 	var summary_margin := MarginContainer.new()
 	summary_margin.add_theme_constant_override("margin_left", 28)
 	summary_margin.add_theme_constant_override("margin_right", 28)
@@ -3170,7 +3225,7 @@ func update_bank_panel() -> void:
 	var sum_title := Label.new()
 	sum_title.text = "💳 LIABILITIES & DEBT OVERVIEW"
 	sum_title.add_theme_font_size_override("font_size", 28)
-	sum_title.add_theme_color_override("font_color", Color("#38bdf8"))
+	sum_title.add_theme_color_override("font_color", Color("#0284c7") if is_light else Color("#38bdf8"))
 	summary_vbox.add_child(sum_title)
 
 	var cs_lbl := Label.new()
@@ -3182,27 +3237,27 @@ func update_bank_panel() -> void:
 	var loan_lbl := Label.new()
 	loan_lbl.text = "• Active Bank Loan: $%s  (@ %d%% APR)" % [_format_number(PlayerData.loan_balance), int(PlayerData.loan_interest_rate * 100)]
 	loan_lbl.add_theme_font_size_override("font_size", 24)
-	loan_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+	loan_lbl.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#f8fafc"))
 	summary_vbox.add_child(loan_lbl)
 
 	var tax_lbl := Label.new()
 	var cc_text := ("\n• Credit Card Balance: $%s" % _format_number(PlayerData.credit_card_balance)) if PlayerData.credit_card_balance > 0 else ""
 	tax_lbl.text = "• Unpaid Tax: $%s%s\n• Other Outstanding Debt: $%s" % [_format_number(PlayerData.tax_debt), cc_text, _format_number(PlayerData.debt)]
 	tax_lbl.add_theme_font_size_override("font_size", 24)
-	tax_lbl.add_theme_color_override("font_color", Color("#f87171") if PlayerData.tax_debt + PlayerData.debt + PlayerData.credit_card_balance > 0 else Color("#f8fafc"))
+	tax_lbl.add_theme_color_override("font_color", Color("#dc2626") if PlayerData.tax_debt + PlayerData.debt + PlayerData.credit_card_balance > 0 else (Color("#0f172a") if is_light else Color("#f8fafc")))
 	summary_vbox.add_child(tax_lbl)
 
 	var total_debt_lbl := Label.new()
 	total_debt_lbl.text = "• Total Debt Burden: $%s" % _format_number(PlayerData.get_total_debt())
 	total_debt_lbl.add_theme_font_size_override("font_size", 26)
-	total_debt_lbl.add_theme_color_override("font_color", Color("#ef4444") if PlayerData.get_total_debt() > 0 else Color("#22c55e"))
+	total_debt_lbl.add_theme_color_override("font_color", (Color("#dc2626") if is_light else Color("#ef4444")) if PlayerData.get_total_debt() > 0 else (Color("#15803d") if is_light else Color("#22c55e")))
 	summary_vbox.add_child(total_debt_lbl)
 
 	bank_list.add_child(summary_card)
 
 	# 2b. Credit Card Facility Card
 	var cc_card := PanelContainer.new()
-	var cc_color: Color = Color("#eab308") if PlayerData.has_credit_card else Color("#a855f7")
+	var cc_color: Color = (Color("#b45309") if is_light else Color("#eab308")) if PlayerData.has_credit_card else (Color("#7e22ce") if is_light else Color("#a855f7"))
 	cc_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(cc_color))
 	var cc_margin := MarginContainer.new()
 	cc_margin.add_theme_constant_override("margin_left", 28)
@@ -3251,7 +3306,7 @@ func update_bank_panel() -> void:
 			var pay_title := Label.new()
 			pay_title.text = "💳 MANUAL USAGE REPAYMENT (Term Min: 10%% = $%s)" % _format_number(min_pay)
 			pay_title.add_theme_font_size_override("font_size", 22)
-			pay_title.add_theme_color_override("font_color", Color("#22c55e"))
+			pay_title.add_theme_color_override("font_color", Color("#15803d") if is_light else Color("#22c55e"))
 			cc_vbox.add_child(pay_title)
 
 			var cc_pay_row := HBoxContainer.new()
@@ -3291,7 +3346,7 @@ func update_bank_panel() -> void:
 			var standing_lbl := Label.new()
 			standing_lbl.text = "✅ Account in Good Standing • No Payments Due ($0 Usage)"
 			standing_lbl.add_theme_font_size_override("font_size", 22)
-			standing_lbl.add_theme_color_override("font_color", Color("#22c55e"))
+			standing_lbl.add_theme_color_override("font_color", Color("#15803d") if is_light else Color("#22c55e"))
 			cc_vbox.add_child(standing_lbl)
 
 			var btn_req_limit := _create_cyber_button("🚀 Request Higher Credit Limit", Color("#38bdf8"), _request_credit_limit_increase, true)
@@ -3323,7 +3378,7 @@ func update_bank_panel() -> void:
 		cc_info.text = "• Status: No Active Credit Card\n• Approval Criteria: Zero debt, zero unpaid taxes, qualifying credit score & net worth."
 		cc_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cc_info.add_theme_font_size_override("font_size", 22)
-		cc_info.add_theme_color_override("font_color", Color("#64748b") if is_light else Color("#94a3b8"))
+		cc_info.add_theme_color_override("font_color", Color("#475569") if is_light else Color("#94a3b8"))
 		cc_vbox.add_child(cc_info)
 
 		var btn_apply := _create_cyber_button("Apply for Credit Card", Color("#a855f7"), _show_credit_card_application, true)
@@ -3337,7 +3392,7 @@ func update_bank_panel() -> void:
 
 	# 2c. Bank Loans Borrowing Card
 	var loan_card := PanelContainer.new()
-	loan_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#38bdf8")))
+	loan_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#0284c7") if is_light else Color("#38bdf8")))
 	var loan_margin := MarginContainer.new()
 	loan_margin.add_theme_constant_override("margin_left", 28)
 	loan_margin.add_theme_constant_override("margin_right", 28)
@@ -3352,7 +3407,7 @@ func update_bank_panel() -> void:
 	var loan_title := Label.new()
 	loan_title.text = "🏦 BORROW FUNDS (INSTANT BANK LOANS)"
 	loan_title.add_theme_font_size_override("font_size", 28)
-	loan_title.add_theme_color_override("font_color", Color("#38bdf8"))
+	loan_title.add_theme_color_override("font_color", Color("#0284c7") if is_light else Color("#38bdf8"))
 	loan_vbox.add_child(loan_title)
 
 	var loan_tiers := [
@@ -3373,13 +3428,14 @@ func update_bank_panel() -> void:
 		var locked_note := Label.new()
 		locked_note.text = "Repay the remaining $%s bank loan to unlock borrowing." % _format_number(PlayerData.loan_balance)
 		locked_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		locked_note.add_theme_color_override("font_color", Color("#475569") if is_light else Color("#94a3b8"))
 		loan_vbox.add_child(locked_note)
 
 	bank_list.add_child(loan_card)
 
 	# 3. Debt Repayment Card
 	var repay_card := PanelContainer.new()
-	repay_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#22c55e")))
+	repay_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#15803d") if is_light else Color("#22c55e")))
 	var repay_margin := MarginContainer.new()
 	repay_margin.add_theme_constant_override("margin_left", 28)
 	repay_margin.add_theme_constant_override("margin_right", 28)
@@ -3394,7 +3450,7 @@ func update_bank_panel() -> void:
 	var repay_title := Label.new()
 	repay_title.text = "💸 REPAY OUTSTANDING DEBT & LOANS"
 	repay_title.add_theme_font_size_override("font_size", 28)
-	repay_title.add_theme_color_override("font_color", Color("#22c55e"))
+	repay_title.add_theme_color_override("font_color", Color("#15803d") if is_light else Color("#22c55e"))
 	repay_vbox.add_child(repay_title)
 	var btn_pay_tax := _create_cyber_button("Pay Tax $%s" % _format_number(PlayerData.tax_debt), Color("#38bdf8"), _pay_tax, true)
 	btn_pay_tax.name = "PayTaxButton"
@@ -3428,10 +3484,13 @@ func update_bank_panel() -> void:
 		cc_note.text = "ℹ️ Note: Credit card usage ($%s) must be paid inside the Revolving Credit Card facility above." % _format_number(PlayerData.credit_card_balance)
 		cc_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cc_note.add_theme_font_size_override("font_size", 18)
-		cc_note.add_theme_color_override("font_color", Color("#94a3b8"))
+		cc_note.add_theme_color_override("font_color", Color("#475569") if is_light else Color("#94a3b8"))
 		repay_vbox.add_child(cc_note)
 
 	bank_list.add_child(repay_card)
+
+	if has_node("ThemeController"):
+		get_node("ThemeController").apply_subtree(bank_list)
 
 
 func _borrow_loan(amount: int, interest_rate: float) -> void:
@@ -4337,6 +4396,7 @@ func _interact_parent(parent_type: String, action: String) -> void:
 
 
 func update_relationships_panel() -> void:
+	var is_light: bool = LifeLibrary.data.theme == "light"
 	for card in [mother_card, father_card]:
 		if card != null:
 			var m := card.get_node_or_null("Margin") as MarginContainer
@@ -4348,6 +4408,9 @@ func update_relationships_panel() -> void:
 
 	var mom_age: int = PlayerData.mother_base_age + PlayerData.age
 	var mom_vbox := mother_name_label.get_parent() as VBoxContainer
+
+	mother_name_label.add_theme_color_override("font_color", Color("#0284c7") if is_light else Color(0.396, 0.902, 1, 1))
+	mother_job_label.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color(0.9, 0.94, 0.98, 1))
 
 	if PlayerData.mother_alive:
 		if PlayerData.mother_name != "":
@@ -4361,7 +4424,8 @@ func update_relationships_panel() -> void:
 			PlayerData.mother_relationship,
 			_relationship_status_text(PlayerData.mother_relationship)
 		]
-		mother_status_label.add_theme_color_override("font_color", Color("#22c55e") if PlayerData.mother_health > 35 else Color("#f59e0b"))
+		var mom_health_col: Color = (Color("#15803d") if is_light else Color("#22c55e")) if PlayerData.mother_health > 35 else (Color("#b45309") if is_light else Color("#f59e0b"))
+		mother_status_label.add_theme_color_override("font_color", mom_health_col)
 		if mom_vbox != null:
 			var mom_debuff_lbl := mom_vbox.get_node_or_null("MotherDebuffLabel") as Label
 			if PlayerData.mother_condition != "":
@@ -4375,7 +4439,7 @@ func update_relationships_panel() -> void:
 					mom_vbox.move_child(mom_debuff_lbl, mother_status_label.get_index() + 1)
 				mom_debuff_lbl.visible = true
 				mom_debuff_lbl.text = "⚠️ Condition: %s" % PlayerData.mother_condition
-				mom_debuff_lbl.add_theme_color_override("font_color", Color("#ef4444"))
+				mom_debuff_lbl.add_theme_color_override("font_color", Color("#dc2626") if is_light else Color("#ef4444"))
 			elif mom_debuff_lbl != null:
 				mom_debuff_lbl.visible = false
 
@@ -4385,7 +4449,7 @@ func update_relationships_panel() -> void:
 		mother_name_label.text = "Mother: %s (Deceased)" % PlayerData.mother_name
 		mother_job_label.text = "Occupation: In Memoriam"
 		mother_status_label.text = "Status: Passed Away • Rest in Peace"
-		mother_status_label.add_theme_color_override("font_color", Color("#94a3b8"))
+		mother_status_label.add_theme_color_override("font_color", Color("#475569") if is_light else Color("#94a3b8"))
 		if mom_vbox != null:
 			var mom_debuff_lbl := mom_vbox.get_node_or_null("MotherDebuffLabel")
 			if mom_debuff_lbl != null:
@@ -4406,6 +4470,8 @@ func update_relationships_panel() -> void:
 		father_card.visible = true
 		var dad_age: int = PlayerData.father_base_age + PlayerData.age
 		var dad_vbox := father_name_label.get_parent() as VBoxContainer
+		father_name_label.add_theme_color_override("font_color", Color("#0284c7") if is_light else Color(0.396, 0.902, 1, 1))
+		father_job_label.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color(0.9, 0.94, 0.98, 1))
 
 		if PlayerData.father_alive:
 			father_name_label.text = "Father: %s (Age %d)" % [PlayerData.father_name, dad_age]
@@ -4415,7 +4481,8 @@ func update_relationships_panel() -> void:
 				PlayerData.father_relationship,
 				_relationship_status_text(PlayerData.father_relationship)
 			]
-			father_status_label.add_theme_color_override("font_color", Color("#22c55e") if PlayerData.father_health > 35 else Color("#f59e0b"))
+			var dad_health_col: Color = (Color("#15803d") if is_light else Color("#22c55e")) if PlayerData.father_health > 35 else (Color("#b45309") if is_light else Color("#f59e0b"))
+			father_status_label.add_theme_color_override("font_color", dad_health_col)
 			if dad_vbox != null:
 				var dad_debuff_lbl := dad_vbox.get_node_or_null("FatherDebuffLabel") as Label
 				if PlayerData.father_condition != "":
@@ -4429,7 +4496,7 @@ func update_relationships_panel() -> void:
 						dad_vbox.move_child(dad_debuff_lbl, father_status_label.get_index() + 1)
 					dad_debuff_lbl.visible = true
 					dad_debuff_lbl.text = "⚠️ Condition: %s" % PlayerData.father_condition
-					dad_debuff_lbl.add_theme_color_override("font_color", Color("#ef4444"))
+					dad_debuff_lbl.add_theme_color_override("font_color", Color("#dc2626") if is_light else Color("#ef4444"))
 				elif dad_debuff_lbl != null:
 					dad_debuff_lbl.visible = false
 
@@ -4439,7 +4506,7 @@ func update_relationships_panel() -> void:
 			father_name_label.text = "Father: %s (Deceased)" % PlayerData.father_name
 			father_job_label.text = "Occupation: In Memoriam"
 			father_status_label.text = "Status: Passed Away • Rest in Peace"
-			father_status_label.add_theme_color_override("font_color", Color("#94a3b8"))
+			father_status_label.add_theme_color_override("font_color", Color("#475569") if is_light else Color("#94a3b8"))
 			if dad_vbox != null:
 				var dad_debuff_lbl := dad_vbox.get_node_or_null("FatherDebuffLabel")
 				if dad_debuff_lbl != null:
@@ -4460,6 +4527,9 @@ func update_relationships_panel() -> void:
 	# Partner / Romantic Relationship Card
 	_setup_partner_card_ui()
 	_setup_children_cards_ui()
+
+	if has_node("ThemeController"):
+		get_node("ThemeController").apply_subtree(relationships_panel)
 
 
 func _setup_relationship_bar(vbox: VBoxContainer, bar_name: String, rel_val: int) -> ProgressBar:
@@ -4526,9 +4596,10 @@ func _setup_partner_card_ui() -> void:
 		var p_hobbies: Array = p.get("hobbies", ["Music", "Reading", "Gaming"])
 		var p_years: int = int(p.get("years_together", 0))
 
+		var is_light: bool = LifeLibrary.data.theme == "light"
 		var card := PanelContainer.new()
 		card.name = "PartnerCard"
-		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f43f5e")))
+		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#e11d48") if is_light else Color("#f43f5e")))
 
 		var cm := MarginContainer.new()
 		cm.name = "Margin"
@@ -4563,21 +4634,21 @@ func _setup_partner_card_ui() -> void:
 		var name_lbl := Label.new()
 		name_lbl.text = "%s: %s (Age %d)" % [p_status, p_name, p_age]
 		name_lbl.add_theme_font_size_override("font_size", 28)
-		name_lbl.add_theme_color_override("font_color", Color("#f43f5e"))
+		name_lbl.add_theme_color_override("font_color", Color("#e11d48") if is_light else Color("#f43f5e"))
 		name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(name_lbl)
 
 		var occ_lbl := Label.new()
 		occ_lbl.text = NpcLifeProgress.get_occupation_display(p)
 		occ_lbl.add_theme_font_size_override("font_size", 22)
-		occ_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+		occ_lbl.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#f8fafc"))
 		occ_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(occ_lbl)
 
 		var edu_lbl := Label.new()
 		edu_lbl.text = NpcLifeProgress.get_education_display(p)
 		edu_lbl.add_theme_font_size_override("font_size", 20)
-		edu_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+		edu_lbl.add_theme_color_override("font_color", Color("#475569") if is_light else Color("#cbd5e1"))
 		edu_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(edu_lbl)
 
@@ -4586,21 +4657,21 @@ func _setup_partner_card_ui() -> void:
 			var biz_lbl := Label.new()
 			biz_lbl.text = biz_str
 			biz_lbl.add_theme_font_size_override("font_size", 20)
-			biz_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
+			biz_lbl.add_theme_color_override("font_color", Color("#b45309") if is_light else Color("#fbbf24"))
 			biz_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			cv.add_child(biz_lbl)
 
 		var wealth_lbl := Label.new()
 		wealth_lbl.text = NpcLifeProgress.get_finances_display(p)
 		wealth_lbl.add_theme_font_size_override("font_size", 20)
-		wealth_lbl.add_theme_color_override("font_color", Color("#34d399"))
+		wealth_lbl.add_theme_color_override("font_color", Color("#15803d") if is_light else Color("#34d399"))
 		wealth_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(wealth_lbl)
 
 		var hob_lbl := Label.new()
 		hob_lbl.text = "Interests: %s" % ", ".join(p_hobbies)
 		hob_lbl.add_theme_font_size_override("font_size", 20)
-		hob_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+		hob_lbl.add_theme_color_override("font_color", Color("#475569") if is_light else Color("#cbd5e1"))
 		hob_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(hob_lbl)
 
@@ -4608,7 +4679,7 @@ func _setup_partner_card_ui() -> void:
 		var yr_str := "year" if p_years == 1 else "years"
 		stat_lbl.text = "Relationship: %d%% (%s)  •  Together: %d %s" % [p_rel, _relationship_status_text(p_rel), p_years, yr_str]
 		stat_lbl.add_theme_font_size_override("font_size", 22)
-		stat_lbl.add_theme_color_override("font_color", Color("#38bdf8"))
+		stat_lbl.add_theme_color_override("font_color", Color("#0284c7") if is_light else Color("#38bdf8"))
 		stat_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(stat_lbl)
 
@@ -4709,7 +4780,6 @@ func _setup_partner_card_ui() -> void:
 			btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 			var col := Color(act[2])
-			var is_light: bool = LifeLibrary.data.theme == "light"
 			btn.set_meta("reference_part", true)
 			btn.set_meta("market_button", true)
 
@@ -4767,9 +4837,10 @@ func _setup_partner_card_ui() -> void:
 
 	else:
 		# Single Status Card
+		var is_light: bool = LifeLibrary.data.theme == "light"
 		var single_card := PanelContainer.new()
 		single_card.name = "SinglePromptCard"
-		single_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#64748b")))
+		single_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#475569") if is_light else Color("#64748b")))
 
 		var sm := MarginContainer.new()
 		sm.add_theme_constant_override("margin_left", 20)
@@ -4785,14 +4856,14 @@ func _setup_partner_card_ui() -> void:
 		var stitle := Label.new()
 		stitle.text = "💔 NO ROMANTIC PARTNER"
 		stitle.add_theme_font_size_override("font_size", 24)
-		stitle.add_theme_color_override("font_color", Color("#94a3b8"))
+		stitle.add_theme_color_override("font_color", Color("#475569") if is_light else Color("#94a3b8"))
 		sv.add_child(stitle)
 
 		var sdesc := Label.new()
 		sdesc.text = "You are currently single. Looking for companionship or love? Launch the Dating App in Activities to browse compatible profiles, chat, and ask potential partners out!"
 		sdesc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		sdesc.add_theme_font_size_override("font_size", 20)
-		sdesc.add_theme_color_override("font_color", Color("#cbd5e1"))
+		sdesc.add_theme_color_override("font_color", Color("#334155") if is_light else Color("#cbd5e1"))
 		sv.add_child(sdesc)
 
 		var open_app_btn := _create_cyber_button("💘 Launch Dating App (Activities)", Color("#f43f5e"), func():
@@ -4816,9 +4887,10 @@ func _setup_children_cards_ui() -> void:
 	if PlayerData.children.is_empty():
 		return
 
+	var is_light: bool = LifeLibrary.data.theme == "light"
 	var header := PanelContainer.new()
 	header.name = "ChildrenHeaderCard"
-	header.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#ec4899")))
+	header.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#db2777") if is_light else Color("#ec4899")))
 	var hm := MarginContainer.new()
 	hm.add_theme_constant_override("margin_left", 20)
 	hm.add_theme_constant_override("margin_top", 12)
@@ -4828,7 +4900,7 @@ func _setup_children_cards_ui() -> void:
 	var hlbl := Label.new()
 	hlbl.text = "👶 CHILDREN & LINEAGE (%d)" % PlayerData.children.size()
 	hlbl.add_theme_font_size_override("font_size", 24)
-	hlbl.add_theme_color_override("font_color", Color("#f472b6"))
+	hlbl.add_theme_color_override("font_color", Color("#db2777") if is_light else Color("#f472b6"))
 	hm.add_child(hlbl)
 	rel_list.add_child(header)
 
@@ -4844,7 +4916,7 @@ func _setup_children_cards_ui() -> void:
 
 		var card := PanelContainer.new()
 		card.name = "ChildCard_%d" % i
-		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#f472b6")))
+		card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#db2777") if is_light else Color("#f472b6")))
 
 		var cm := MarginContainer.new()
 		cm.add_theme_constant_override("margin_left", 48)
@@ -4874,21 +4946,21 @@ func _setup_children_cards_ui() -> void:
 		var title := Label.new()
 		title.text = "%s (%s, Age %d)" % [c_name, "Daughter" if c_gender == "FEMALE" else "Son", c_age]
 		title.add_theme_font_size_override("font_size", 24)
-		title.add_theme_color_override("font_color", Color("#f472b6"))
+		title.add_theme_color_override("font_color", Color("#db2777") if is_light else Color("#f472b6"))
 		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(title)
 
 		var occ_lbl := Label.new()
 		occ_lbl.text = NpcLifeProgress.get_occupation_display(c)
 		occ_lbl.add_theme_font_size_override("font_size", 20)
-		occ_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+		occ_lbl.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#f8fafc"))
 		occ_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(occ_lbl)
 
 		var edu_lbl := Label.new()
 		edu_lbl.text = NpcLifeProgress.get_education_display(c)
 		edu_lbl.add_theme_font_size_override("font_size", 19)
-		edu_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+		edu_lbl.add_theme_color_override("font_color", Color("#475569") if is_light else Color("#cbd5e1"))
 		edu_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(edu_lbl)
 
@@ -4897,7 +4969,7 @@ func _setup_children_cards_ui() -> void:
 			var biz_lbl := Label.new()
 			biz_lbl.text = biz_str
 			biz_lbl.add_theme_font_size_override("font_size", 19)
-			biz_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
+			biz_lbl.add_theme_color_override("font_color", Color("#b45309") if is_light else Color("#fbbf24"))
 			biz_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			cv.add_child(biz_lbl)
 
@@ -4905,7 +4977,7 @@ func _setup_children_cards_ui() -> void:
 			var wealth_lbl := Label.new()
 			wealth_lbl.text = NpcLifeProgress.get_finances_display(c)
 			wealth_lbl.add_theme_font_size_override("font_size", 19)
-			wealth_lbl.add_theme_color_override("font_color", Color("#34d399"))
+			wealth_lbl.add_theme_color_override("font_color", Color("#15803d") if is_light else Color("#34d399"))
 			wealth_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			cv.add_child(wealth_lbl)
 
@@ -10803,10 +10875,11 @@ func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callabl
 	pressed_sb.shadow_offset = Vector2(0, 1)
 	btn.add_theme_stylebox_override("pressed", pressed_sb)
 
-	btn.add_theme_color_override("font_color", Color.WHITE)
-	btn.add_theme_color_override("font_hover_color", Color.WHITE)
-	btn.add_theme_color_override("font_pressed_color", Color.WHITE)
-	btn.add_theme_color_override("font_focus_color", Color.WHITE)
+	var btn_font_col: Color = Color.WHITE
+	btn.add_theme_color_override("font_color", btn_font_col)
+	btn.add_theme_color_override("font_hover_color", btn_font_col)
+	btn.add_theme_color_override("font_pressed_color", btn_font_col)
+	btn.add_theme_color_override("font_focus_color", btn_font_col)
 
 	if on_click.is_valid():
 		btn.pressed.connect(on_click)
@@ -14370,153 +14443,197 @@ func _configure_creation() -> void:
 	update_card_bounds.call()
 	get_viewport().size_changed.connect(update_card_bounds)
 
-	var card_style := StyleBoxFlat.new()
-	card_style.bg_color = Color("#090f1d") # Rich dark cyber navy
-	card_style.border_color = Color("#38bdf8") # Radiant cyan border
-	card_style.set_border_width_all(3)
-	card_style.set_corner_radius_all(12)
-	card_style.shadow_color = Color(0, 0, 0, 0.85)
-	card_style.shadow_size = 20
-	card_style.content_margin_left = 32
-	card_style.content_margin_right = 32
-	card_style.content_margin_top = 28
-	card_style.content_margin_bottom = 28
-	card.add_theme_stylebox_override("panel", card_style)
+	_update_creation_theme()
 
-	# High contrast text for all labels in creator card
-	for child in content.get_children():
-		if child is Label:
-			if child.name == "NewGameTitle":
-				child.add_theme_color_override("font_color", Color("#00f0ff")) # Glowing neon cyan
-				child.add_theme_font_size_override("font_size", 38)
-			elif child == validation_label:
-				child.add_theme_color_override("font_color", Color("#f87171")) # Bright warning red
-				child.add_theme_font_size_override("font_size", 22)
-			else:
-				child.add_theme_color_override("font_color", Color("#bae6fd")) # Ice blue for crisp legibility
-				child.add_theme_font_size_override("font_size", 24)
 
-	# Input field styling: Dark tech navy with cyan/blue borders
+func _update_creation_theme() -> void:
+	if new_game_panel == null or not is_instance_valid(new_game_panel):
+		return
+	var is_light: bool = LifeLibrary.data.theme == "light"
+	var card := new_game_panel.get_node_or_null("CenterContainer/CreationCard") as PanelContainer
+	if card != null:
+		var card_style := StyleBoxFlat.new()
+		card_style.bg_color = Color("#ffffff") if is_light else Color("#090f1d")
+		card_style.border_color = Color("#0284c7") if is_light else Color("#38bdf8")
+		card_style.set_border_width_all(3)
+		card_style.set_corner_radius_all(12)
+		card_style.shadow_color = Color(0, 0, 0, 0.15 if is_light else 0.85)
+		card_style.shadow_size = 20
+		card_style.content_margin_left = 32
+		card_style.content_margin_right = 32
+		card_style.content_margin_top = 28
+		card_style.content_margin_bottom = 28
+		card.add_theme_stylebox_override("panel", card_style)
+
+	var content: Node = null
+	if card != null:
+		var scroll := card.get_node_or_null("CreationScroll")
+		if scroll != null:
+			content = scroll.get_node_or_null("NewGameContent")
+		if content == null:
+			content = card.get_node_or_null("NewGameContent")
+
+	if content != null:
+		for child in content.get_children():
+			if child is Label:
+				if child.name == "NewGameTitle":
+					child.add_theme_color_override("font_color", Color("#0369a1") if is_light else Color("#00f0ff"))
+					child.add_theme_font_size_override("font_size", 38)
+				elif child == validation_label:
+					child.add_theme_color_override("font_color", Color("#dc2626") if is_light else Color("#f87171"))
+					child.add_theme_font_size_override("font_size", 22)
+				else:
+					child.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#bae6fd"))
+					child.add_theme_font_size_override("font_size", 24)
+
+		if creation_avatar_desc != null and is_instance_valid(creation_avatar_desc):
+			creation_avatar_desc.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#bae6fd"))
+
+		var name_kb_btn := content.get_node_or_null("CustomNameKeyboardButton") as Button
+		if name_kb_btn != null:
+			var kb_sb := StyleBoxFlat.new()
+			kb_sb.bg_color = Color("#e0f2fe") if is_light else Color("#082f49")
+			kb_sb.border_color = Color("#0284c7") if is_light else Color("#00f0ff")
+			kb_sb.set_border_width_all(2)
+			kb_sb.set_corner_radius_all(10)
+			kb_sb.content_margin_left = 16
+			kb_sb.content_margin_right = 16
+			var kb_sb_h := kb_sb.duplicate() as StyleBoxFlat
+			kb_sb_h.bg_color = Color("#bae6fd") if is_light else Color("#0369a1")
+			name_kb_btn.add_theme_stylebox_override("normal", kb_sb)
+			name_kb_btn.add_theme_stylebox_override("hover", kb_sb_h)
+			name_kb_btn.add_theme_stylebox_override("pressed", kb_sb_h)
+			name_kb_btn.add_theme_color_override("font_color", Color("#0369a1") if is_light else Color.WHITE)
+			name_kb_btn.add_theme_color_override("font_hover_color", Color("#0c4a6e") if is_light else Color.WHITE)
+
+		var avatar_row := content.get_node_or_null("AvatarRow")
+		if avatar_row != null:
+			for arrow_name in ["PrevAvatarButton", "NextAvatarButton"]:
+				var arrow_btn := avatar_row.get_node_or_null(arrow_name) as Button
+				if arrow_btn != null:
+					var arrow_style := StyleBoxFlat.new()
+					arrow_style.bg_color = Color("#edf3fa") if is_light else Color("#1e293b")
+					arrow_style.border_color = Color("#0284c7") if is_light else Color("#38bdf8")
+					arrow_style.set_border_width_all(2)
+					arrow_style.set_corner_radius_all(8)
+					var arrow_hover := arrow_style.duplicate() as StyleBoxFlat
+					arrow_hover.bg_color = Color("#bfdbfe") if is_light else Color("#0284c7")
+					arrow_btn.add_theme_stylebox_override("normal", arrow_style)
+					arrow_btn.add_theme_stylebox_override("hover", arrow_hover)
+					arrow_btn.add_theme_stylebox_override("pressed", arrow_hover)
+					arrow_btn.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color.WHITE)
+
+		var rand_btn := content.get_node_or_null("RandomizeButton") as Button
+		if rand_btn != null:
+			var rand_style := StyleBoxFlat.new()
+			rand_style.bg_color = Color("#e0e7ff") if is_light else Color("#1e293b")
+			rand_style.border_color = Color("#4338ca") if is_light else Color("#6366f1")
+			rand_style.set_border_width_all(2)
+			rand_style.set_corner_radius_all(10)
+			rand_style.shadow_color = Color(0, 0, 0, 0.10 if is_light else 0.25)
+			rand_style.shadow_size = 4
+			rand_style.shadow_offset = Vector2(0, 3)
+			var rand_hover := rand_style.duplicate() as StyleBoxFlat
+			rand_hover.bg_color = Color("#c7d2fe") if is_light else Color("#312e81")
+			rand_hover.border_color = Color("#312e81") if is_light else Color.WHITE
+			var rand_pressed := rand_style.duplicate() as StyleBoxFlat
+			rand_pressed.bg_color = Color("#a5b4fc") if is_light else Color("#1e1b4b")
+			rand_btn.add_theme_stylebox_override("normal", rand_style)
+			rand_btn.add_theme_stylebox_override("hover", rand_hover)
+			rand_btn.add_theme_stylebox_override("pressed", rand_pressed)
+			rand_btn.add_theme_color_override("font_color", Color("#1e1b4b") if is_light else Color.WHITE)
+			rand_btn.add_theme_color_override("font_hover_color", Color("#0f172a") if is_light else Color("#c7d2fe"))
+
+		var start_btn := content.get_node_or_null("StartGameButton") as Button
+		if start_btn != null:
+			var start_style := StyleBoxFlat.new()
+			start_style.bg_color = Color("#16a34a") if is_light else Color("#22c55e")
+			start_style.border_color = Color("#15803d")
+			start_style.set_border_width_all(2)
+			start_style.set_corner_radius_all(10)
+			start_style.shadow_color = Color(0, 0, 0, 0.15 if is_light else 0.28)
+			start_style.shadow_size = 4
+			start_style.shadow_offset = Vector2(0, 3)
+			var start_hover := start_style.duplicate() as StyleBoxFlat
+			start_hover.bg_color = Color("#22c55e") if is_light else Color("#4ade80")
+			start_hover.border_color = Color.WHITE
+			var start_pressed := start_style.duplicate() as StyleBoxFlat
+			start_pressed.bg_color = Color("#15803d")
+			start_btn.add_theme_stylebox_override("normal", start_style)
+			start_btn.add_theme_stylebox_override("hover", start_hover)
+			start_btn.add_theme_stylebox_override("pressed", start_pressed)
+			start_btn.add_theme_color_override("font_color", Color.WHITE)
+			start_btn.add_theme_color_override("font_hover_color", Color.WHITE)
+			start_btn.add_theme_color_override("font_pressed_color", Color.WHITE)
+			start_btn.add_theme_font_size_override("font_size", 30)
+
+	# Input field styling
 	var field_style := StyleBoxFlat.new()
-	field_style.bg_color = Color("#111827")
-	field_style.border_color = Color("#2563eb")
+	field_style.bg_color = Color("#edf3fa") if is_light else Color("#111827")
+	field_style.border_color = Color("#0284c7") if is_light else Color("#2563eb")
 	field_style.set_border_width_all(2)
 	field_style.set_corner_radius_all(10)
 	field_style.content_margin_left = 18
 	field_style.content_margin_right = 18
 
 	var field_hover := field_style.duplicate() as StyleBoxFlat
-	field_hover.border_color = Color("#38bdf8")
+	field_hover.bg_color = Color("#dbeafe") if is_light else Color("#1e293b")
+	field_hover.border_color = Color("#0284c7") if is_light else Color("#38bdf8")
 
 	var field_focus := field_style.duplicate() as StyleBoxFlat
-	field_focus.border_color = Color("#00f0ff")
+	field_focus.border_color = Color("#0369a1") if is_light else Color("#00f0ff")
 	field_focus.set_border_width_all(3)
 
 	for field in [name_input, birthplace_input, gender_input]:
-		field.add_theme_stylebox_override("normal", field_style)
-		field.add_theme_stylebox_override("hover", field_hover)
-		field.add_theme_stylebox_override("focus", field_focus)
-		field.add_theme_color_override("font_color", Color("#ffffff"))
-		field.add_theme_color_override("font_hover_color", Color("#ffffff"))
-		field.add_theme_font_size_override("font_size", 26)
+		if field != null and is_instance_valid(field):
+			field.add_theme_stylebox_override("normal", field_style)
+			field.add_theme_stylebox_override("hover", field_hover)
+			field.add_theme_stylebox_override("focus", field_focus)
+			field.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color.WHITE)
+			field.add_theme_color_override("font_hover_color", Color("#0f172a") if is_light else Color.WHITE)
+			field.add_theme_font_size_override("font_size", 26)
 
-	name_input.add_theme_color_override("font_placeholder_color", Color("#94a3b8"))
+	if name_input != null and is_instance_valid(name_input):
+		name_input.add_theme_color_override("font_placeholder_color", Color("#64748b") if is_light else Color("#94a3b8"))
 
-	# Randomize Button: Stylish cyber button with tactile depth
-	var rand_style := StyleBoxFlat.new()
-	rand_style.bg_color = Color("#1e293b")
-	rand_style.border_color = Color("#6366f1")
-	rand_style.set_border_width_all(2)
-	rand_style.set_corner_radius_all(10)
-	rand_style.shadow_color = Color(0, 0, 0, 0.25)
-	rand_style.shadow_size = 4
-	rand_style.shadow_offset = Vector2(0, 3)
+	if birthplace_input != null and is_instance_valid(birthplace_input):
+		var bp_popup := birthplace_input.get_popup()
+		if bp_popup != null:
+			var popup_style := StyleBoxFlat.new()
+			popup_style.bg_color = Color("#ffffff") if is_light else Color("#0f172a")
+			popup_style.border_color = Color("#0284c7") if is_light else Color("#38bdf8")
+			popup_style.set_border_width_all(2)
+			popup_style.set_corner_radius_all(10)
+			bp_popup.add_theme_stylebox_override("panel", popup_style)
+			bp_popup.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#f8fafc"))
+			bp_popup.add_theme_color_override("font_hover_color", Color("#0284c7") if is_light else Color("#38bdf8"))
 
-	var rand_hover := rand_style.duplicate() as StyleBoxFlat
-	rand_hover.bg_color = Color("#312e81")
-	rand_hover.border_color = Color.WHITE
-	rand_hover.shadow_size = 6
-	rand_hover.shadow_offset = Vector2(0, 3)
-
-	var rand_pressed := rand_style.duplicate() as StyleBoxFlat
-	rand_pressed.bg_color = Color("#1e1b4b")
-	rand_pressed.shadow_size = 1
-	rand_pressed.shadow_offset = Vector2(0, 1)
-
-	random_button.add_theme_stylebox_override("normal", rand_style)
-	random_button.add_theme_stylebox_override("hover", rand_hover)
-	random_button.add_theme_stylebox_override("pressed", rand_pressed)
-	random_button.add_theme_color_override("font_color", Color("#ffffff"))
-	random_button.add_theme_color_override("font_hover_color", Color("#c7d2fe"))
-	random_button.add_theme_font_size_override("font_size", 24)
-
-	# Country selector popup
-	var popup_style := StyleBoxFlat.new()
-	popup_style.bg_color = Color("#0f172a")
-	popup_style.border_color = Color("#38bdf8")
-	popup_style.set_border_width_all(2)
-	popup_style.set_corner_radius_all(10)
-	popup.add_theme_stylebox_override("panel", popup_style)
-	popup.add_theme_color_override("font_color", Color("#f8fafc"))
-	popup.add_theme_color_override("font_hover_color", Color("#38bdf8"))
-	popup.add_theme_constant_override("h_separation", 16)
-
-	# Gender selector: keep the expanded menu in the same navy/cyan theme.
-	gender_input.add_theme_stylebox_override("pressed", field_hover)
-	gender_input.add_theme_stylebox_override("hover_pressed", field_hover)
-	gender_input.add_theme_color_override("font_pressed_color", Color("#64e6ff"))
-	gender_input.add_theme_color_override("arrow_normal_color", Color("#64e6ff"))
-	gender_input.add_theme_color_override("arrow_hover_color", Color("#ffffff"))
-	var gender_popup := gender_input.get_popup()
-	var gender_panel := popup_style.duplicate() as StyleBoxFlat
-	gender_panel.set_content_margin_all(12)
-	gender_popup.add_theme_stylebox_override("panel", gender_panel)
-	var gender_highlight := StyleBoxFlat.new()
-	gender_highlight.bg_color = Color("#1d3353")
-	gender_highlight.border_color = Color("#64e6ff")
-	gender_highlight.set_border_width_all(2)
-	gender_highlight.set_corner_radius_all(10)
-	gender_popup.add_theme_stylebox_override("hover", gender_highlight)
-	gender_popup.add_theme_font_override("font", gender_input.get_theme_font("font"))
-	gender_popup.add_theme_font_size_override("font_size", 26)
-	gender_popup.add_theme_color_override("font_color", Color("#d9efff"))
-	gender_popup.add_theme_color_override("font_hover_color", Color("#64e6ff"))
-	gender_popup.add_theme_color_override("font_focus_color", Color("#64e6ff"))
-	gender_popup.add_theme_constant_override("v_separation", 24)
-	gender_popup.add_theme_constant_override("h_separation", 16)
-	gender_popup.add_theme_constant_override("item_start_padding", 12)
-	gender_popup.add_theme_constant_override("item_end_padding", 12)
-
-	# Start Life Button: Tactile high-visibility button
-	var start_btn := content.get_node_or_null("StartGameButton") as Button
-	if start_btn != null:
-		var start_style := StyleBoxFlat.new()
-		start_style.bg_color = Color("#22c55e")
-		start_style.border_color = Color("#15803d")
-		start_style.set_border_width_all(2)
-		start_style.set_corner_radius_all(10)
-		start_style.shadow_color = Color(0, 0, 0, 0.28)
-		start_style.shadow_size = 4
-		start_style.shadow_offset = Vector2(0, 3)
-
-		var start_hover := start_style.duplicate() as StyleBoxFlat
-		start_hover.bg_color = Color("#4ade80")
-		start_hover.border_color = Color.WHITE
-		start_hover.shadow_size = 6
-		start_hover.shadow_offset = Vector2(0, 3)
-
-		var start_pressed := start_style.duplicate() as StyleBoxFlat
-		start_pressed.bg_color = Color("#15803d")
-		start_pressed.shadow_size = 1
-		start_pressed.shadow_offset = Vector2(0, 1)
-
-		start_btn.add_theme_stylebox_override("normal", start_style)
-		start_btn.add_theme_stylebox_override("hover", start_hover)
-		start_btn.add_theme_stylebox_override("pressed", start_pressed)
-		start_btn.add_theme_color_override("font_color", Color.WHITE)
-		start_btn.add_theme_color_override("font_hover_color", Color.WHITE)
-		start_btn.add_theme_color_override("font_pressed_color", Color.WHITE)
-		start_btn.add_theme_font_size_override("font_size", 30)
+	if gender_input != null and is_instance_valid(gender_input):
+		gender_input.add_theme_stylebox_override("pressed", field_hover)
+		gender_input.add_theme_stylebox_override("hover_pressed", field_hover)
+		gender_input.add_theme_color_override("font_pressed_color", Color("#0284c7") if is_light else Color("#64e6ff"))
+		gender_input.add_theme_color_override("arrow_normal_color", Color("#0284c7") if is_light else Color("#64e6ff"))
+		gender_input.add_theme_color_override("arrow_hover_color", Color("#0369a1") if is_light else Color.WHITE)
+		var gp := gender_input.get_popup()
+		if gp != null:
+			var g_panel := StyleBoxFlat.new()
+			g_panel.bg_color = Color("#ffffff") if is_light else Color("#0f172a")
+			g_panel.border_color = Color("#0284c7") if is_light else Color("#38bdf8")
+			g_panel.set_border_width_all(2)
+			g_panel.set_corner_radius_all(10)
+			g_panel.set_content_margin_all(12)
+			gp.add_theme_stylebox_override("panel", g_panel)
+			var g_hi := StyleBoxFlat.new()
+			g_hi.bg_color = Color("#e0f2fe") if is_light else Color("#1d3353")
+			g_hi.border_color = Color("#0284c7") if is_light else Color("#64e6ff")
+			g_hi.set_border_width_all(2)
+			g_hi.set_corner_radius_all(10)
+			gp.add_theme_stylebox_override("hover", g_hi)
+			gp.add_theme_font_override("font", gender_input.get_theme_font("font"))
+			gp.add_theme_font_size_override("font_size", 26)
+			gp.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#d9efff"))
+			gp.add_theme_color_override("font_hover_color", Color("#0284c7") if is_light else Color("#64e6ff"))
+			gp.add_theme_color_override("font_focus_color", Color("#0284c7") if is_light else Color("#64e6ff"))
 
 
 func _cycle_creation_avatar(direction: int) -> void:

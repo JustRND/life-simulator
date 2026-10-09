@@ -1,10 +1,19 @@
 extends RefCounted
 
-const DURATION := preload("res://scripts/ui/ui_style.gd").OPEN_SECONDS
+const DURATION := 0.22 # Snappy slide-up animation so buttons settle immediately for touch interactions
+static var _active_instances: Array = []
 var _tween: Tween
 var _panel: Control
 var _top := 0.0
 var _bottom := 0.0
+
+
+static func finish_all_active() -> void:
+	var list := _active_instances.duplicate()
+	for inst in list:
+		if inst != null and inst.has_method("finish_immediately"):
+			inst.finish_immediately()
+	_active_instances.clear()
 
 
 # One controller per surface so nested panels can finish independently.
@@ -26,7 +35,22 @@ static func watch(panel: Control, visibility_source: Control = null) -> void:
 		controller.play(panel)
 
 
+func finish_immediately() -> void:
+	_active_instances.erase(self)
+	if _tween != null and _tween.is_valid():
+		_tween.kill()
+	if is_instance_valid(_panel):
+		if _panel.anchor_right == 1.0 and _panel.anchor_bottom == 1.0:
+			_panel.offset_top = 0.0
+			_panel.offset_bottom = 0.0
+		else:
+			_panel.offset_top = _top
+			_panel.offset_bottom = _bottom
+	_panel = null
+
+
 func cancel() -> void:
+	_active_instances.erase(self)
 	if _tween != null and _tween.is_valid():
 		_tween.kill()
 	if is_instance_valid(_panel):
@@ -42,6 +66,8 @@ func cancel() -> void:
 func play(panel: Control) -> void:
 	cancel()
 	_panel = panel
+	if not _active_instances.has(self):
+		_active_instances.append(self)
 	var is_fullscreen: bool = (panel.anchor_right == 1.0 and panel.anchor_bottom == 1.0)
 	_top = 0.0 if is_fullscreen else panel.offset_top
 	_bottom = 0.0 if is_fullscreen else panel.offset_bottom
