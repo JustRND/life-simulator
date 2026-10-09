@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://c81ofgcdtuleu"]
+
+[ext_resource type="Script" path="res://tests/test_mobile_bottom_bar_grounding.gd" id="1_test"]
+
+[node name="TestMobileBottomBarGrounding" type="Node"]
+script = ExtResource("1_test")

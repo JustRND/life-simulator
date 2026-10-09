@@ -29,6 +29,7 @@ func _ready() -> void:
 
 	# 4. Verify 5 Core Buttons Visible on New Game
 	PlayerData.reset_player()
+	main_scene.name_input.text = "Alex"
 	main_scene._on_start_game_button_pressed()
 	await get_tree().process_frame
 	

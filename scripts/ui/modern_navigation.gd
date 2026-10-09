@@ -53,6 +53,9 @@ func apply(node: Control, light: bool) -> void:
 		bar.bg_color = Color("#f8fafc") if light else Color("#101925")
 		bar.border_width_top = 2
 		bar.border_color = Color("#d1dce6") if light else Color("#324455")
+		var bottom_pad: float = float(node.get_meta("safe_bottom_margin", 0.0))
+		if bottom_pad > 0.0:
+			bar.content_margin_bottom = bottom_pad
 		node.add_theme_stylebox_override("panel", bar)
 		return
 	var kinds := {"InfantButton": "life", "AssetsButton": "assets", "RelationshipsButton": "relationships", "ActivitiesButton": "activities"}

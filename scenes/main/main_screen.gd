@@ -1304,21 +1304,28 @@ func _adjust_safe_area() -> void:
 	var top_m: float = 0.0
 	var bottom_m: float = 0.0
 
-	var screen_h: int = DisplayServer.screen_get_size().y
-	var safe: Rect2i = DisplayServer.get_display_safe_area()
-	if screen_h > 0 and safe.size.y > 0 and safe.size.y < screen_h:
-		var scale: float = 1920.0 / float(screen_h)
-		top_m = float(safe.position.y) * scale
-		bottom_m = float(screen_h - (safe.position.y + safe.size.y)) * scale
+	var is_mob: bool = MobileKeyboardManager.is_mobile()
+	if is_mob:
+		if not OS.has_feature("web"):
+			var win_size: Vector2i = DisplayServer.window_get_size()
+			var vp_size: Vector2 = get_viewport().get_visible_rect().size
+			var safe: Rect2i = DisplayServer.get_display_safe_area()
+			if win_size.y > 0 and safe.size.y > 0 and safe.size.y < win_size.y:
+				var scale_y: float = vp_size.y / float(win_size.y)
+				top_m = float(safe.position.y) * scale_y
+				var raw_bottom: float = float(win_size.y - (safe.position.y + safe.size.y))
+				bottom_m = maxf(0.0, raw_bottom * scale_y)
+			top_m = clampf(top_m, 0.0, 160.0)
+			bottom_m = clampf(bottom_m, 0.0, 120.0)
+		else:
+			# Mobile web browser cushioning to clear navigation / home bar
+			bottom_m = 24.0
+			top_m = 0.0
 
-	# Extra padding on mobile web to clear dynamic browser address/tab bars
-	if OS.has_feature("web") and MobileKeyboardManager.is_mobile():
-		bottom_m = maxf(bottom_m, 32.0)
-		top_m = maxf(top_m, 16.0)
-
+	# SafeArea node spans the full height to the bottom of the screen (never lifted into the air)
 	if is_instance_valid(safe_area):
 		safe_area.offset_top = top_m
-		safe_area.offset_bottom = -bottom_m
+		safe_area.offset_bottom = 0.0
 
 	if is_instance_valid(top_bar):
 		top_bar.offset_top = top_m
@@ -1327,6 +1334,45 @@ func _adjust_safe_area() -> void:
 	if is_instance_valid(profile_strip):
 		profile_strip.offset_top = 112.0 + top_m
 		profile_strip.offset_bottom = 260.0 + top_m
+
+	# ActionBar is pinned to the absolute bottom of the screen (offset_bottom = 0.0)
+	# Its height extends upward by bottom_m to absorb safe insets and keep the bar grounded
+	if is_instance_valid(action_bar):
+		action_bar.offset_bottom = 0.0
+		action_bar.offset_top = -220.0 - bottom_m
+		action_bar.set_meta("safe_bottom_margin", bottom_m)
+		var panel_sb := action_bar.get_theme_stylebox("panel")
+		if panel_sb is StyleBoxFlat:
+			panel_sb.content_margin_bottom = bottom_m
+
+	# AgeButton sits centered above the bottom margin
+	if is_instance_valid(age_button):
+		age_button.offset_bottom = -15.0 - bottom_m
+		age_button.offset_top = -245.0 - bottom_m
+
+	# Update stats panel and feed panel spacing relative to action_bar
+	var stats_panel_node := get_node_or_null("SafeArea/MainColumn/StatsPanel") as Control
+	var feed_node := get_node_or_null("SafeArea/MainColumn/LifeFeedPanel") as Control
+	if stats_panel_node != null and feed_node != null and is_instance_valid(action_bar):
+		stats_panel_node.offset_bottom = action_bar.offset_top - 16.0
+		stats_panel_node.offset_top = stats_panel_node.offset_bottom - stats_panel_node.get_combined_minimum_size().y
+		feed_node.offset_bottom = stats_panel_node.offset_top - 16.0
+
+	# Full-screen modal panels margins
+	for panel_path in ["AssetsPanel/AssetsMargin", "BankPanel/BankMargin", "RelationshipsPanel/RelMargin", "CharacterPanel/CharacterMargin", "InfantPanel/InfantMargin", "ActivitiesPanel/ActMargin"]:
+		var margin_ctrl := get_node_or_null(panel_path) as MarginContainer
+		if margin_ctrl != null:
+			var base_bottom: int = int(margin_ctrl.get_meta("base_margin_bottom", -1))
+			if base_bottom == -1:
+				base_bottom = margin_ctrl.get_theme_constant("margin_bottom")
+				margin_ctrl.set_meta("base_margin_bottom", base_bottom)
+			margin_ctrl.add_theme_constant_override("margin_bottom", base_bottom + int(bottom_m))
+			var base_top: int = int(margin_ctrl.get_meta("base_margin_top", -1))
+			if base_top == -1:
+				base_top = margin_ctrl.get_theme_constant("margin_top")
+				margin_ctrl.set_meta("base_margin_top", base_top)
+			margin_ctrl.add_theme_constant_override("margin_top", base_top + int(top_m))
+
 
 
 func trigger_event() -> void:
