@@ -10,10 +10,12 @@ config_version=5
 
 [application]
 
-config/name="LifeSimulatorPrototype"
+config/name="Life.exe - Original"
 run/main_scene="uid://dtpvigdquw6gc"
 config/features=PackedStringArray("4.7", "Mobile")
 run/max_fps=120
+boot_splash/show_image=false
+boot_splash/use_filter=false
 config/icon="res://icon.svg"
 
 [autoload]

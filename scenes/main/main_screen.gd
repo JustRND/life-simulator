@@ -7,6 +7,7 @@ const RomanceRules = preload("res://scripts/core/romance_rules.gd")
 const RelationshipExtras = preload("res://scripts/core/relationship_extras.gd")
 const CareerProgression = preload("res://scripts/economy/career_progression.gd")
 const UndergroundProgression = preload("res://scripts/economy/underground_progression.gd")
+const CollateralManager = preload("res://scripts/economy/collateral_manager.gd")
 const UIStyle = preload("res://scripts/ui/ui_style.gd")
 const NpcLifeProgress = preload("res://scripts/core/npc_life_progress.gd")
 
@@ -101,6 +102,9 @@ var license_category_modal_overlay: Control = null
 var driving_exam_modal_overlay: Control = null
 var business_modal_overlay: Control = null
 var business_category_modal_overlay: Control = null
+var business_modal_list: VBoxContainer = null
+var business_modal_tab_bar: HBoxContainer = null
+var business_modal_scroll: ScrollContainer = null
 var education_modal_overlay: Control = null
 var university_modal_overlay: Control = null
 var shopping_modal_overlay: Control = null
@@ -819,6 +823,9 @@ func age_up() -> void:
 	_process_yearly_business_operations()
 	FinanceMarket.advance_year(PlayerData)
 
+	# 7e-2. Loan & Debt Collateral Delinquency Tracking
+	CollateralManager.process_yearly_delinquency(PlayerData)
+
 	# 7f. Social Media Audience Growth & Monetization
 	var social_logs := SocialMediaManager.process_yearly_social_media(PlayerData)
 	for s_log in social_logs:
@@ -1378,6 +1385,16 @@ func _adjust_safe_area() -> void:
 func trigger_event() -> void:
 	if PlayerData.is_dead:
 		return
+
+	# High-priority Collateral & Foreclosure Event Panels (Warning / Seizure)
+	if PlayerData.age >= 18 and not PlayerData.is_in_prison:
+		var col_ev := CollateralManager.check_and_trigger_event(PlayerData, self)
+		if not col_ev.is_empty():
+			current_event = col_ev
+			current_event_choices = col_ev.get("choices", [])
+			show_event_popup()
+			return
+
 	if PlayerData.age >= 18 and not PlayerData.is_in_prison and not LifeLibrary.data.people.is_empty() and randf() < 0.25:
 		var person: Dictionary = LifeLibrary.data.people.pick_random()
 		add_life_event("You met %s from %s and enjoyed a friendly conversation." % [person.name, person.country], "event")
@@ -1607,12 +1624,19 @@ func choose_event_option(choice_index: int) -> void:
 	PlayerData.apply_effects(BalanceRules.event_effects(choice.get("effects", {}), PlayerData.age))
 
 	var result_text: String = str(choice.get("result", ""))
+	if choice.has("callback") and choice["callback"] is Callable:
+		var cb_res = choice["callback"].call()
+		if cb_res is String and cb_res != "":
+			result_text = cb_res
 	if current_event.has("unplanned_pregnancy"):
 		result_text = RelationshipExtras.begin_unplanned_pregnancy(PlayerData)
 	if current_event.has("candidate"):
 		result_text = RomanceRules.date_result(PlayerData, current_event.candidate, bool(choice.get("accept_date", false)), randf())
 	if result_text != "":
-		add_life_event(result_text, "family" if current_event.has("unplanned_pregnancy") else ("relationship" if current_event.has("candidate") else "event"))
+		var ev_cat: String = str(current_event.get("category", ""))
+		if ev_cat == "":
+			ev_cat = "family" if current_event.has("unplanned_pregnancy") else ("relationship" if current_event.has("candidate") else "event")
+		add_life_event(result_text, ev_cat)
 
 	PlayerData.record_event(event_id)
 
@@ -7407,26 +7431,12 @@ func _show_freelance_modal() -> void:
 # -----------------------------------------------------------------------------
 # COMMERCIAL BUSINESSES & ENTERPRISE SYSTEM
 # -----------------------------------------------------------------------------
-func _show_business_modal(initial_tab: String = "", selected_uid: String = "") -> void:
-	if business_modal_overlay != null and is_instance_valid(business_modal_overlay):
-		business_modal_overlay.queue_free()
-	if business_category_modal_overlay != null and is_instance_valid(business_category_modal_overlay):
-		business_category_modal_overlay.queue_free()
+func _populate_business_tab_bar(tab_bar: HBoxContainer, tab: String, selected_uid: String) -> void:
+	for child in tab_bar.get_children():
+		tab_bar.remove_child(child)
+		child.queue_free()
 
-	var modal := _create_cyber_modal("🏢 ENTERPRISES & COMMERCIAL VENTURES", "Found Companies, Manage Corporate Financials, Pay Taxes & Scale Ventures", Color("#f59e0b"))
-	business_modal_overlay = modal.overlay
-	var list: VBoxContainer = modal.list
-
-	var tab: String = initial_tab
-	if tab == "":
-		tab = "enterprises" if PlayerData.owned_businesses.size() > 0 else "incorporate"
-
-	# Top Tab Bar (Pinned above scroll container)
-	var tab_bar := HBoxContainer.new()
-	tab_bar.add_theme_constant_override("separation", 10)
-	tab_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-	var btn_tab_ent := _create_cyber_button("📊 My Enterprises (%d)" % PlayerData.owned_businesses.size(), Color("#f59e0b") if tab == "enterprises" else Color("#475569"), func():
+	var btn_tab_ent := _create_cyber_button("📊 My Enterprises (%d)" % PlayerData.owned_businesses.size(), Color("#f59e0b") if (tab == "enterprises" or tab == "overview") else Color("#475569"), func():
 		_show_business_modal("enterprises", selected_uid)
 	)
 	btn_tab_ent.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -7454,17 +7464,82 @@ func _show_business_modal(initial_tab: String = "", selected_uid: String = "") -
 		btn_tab_fin.alignment = HORIZONTAL_ALIGNMENT_CENTER
 		tab_bar.add_child(btn_tab_fin)
 
-	modal.vbox.add_child(tab_bar)
-	modal.vbox.move_child(tab_bar, 2)
+
+func _show_business_modal(initial_tab: String = "", selected_uid: String = "") -> void:
+	if business_category_modal_overlay != null and is_instance_valid(business_category_modal_overlay):
+		business_category_modal_overlay.queue_free()
+
+	var tab: String = initial_tab
+	if tab == "" or tab == "overview":
+		tab = "enterprises" if PlayerData.owned_businesses.size() > 0 else "incorporate"
+
+	var can_reuse: bool = (
+		business_modal_overlay != null
+		and is_instance_valid(business_modal_overlay)
+		and business_modal_overlay.is_inside_tree()
+		and not business_modal_overlay.is_queued_for_deletion()
+		and business_modal_list != null
+		and is_instance_valid(business_modal_list)
+		and business_modal_tab_bar != null
+		and is_instance_valid(business_modal_tab_bar)
+	)
+
+	if can_reuse:
+		# In-place refresh! No destroying overlay, no screen flash, no slide-up tween restart
+		for child in business_modal_list.get_children():
+			business_modal_list.remove_child(child)
+			child.queue_free()
+
+		_populate_business_tab_bar(business_modal_tab_bar, tab, selected_uid)
+
+		match tab:
+			"enterprises", "overview":
+				_render_business_tab_enterprises(business_modal_list)
+			"incorporate":
+				_render_business_tab_incorporate(business_modal_list)
+			"financials":
+				_render_business_tab_financials(business_modal_list, selected_uid)
+			_:
+				_render_business_tab_enterprises(business_modal_list)
+
+		business_modal_overlay.visible = true
+		if has_node("ThemeController"):
+			get_node("ThemeController").apply_subtree(business_modal_list)
+		return
+
+	if business_modal_overlay != null and is_instance_valid(business_modal_overlay):
+		business_modal_overlay.queue_free()
+
+	var modal := _create_cyber_modal("🏢 ENTERPRISES & COMMERCIAL VENTURES", "Found Companies, Manage Corporate Financials, Pay Taxes & Scale Ventures", Color("#f59e0b"))
+	business_modal_overlay = modal.overlay
+	business_modal_list = modal.list
+	business_modal_scroll = modal.scroll
+	business_modal_overlay.tree_exited.connect(func():
+		business_modal_list = null
+		business_modal_tab_bar = null
+		business_modal_scroll = null
+	)
+
+	# Top Tab Bar (Pinned above scroll container)
+	business_modal_tab_bar = HBoxContainer.new()
+	business_modal_tab_bar.add_theme_constant_override("separation", 10)
+	business_modal_tab_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	_populate_business_tab_bar(business_modal_tab_bar, tab, selected_uid)
+
+	modal.vbox.add_child(business_modal_tab_bar)
+	modal.vbox.move_child(business_modal_tab_bar, 2)
 
 	# Content based on tab
 	match tab:
-		"enterprises":
-			_render_business_tab_enterprises(list)
+		"enterprises", "overview":
+			_render_business_tab_enterprises(business_modal_list)
 		"incorporate":
-			_render_business_tab_incorporate(list)
+			_render_business_tab_incorporate(business_modal_list)
 		"financials":
-			_render_business_tab_financials(list, selected_uid)
+			_render_business_tab_financials(business_modal_list, selected_uid)
+		_:
+			_render_business_tab_enterprises(business_modal_list)
 
 	business_modal_overlay.visible = true
 	if has_node("ThemeController"):
@@ -7693,7 +7768,7 @@ func _show_business_category_modal(category_id: String) -> void:
 	if business_category_modal_overlay != null and is_instance_valid(business_category_modal_overlay):
 		business_category_modal_overlay.queue_free()
 	if business_modal_overlay != null and is_instance_valid(business_modal_overlay):
-		business_modal_overlay.queue_free()
+		business_modal_overlay.visible = false
 
 	var cat: Dictionary = BusinessManager.get_category_by_id(category_id)
 	var cat_name: String = str(cat.get("name", "Commercial Sector"))
@@ -7705,11 +7780,18 @@ func _show_business_category_modal(category_id: String) -> void:
 	business_category_modal_overlay = modal.overlay
 	var list: VBoxContainer = modal.list
 
+	modal.overlay.tree_exited.connect(func():
+		if is_instance_valid(business_modal_overlay) and not business_modal_overlay.visible:
+			business_modal_overlay.visible = true
+	)
+
 	var close_btn: Button = modal.get("close_btn")
 	if close_btn != null:
 		close_btn.pressed.connect(func():
 			if is_instance_valid(business_category_modal_overlay):
 				business_category_modal_overlay.queue_free()
+			if is_instance_valid(business_modal_overlay):
+				business_modal_overlay.visible = true
 			_show_business_modal("incorporate")
 		)
 
@@ -7717,6 +7799,8 @@ func _show_business_category_modal(category_id: String) -> void:
 	var back_btn := _create_cyber_button("← Back to Enterprise Sectors", cat_color, func():
 		if is_instance_valid(business_category_modal_overlay):
 			business_category_modal_overlay.queue_free()
+		if is_instance_valid(business_modal_overlay):
+			business_modal_overlay.visible = true
 		_show_business_modal("incorporate")
 	)
 	back_btn.custom_minimum_size.y = 70
@@ -10920,6 +11004,11 @@ func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callabl
 	pressed_sb.shadow_size = 1
 	pressed_sb.shadow_offset = Vector2(0, 1)
 	btn.add_theme_stylebox_override("pressed", pressed_sb)
+
+	var disabled_sb := normal_sb.duplicate() as StyleBoxFlat
+	disabled_sb.bg_color = Color("#cbd5e1") if is_light else Color("#1e293b")
+	disabled_sb.border_color = Color("#94a3b8") if is_light else Color("#334155")
+	btn.add_theme_stylebox_override("disabled", disabled_sb)
 
 	var btn_font_col: Color = Color.WHITE
 	btn.add_theme_color_override("font_color", btn_font_col)

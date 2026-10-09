@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cshq1iurc3mg3"]
+
+[ext_resource type="Script" path="res://tests/test_collateral_and_business_refresh.gd" id="1_collat"]
+
+[node name="TestCollateralAndBusinessRefresh" type="Node"]
+script = ExtResource("1_collat")

@@ -103,6 +103,8 @@ var credit_card_limit: int = 0
 var credit_card_balance: int = 0
 var credit_card_apr: float = 0.18
 var credit_card_paid_this_year: int = 0
+var debt_delinquency_years: int = 0
+var has_debt_warning: bool = false
 var owned_assets: Array[Dictionary] = []
 var health_insurance: String = "none"
 
@@ -256,6 +258,8 @@ func reset_player() -> void:
 	credit_card_balance = 0
 	credit_card_apr = 0.18
 	credit_card_paid_this_year = 0
+	debt_delinquency_years = 0
+	has_debt_warning = false
 	owned_assets.clear()
 	health_insurance = "none"
 
@@ -712,6 +716,18 @@ func cure_illness(illness_id: String) -> bool:
 
 func get_total_debt() -> int:
 	return debt + tax_debt + loan_balance + credit_card_balance
+
+
+func get_total_business_debt() -> int:
+	var total: int = 0
+	for b in owned_businesses:
+		if b is Dictionary:
+			total += int(b.get("unpaid_taxes", 0)) + int(b.get("loan_balance", 0))
+	return total
+
+
+func get_total_liabilities() -> int:
+	return get_total_debt() + get_total_business_debt()
 
 
 func take_bank_loan(amount: int, interest_rate: float) -> bool:
