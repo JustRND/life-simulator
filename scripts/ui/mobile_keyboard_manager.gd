@@ -39,6 +39,13 @@ func _scan_tree(node: Node) -> void:
 static func is_mobile() -> bool:
 	if OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios"):
 		return true
+	var os_name := OS.get_name().to_lower()
+	if os_name == "android" or os_name == "ios":
+		return true
+	if DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD):
+		return true
+	if DisplayServer.is_touchscreen_available():
+		return true
 	if is_mobile_web():
 		return true
 	return false
@@ -54,7 +61,9 @@ static func is_mobile_web() -> bool:
 		Boolean(
 			/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent) ||
 			(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
-			(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
+			(navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
+			(window.matchMedia && (window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(hover: none)').matches)) ||
+			('ontouchstart' in window)
 		)
 	""")
 	return bool(res)
@@ -99,15 +108,53 @@ static func attach_to_input(input_ctrl: Control, prompt_title: String = "") -> v
 	)
 
 
+## Creates a styled cyber button dedicated to triggering mobile keyboard input for a specific input field
+static func create_keyboard_trigger_button(input_ctrl: Control, button_title: String = "⌨️ Type Custom Value", prompt_title: String = "", btn_color: Color = Color("#00f0ff")) -> Button:
+	var btn := Button.new()
+	btn.name = "MobileKeyboardTriggerButton"
+	btn.text = button_title
+	btn.custom_minimum_size.y = 54
+	btn.add_theme_font_size_override("font_size", 22)
+	btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn.set_meta("center_text", true)
+
+	var sb_normal := StyleBoxFlat.new()
+	sb_normal.bg_color = Color(btn_color.r * 0.15, btn_color.g * 0.15, btn_color.b * 0.15, 0.95)
+	sb_normal.border_color = btn_color
+	sb_normal.set_border_width_all(2)
+	sb_normal.set_corner_radius_all(10)
+	sb_normal.content_margin_left = 16
+	sb_normal.content_margin_right = 16
+
+	var sb_hover := sb_normal.duplicate() as StyleBoxFlat
+	sb_hover.bg_color = Color(btn_color.r * 0.3, btn_color.g * 0.3, btn_color.b * 0.3, 0.98)
+	sb_hover.border_color = Color("#ffffff")
+
+	var sb_pressed := sb_normal.duplicate() as StyleBoxFlat
+	sb_pressed.bg_color = btn_color
+
+	btn.add_theme_stylebox_override("normal", sb_normal)
+	btn.add_theme_stylebox_override("hover", sb_hover)
+	btn.add_theme_stylebox_override("pressed", sb_pressed)
+	btn.add_theme_color_override("font_color", Color("#ffffff"))
+	btn.add_theme_color_override("font_hover_color", Color("#ffffff"))
+	btn.add_theme_color_override("font_pressed_color", Color("#000000"))
+
+	btn.pressed.connect(func():
+		open_keyboard(input_ctrl, prompt_title, true)
+	)
+	return btn
+
+
 ## Opens the virtual keyboard for the target input control
-static func open_keyboard(input_ctrl: Control, prompt_override: String = "") -> void:
+static func open_keyboard(input_ctrl: Control, prompt_override: String = "", force_prompt: bool = false) -> void:
 	if input_ctrl == null or not is_instance_valid(input_ctrl):
 		return
 
-	# Debounce within 350ms to prevent double-firing
+	# Debounce within 200ms to prevent double-firing
 	var now := Time.get_ticks_msec()
 	var last_open: int = int(input_ctrl.get_meta("last_kb_open_time", 0))
-	if (now - last_open) < 350:
+	if (now - last_open) < 200:
 		return
 	input_ctrl.set_meta("last_kb_open_time", now)
 
@@ -134,7 +181,7 @@ static func open_keyboard(input_ctrl: Control, prompt_override: String = "") -> 
 
 	# 2. Web Mobile Browser Support (iOS Safari, Android Chrome, Samsung Internet)
 	# On mobile browsers, HTML5 canvas elements cannot summon the OS virtual keyboard without a native DOM prompt or input
-	if is_mobile_web():
+	if force_prompt or is_mobile_web() or (OS.has_feature("web") and is_mobile()):
 		_prompt_mobile_web(input_ctrl, prompt_override, current_text)
 
 

@@ -3368,8 +3368,10 @@ func _show_loan_repayment() -> void:
 	amount.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	modal.list.add_child(amount)
 	get_node("OptionsMenu")._style_input(amount)
-	amount.add_theme_color_override("font_placeholder_color", Color("#64748b") if LifeLibrary.data.theme == "light" else Color("#94a3b8"))
 	MobileKeyboardManager.attach_to_input(amount, "How much would you like to repay? (Whole dollars)")
+	var kb_btn := MobileKeyboardManager.create_keyboard_trigger_button(amount, "⌨️ Type Custom Repayment Amount", "How much would you like to repay? (Whole dollars)", Color("#22c55e"))
+	modal.list.add_child(kb_btn)
+	MobileKeyboardManager.open_keyboard.call_deferred(amount, "How much would you like to repay? (Whole dollars)")
 	var feedback := Label.new()
 	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	feedback.add_theme_color_override("font_color", Color("#b91c1c") if LifeLibrary.data.theme == "light" else Color("#fca5a5"))
@@ -3474,8 +3476,10 @@ func _show_bank_transfer(deposit: bool) -> void:
 	amount.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_NUMBER
 	amount.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	modal.list.add_child(amount)
-	get_node("OptionsMenu")._style_input(amount)
 	MobileKeyboardManager.attach_to_input(amount, verb + " amount (whole dollars)")
+	var kb_btn := MobileKeyboardManager.create_keyboard_trigger_button(amount, "⌨️ Type Custom %s Amount" % verb, verb + " amount (whole dollars)", Color("#10b981") if deposit else Color("#fbbf24"))
+	modal.list.add_child(kb_btn)
+	MobileKeyboardManager.open_keyboard.call_deferred(amount, verb + " amount (whole dollars)")
 	var feedback := Label.new()
 	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	feedback.add_theme_color_override("font_color", Color("#b91c1c") if LifeLibrary.data.theme == "light" else Color("#fca5a5"))
@@ -3769,8 +3773,10 @@ func _show_credit_card_custom_amount_modal(min_pay: int, total_usage: int) -> vo
 	amount_input.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_NUMBER
 	amount_input.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	modal.list.add_child(amount_input)
-	get_node("OptionsMenu")._style_input(amount_input)
 	MobileKeyboardManager.attach_to_input(amount_input, "Repayment amount (Min 10%%: $%d)" % min_pay)
+	var kb_btn := MobileKeyboardManager.create_keyboard_trigger_button(amount_input, "⌨️ Type Custom Repayment Amount", "Repayment amount (Min 10%%: $%d)" % min_pay, Color("#06b6d4"))
+	modal.list.add_child(kb_btn)
+	MobileKeyboardManager.open_keyboard.call_deferred(amount_input, "Repayment amount (Min 10%%: $%d)" % min_pay)
 
 	var feedback := Label.new()
 	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -7605,7 +7611,13 @@ func _show_business_category_modal(category_id: String) -> void:
 			edit_sb.content_margin_bottom = 8
 			name_edit.add_theme_stylebox_override("normal", edit_sb)
 			name_edit.add_theme_stylebox_override("focus", edit_sb)
+			MobileKeyboardManager.attach_to_input(name_edit, "Enter custom business name:")
 			name_box.add_child(name_edit)
+
+			var name_kb_btn := MobileKeyboardManager.create_keyboard_trigger_button(name_edit, "⌨️ Enter Custom Business Name", "Enter custom business name:", cat_color)
+			name_kb_btn.custom_minimum_size.y = 44
+			name_kb_btn.add_theme_font_size_override("font_size", 19)
+			name_box.add_child(name_kb_btn)
 			cv.add_child(name_box)
 
 			if has_license:
@@ -7939,6 +7951,16 @@ func _render_business_tab_financials(list: VBoxContainer, selected_uid: String) 
 		btn_rep_all.add_theme_font_size_override("font_size", 20)
 		repay_row.add_child(btn_rep_all)
 
+		var btn_rep_custom := _create_cyber_button("💳 Repay Custom Principal", Color("#10b981"), func():
+			_show_business_repay_custom_loan(target_biz, cur_uid)
+		, true)
+		btn_rep_custom.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn_rep_custom.custom_minimum_size.y = 50
+		btn_rep_custom.add_theme_font_size_override("font_size", 20)
+		btn_rep_custom.alignment = HORIZONTAL_ALIGNMENT_CENTER
+		btn_rep_custom.set_meta("center_text", true)
+		repay_row.add_child(btn_rep_custom)
+
 		lv.add_child(repay_row)
 
 	list.add_child(loan_card)
@@ -8007,6 +8029,31 @@ func _render_business_tab_financials(list: VBoxContainer, selected_uid: String) 
 		eq_row.add_child(btn_inj)
 
 		ev.add_child(eq_row)
+
+	var custom_eq_row := HBoxContainer.new()
+	custom_eq_row.add_theme_constant_override("separation", 10)
+
+	var btn_custom_div := _create_cyber_button("💰 Withdraw Custom Dividend", Color("#10b981"), func():
+		_show_business_custom_dividend(target_biz, cur_uid)
+	, true)
+	btn_custom_div.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_custom_div.custom_minimum_size.y = 50
+	btn_custom_div.add_theme_font_size_override("font_size", 20)
+	btn_custom_div.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn_custom_div.set_meta("center_text", true)
+	custom_eq_row.add_child(btn_custom_div)
+
+	var btn_custom_inj := _create_cyber_button("💵 Inject Custom Capital", Color("#0284c7"), func():
+		_show_business_custom_capital(target_biz, cur_uid)
+	, true)
+	btn_custom_inj.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_custom_inj.custom_minimum_size.y = 50
+	btn_custom_inj.add_theme_font_size_override("font_size", 20)
+	btn_custom_inj.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn_custom_inj.set_meta("center_text", true)
+	custom_eq_row.add_child(btn_custom_inj)
+
+	ev.add_child(custom_eq_row)
 	list.add_child(equity_card)
 
 	# 5. Corporate Treasury Expansion & Growth Operations (Item 3)
@@ -8135,7 +8182,12 @@ func _show_rename_business_modal(biz: Dictionary) -> void:
 	edit_sb.content_margin_bottom = 8
 	name_edit.add_theme_stylebox_override("normal", edit_sb)
 	name_edit.add_theme_stylebox_override("focus", edit_sb)
+	MobileKeyboardManager.attach_to_input(name_edit, "Enter new name for %s:" % cur_name)
 	edit_box.add_child(name_edit)
+
+	var kb_btn := MobileKeyboardManager.create_keyboard_trigger_button(name_edit, "⌨️ Type New Business Name", "Enter new name for %s:" % cur_name, Color("#f59e0b"))
+	edit_box.add_child(kb_btn)
+	MobileKeyboardManager.open_keyboard.call_deferred(name_edit, "Enter new name for %s:" % cur_name)
 	list.add_child(edit_box)
 
 	var btn_save := _create_cyber_button("💾 Save Business Name", Color("#10b981"), func():
@@ -8155,6 +8207,222 @@ func _show_rename_business_modal(biz: Dictionary) -> void:
 	btn_save.custom_minimum_size.y = 54
 	btn_save.add_theme_font_size_override("font_size", 22)
 	list.add_child(btn_save)
+
+	modal.overlay.visible = true
+	if has_node("ThemeController"):
+		get_node("ThemeController").apply_subtree(modal.overlay)
+
+
+func _show_business_repay_custom_loan(biz: Dictionary, cur_uid: String) -> void:
+	var cur_loan: int = int(biz.get("loan_balance", 0))
+	var cur_treasury: int = int(biz.get("treasury", 0))
+	var modal := _create_cyber_modal("REPAY COMMERCIAL LOAN", "Repay principal on this enterprise's commercial debt directly from corporate treasury.", Color("#10b981"))
+	var summary := Label.new()
+	summary.text = "Commercial Loan: $%s • Corporate Treasury: $%s" % [_format_number(cur_loan), _format_number(cur_treasury)]
+	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	summary.add_theme_font_size_override("font_size", 24)
+	summary.add_theme_color_override("font_color", Color("#e2e8f0"))
+	modal.list.add_child(summary)
+
+	var amount_input := LineEdit.new()
+	amount_input.name = "CustomBusinessLoanRepayInput"
+	amount_input.placeholder_text = "Enter whole dollars (Max: $%s)" % _format_number(mini(cur_loan, cur_treasury))
+	amount_input.max_length = 15
+	amount_input.custom_minimum_size.y = 70
+	amount_input.virtual_keyboard_enabled = true
+	amount_input.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_NUMBER
+	amount_input.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	modal.list.add_child(amount_input)
+	get_node("OptionsMenu")._style_input(amount_input)
+
+	MobileKeyboardManager.attach_to_input(amount_input, "Enter loan repayment amount (whole dollars):")
+	var kb_btn := MobileKeyboardManager.create_keyboard_trigger_button(amount_input, "⌨️ Type Custom Repayment Amount", "Enter loan repayment amount (whole dollars):", Color("#10b981"))
+	modal.list.add_child(kb_btn)
+	MobileKeyboardManager.open_keyboard.call_deferred(amount_input, "Enter loan repayment amount (whole dollars):")
+
+	var feedback := Label.new()
+	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	feedback.add_theme_color_override("font_color", Color("#ef4444"))
+	feedback.add_theme_font_size_override("font_size", 22)
+	modal.list.add_child(feedback)
+
+	var submit := _create_cyber_button("💳 Repay Commercial Loan", Color("#10b981"), func():
+		var requested := _parse_loan_payment(amount_input.text)
+		if requested <= 0:
+			feedback.text = "⚠️ Enter a positive whole-dollar amount."
+			return
+		if requested > cur_loan:
+			feedback.text = "⚠️ Repayment cannot exceed loan balance ($%s)." % _format_number(cur_loan)
+			return
+		if requested > cur_treasury:
+			feedback.text = "⚠️ Insufficient corporate treasury ($%s available)." % _format_number(cur_treasury)
+			return
+		var r := BusinessManager.repay_business_loan(biz, requested)
+		if bool(r.get("success", false)):
+			update_ui()
+			SaveManager.save_game()
+			if is_instance_valid(modal.overlay):
+				modal.overlay.queue_free()
+			_show_business_modal("financials", cur_uid)
+		else:
+			feedback.text = "⚠️ " + str(r.get("message", "Repayment failed."))
+	, true)
+	submit.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	submit.set_meta("center_text", true)
+	submit.disabled = true
+	modal.list.add_child(submit)
+
+	amount_input.text_changed.connect(func(val: String):
+		var req := _parse_loan_payment(val)
+		submit.disabled = req <= 0 or req > cur_loan or req > cur_treasury
+		if submit.disabled and not val.is_empty():
+			if req > cur_loan:
+				feedback.text = "⚠️ Repayment cannot exceed loan balance ($%s)." % _format_number(cur_loan)
+			elif req > cur_treasury:
+				feedback.text = "⚠️ Insufficient treasury ($%s available)." % _format_number(cur_treasury)
+			else:
+				feedback.text = "⚠️ Enter a valid positive whole number."
+		else:
+			feedback.text = ""
+	)
+
+	modal.overlay.visible = true
+	if has_node("ThemeController"):
+		get_node("ThemeController").apply_subtree(modal.overlay)
+
+
+func _show_business_custom_dividend(biz: Dictionary, cur_uid: String) -> void:
+	var cur_treasury: int = int(biz.get("treasury", 0))
+	var modal := _create_cyber_modal("WITHDRAW OWNER DIVIDEND", "Withdraw funds from the corporate treasury directly into your personal cash.", Color("#10b981"))
+	var summary := Label.new()
+	summary.text = "Available Corporate Treasury: $%s" % _format_number(cur_treasury)
+	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	summary.add_theme_font_size_override("font_size", 24)
+	summary.add_theme_color_override("font_color", Color("#a7f3d0"))
+	modal.list.add_child(summary)
+
+	var amount_input := LineEdit.new()
+	amount_input.name = "CustomDividendInput"
+	amount_input.placeholder_text = "Enter dividend amount (Max: $%s)" % _format_number(cur_treasury)
+	amount_input.max_length = 15
+	amount_input.custom_minimum_size.y = 70
+	amount_input.virtual_keyboard_enabled = true
+	amount_input.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_NUMBER
+	amount_input.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	modal.list.add_child(amount_input)
+	get_node("OptionsMenu")._style_input(amount_input)
+
+	MobileKeyboardManager.attach_to_input(amount_input, "Enter dividend withdrawal amount (whole dollars):")
+	var kb_btn := MobileKeyboardManager.create_keyboard_trigger_button(amount_input, "⌨️ Type Custom Dividend Amount", "Enter dividend withdrawal amount (whole dollars):", Color("#10b981"))
+	modal.list.add_child(kb_btn)
+	MobileKeyboardManager.open_keyboard.call_deferred(amount_input, "Enter dividend withdrawal amount (whole dollars):")
+
+	var feedback := Label.new()
+	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	feedback.add_theme_color_override("font_color", Color("#ef4444"))
+	feedback.add_theme_font_size_override("font_size", 22)
+	modal.list.add_child(feedback)
+
+	var submit := _create_cyber_button("💰 Withdraw Dividend", Color("#10b981"), func():
+		var requested := _parse_loan_payment(amount_input.text)
+		if requested <= 0:
+			feedback.text = "⚠️ Enter a positive whole-dollar amount."
+			return
+		if requested > cur_treasury:
+			feedback.text = "⚠️ Withdrawal cannot exceed treasury ($%s available)." % _format_number(cur_treasury)
+			return
+		var r := BusinessManager.withdraw_owner_dividend(biz, requested)
+		if bool(r.get("success", false)):
+			update_ui()
+			SaveManager.save_game()
+			if is_instance_valid(modal.overlay):
+				modal.overlay.queue_free()
+			_show_business_modal("financials", cur_uid)
+		else:
+			feedback.text = "⚠️ " + str(r.get("message", "Withdrawal failed."))
+	, true)
+	submit.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	submit.set_meta("center_text", true)
+	submit.disabled = true
+	modal.list.add_child(submit)
+
+	amount_input.text_changed.connect(func(val: String):
+		var req := _parse_loan_payment(val)
+		submit.disabled = req <= 0 or req > cur_treasury
+		if submit.disabled and not val.is_empty():
+			feedback.text = "⚠️ Amount must be between $1 and $%s." % _format_number(cur_treasury)
+		else:
+			feedback.text = ""
+	)
+
+	modal.overlay.visible = true
+	if has_node("ThemeController"):
+		get_node("ThemeController").apply_subtree(modal.overlay)
+
+
+func _show_business_custom_capital(biz: Dictionary, cur_uid: String) -> void:
+	var avail_funds: int = PlayerData.get_available_funds()
+	var modal := _create_cyber_modal("INJECT OWNER CAPITAL", "Inject personal cash and savings into the corporate treasury to expand working capital.", Color("#0284c7"))
+	var summary := Label.new()
+	summary.text = "Available Personal Funds: $%s" % _format_number(avail_funds)
+	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	summary.add_theme_font_size_override("font_size", 24)
+	summary.add_theme_color_override("font_color", Color("#bae6fd"))
+	modal.list.add_child(summary)
+
+	var amount_input := LineEdit.new()
+	amount_input.name = "CustomCapitalInput"
+	amount_input.placeholder_text = "Enter capital injection (Max: $%s)" % _format_number(avail_funds)
+	amount_input.max_length = 15
+	amount_input.custom_minimum_size.y = 70
+	amount_input.virtual_keyboard_enabled = true
+	amount_input.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_NUMBER
+	amount_input.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	modal.list.add_child(amount_input)
+	get_node("OptionsMenu")._style_input(amount_input)
+
+	MobileKeyboardManager.attach_to_input(amount_input, "Enter capital injection amount (whole dollars):")
+	var kb_btn := MobileKeyboardManager.create_keyboard_trigger_button(amount_input, "⌨️ Type Custom Capital Amount", "Enter capital injection amount (whole dollars):", Color("#0284c7"))
+	modal.list.add_child(kb_btn)
+	MobileKeyboardManager.open_keyboard.call_deferred(amount_input, "Enter capital injection amount (whole dollars):")
+
+	var feedback := Label.new()
+	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	feedback.add_theme_color_override("font_color", Color("#ef4444"))
+	feedback.add_theme_font_size_override("font_size", 22)
+	modal.list.add_child(feedback)
+
+	var submit := _create_cyber_button("💵 Inject Capital", Color("#0284c7"), func():
+		var requested := _parse_loan_payment(amount_input.text)
+		if requested <= 0:
+			feedback.text = "⚠️ Enter a positive whole-dollar amount."
+			return
+		if requested > avail_funds:
+			feedback.text = "⚠️ Injection cannot exceed available funds ($%s available)." % _format_number(avail_funds)
+			return
+		var r := BusinessManager.deposit_owner_capital(biz, requested)
+		if bool(r.get("success", false)):
+			update_ui()
+			SaveManager.save_game()
+			if is_instance_valid(modal.overlay):
+				modal.overlay.queue_free()
+			_show_business_modal("financials", cur_uid)
+		else:
+			feedback.text = "⚠️ " + str(r.get("message", "Injection failed."))
+	, true)
+	submit.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	submit.set_meta("center_text", true)
+	submit.disabled = true
+	modal.list.add_child(submit)
+
+	amount_input.text_changed.connect(func(val: String):
+		var req := _parse_loan_payment(val)
+		submit.disabled = req <= 0 or req > avail_funds
+		if submit.disabled and not val.is_empty():
+			feedback.text = "⚠️ Amount must be between $1 and $%s." % _format_number(avail_funds)
+		else:
+			feedback.text = ""
+	)
 
 	modal.overlay.visible = true
 	if has_node("ThemeController"):
@@ -13778,6 +14046,10 @@ func _configure_creation() -> void:
 		birthplace_input.add_icon_item(CreationOptions.flag_texture(country[1], country[2]), country[0])
 	birthplace_input.select(8)
 	var content := name_input.get_parent()
+	var name_kb_btn := MobileKeyboardManager.create_keyboard_trigger_button(name_input, "⌨️ Enter Custom Name", "What is your character's name?", Color("#00f0ff"))
+	name_kb_btn.name = "CustomNameKeyboardButton"
+	content.add_child(name_kb_btn)
+	content.move_child(name_kb_btn, name_input.get_index() + 1)
 
 	var gender_label := Label.new()
 	gender_label.name = "GenderLabel"

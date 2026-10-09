@@ -387,8 +387,13 @@ func _open_trade_modal(c: Dictionary, is_buy: bool) -> void:
 	le_empty.content_margin_left = 16
 	le_empty.content_margin_right = 16
 	line_edit.add_theme_stylebox_override("normal", le_empty)
-	line_edit.add_theme_color_override("font_color", Color("#0f172a" if is_light else "#ffffff"))
 	input_container.add_child(line_edit)
+
+	line_edit.virtual_keyboard_enabled = true
+	line_edit.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_NUMBER
+	MobileKeyboardManager.attach_to_input(line_edit, "Enter share quantity to %s:" % action_word)
+	var kb_btn := MobileKeyboardManager.create_keyboard_trigger_button(line_edit, "⌨️ Type Custom Share Quantity", "Enter share quantity to %s:" % action_word, Color("#0284c7"))
+	list.add_child(kb_btn)
 	
 	# 3. Quick Preset Buttons Row
 	var preset_row := HBoxContainer.new()

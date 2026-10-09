@@ -176,12 +176,16 @@ func field(parent: Node, placeholder: String) -> LineEdit:
 	edit.add_theme_font_size_override("font_size", 26)
 	parent.add_child(edit)
 	_style_input(edit)
+	MobileKeyboardManager.attach_to_input(edit, placeholder)
 	return edit
 
 
 func _cities() -> void:
 	var view := modal("CUSTOM CITIES", "Cities are stored on this device and used in new birth stories for their matching country.")
 	var city := field(view.list, "City name")
+	var kb_city := MobileKeyboardManager.create_keyboard_trigger_button(city, "⌨️ Enter Custom City Name", "Enter city name:", Color("#0284c7"))
+	view.list.add_child(kb_city)
+	view.list.move_child(kb_city, city.get_index() + 1)
 	var country := country_picker(view.list)
 	var status := section(view.list, "")
 	button(view.list, "Add City", func():
@@ -201,6 +205,9 @@ func _people() -> void:
 	var view := modal("CUSTOM PEOPLE", "Create adult NPCs using the game's portraits. They can appear in dating encounters; all custom people may also appear in annual social encounters.")
 	var name_field := field(view.list, "Full name")
 	name_field.max_length = 40
+	var kb_person := MobileKeyboardManager.create_keyboard_trigger_button(name_field, "⌨️ Enter Custom Full Name", "Enter full name for custom person:", Color("#0284c7"))
+	view.list.add_child(kb_person)
+	view.list.move_child(kb_person, name_field.get_index() + 1)
 	var country := country_picker(view.list)
 	var gender := OptionButton.new()
 	gender.add_item("MALE")

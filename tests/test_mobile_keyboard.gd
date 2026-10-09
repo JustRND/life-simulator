@@ -108,4 +108,44 @@ func _ready() -> void:
 	assert(dynamic_input.virtual_keyboard_enabled, "Dynamic LineEdit virtual_keyboard_enabled must be true")
 	print("✔ Test 5 passed: Dynamically instantiated LineEdit auto-attached via node_added signal!")
 
+	# Test 6: Dedicated Mobile Keyboard Trigger Buttons for Custom Values
+	print("\n--- Test 6: Dedicated Mobile Keyboard Trigger Buttons ---")
+	# 6.1 Custom Names
+	var custom_name_input := LineEdit.new()
+	custom_name_input.name = "CustomNameInput"
+	vbox.add_child(custom_name_input)
+	var name_btn := MobileKeyboardManager.create_keyboard_trigger_button(custom_name_input, "⌨️ Enter Custom Name", "What is your character's name?", Color("#00f0ff"))
+	vbox.add_child(name_btn)
+	assert(name_btn != null and name_btn is Button, "Dedicated custom name button must be created")
+	assert(name_btn.text == "⌨️ Enter Custom Name", "Custom name button text verified")
+
+	# 6.2 Custom Amounts
+	var custom_amount_input := LineEdit.new()
+	custom_amount_input.name = "CustomAmountInput"
+	vbox.add_child(custom_amount_input)
+	var amount_btn := MobileKeyboardManager.create_keyboard_trigger_button(custom_amount_input, "⌨️ Type Custom Amount", "Enter deposit amount in whole dollars:", Color("#10b981"))
+	vbox.add_child(amount_btn)
+	assert(amount_btn != null and amount_btn is Button, "Dedicated custom amount button must be created")
+	assert(amount_btn.text == "⌨️ Type Custom Amount", "Custom amount button text verified")
+
+	# 6.3 Custom Cities
+	var custom_city_input := LineEdit.new()
+	custom_city_input.name = "CustomCityInput"
+	vbox.add_child(custom_city_input)
+	var city_btn := MobileKeyboardManager.create_keyboard_trigger_button(custom_city_input, "⌨️ Enter Custom City Name", "Enter city name:", Color("#0284c7"))
+	vbox.add_child(city_btn)
+	assert(city_btn != null and city_btn is Button, "Dedicated custom city button must be created")
+	assert(city_btn.text == "⌨️ Enter Custom City Name", "Custom city button text verified")
+
+	# 6.4 Button Press Action Verification
+	var amount_text_changed_fired := false
+	custom_amount_input.text_changed.connect(func(val):
+		amount_text_changed_fired = true
+	)
+	# Trigger dedicated button click
+	amount_btn.emit_signal("pressed")
+	assert(custom_amount_input.has_focus(), "Clicking dedicated button must grant focus to target input")
+	print("✔ Test 6 passed: Dedicated keyboard trigger buttons for custom names, amounts, and cities verified!")
+
 	print("\n🎉 ALL MOBILE KEYBOARD & TEXT INPUT INTEGRATION TESTS PASSED SUCCESSFULLY! 🎉")
+	get_tree().quit(0)
