@@ -3777,7 +3777,7 @@ func _show_credit_card_custom_amount_modal(min_pay: int, total_usage: int) -> vo
 	amount_input.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	modal.list.add_child(amount_input)
 	get_node("OptionsMenu")._style_input(amount_input)
-	MobileKeyboardManager.attach_to_input(amount_input, "Repayment amount (Min 10%: $%d)" % min_pay)
+	MobileKeyboardManager.attach_to_input(amount_input, "Repayment amount (Min 10%%: $%d)" % min_pay)
 
 	var feedback := Label.new()
 	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

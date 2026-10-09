@@ -15,8 +15,9 @@ const FIELDS = [
 
 
 static func ensure(person: Dictionary) -> void:
-	if person.is_empty():
+	if person.is_empty() or bool(person.get("_is_ensuring", false)):
 		return
+	person["_is_ensuring"] = true
 
 	if not person.has("life_progress"):
 		var base_smarts: int = clampi(int(person.get("smarts", 70)), 35, 95)
@@ -70,6 +71,8 @@ static func ensure(person: Dictionary) -> void:
 			person["occupation"] = occ_prefix + " / " + str(life["job_title"])
 		else:
 			person["occupation"] = occ_prefix
+
+	person.erase("_is_ensuring")
 
 
 static func _record(life: Dictionary, year: int, text: String) -> void:
