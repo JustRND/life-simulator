@@ -7408,7 +7408,7 @@ func _render_business_tab_enterprises(list: VBoxContainer) -> void:
 
 		var btn_sell := _create_cyber_button("🏷️ Sell / Exit", Color("#ef4444"), func():
 			var r: Dictionary = BusinessManager.liquidate_business(uid)
-			_show_simple_popup("💼 ENTERPRISE LIQUIDATION", str(r.get("message", "Business sold.")), Color("#10b981"))
+			add_life_event(str(r.get("message", "Business sold.")), "finance")
 			update_ui()
 			SaveManager.save_game()
 			_show_business_modal("enterprises")
@@ -7629,7 +7629,7 @@ func _show_business_category_modal(category_id: String) -> void:
 					if bool(res.get("allowed", false)):
 						var b_data: Dictionary = res.get("business", {})
 						var registered_name: String = str(b_data.get("name", custom_name))
-						_show_simple_popup("🚀 ENTERPRISE INCORPORATED", "Congratulations! '%s' has been officially incorporated under state charter.\n\nBusiness treasury seeded with $10,000 working capital." % registered_name, Color("#10b981"))
+						add_life_event("🚀 ENTERPRISE INCORPORATED: Congratulations! '%s' has been officially incorporated under state charter. Business treasury seeded with $10,000 working capital." % registered_name, "milestone")
 						update_ui()
 						SaveManager.save_game()
 						if is_instance_valid(business_category_modal_overlay):
@@ -7651,7 +7651,7 @@ func _show_business_category_modal(category_id: String) -> void:
 				if bool(res.get("allowed", false)):
 					var b_data: Dictionary = res.get("business", {})
 					var registered_name: String = str(b_data.get("name", custom_name))
-					_show_simple_popup("⚠️ UNLICENSED ENTERPRISE OPENED", "You launched '%s' WITHOUT a commercial license.\n\nWARNING: Operating without a license is a crime! Each year you risk regulatory raids, hefty fines, forced closure, asset confiscation, and prison sentences!" % registered_name, Color("#f97316"))
+					add_life_event("⚠️ UNLICENSED ENTERPRISE OPENED: You launched '%s' WITHOUT a commercial license! Operating without a license is a crime and risks audits, lawsuits, closures, and prison sentences!" % registered_name, "crime")
 					update_ui()
 					SaveManager.save_game()
 					if is_instance_valid(business_category_modal_overlay):
@@ -7828,7 +7828,7 @@ func _render_business_tab_financials(list: VBoxContainer, selected_uid: String) 
 		var btn_pay_tax := _create_cyber_button("🏛️ Pay Corporate Taxes ($%s)" % _format_number(unpaid_tax), Color("#10b981"), func():
 			var r: Dictionary = BusinessManager.pay_business_taxes(target_biz)
 			if bool(r.get("success", false)):
-				_show_simple_popup("🏛️ CORPORATE TAXES PAID", str(r.get("message", "Taxes paid.")), Color("#10b981"))
+				add_life_event(str(r.get("message", "Corporate taxes paid.")), "finance")
 				update_ui()
 				SaveManager.save_game()
 				_show_business_modal("financials", cur_uid)
@@ -7881,6 +7881,7 @@ func _render_business_tab_financials(list: VBoxContainer, selected_uid: String) 
 	var btn_b25 := _create_cyber_button("🏦 Borrow $25,000", Color("#8b5cf6"), func():
 		var r: Dictionary = BusinessManager.take_business_loan(target_biz, 25000)
 		if bool(r.get("success", false)):
+			add_life_event(str(r.get("message", "Commercial loan of $25,000 disbursed into corporate treasury.")), "finance")
 			update_ui()
 			SaveManager.save_game()
 			_show_business_modal("financials", cur_uid)
@@ -7895,6 +7896,7 @@ func _render_business_tab_financials(list: VBoxContainer, selected_uid: String) 
 	var btn_b100 := _create_cyber_button("🏦 Borrow $100,000", Color("#8b5cf6"), func():
 		var r: Dictionary = BusinessManager.take_business_loan(target_biz, 100000)
 		if bool(r.get("success", false)):
+			add_life_event(str(r.get("message", "Commercial loan of $100,000 disbursed into corporate treasury.")), "finance")
 			update_ui()
 			SaveManager.save_game()
 			_show_business_modal("financials", cur_uid)
@@ -7909,6 +7911,7 @@ func _render_business_tab_financials(list: VBoxContainer, selected_uid: String) 
 	var btn_b500 := _create_cyber_button("🏦 Borrow $500,000", Color("#8b5cf6"), func():
 		var r: Dictionary = BusinessManager.take_business_loan(target_biz, 500000)
 		if bool(r.get("success", false)):
+			add_life_event(str(r.get("message", "Commercial loan of $500,000 disbursed into corporate treasury.")), "finance")
 			update_ui()
 			SaveManager.save_game()
 			_show_business_modal("financials", cur_uid)
@@ -7930,6 +7933,7 @@ func _render_business_tab_financials(list: VBoxContainer, selected_uid: String) 
 		var btn_rep10 := _create_cyber_button("💳 Repay $10,000 Principal", Color("#10b981"), func():
 			var r: Dictionary = BusinessManager.repay_business_loan(target_biz, 10000)
 			if bool(r.get("success", false)):
+				add_life_event(str(r.get("message", "Repaid $10,000 commercial loan principal from treasury.")), "finance")
 				update_ui()
 				SaveManager.save_game()
 				_show_business_modal("financials", cur_uid)
@@ -7944,6 +7948,7 @@ func _render_business_tab_financials(list: VBoxContainer, selected_uid: String) 
 		var btn_rep_all := _create_cyber_button("💳 Repay Full Balance ($%s)" % _format_number(cur_loan), Color("#10b981"), func():
 			var r: Dictionary = BusinessManager.repay_business_loan(target_biz, cur_loan)
 			if bool(r.get("success", false)):
+				add_life_event(str(r.get("message", "Repaid entire commercial loan balance from treasury.")), "finance")
 				update_ui()
 				SaveManager.save_game()
 				_show_business_modal("financials", cur_uid)
@@ -8003,6 +8008,7 @@ func _render_business_tab_financials(list: VBoxContainer, selected_uid: String) 
 		var btn_div := _create_cyber_button("💰 Withdraw $%s Dividend (Treasury -> Cash)" % _format_number(amt), Color("#10b981"), func():
 			var r: Dictionary = BusinessManager.withdraw_owner_dividend(target_biz, amt)
 			if bool(r.get("success", false)):
+				add_life_event(str(r.get("message", "Withdrew $%s owner dividend." % _format_number(amt))), "finance")
 				update_ui()
 				SaveManager.save_game()
 				_show_business_modal("financials", cur_uid)
@@ -8019,6 +8025,7 @@ func _render_business_tab_financials(list: VBoxContainer, selected_uid: String) 
 		var btn_inj := _create_cyber_button("💵 Inject $%s Capital (Cash -> Treasury)" % _format_number(amt), Color("#0284c7"), func():
 			var r: Dictionary = BusinessManager.deposit_owner_capital(target_biz, amt)
 			if bool(r.get("success", false)):
+				add_life_event(str(r.get("message", "Injected $%s capital into corporate treasury." % _format_number(amt))), "finance")
 				update_ui()
 				SaveManager.save_game()
 				_show_business_modal("financials", cur_uid)
@@ -8106,7 +8113,7 @@ func _render_business_tab_financials(list: VBoxContainer, selected_uid: String) 
 	var btn_fac := _create_cyber_button("⚙️ Upgrade Automation to Grade %d ($%s Treasury)" % [fac_tier + 1, _format_number(fac_cost)], Color("#8b5cf6"), func():
 		var r := BusinessManager.upgrade_business_facilities(target_biz)
 		if bool(r.get("success", false)):
-			_show_simple_popup("⚙️ FACILITY UPGRADE", str(r.get("message", "Upgraded!")), Color("#10b981"))
+			add_life_event(str(r.get("message", "Facility upgraded!")), "finance")
 			update_ui()
 			SaveManager.save_game()
 			_show_business_modal("financials", cur_uid)
@@ -8124,7 +8131,7 @@ func _render_business_tab_financials(list: VBoxContainer, selected_uid: String) 
 	var btn_ad := _create_cyber_button("📢 Launch $25,000 National Advertising Blitz (Treasury)", Color("#f59e0b"), func():
 		var r := BusinessManager.launch_treasury_marketing_blitz(target_biz, 25000)
 		if bool(r.get("success", false)):
-			_show_simple_popup("📢 ADVERTISING BLITZ", str(r.get("message", "Campaign launched!")), Color("#10b981"))
+			add_life_event(str(r.get("message", "Campaign launched!")), "finance")
 			update_ui()
 			SaveManager.save_game()
 			_show_business_modal("financials", cur_uid)
@@ -8192,7 +8199,7 @@ func _show_rename_business_modal(biz: Dictionary) -> void:
 		if new_name != "":
 			var r := BusinessManager.rename_business(uid, new_name)
 			if bool(r.get("success", false)):
-				_show_simple_popup("✏️ ENTERPRISE RENAMED", str(r.get("message", "Name updated.")), Color("#10b981"))
+				add_life_event(str(r.get("message", "Enterprise name updated.")), "activity")
 				update_ui()
 				SaveManager.save_game()
 				if is_instance_valid(modal.overlay):
@@ -8265,12 +8272,12 @@ func _show_expand_branch_modal(biz: Dictionary, cur_uid: String) -> void:
 
 		var r := BusinessManager.open_business_branch(biz, b_name)
 		if bool(r.get("success", false)):
+			add_life_event(str(r.get("message", "Branch established!")), "milestone")
 			update_ui()
 			SaveManager.save_game()
 			if is_instance_valid(modal.overlay):
 				modal.overlay.queue_free()
 			var new_uid: String = str(r.get("branch", {}).get("uid", cur_uid))
-			_show_simple_popup("🏢 BRANCH EXPANSION", str(r.get("message", "Branch established!")), Color("#10b981"))
 			_show_business_modal("overview", new_uid)
 		else:
 			feedback.text = "⚠️ " + str(r.get("message", "Could not open branch."))
@@ -8333,6 +8340,7 @@ func _show_business_repay_custom_loan(biz: Dictionary, cur_uid: String) -> void:
 			return
 		var r := BusinessManager.repay_business_loan(biz, requested)
 		if bool(r.get("success", false)):
+			add_life_event(str(r.get("message", "Repaid $%s commercial loan principal from treasury." % _format_number(requested))), "finance")
 			update_ui()
 			SaveManager.save_game()
 			if is_instance_valid(modal.overlay):
@@ -8407,6 +8415,7 @@ func _show_business_custom_dividend(biz: Dictionary, cur_uid: String) -> void:
 			return
 		var r := BusinessManager.withdraw_owner_dividend(biz, requested)
 		if bool(r.get("success", false)):
+			add_life_event(str(r.get("message", "Withdrew $%s owner dividend." % _format_number(requested))), "finance")
 			update_ui()
 			SaveManager.save_game()
 			if is_instance_valid(modal.overlay):
@@ -8476,6 +8485,7 @@ func _show_business_custom_capital(biz: Dictionary, cur_uid: String) -> void:
 			return
 		var r := BusinessManager.deposit_owner_capital(biz, requested)
 		if bool(r.get("success", false)):
+			add_life_event(str(r.get("message", "Injected $%s capital into corporate treasury." % _format_number(requested))), "finance")
 			update_ui()
 			SaveManager.save_game()
 			if is_instance_valid(modal.overlay):

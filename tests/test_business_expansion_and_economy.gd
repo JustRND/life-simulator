@@ -7,6 +7,7 @@ func _ready() -> void:
 	test_branch_independent_micromanagement()
 	test_progressive_conglomerate_tax()
 	test_business_slumps_and_flops()
+	test_business_actions_sounded_to_timeline_without_popups()
 	print("--- ALL BUSINESS EXPANSION & ECONOMY BALANCING TESTS PASSED! ---")
 	get_tree().quit(0)
 
@@ -167,3 +168,60 @@ func test_business_slumps_and_flops() -> void:
 
 	assert(not found_doomed, "Doomed insolvent business must flop and be removed from owned_businesses")
 	print("✔ Business failure and flop/bankruptcy dissolution verified.")
+
+
+func test_business_actions_sounded_to_timeline_without_popups() -> void:
+	print("Testing business actions sounded to timeline without popup clutter...")
+	var main_scene = load("res://scenes/main/main_screen.tscn").instantiate()
+	add_child(main_scene)
+	if is_instance_valid(main_scene.new_game_panel):
+		main_scene.new_game_panel.hide()
+	if is_instance_valid(main_scene.loading_screen):
+		main_scene.loading_screen.hide()
+	if is_instance_valid(main_scene.disclaimer_screen):
+		main_scene.disclaimer_screen.hide()
+
+	var test_biz := {
+		"uid": "biz_timeline_test",
+		"type_id": "biz_tech_startup",
+		"name": "Apex Logic",
+		"icon": "💻",
+		"treasury": 2500000,
+		"unpaid_taxes": 15000,
+		"loan_balance": 50000,
+		"branches": 1,
+		"facility_tier": 1,
+		"employees": 4
+	}
+	PlayerData.owned_businesses = [test_biz]
+	PlayerData.life_log.clear()
+
+	# Pay corporate taxes
+	var tax_res := BusinessManager.pay_business_taxes(test_biz)
+	assert(bool(tax_res.get("success", false)), "Tax payment should succeed")
+	main_scene.add_life_event(str(tax_res.get("message", "Corporate taxes paid.")), "finance")
+	assert(PlayerData.life_log.size() >= 1, "Tax payment must be logged to timeline")
+	assert("tax" in str(PlayerData.life_log[-1].get("text", "")).to_lower(), "Timeline log must reference corporate taxes")
+
+	# Expand branch
+	var exp_res := BusinessManager.open_business_branch(test_biz, "Apex Logic - East Branch")
+	assert(bool(exp_res.get("success", false)), "Branch expansion should succeed")
+	main_scene.add_life_event(str(exp_res.get("message", "Branch established!")), "milestone")
+	assert(PlayerData.life_log.size() >= 2, "Branch expansion must be logged to timeline")
+	assert("branch" in str(PlayerData.life_log[-1].get("text", "")).to_lower(), "Timeline log must reference branch expansion")
+
+	# Owner dividend
+	var div_res := BusinessManager.withdraw_owner_dividend(test_biz, 10000)
+	assert(bool(div_res.get("success", false)), "Dividend withdrawal should succeed")
+	main_scene.add_life_event(str(div_res.get("message", "Withdrew $10,000 owner dividend.")), "finance")
+	assert(PlayerData.life_log.size() >= 3, "Dividend withdrawal must be logged to timeline")
+
+	# Capital injection
+	PlayerData.money = 50000
+	var inj_res := BusinessManager.deposit_owner_capital(test_biz, 10000)
+	assert(bool(inj_res.get("success", false)), "Capital injection should succeed")
+	main_scene.add_life_event(str(inj_res.get("message", "Injected $10,000 capital into corporate treasury.")), "finance")
+	assert(PlayerData.life_log.size() >= 4, "Capital injection must be logged to timeline")
+
+	main_scene.queue_free()
+	print("✔ Business actions sounded to timeline without popups verified.")
