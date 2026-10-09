@@ -141,7 +141,51 @@ func capture_data() -> Dictionary:
 		"will_recipient": PlayerData.will_recipient
 	}
 
+var _save_timer: Timer = null
+var _pending_save_path := ""
+
+
+func _ready() -> void:
+	_save_timer = Timer.new()
+	_save_timer.one_shot = true
+	_save_timer.wait_time = 0.35
+	_save_timer.timeout.connect(_on_save_timer_timeout)
+	add_child(_save_timer)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_CRASH:
+		flush_pending_save()
+
+
+func flush_pending_save() -> void:
+	if _save_timer != null and not _save_timer.is_stopped():
+		_save_timer.stop()
+		var path := _pending_save_path if not _pending_save_path.is_empty() else SAVE_PATH
+		_pending_save_path = ""
+		save_game(path)
+
+
+func save_game_debounced(delay_sec: float = 0.35, path: String = SAVE_PATH) -> void:
+	_pending_save_path = path
+	if _save_timer == null or not is_inside_tree():
+		save_game(path)
+		return
+	_save_timer.stop()
+	_save_timer.wait_time = maxf(0.1, delay_sec)
+	_save_timer.start()
+
+
+func _on_save_timer_timeout() -> void:
+	var path := _pending_save_path if not _pending_save_path.is_empty() else SAVE_PATH
+	_pending_save_path = ""
+	save_game(path)
+
+
 func save_game(path: String = SAVE_PATH) -> bool:
+	if _save_timer != null and not _save_timer.is_stopped():
+		_save_timer.stop()
+	_pending_save_path = ""
 	var save_data := capture_data()
 	return write_data(path, save_data)
 
@@ -153,7 +197,8 @@ func write_data(path: String, data: Dictionary) -> bool:
 		push_error("Could not open save file.")
 		return false
 
-	file.store_string(JSON.stringify(data, "\t"))
+	var json_str := JSON.stringify(data)
+	file.store_string(json_str)
 	file.flush()
 	var write_error := file.get_error()
 	file.close()

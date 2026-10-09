@@ -1123,13 +1123,17 @@ func trigger_death(cause: String) -> void:
 	_show_death_screen(cause)
 
 
+var _life_feed_empty: bool = true
+
+
 func add_life_event(text: String, kind: String = "event") -> void:
 	var clean_text := PlayerData.sanitize_stat_spoilers(text).strip_edges()
 	if clean_text == "":
 		return
 
-	if life_feed.text.strip_edges() == "":
+	if _life_feed_empty:
 		life_feed.append_text(_format_life_entry(PlayerData.age, clean_text))
+		_life_feed_empty = false
 	else:
 		life_feed.append_text("\n\n" + _format_life_entry(PlayerData.age, clean_text))
 
@@ -1139,6 +1143,7 @@ func add_life_event(text: String, kind: String = "event") -> void:
 
 func rebuild_life_feed() -> void:
 	life_feed.clear()
+	_life_feed_empty = true
 
 	for entry in PlayerData.life_log:
 		var text_value: String = str(entry.get("text", ""))
@@ -1146,8 +1151,9 @@ func rebuild_life_feed() -> void:
 			continue
 
 		var formatted_entry := _format_life_entry(int(entry.get("age", 0)), text_value)
-		if life_feed.text.strip_edges() == "":
+		if _life_feed_empty:
 			life_feed.append_text(formatted_entry)
+			_life_feed_empty = false
 		else:
 			life_feed.append_text("\n\n" + formatted_entry)
 
@@ -1882,20 +1888,47 @@ func _update_history_filter_buttons() -> void:
 		btn.add_theme_color_override("font_color", (Color("#0369a1") if is_light else Color("#ffffff")) if is_selected else normal_color)
 
 
+var history_display_limit: int = 35
+var _card_style_milestone: StyleBoxFlat = null
+var _card_style_regular: StyleBoxFlat = null
+
+
+func _get_card_style(is_milestone: bool) -> StyleBoxFlat:
+	if is_milestone:
+		if _card_style_milestone == null:
+			_card_style_milestone = StyleBoxFlat.new()
+			_card_style_milestone.bg_color = Color("#17120a")
+			_card_style_milestone.border_color = Color("#f59e0b")
+			_card_style_milestone.set_border_width_all(2)
+			_card_style_milestone.set_corner_radius_all(8)
+		return _card_style_milestone
+	else:
+		if _card_style_regular == null:
+			_card_style_regular = StyleBoxFlat.new()
+			_card_style_regular.bg_color = Color("#091122")
+			_card_style_regular.border_color = Color("#1e3a5f")
+			_card_style_regular.set_border_width_all(2)
+			_card_style_regular.set_corner_radius_all(8)
+		return _card_style_regular
+
+
 func _on_filter_all_pressed() -> void:
 	overview_history_filter = "all"
+	history_display_limit = 35
 	_update_history_filter_buttons()
 	update_history_panel()
 
 
 func _on_filter_milestones_pressed() -> void:
 	overview_history_filter = "milestones"
+	history_display_limit = 35
 	_update_history_filter_buttons()
 	update_history_panel()
 
 
 func _on_filter_unique_pressed() -> void:
 	overview_history_filter = "unique"
+	history_display_limit = 35
 	_update_history_filter_buttons()
 	update_history_panel()
 
@@ -1908,9 +1941,10 @@ func update_history_panel() -> void:
 		history_list.remove_child(child)
 		child.queue_free()
 
-	var count := 0
+	var matching_entries: Array[Dictionary] = []
 	var last_rendered_text := ""
 	var last_rendered_age := -1
+
 	for entry in PlayerData.life_log:
 		var is_milestone: bool = _is_life_milestone(entry)
 		var is_unique: bool = _is_unique_life_event(entry)
@@ -1928,20 +1962,19 @@ func update_history_panel() -> void:
 			continue
 		last_rendered_text = entry_text
 		last_rendered_age = entry_age
+		matching_entries.append(entry)
 
-		count += 1
+	var total_count := matching_entries.size()
+	var visible_count := mini(total_count, history_display_limit)
+	var is_light: bool = LifeLibrary.data.theme == "light"
+
+	for i in range(visible_count):
+		var entry: Dictionary = matching_entries[i]
+		var is_milestone: bool = _is_life_milestone(entry)
+
 		var card := PanelContainer.new()
 		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var card_style := StyleBoxFlat.new()
-		if is_milestone:
-			card_style.bg_color = Color("#17120a")
-			card_style.border_color = Color("#f59e0b")
-		else:
-			card_style.bg_color = Color("#091122")
-			card_style.border_color = Color("#1e3a5f")
-		card_style.set_border_width_all(2)
-		card_style.set_corner_radius_all(8)
-		card.add_theme_stylebox_override("panel", card_style)
+		card.add_theme_stylebox_override("panel", _get_card_style(is_milestone))
 
 		var margin := MarginContainer.new()
 		margin.add_theme_constant_override("margin_left", 20)
@@ -1957,7 +1990,6 @@ func update_history_panel() -> void:
 		var header_hbox := HBoxContainer.new()
 		vbox.add_child(header_hbox)
 
-		var is_light: bool = LifeLibrary.data.theme == "light"
 		var badge_lbl := Label.new()
 		if is_milestone:
 			badge_lbl.text = "🏆 LIFE MILESTONE"
@@ -1985,8 +2017,19 @@ func update_history_panel() -> void:
 
 		history_list.add_child(card)
 
-	if count == 0:
-		var is_light: bool = LifeLibrary.data.theme == "light"
+	if total_count > visible_count:
+		var remaining := total_count - visible_count
+		var load_more_btn := Button.new()
+		load_more_btn.text = "▼ Load Older Events (%d remaining)" % remaining
+		load_more_btn.custom_minimum_size.y = 54
+		load_more_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		load_more_btn.pressed.connect(func():
+			history_display_limit += 35
+			update_history_panel()
+		)
+		history_list.add_child(load_more_btn)
+
+	if total_count == 0:
 		var empty := Label.new()
 		if overview_history_filter == "milestones":
 			empty.text = "No life milestones reached yet.\nEnrolling in school, graduating, starting a career, or key achievements will appear here!"
@@ -14491,6 +14534,18 @@ func _on_age_btn_up() -> void:
 		tween.tween_property(art, "scale", Vector2(1.05, 1.05), 0.08).set_trans(Tween.TRANS_QUAD)
 
 
+var _stat_gradient_cache: Dictionary = {}
+
+
+func _get_or_create_stat_gradient(c1: Color, c2: Color) -> GradientTexture2D:
+	var key: int = int(c1.to_rgba32()) ^ (int(c2.to_rgba32()) << 1)
+	if _stat_gradient_cache.has(key):
+		return _stat_gradient_cache[key]
+	var tex := _create_stat_gradient_texture(c1, c2)
+	_stat_gradient_cache[key] = tex
+	return tex
+
+
 func _create_stat_gradient_texture(c1: Color, c2: Color) -> GradientTexture2D:
 	var grad := Gradient.new()
 	grad.colors = PackedColorArray([c1, c2])
@@ -14566,7 +14621,7 @@ func _configure_stat_bars() -> void:
 		grades_progress_bar.add_theme_constant_override("outline_size", 4)
 		grades_progress_bar.add_theme_stylebox_override("background", track_style)
 		var fill_style := StyleBoxTexture.new()
-		fill_style.texture = _create_stat_gradient_texture(Color("#10b981"), Color("#047857"))
+		fill_style.texture = _get_or_create_stat_gradient(Color("#10b981"), Color("#047857"))
 		grades_progress_bar.add_theme_stylebox_override("fill", fill_style)
 
 
@@ -14578,10 +14633,14 @@ func _update_stat_bar_color(bar: ProgressBar, value: int, col_left: Color, col_r
 		fill = StyleBoxTexture.new()
 		bar.add_theme_stylebox_override("fill", fill)
 
+	var target_tex: GradientTexture2D
 	if value < 25:
-		fill.texture = _create_stat_gradient_texture(Color("#ef4444"), Color("#991b1b"))
+		target_tex = _get_or_create_stat_gradient(Color("#ef4444"), Color("#991b1b"))
 	else:
-		fill.texture = _create_stat_gradient_texture(col_left, col_right)
+		target_tex = _get_or_create_stat_gradient(col_left, col_right)
+
+	if fill.texture != target_tex:
+		fill.texture = target_tex
 
 
 func _configure_custom_icons() -> void:

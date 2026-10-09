@@ -35,17 +35,54 @@ var previous := ""
 
 func setup(btn: Button) -> void:
 	target = btn
+	set_process(false)
 	if heading == null:
 		_build_ui()
+	_connect_target()
 	_sync()
 
 
 func _ready() -> void:
+	set_process(false)
 	if target == null and get_parent() is Button:
 		target = get_parent() as Button
 	if heading == null:
 		_build_ui()
+	_connect_target()
 	_sync()
+
+
+func _connect_target() -> void:
+	if target == null:
+		return
+	if not target.draw.is_connected(_on_target_state_changed):
+		target.draw.connect(_on_target_state_changed)
+	if not target.resized.is_connected(_on_target_state_changed):
+		target.resized.connect(_on_target_state_changed)
+	if not target.toggled.is_connected(_on_target_toggled):
+		target.toggled.connect(_on_target_toggled)
+	if not visibility_changed.is_connected(_on_visibility_changed):
+		visibility_changed.connect(_on_visibility_changed)
+	var locale = Engine.get_singleton("GameLocale") if Engine.has_singleton("GameLocale") else null
+	if locale == null and has_node("/root/GameLocale"):
+		locale = get_node("/root/GameLocale")
+	if locale != null and not locale.changed.is_connected(_on_target_state_changed):
+		locale.changed.connect(_on_target_state_changed)
+
+
+func _on_target_state_changed() -> void:
+	if is_visible_in_tree():
+		_sync()
+
+
+func _on_target_toggled(_pressed: bool) -> void:
+	if is_visible_in_tree():
+		_sync()
+
+
+func _on_visibility_changed() -> void:
+	if is_visible_in_tree():
+		_sync()
 
 
 func _build_ui() -> void:
@@ -138,9 +175,8 @@ func _ignore_mouse(node: Node) -> void:
 		_ignore_mouse(child)
 
 func _process(_delta: float) -> void:
-	if target == null or not is_visible_in_tree():
-		return
-	_sync()
+	# Per-frame polling disabled. ReferenceRow updates on-demand via draw/resized/toggled/visibility signals.
+	pass
 
 func _sync() -> void:
 	if target == null:

@@ -28,6 +28,7 @@ var _kinetic_velocity := 0.0
 
 func _ready() -> void:
 	process_priority = -100 # Process before UI updates
+	set_process(false)
 
 
 func _input(event: InputEvent) -> void:
@@ -82,6 +83,7 @@ func _input(event: InputEvent) -> void:
 
 
 func _handle_touch_down(pos: Vector2, id: int) -> void:
+	set_process(true)
 	_kinetic_velocity = 0.0
 	_kinetic_scroll = null
 	_touch_id = id
@@ -187,6 +189,8 @@ func _handle_touch_up(pos: Vector2) -> void:
 	_captured_text_input = null
 	_touch_id = -1
 	_recent_moves.clear()
+	if _kinetic_scroll == null:
+		set_process(false)
 
 
 func _cancel_captured_button() -> void:
@@ -207,8 +211,6 @@ func _cancel_captured_button() -> void:
 
 func _process(delta: float) -> void:
 	# 1. Long-press / Hold cancellation:
-	# If touch is held down for more than 400ms without releasing:
-	# It is counted as hold / scrolling, NOT a quick click! Cancel the button press.
 	if _touch_active and _captured_button != null:
 		var held_time := Time.get_ticks_msec() - _touch_start_time
 		if held_time > MAX_TAP_DURATION_MS:
@@ -227,11 +229,17 @@ func _process(delta: float) -> void:
 					# Hit top or bottom bounds
 					_kinetic_velocity = 0.0
 					_kinetic_scroll = null
+					if not _touch_active:
+						set_process(false)
 					return
 			_kinetic_velocity = lerpf(_kinetic_velocity, 0.0, FRICTION * delta)
 		else:
 			_kinetic_velocity = 0.0
 			_kinetic_scroll = null
+			if not _touch_active:
+				set_process(false)
+	elif not _touch_active:
+		set_process(false)
 
 
 func _find_scroll_at(node: Node, pos: Vector2) -> ScrollContainer:
