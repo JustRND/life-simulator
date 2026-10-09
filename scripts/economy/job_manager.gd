@@ -41,14 +41,20 @@ func load_jobs() -> void:
 
 
 func get_all_jobs() -> Array:
+	if jobs.is_empty():
+		load_jobs()
 	return jobs
 
 
 func get_categories() -> Array:
+	if categories.is_empty():
+		load_jobs()
 	return categories
 
 
 func get_job_by_id(job_id: String) -> Dictionary:
+	if _jobs_by_id.is_empty():
+		load_jobs()
 	return _jobs_by_id.get(job_id, {})
 
 

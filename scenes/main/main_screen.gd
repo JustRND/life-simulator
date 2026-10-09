@@ -8,6 +8,7 @@ const RelationshipExtras = preload("res://scripts/core/relationship_extras.gd")
 const CareerProgression = preload("res://scripts/economy/career_progression.gd")
 const UndergroundProgression = preload("res://scripts/economy/underground_progression.gd")
 const UIStyle = preload("res://scripts/ui/ui_style.gd")
+const NpcLifeProgress = preload("res://scripts/core/npc_life_progress.gd")
 
 
 var portrait: TextureRect
@@ -4183,12 +4184,11 @@ func _setup_partner_card_ui() -> void:
 
 	if PlayerData.has_partner():
 		var p: Dictionary = PlayerData.partner
+		NpcLifeProgress.ensure(p)
 		var p_name: String = str(p.get("name", "Partner"))
 		var p_status: String = str(p.get("status", "Partner"))
 		var p_age: int = int(p.get("age", 20))
 		var p_gender: String = str(p.get("gender", "FEMALE" if PlayerData.gender == "MALE" else "MALE"))
-		var p_occ: String = str(p.get("occupation", "Unemployed"))
-		var p_edu: String = str(p.get("education", "High School"))
 		var p_rel: int = int(p.get("relationship", 75))
 		var p_variant: int = int(p.get("portrait_variant", 0))
 		var p_hobbies: Array = p.get("hobbies", ["Music", "Reading", "Gaming"])
@@ -4235,12 +4235,35 @@ func _setup_partner_card_ui() -> void:
 		name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(name_lbl)
 
-		var job_lbl := Label.new()
-		job_lbl.text = "Occupation: %s  •  Education: %s" % [p_occ, p_edu]
-		job_lbl.add_theme_font_size_override("font_size", 24)
-		job_lbl.add_theme_color_override("font_color", Color("#f1f5f9"))
-		job_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		cv.add_child(job_lbl)
+		var occ_lbl := Label.new()
+		occ_lbl.text = NpcLifeProgress.get_occupation_display(p)
+		occ_lbl.add_theme_font_size_override("font_size", 22)
+		occ_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+		occ_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		cv.add_child(occ_lbl)
+
+		var edu_lbl := Label.new()
+		edu_lbl.text = NpcLifeProgress.get_education_display(p)
+		edu_lbl.add_theme_font_size_override("font_size", 20)
+		edu_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+		edu_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		cv.add_child(edu_lbl)
+
+		var biz_str := NpcLifeProgress.get_business_display(p)
+		if not biz_str.is_empty():
+			var biz_lbl := Label.new()
+			biz_lbl.text = biz_str
+			biz_lbl.add_theme_font_size_override("font_size", 20)
+			biz_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
+			biz_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			cv.add_child(biz_lbl)
+
+		var wealth_lbl := Label.new()
+		wealth_lbl.text = NpcLifeProgress.get_finances_display(p)
+		wealth_lbl.add_theme_font_size_override("font_size", 20)
+		wealth_lbl.add_theme_color_override("font_color", Color("#34d399"))
+		wealth_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		cv.add_child(wealth_lbl)
 
 		var hob_lbl := Label.new()
 		hob_lbl.text = "Interests: %s" % ", ".join(p_hobbies)
@@ -4479,6 +4502,7 @@ func _setup_children_cards_ui() -> void:
 
 	for i in range(PlayerData.children.size()):
 		var c: Dictionary = PlayerData.children[i]
+		NpcLifeProgress.ensure(c)
 		var c_name: String = str(c.get("name", "Child"))
 		var c_age: int = int(c.get("age", 0))
 		var c_gender: String = str(c.get("gender", "MALE"))
@@ -4512,7 +4536,7 @@ func _setup_children_cards_ui() -> void:
 
 		var cv := VBoxContainer.new()
 		cv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		cv.add_theme_constant_override("separation", 8)
+		cv.add_theme_constant_override("separation", 6)
 		ch.add_child(cv)
 
 		var title := Label.new()
@@ -4521,6 +4545,37 @@ func _setup_children_cards_ui() -> void:
 		title.add_theme_color_override("font_color", Color("#f472b6"))
 		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(title)
+
+		var occ_lbl := Label.new()
+		occ_lbl.text = NpcLifeProgress.get_occupation_display(c)
+		occ_lbl.add_theme_font_size_override("font_size", 20)
+		occ_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+		occ_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		cv.add_child(occ_lbl)
+
+		var edu_lbl := Label.new()
+		edu_lbl.text = NpcLifeProgress.get_education_display(c)
+		edu_lbl.add_theme_font_size_override("font_size", 19)
+		edu_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+		edu_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		cv.add_child(edu_lbl)
+
+		var biz_str := NpcLifeProgress.get_business_display(c)
+		if not biz_str.is_empty():
+			var biz_lbl := Label.new()
+			biz_lbl.text = biz_str
+			biz_lbl.add_theme_font_size_override("font_size", 19)
+			biz_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
+			biz_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			cv.add_child(biz_lbl)
+
+		if c_age >= 18:
+			var wealth_lbl := Label.new()
+			wealth_lbl.text = NpcLifeProgress.get_finances_display(c)
+			wealth_lbl.add_theme_font_size_override("font_size", 19)
+			wealth_lbl.add_theme_color_override("font_color", Color("#34d399"))
+			wealth_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			cv.add_child(wealth_lbl)
 
 		_setup_relationship_bar(cv, "ChildRel_%d" % i, c_rel)
 
@@ -5009,7 +5064,7 @@ func _generate_dating_candidate() -> Dictionary:
 		cand_track = int(custom.portrait_track)
 		cand_country = str(custom.country)
 
-	return {
+	var cand := {
 		"name": chosen_name,
 		"nationality": cand_country,
 		"gender": target_gender,
@@ -5021,8 +5076,13 @@ func _generate_dating_candidate() -> Dictionary:
 		"ethnicity": cand_eth,
 		"portrait_track": cand_track,
 		"portrait_variant": cand_track,
-		"compatibility": randi_range(80, 98)
+		"compatibility": randi_range(80, 98),
+		"smarts": randi_range(55, 88),
+		"health": randi_range(70, 90),
+		"looks": randi_range(60, 90)
 	}
+	NpcLifeProgress.ensure(cand)
+	return cand
 
 
 func _show_dating_app_modal() -> void:
@@ -5144,6 +5204,14 @@ func _render_dating_candidate_ui(list: VBoxContainer) -> void:
 	edu_lbl.add_theme_font_size_override("font_size", 20)
 	edu_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
 	info_vbox.add_child(edu_lbl)
+
+	var biz_str := NpcLifeProgress.get_business_display(cand)
+	if not biz_str.is_empty():
+		var biz_lbl := Label.new()
+		biz_lbl.text = biz_str
+		biz_lbl.add_theme_font_size_override("font_size", 20)
+		biz_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
+		info_vbox.add_child(biz_lbl)
 
 	# Hobbies Section
 	var hob_title := Label.new()
@@ -5329,6 +5397,7 @@ func _process_relationships_aging() -> void:
 			add_life_event(delay_message, "relationship")
 		PlayerData.partner["age"] = int(PlayerData.partner.get("age", 20)) + 1
 		PlayerData.partner["years_together"] = int(PlayerData.partner.get("years_together", 0)) + 1
+		NpcLifeProgress.ensure(PlayerData.partner)
 		var p_name: String = PlayerData.get_partner_name()
 		var p_status: String = PlayerData.get_partner_status()
 		var p_rel: int = PlayerData.get_partner_relationship()
@@ -5364,10 +5433,19 @@ func _process_relationships_aging() -> void:
 	for child in PlayerData.children:
 		if child is Dictionary and bool(child.get("is_alive", true)):
 			child["age"] = int(child.get("age", 0)) + 1
+			NpcLifeProgress.ensure(child)
 			var c_age: int = int(child["age"])
 			var c_name: String = str(child.get("name", "Child"))
 			if c_age == 18:
 				add_life_event("🎓 Your child %s celebrated their 18th birthday and graduated into adulthood!" % c_name, "family")
+			elif c_age == 22 and str(child.get("life_progress", {}).get("education_level", "")) == "University Graduate":
+				var d_title: String = str(child.get("life_progress", {}).get("university_degree", "degree"))
+				add_life_event("🎓 PROUD MOMENT: Your child %s graduated from university with a %s!" % [c_name, d_title], "family")
+			var biz_list: Array = child.get("life_progress", {}).get("owned_businesses", [])
+			if not biz_list.is_empty() and int(biz_list[0].get("founded_age", -1)) == c_age:
+				var b_title: String = str(biz_list[0].get("name", "an enterprise"))
+				add_life_event("🚀 FAMILY ENTERPRISE: Your child %s founded their own business '%s'!" % [c_name, b_title], "family")
+
 			if maxi(int(child.get("last_spend_time_age", -1)), int(child.get("last_gift_age", -1))) < PlayerData.age - 1:
 				child["relationship"] = clampi(int(child.get("relationship", 80)) - randi_range(1, 2), 0, 100)
 
@@ -13068,15 +13146,30 @@ func _show_inheritance_selection_modal() -> void:
 	var modal := _create_cyber_modal("📜 ESTATE INHERITANCE & SUCCESSION", "Net Worth: $%s  •  Select an heir to continue lineage" % _format_number(PlayerData.get_net_worth()), Color("#eab308"))
 	var list: VBoxContainer = modal.list
 
-	var living_children := PlayerData.get_living_children()
-	for child in living_children:
-		var c_name: String = str(child.get("name", "Child"))
-		var c_age: int = int(child.get("age", 0))
-		var c_gender: String = str(child.get("gender", "MALE"))
-		var c_rel: int = int(child.get("relationship", 80))
+	var heirs: Array = []
+	# 1. Living Partner/Spouse
+	if PlayerData.has_partner():
+		var p_candidate: Dictionary = PlayerData.partner.duplicate(true)
+		p_candidate["_is_partner_heir"] = true
+		heirs.append(p_candidate)
+
+	# 2. Living Children
+	for child in PlayerData.get_living_children():
+		var c_candidate: Dictionary = (child as Dictionary).duplicate(true) if child is Dictionary else {}
+		c_candidate["_is_partner_heir"] = false
+		heirs.append(c_candidate)
+
+	for heir in heirs:
+		NpcLifeProgress.ensure(heir)
+		var h_name: String = str(heir.get("name", "Heir"))
+		var h_age: int = int(heir.get("age", 0))
+		var h_gender: String = str(heir.get("gender", "MALE"))
+		var h_rel: int = int(heir.get("relationship", 80))
+		var is_partner: bool = bool(heir.get("_is_partner_heir", false))
 
 		var p_card := PanelContainer.new()
-		p_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(Color("#eab308")))
+		var card_color := Color("#f43f5e") if is_partner else Color("#eab308")
+		p_card.add_theme_stylebox_override("panel", load_style_box_cyber_card(card_color))
 		var cm := MarginContainer.new()
 		cm.add_theme_constant_override("margin_left", 20)
 		cm.add_theme_constant_override("margin_right", 20)
@@ -13090,10 +13183,11 @@ func _show_inheritance_selection_modal() -> void:
 
 		# Avatar
 		var icon := TextureRect.new()
-		icon.custom_minimum_size = Vector2(80, 80)
+		icon.custom_minimum_size = Vector2(96, 96)
+		icon.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.texture = PortraitCatalog.texture(c_age, c_gender, int(child.get("portrait_variant", 0)), str(child.get("ethnicity", PlayerData.ethnicity)))
+		icon.texture = PortraitCatalog.texture(h_age, h_gender, int(heir.get("portrait_variant", 0)), str(heir.get("ethnicity", PlayerData.ethnicity)))
 		icon.material = PortraitCatalog.cutout_material()
 		ch.add_child(icon)
 
@@ -13103,24 +13197,60 @@ func _show_inheritance_selection_modal() -> void:
 		ch.add_child(info_v)
 
 		var name_lbl := Label.new()
-		name_lbl.text = "%s (%s, Age %d)" % [c_name, "Daughter" if c_gender == "FEMALE" else "Son", c_age]
+		if is_partner:
+			name_lbl.text = "%s (%s, Age %d)" % [h_name, PlayerData.get_partner_status(), h_age]
+			name_lbl.add_theme_color_override("font_color", Color("#f43f5e"))
+		else:
+			name_lbl.text = "%s (%s, Age %d)" % [h_name, "Daughter" if h_gender == "FEMALE" else "Son", h_age]
+			name_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
 		name_lbl.add_theme_font_size_override("font_size", 24)
-		name_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
+		name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		info_v.add_child(name_lbl)
 
+		var occ_lbl := Label.new()
+		occ_lbl.text = NpcLifeProgress.get_occupation_display(heir)
+		occ_lbl.add_theme_font_size_override("font_size", 20)
+		occ_lbl.add_theme_color_override("font_color", Color("#f8fafc"))
+		occ_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		info_v.add_child(occ_lbl)
+
+		var edu_lbl := Label.new()
+		edu_lbl.text = NpcLifeProgress.get_education_display(heir)
+		edu_lbl.add_theme_font_size_override("font_size", 19)
+		edu_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+		edu_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		info_v.add_child(edu_lbl)
+
+		var biz_str := NpcLifeProgress.get_business_display(heir)
+		if not biz_str.is_empty():
+			var biz_lbl := Label.new()
+			biz_lbl.text = biz_str
+			biz_lbl.add_theme_font_size_override("font_size", 19)
+			biz_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
+			biz_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			info_v.add_child(biz_lbl)
+
+		var wealth_lbl := Label.new()
+		wealth_lbl.text = NpcLifeProgress.get_finances_display(heir)
+		wealth_lbl.add_theme_font_size_override("font_size", 19)
+		wealth_lbl.add_theme_color_override("font_color", Color("#34d399"))
+		wealth_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		info_v.add_child(wealth_lbl)
+
 		var rel_lbl := Label.new()
-		rel_lbl.text = "Relationship with late parent: %d%%" % c_rel
-		rel_lbl.add_theme_font_size_override("font_size", 20)
-		rel_lbl.add_theme_color_override("font_color", Color("#cbd5e1"))
+		var rel_target := "partner" if is_partner else "parent"
+		rel_lbl.text = "Relationship with late %s: %d%%" % [rel_target, h_rel]
+		rel_lbl.add_theme_font_size_override("font_size", 18)
+		rel_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
 		info_v.add_child(rel_lbl)
 
 		var pick_btn := Button.new()
-		pick_btn.text = "👑 Bequeath Estate & Continue as %s" % c_name
-		pick_btn.custom_minimum_size.y = 60
+		pick_btn.text = "👑 Bequeath Estate & Continue as %s" % h_name
+		pick_btn.custom_minimum_size.y = 56
 		pick_btn.add_theme_font_size_override("font_size", 22)
 		var bs := StyleBoxFlat.new()
-		bs.bg_color = Color("#854d0e")
-		bs.border_color = Color("#facc15")
+		bs.bg_color = Color("#854d0e") if not is_partner else Color("#9f1239")
+		bs.border_color = Color("#facc15") if not is_partner else Color("#f43f5e")
 		bs.set_border_width_all(2)
 		bs.set_corner_radius_all(8)
 		pick_btn.add_theme_stylebox_override("normal", bs)
@@ -13128,16 +13258,17 @@ func _show_inheritance_selection_modal() -> void:
 		bsh.bg_color = bs.bg_color.lightened(0.2)
 		pick_btn.add_theme_stylebox_override("hover", bsh)
 
-		var target_child = child
+		var target_heir = heir
+		var target_is_partner = is_partner
 		pick_btn.pressed.connect(func():
-			_execute_inheritance_takeover(target_child, modal.overlay)
+			_execute_inheritance_takeover(target_heir, modal.overlay, target_is_partner)
 		)
 		info_v.add_child(pick_btn)
 
 		list.add_child(p_card)
 
 
-func _execute_inheritance_takeover(child: Dictionary, overlay_to_free: Control) -> void:
+func _execute_inheritance_takeover(heir: Dictionary, overlay_to_free: Control, is_partner: bool = false) -> void:
 	if overlay_to_free != null and is_instance_valid(overlay_to_free):
 		overlay_to_free.queue_free()
 
@@ -13161,7 +13292,7 @@ func _execute_inheritance_takeover(child: Dictionary, overlay_to_free: Control) 
 	var liquid_estate := PlayerData.money + PlayerData.bank_savings - PlayerData.get_total_debt()
 	var bank_inheritance := maxi(0, liquid_estate - estate_fees)
 	var remaining_liability := maxi(0, estate_fees - liquid_estate)
-	PlayerData.takeover_as_child(child, bank_inheritance, PlayerData.owned_assets)
+	PlayerData.takeover_as_heir(heir, bank_inheritance, PlayerData.owned_assets, "partner" if is_partner else "child")
 	PlayerData.debt = remaining_liability
 	PlayerData.add_life_log_entry(inheritance_msg, "finance")
 

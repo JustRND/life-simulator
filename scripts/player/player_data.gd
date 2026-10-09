@@ -1,5 +1,7 @@
 extends Node
 
+const NpcLifeProgress = preload("res://scripts/core/npc_life_progress.gd")
+
 var age: int = 0
 var life_id: String = ""
 var finance_market: Dictionary = {}
@@ -1095,6 +1097,7 @@ func add_player_child(c_name: String, c_gender: String, c_age: int = 0) -> Dicti
 		"looks": randi_range(50, 85),
 		"is_alive": true
 	}
+	NpcLifeProgress.ensure(child_data)
 	children.append(child_data)
 	return child_data
 
@@ -1183,21 +1186,30 @@ func start_reincarnated_life(identity: Dictionary, debuffs: Array, buffs: Array)
 
 
 func takeover_as_child(child: Dictionary, inherited_money: int, inherited_assets: Array = []) -> void:
+	takeover_as_heir(child, inherited_money, inherited_assets, "child")
+
+
+func takeover_as_heir(heir: Dictionary, inherited_money: int, inherited_assets: Array = [], relation_type: String = "child") -> void:
+	NpcLifeProgress.ensure(heir)
 	var inherited_businesses := owned_businesses.duplicate(true)
 	var inherited_market := finance_market.duplicate(true)
 	var prev_parent_name: String = first_name
 	var prev_gender: String = gender
 	var assets_copy: Array = inherited_assets.duplicate(true)
+	var preserved_children: Array = children.duplicate(true) if relation_type == "partner" else []
+
 	reset_player()
 	owned_businesses = inherited_businesses
 	finance_market = inherited_market
+	if relation_type == "partner":
+		children = preserved_children
 
-	first_name = str(child.get("name", "Child"))
-	gender = str(child.get("gender", "MALE"))
-	ethnicity = str(child.get("ethnicity", "white"))
-	portrait_track = int(child.get("portrait_track", 0))
-	portrait_variant = int(child.get("portrait_variant", 0))
-	age = int(child.get("age", 18))
+	first_name = str(heir.get("name", "Heir"))
+	gender = str(heir.get("gender", "MALE"))
+	ethnicity = str(heir.get("ethnicity", "white"))
+	portrait_track = int(heir.get("portrait_track", 0))
+	portrait_variant = int(heir.get("portrait_variant", 0))
+	age = int(heir.get("age", 18))
 	if not finance_market.is_empty():
 		finance_market.last_age = age
 		finance_market.history = []
@@ -1207,16 +1219,15 @@ func takeover_as_child(child: Dictionary, inherited_money: int, inherited_assets
 				company.owner = first_name
 	has_started_game = true
 
-	health = int(child.get("health", 85))
-	happiness = int(child.get("happiness", 75))
-	smarts = int(child.get("smarts", 65))
-	looks = int(child.get("looks", 65))
+	health = int(heir.get("health", 85))
+	happiness = int(heir.get("happiness", 75))
+	smarts = int(heir.get("smarts", 65))
+	looks = int(heir.get("looks", 65))
 	money = 0
-	bank_savings = maxi(0, inherited_money)
+	bank_savings = 0
 	debt = 0
 	tax_debt = 0
 	loan_balance = 0
-	credit_score = 650
 	has_credit_card = false
 	credit_card_tier = "None"
 	credit_card_limit = 0
@@ -1229,26 +1240,26 @@ func takeover_as_child(child: Dictionary, inherited_money: int, inherited_assets
 		if a is Dictionary:
 			owned_assets.append(a.duplicate(true))
 
-	if prev_gender == "FEMALE":
-		mother_name = prev_parent_name
-		mother_alive = false
-		mother_health = 0
+	if relation_type == "partner":
+		partner = {}
 	else:
-		father_name = prev_parent_name
-		father_alive = false
-		father_health = 0
+		if prev_gender == "FEMALE":
+			mother_name = prev_parent_name
+			mother_alive = false
+			mother_health = 0
+		else:
+			father_name = prev_parent_name
+			father_alive = false
+			father_health = 0
 
-	if age >= 18:
-		education_level = "High School Graduate"
-		grades = 80
-	elif age >= 12:
-		education_level = "Middle School"
-		grades = 75
-	elif age >= 6:
-		education_level = "Primary School"
-		grades = 75
-	else:
-		education_level = "None"
+	# Apply heir's life background: education, university degrees, jobs, promotions, personal savings, businesses, history
+	NpcLifeProgress.apply_to_player(self, heir)
+
+	# Bank savings adds the inherited money to the heir's personal savings:
+	bank_savings = maxi(0, bank_savings + inherited_money)
 
 	var asset_text := " and %d property/vehicle assets" % owned_assets.size() if owned_assets.size() > 0 else ""
-	add_life_log_entry("📜 LEGACY: You inherited your late parent %s's estate ($%d deposited into your Bank Balance%s) and continue the family bloodline at age %d." % [prev_parent_name, bank_savings, asset_text, age], "event")
+	if relation_type == "partner":
+		add_life_log_entry("📜 LEGACY: You inherited your late partner %s's estate ($%d deposited into your Bank Balance%s) and continue their legacy at age %d." % [prev_parent_name, inherited_money, asset_text, age], "event")
+	else:
+		add_life_log_entry("📜 LEGACY: You inherited your late parent %s's estate ($%d deposited into your Bank Balance%s) and continue the family bloodline at age %d." % [prev_parent_name, inherited_money, asset_text, age], "event")

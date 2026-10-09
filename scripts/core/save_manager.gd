@@ -1,5 +1,6 @@
 extends Node
 
+const NpcLifeProgress = preload("res://scripts/core/npc_life_progress.gd")
 const SAVE_PATH := "user://savegame.json"
 
 
@@ -290,6 +291,11 @@ func apply_data(data: Dictionary) -> bool:
 
 	PlayerData.partner = Dictionary(data.get("partner", {}))
 	preload("res://scripts/core/romance_rules.gd").normalize(PlayerData)
+	if PlayerData.has_partner():
+		NpcLifeProgress.ensure(PlayerData.partner)
+	for c in PlayerData.children:
+		if c is Dictionary:
+			NpcLifeProgress.ensure(c)
 	PlayerData.ex_partners = Array(data.get("ex_partners", []))
 	PlayerData.last_parent_interact_age = int(data.get("last_parent_interact_age", -1))
 	PlayerData.last_mother_spend_time_age = int(data.get("last_mother_spend_time_age", -1))

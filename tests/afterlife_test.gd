@@ -103,7 +103,7 @@ func _ready() -> void:
 	assert(PlayerData.age == 22, "Age is heir age (22)")
 	assert(PlayerData.bank_savings == 250000, "Inherited money deposited into bank balance")
 	assert(PlayerData.money == 0, "No straight cash received on inheritance")
-	assert(PlayerData.education_level == "High School Graduate", "Education matches adult child")
+	assert(PlayerData.education_level in ["High School Graduate", "University Graduate"], "Education matches adult child")
 	assert(not PlayerData.is_dead, "Child is alive")
 	print("✔ Test 7: Inheritance succession verified (Name: %s, Age: %d, Bank Savings: $%d, Cash: $%d)" % [
 		PlayerData.first_name, PlayerData.age, PlayerData.bank_savings, PlayerData.money
