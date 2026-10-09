@@ -2854,19 +2854,27 @@ func update_bank_panel() -> void:
 	dep_row.add_theme_constant_override("separation", 8)
 	sv.add_child(dep_row)
 
-	var btn_dep_100 := _create_cyber_button("Deposit $100", Color("#10b981"), func(): _deposit_money(100))
+	var btn_dep_100 := _create_cyber_button("Deposit $100", Color("#10b981"), func(): _deposit_money(100), true)
 	btn_dep_100.disabled = PlayerData.money < 100
+	btn_dep_100.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn_dep_100.set_meta("center_text", true)
 	dep_row.add_child(btn_dep_100)
 
-	var btn_dep_1k := _create_cyber_button("Deposit $1,000", Color("#10b981"), func(): _deposit_money(1000))
+	var btn_dep_1k := _create_cyber_button("Deposit $1,000", Color("#10b981"), func(): _deposit_money(1000), true)
 	btn_dep_1k.disabled = PlayerData.money < 1000
+	btn_dep_1k.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn_dep_1k.set_meta("center_text", true)
 	dep_row.add_child(btn_dep_1k)
 
-	var btn_dep_all := _create_cyber_button("Deposit All", Color("#10b981"), func(): _deposit_money(PlayerData.money))
+	var btn_dep_all := _create_cyber_button("Deposit All", Color("#10b981"), func(): _deposit_money(PlayerData.money), true)
 	btn_dep_all.disabled = PlayerData.money <= 0
+	btn_dep_all.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn_dep_all.set_meta("center_text", true)
 	dep_row.add_child(btn_dep_all)
-	var deposit_custom := _create_cyber_button("Deposit Amount", Color("#10b981"), func(): _show_bank_transfer(true))
+	var deposit_custom := _create_cyber_button("Deposit Amount", Color("#10b981"), func(): _show_bank_transfer(true), true)
 	deposit_custom.disabled = PlayerData.money <= 0
+	deposit_custom.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	deposit_custom.set_meta("center_text", true)
 	sv.add_child(deposit_custom)
 
 	var wth_title := Label.new()
@@ -2879,19 +2887,27 @@ func update_bank_panel() -> void:
 	wth_row.add_theme_constant_override("separation", 8)
 	sv.add_child(wth_row)
 
-	var btn_wth_100 := _create_cyber_button("Withdraw $100", Color("#fbbf24"), func(): _withdraw_money(100))
+	var btn_wth_100 := _create_cyber_button("Withdraw $100", Color("#fbbf24"), func(): _withdraw_money(100), true)
 	btn_wth_100.disabled = PlayerData.bank_savings < 100
+	btn_wth_100.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn_wth_100.set_meta("center_text", true)
 	wth_row.add_child(btn_wth_100)
 
-	var btn_wth_1k := _create_cyber_button("Withdraw $1,000", Color("#fbbf24"), func(): _withdraw_money(1000))
+	var btn_wth_1k := _create_cyber_button("Withdraw $1,000", Color("#fbbf24"), func(): _withdraw_money(1000), true)
 	btn_wth_1k.disabled = PlayerData.bank_savings < 1000
+	btn_wth_1k.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn_wth_1k.set_meta("center_text", true)
 	wth_row.add_child(btn_wth_1k)
 
-	var btn_wth_all := _create_cyber_button("Withdraw All", Color("#fbbf24"), func(): _withdraw_money(PlayerData.bank_savings))
+	var btn_wth_all := _create_cyber_button("Withdraw All", Color("#fbbf24"), func(): _withdraw_money(PlayerData.bank_savings), true)
 	btn_wth_all.disabled = PlayerData.bank_savings <= 0
+	btn_wth_all.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn_wth_all.set_meta("center_text", true)
 	wth_row.add_child(btn_wth_all)
-	var withdraw_custom := _create_cyber_button("Withdraw Amount", Color("#fbbf24"), func(): _show_bank_transfer(false))
+	var withdraw_custom := _create_cyber_button("Withdraw Amount", Color("#fbbf24"), func(): _show_bank_transfer(false), true)
 	withdraw_custom.disabled = PlayerData.bank_savings <= 0
+	withdraw_custom.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	withdraw_custom.set_meta("center_text", true)
 	sv.add_child(withdraw_custom)
 
 	bank_list.add_child(savings_card)
@@ -2995,22 +3011,30 @@ func update_bank_panel() -> void:
 	repay_title.add_theme_font_size_override("font_size", 28)
 	repay_title.add_theme_color_override("font_color", Color("#22c55e"))
 	repay_vbox.add_child(repay_title)
-	var btn_pay_tax := _create_cyber_button("Pay Tax $%s" % _format_number(PlayerData.tax_debt), Color("#38bdf8"), _pay_tax)
+	var btn_pay_tax := _create_cyber_button("Pay Tax $%s" % _format_number(PlayerData.tax_debt), Color("#38bdf8"), _pay_tax, true)
 	btn_pay_tax.name = "PayTaxButton"
 	btn_pay_tax.disabled = PlayerData.tax_debt <= 0 or PlayerData.get_available_funds() < PlayerData.tax_debt
 	btn_pay_tax.tooltip_text = "Pay outstanding tax using cash and bank funds."
+	btn_pay_tax.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn_pay_tax.set_meta("center_text", true)
 	repay_vbox.add_child(btn_pay_tax)
-	var btn_custom := _create_cyber_button("Repay Loan — Enter Amount", Color("#22c55e"), _show_loan_repayment)
+	var btn_custom := _create_cyber_button("Repay Loan — Enter Amount", Color("#22c55e"), _show_loan_repayment, true)
 	btn_custom.name = "CustomLoanRepaymentButton"
 	btn_custom.disabled = PlayerData.loan_balance <= 0 or PlayerData.get_available_funds() <= 0
+	btn_custom.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn_custom.set_meta("center_text", true)
 	repay_vbox.add_child(btn_custom)
 
-	var btn_pay_1k := _create_cyber_button("Repay $1,000", Color("#22c55e"), func(): _repay_debt(1000))
+	var btn_pay_1k := _create_cyber_button("Repay $1,000", Color("#22c55e"), func(): _repay_debt(1000), true)
 	btn_pay_1k.disabled = PlayerData.get_available_funds() < 1000 or PlayerData.get_total_debt() <= 0
+	btn_pay_1k.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn_pay_1k.set_meta("center_text", true)
 	repay_vbox.add_child(btn_pay_1k)
 
-	var btn_pay_all := _create_cyber_button("Repay Full Debt ($%s)" % _format_number(PlayerData.get_total_debt()), Color("#22c55e"), func(): _repay_debt(PlayerData.get_total_debt()))
+	var btn_pay_all := _create_cyber_button("Repay Full Debt ($%s)" % _format_number(PlayerData.get_total_debt()), Color("#22c55e"), func(): _repay_debt(PlayerData.get_total_debt()), true)
 	btn_pay_all.disabled = PlayerData.get_available_funds() < PlayerData.get_total_debt() or PlayerData.get_total_debt() <= 0
+	btn_pay_all.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn_pay_all.set_meta("center_text", true)
 	repay_vbox.add_child(btn_pay_all)
 
 	bank_list.add_child(repay_card)
@@ -3044,6 +3068,7 @@ func _show_loan_repayment() -> void:
 	amount.custom_minimum_size.y = 80
 	amount.virtual_keyboard_enabled = true
 	amount.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_NUMBER
+	amount.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	modal.list.add_child(amount)
 	get_node("OptionsMenu")._style_input(amount)
 	amount.add_theme_color_override("font_placeholder_color", Color("#64748b") if LifeLibrary.data.theme == "light" else Color("#94a3b8"))
@@ -3066,7 +3091,9 @@ func _show_loan_repayment() -> void:
 		update_bank_panel()
 		SaveManager.save_game()
 		preload("res://scripts/ui/panel_close.gd").dismiss(modal.overlay, true)
-	)
+	, true)
+	submit.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	submit.set_meta("center_text", true)
 	submit.disabled = true
 	modal.list.add_child(submit)
 	amount.text_changed.connect(func(value: String):
@@ -3146,6 +3173,7 @@ func _show_bank_transfer(deposit: bool) -> void:
 	amount.custom_minimum_size.y = 80
 	amount.virtual_keyboard_enabled = true
 	amount.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_NUMBER
+	amount.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	modal.list.add_child(amount)
 	get_node("OptionsMenu")._style_input(amount)
 	MobileKeyboardManager.attach_to_input(amount, verb + " amount (whole dollars)")
@@ -3164,7 +3192,9 @@ func _show_bank_transfer(deposit: bool) -> void:
 		else:
 			_withdraw_money(requested)
 		preload("res://scripts/ui/panel_close.gd").dismiss(modal.overlay, true)
-	)
+	, true)
+	submit.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	submit.set_meta("center_text", true)
 	submit.disabled = true
 	modal.list.add_child(submit)
 	amount.text_changed.connect(func(value: String):
@@ -9351,7 +9381,7 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	}
 
 
-func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callable = Callable()) -> Button:
+func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callable = Callable(), center_align: bool = false) -> Button:
 	var btn := Button.new()
 	btn.set_meta("reference_part", true)
 	btn.set_meta("market_button", true)
@@ -9361,7 +9391,11 @@ func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callabl
 	btn.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	btn.add_theme_font_size_override("font_size", 22)
-	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	if center_align:
+		btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
+		btn.set_meta("center_text", true)
+	else:
+		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 
 	var is_light: bool = LifeLibrary.data.theme == "light"
 	var normal_sb := StyleBoxFlat.new()
@@ -9400,7 +9434,7 @@ func _create_cyber_button(btn_text: String, border_col: Color, on_click: Callabl
 	return btn
 
 
-func _create_disabled_cyber_button(btn_text: String, reason: String = "") -> Button:
+func _create_disabled_cyber_button(btn_text: String, reason: String = "", center_align: bool = false) -> Button:
 	var btn := Button.new()
 	btn.set_meta("reference_part", true)
 	var clean_btn := btn_text.strip_edges()
@@ -9437,7 +9471,11 @@ func _create_disabled_cyber_button(btn_text: String, reason: String = "") -> But
 
 	btn.add_theme_color_override("font_disabled_color", Color("#334155" if is_light else "#94a3b8"))
 	btn.add_theme_color_override("font_color", Color("#334155" if is_light else "#94a3b8"))
-	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	if center_align:
+		btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
+		btn.set_meta("center_text", true)
+	else:
+		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	return btn
 
 

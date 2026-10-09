@@ -41,16 +41,35 @@ func _ready() -> void:
 	assert(company.loan_balance == 40 and PlayerData.bank_savings == 880)
 	BusinessManager.pay_business_taxes(company)
 	assert(company.unpaid_taxes == 0 and PlayerData.bank_savings == 840)
+	main.update_bank_panel()
+	var found_dep_custom: Button = null
+	var found_wth_custom: Button = null
+	for btn in main.bank_list.find_children("*", "Button", true, false):
+		if btn.text == "Deposit Amount":
+			found_dep_custom = btn
+			assert(btn.alignment == HORIZONTAL_ALIGNMENT_CENTER, "Deposit Amount button must be centered")
+		elif btn.text == "Withdraw Amount":
+			found_wth_custom = btn
+			assert(btn.alignment == HORIZONTAL_ALIGNMENT_CENTER, "Withdraw Amount button must be centered")
+	assert(found_dep_custom != null, "Deposit Amount button must exist")
+	assert(found_wth_custom != null, "Withdraw Amount button must exist")
 	for deposit in [true, false]:
 		main._show_bank_transfer(deposit)
 		await get_tree().create_timer(0.4).timeout
 		var field = main.find_child("BankTransferAmount", true, false)
 		assert(field != null and field.virtual_keyboard_enabled)
 		assert(field.virtual_keyboard_type == LineEdit.KEYBOARD_TYPE_NUMBER)
+		assert(field.alignment == HORIZONTAL_ALIGNMENT_CENTER, "BankTransferAmount input must be centered")
 		assert(field.has_meta("mobile_kb_attached"))
 		var overlay = field
 		while overlay.get_parent() != main:
 			overlay = overlay.get_parent()
+		var submit_btn: Button = null
+		for c in overlay.find_children("*", "Button", true, false):
+			if c.text in ["Deposit", "Withdraw"]:
+				submit_btn = c
+				break
+		assert(submit_btn != null and submit_btn.alignment == HORIZONTAL_ALIGNMENT_CENTER, "Transfer submit button must be centered")
 		overlay.queue_free()
 		await get_tree().process_frame
 	if FileAccess.file_exists(LifeLibrary.profile_path):

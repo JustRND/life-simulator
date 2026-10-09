@@ -642,6 +642,7 @@ func _portfolio(list: VBoxContainer) -> void:
 		var is_active: bool = bool(company.get("active", true))
 		
 		var title_row := HBoxContainer.new()
+		title_row.add_theme_constant_override("separation", 16)
 		cv.add_child(title_row)
 		var hname := label(title_row, "🏛️ %s" % company.name, 26, Color("#0369a1" if is_light else "#38bdf8"))
 		hname.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -649,8 +650,15 @@ func _portfolio(list: VBoxContainer) -> void:
 		if not is_active:
 			var off_badge := label(title_row, "[Off-Market]", 20, Color("#f59e0b" if is_light else "#fbbf24"))
 			off_badge.size_flags_horizontal = Control.SIZE_SHRINK_END
+			off_badge.autowrap_mode = TextServer.AUTOWRAP_OFF
 		
-		var pnl_lbl := label(title_row, "%s%s" % ["+" if is_profit else "", _money(diff)], 24, Color("#15803d" if is_light else "#34d399") if is_profit else Color("#b91c1c" if is_light else "#f87171"))
+		# Give the amount its own full-width line; company names must not squeeze
+		# currency values into a one-character-wide column on smaller screens.
+		var pnl_lbl := label(cv, "%s%s" % ["+" if is_profit else "", _money(diff)], 24, Color("#15803d" if is_light else "#34d399") if is_profit else Color("#b91c1c" if is_light else "#f87171"))
+		pnl_lbl.name = "PortfolioProfitLoss"
+		pnl_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
+		pnl_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		pnl_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		
 		label(cv, "Holding: %d shares  •  Current Value: %s  •  Cost Basis: %s" % [position.quantity, _money(value), _money(cost)], 21, Color("#64748b"))
 		

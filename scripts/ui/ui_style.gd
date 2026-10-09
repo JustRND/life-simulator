@@ -80,6 +80,8 @@ func apply_button(button: Button) -> void:
 		button.custom_minimum_size.y = maxf(BUTTON_HEIGHT, button.custom_minimum_size.y)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		if button.has_meta("center_text") or button.alignment == HORIZONTAL_ALIGNMENT_CENTER:
+			button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 	button.focus_mode = Control.FOCUS_NONE
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
