@@ -3161,24 +3161,24 @@ func update_bank_panel() -> void:
 			cc_pay_row.add_theme_constant_override("separation", 10)
 			cc_vbox.add_child(cc_pay_row)
 
-			var btn_pay_10 := _create_cyber_button("Pay 10% ($%s)" % _format_number(min_pay), Color("#22c55e"), func():
+			var btn_pay_10 := _create_cyber_button("Pay 10%% ($%s)" % _format_number(min_pay), Color("#22c55e"), func():
 				_execute_manual_cc_repay(min_pay)
 			, true)
 			btn_pay_10.disabled = total_funds < min_pay
 			btn_pay_10.alignment = HORIZONTAL_ALIGNMENT_CENTER
 			btn_pay_10.set_meta("center_text", true)
 			btn_pay_10.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			btn_pay_10.tooltip_text = "Pay minimum locked 10% usage payment ($%s)." % _format_number(min_pay)
+			btn_pay_10.tooltip_text = "Pay minimum locked 10%% usage payment ($%s)." % _format_number(min_pay)
 			cc_pay_row.add_child(btn_pay_10)
 
-			var btn_pay_20 := _create_cyber_button("Pay 20% ($%s)" % _format_number(pay_20), Color("#10b981"), func():
+			var btn_pay_20 := _create_cyber_button("Pay 20%% ($%s)" % _format_number(pay_20), Color("#10b981"), func():
 				_execute_manual_cc_repay(pay_20)
 			, true)
 			btn_pay_20.disabled = total_funds < pay_20
 			btn_pay_20.alignment = HORIZONTAL_ALIGNMENT_CENTER
 			btn_pay_20.set_meta("center_text", true)
 			btn_pay_20.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			btn_pay_20.tooltip_text = "Pay 20% usage payment ($%s)." % _format_number(pay_20)
+			btn_pay_20.tooltip_text = "Pay 20%% usage payment ($%s)." % _format_number(pay_20)
 			cc_pay_row.add_child(btn_pay_20)
 
 			var btn_pay_custom := _create_cyber_button("Input Amount", Color("#06b6d4"), func():
@@ -3734,7 +3734,7 @@ func _execute_manual_cc_repay(amount: int) -> void:
 		return
 	var min_pay: int = maxi(1, int(ceil(PlayerData.credit_card_balance * 0.10)))
 	if amount < min_pay and PlayerData.credit_card_balance > 0:
-		add_life_event("⚠️ Payment rejected: Minimum payment is locked at 10% ($%s)." % _format_number(min_pay), "finance")
+		add_life_event("⚠️ Payment rejected: Minimum payment is locked at 10%% ($%s)." % _format_number(min_pay), "finance")
 		return
 	var paid := PlayerData.repay_credit_card(amount)
 	if paid > 0:
@@ -3751,7 +3751,7 @@ func _execute_manual_cc_repay(amount: int) -> void:
 func _show_credit_card_custom_amount_modal(min_pay: int, total_usage: int) -> void:
 	if not PlayerData.has_credit_card or total_usage <= 0 or PlayerData.get_available_funds() <= 0:
 		return
-	var modal := _create_cyber_modal("INPUT REPAYMENT AMOUNT", "Specify your credit card usage repayment. Minimum payment is locked at 10% ($%s) up to 100% ($%s)." % [_format_number(min_pay), _format_number(total_usage)], Color("#06b6d4"))
+	var modal := _create_cyber_modal("INPUT REPAYMENT AMOUNT", "Specify your credit card usage repayment. Minimum payment is locked at 10%% ($%s) up to 100%% ($%s)." % [_format_number(min_pay), _format_number(total_usage)], Color("#06b6d4"))
 	var summary := Label.new()
 	summary.text = "Card Usage: $%s • Minimum Payment: $%s (10%% Locked) • Available Funds: $%s" % [
 		_format_number(total_usage),
@@ -3783,13 +3783,13 @@ func _show_credit_card_custom_amount_modal(min_pay: int, total_usage: int) -> vo
 	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	feedback.add_theme_color_override("font_color", Color("#ef4444"))
 	feedback.add_theme_font_size_override("font_size", 22)
-	feedback.text = "Minimum payment is locked at 10% ($%s)." % _format_number(min_pay)
+	feedback.text = "Minimum payment is locked at 10%% ($%s)." % _format_number(min_pay)
 	modal.list.add_child(feedback)
 
 	var submit := _create_cyber_button("Submit Repayment", Color("#06b6d4"), func():
 		var requested := _parse_loan_payment(amount_input.text)
 		if requested < min_pay:
-			feedback.text = "⚠️ Minimum payment is strictly locked at 10% ($%s)." % _format_number(min_pay)
+			feedback.text = "⚠️ Minimum payment is strictly locked at 10%% ($%s)." % _format_number(min_pay)
 			return
 		if requested > total_usage:
 			feedback.text = "⚠️ Payment cannot exceed total usage ($%s)." % _format_number(total_usage)
@@ -3809,11 +3809,11 @@ func _show_credit_card_custom_amount_modal(min_pay: int, total_usage: int) -> vo
 		var val := _parse_loan_payment(val_str)
 		if val <= 0 and val_str.is_empty():
 			submit.disabled = true
-			feedback.text = "Minimum payment is locked at 10% ($%s)." % _format_number(min_pay)
+			feedback.text = "Minimum payment is locked at 10%% ($%s)." % _format_number(min_pay)
 			feedback.add_theme_color_override("font_color", Color("#94a3b8"))
 		elif val < min_pay:
 			submit.disabled = true
-			feedback.text = "⚠️ Minimum payment is strictly locked at 10% ($%s)." % _format_number(min_pay)
+			feedback.text = "⚠️ Minimum payment is strictly locked at 10%% ($%s)." % _format_number(min_pay)
 			feedback.add_theme_color_override("font_color", Color("#ef4444"))
 		elif val > total_usage:
 			submit.disabled = true
@@ -3833,10 +3833,10 @@ func _show_credit_card_custom_amount_modal(min_pay: int, total_usage: int) -> vo
 
 	# Quick preset buttons
 	var presets := [
-		{"label": "10% Min ($%s)" % _format_number(min_pay), "val": min_pay},
-		{"label": "20% ($%s)" % _format_number(maxi(min_pay, int(ceil(total_usage * 0.20)))), "val": maxi(min_pay, int(ceil(total_usage * 0.20)))},
-		{"label": "50% ($%s)" % _format_number(maxi(min_pay, int(ceil(total_usage * 0.50)))), "val": maxi(min_pay, int(ceil(total_usage * 0.50)))},
-		{"label": "100% Full ($%s)" % _format_number(total_usage), "val": total_usage}
+		{"label": "10%% Min ($%s)" % _format_number(min_pay), "val": min_pay},
+		{"label": "20%% ($%s)" % _format_number(maxi(min_pay, int(ceil(total_usage * 0.20)))), "val": maxi(min_pay, int(ceil(total_usage * 0.20)))},
+		{"label": "50%% ($%s)" % _format_number(maxi(min_pay, int(ceil(total_usage * 0.50)))), "val": maxi(min_pay, int(ceil(total_usage * 0.50)))},
+		{"label": "100%% Full ($%s)" % _format_number(total_usage), "val": total_usage}
 	]
 	for p in presets:
 		var p_btn := _create_cyber_button(p.label, Color("#06b6d4"), func():
@@ -8445,7 +8445,7 @@ func _show_education_modal() -> void:
 					_close_education_modal_and_return_to_main()
 					return
 				if PlayerData.grades < 55:
-					add_life_event("Low Marks: You need at least 55% academic marks to tutor and lead a study group (Current: %d%%)." % PlayerData.grades, "education")
+					add_life_event("Low Marks: You need at least 55%% academic marks to tutor and lead a study group (Current: %d%%)." % PlayerData.grades, "education")
 					_close_education_modal_and_return_to_main()
 					return
 				PlayerData.last_school_activity_age = PlayerData.age
@@ -13521,10 +13521,10 @@ func _execute_inheritance_takeover(heir: Dictionary, overlay_to_free: Control, i
 
 	if roll < 0.50:
 		final_amount = net_worth
-		inheritance_msg = "✨ Seamless Succession: 100% of the estate ($%s) was transferred without dispute into your bank balance." % _format_number(final_amount)
+		inheritance_msg = "✨ Seamless Succession: 100%% of the estate ($%s) was transferred without dispute into your bank balance." % _format_number(final_amount)
 	elif roll < 0.75:
 		final_amount = int(net_worth * 0.85)
-		inheritance_msg = "🏛️ Estate Tax Levy: State tax authorities collected 15% inheritance tax. $%s was deposited into your bank balance." % _format_number(final_amount)
+		inheritance_msg = "🏛️ Estate Tax Levy: State tax authorities collected 15%% inheritance tax. $%s was deposited into your bank balance." % _format_number(final_amount)
 	else:
 		final_amount = maxi(250, net_worth - 5000)
 		inheritance_msg = "⚖️ Probate Legal Settlement: Estate filing and attorney fees cost $5,000. $%s was secured into your bank balance." % _format_number(final_amount)

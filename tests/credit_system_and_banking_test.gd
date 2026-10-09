@@ -212,7 +212,7 @@ func _ready() -> void:
 	# Pay 20% of new balance:
 	var pay_20 := maxi(1, int(ceil(PlayerData.credit_card_balance * 0.20)))
 	var paid_20 := PlayerData.repay_credit_card(pay_20)
-	check(paid_20 == pay_20, "Paid 20% payment (%d)" % pay_20)
+	check(paid_20 == pay_20, "Paid 20%% payment ($%d)" % pay_20)
 	check(PlayerData.credit_card_paid_this_year == 2200 + pay_20, "Annual payment tracker accumulated payments")
 
 	# Custom payoff remaining:

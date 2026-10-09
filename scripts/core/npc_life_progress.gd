@@ -53,7 +53,7 @@ static func ensure(person: Dictionary) -> void:
 		life["last_age"] = year
 
 	# Synchronize summary fields on the person dictionary
-	person["education"] = get_education_display(person).replace("🎓 ", "")
+	person["education"] = _format_education_display(life).replace("🎓 ", "")
 	if not life.get("job_title", "").is_empty():
 		person["occupation"] = str(life["job_title"])
 	elif target_age < 18:
@@ -346,7 +346,10 @@ static func _update_credit_score(life: Dictionary, year: int) -> void:
 
 static func get_education_display(person: Dictionary) -> String:
 	ensure(person)
-	var life: Dictionary = person.get("life_progress", {})
+	return _format_education_display(person.get("life_progress", {}))
+
+
+static func _format_education_display(life: Dictionary) -> String:
 	var edu_level: String = str(life.get("education_level", "None"))
 
 	if edu_level == "University Graduate":
