@@ -7937,38 +7937,44 @@ func _render_business_tab_financials(list: VBoxContainer, selected_uid: String) 
 	e_desc.add_theme_color_override("font_color", Color("#a7f3d0"))
 	ev.add_child(e_desc)
 
-	var eq_row := HBoxContainer.new()
-	eq_row.add_theme_constant_override("separation", 10)
+	var transfer_amounts: Array[int] = [10000, 50000, 100000]
+	for amt in transfer_amounts:
+		var eq_row := HBoxContainer.new()
+		eq_row.add_theme_constant_override("separation", 10)
 
-	var btn_div := _create_cyber_button("💰 Withdraw $10,000 Dividend (Treasury -> Cash)", Color("#10b981"), func():
-		var r: Dictionary = BusinessManager.withdraw_owner_dividend(target_biz, 10000)
-		if bool(r.get("success", false)):
-			update_ui()
-			SaveManager.save_game()
-			_show_business_modal("financials", cur_uid)
-		else:
-			add_life_event(str(r.get("message", "Withdrawal failed.")), "finance")
-	)
-	btn_div.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	btn_div.custom_minimum_size.y = 50
-	btn_div.add_theme_font_size_override("font_size", 20)
-	eq_row.add_child(btn_div)
+		var btn_div := _create_cyber_button("💰 Withdraw $%s Dividend (Treasury -> Cash)" % _format_number(amt), Color("#10b981"), func():
+			var r: Dictionary = BusinessManager.withdraw_owner_dividend(target_biz, amt)
+			if bool(r.get("success", false)):
+				update_ui()
+				SaveManager.save_game()
+				_show_business_modal("financials", cur_uid)
+			else:
+				add_life_event(str(r.get("message", "Withdrawal failed.")), "finance")
+		, true)
+		btn_div.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn_div.custom_minimum_size.y = 50
+		btn_div.add_theme_font_size_override("font_size", 20)
+		btn_div.alignment = HORIZONTAL_ALIGNMENT_CENTER
+		btn_div.set_meta("center_text", true)
+		eq_row.add_child(btn_div)
 
-	var btn_inj := _create_cyber_button("💵 Inject $10,000 Capital (Cash -> Treasury)", Color("#0284c7"), func():
-		var r: Dictionary = BusinessManager.deposit_owner_capital(target_biz, 10000)
-		if bool(r.get("success", false)):
-			update_ui()
-			SaveManager.save_game()
-			_show_business_modal("financials", cur_uid)
-		else:
-			add_life_event(str(r.get("message", "Injection failed.")), "finance")
-	)
-	btn_inj.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	btn_inj.custom_minimum_size.y = 50
-	btn_inj.add_theme_font_size_override("font_size", 20)
-	eq_row.add_child(btn_inj)
+		var btn_inj := _create_cyber_button("💵 Inject $%s Capital (Cash -> Treasury)" % _format_number(amt), Color("#0284c7"), func():
+			var r: Dictionary = BusinessManager.deposit_owner_capital(target_biz, amt)
+			if bool(r.get("success", false)):
+				update_ui()
+				SaveManager.save_game()
+				_show_business_modal("financials", cur_uid)
+			else:
+				add_life_event(str(r.get("message", "Injection failed.")), "finance")
+		, true)
+		btn_inj.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn_inj.custom_minimum_size.y = 50
+		btn_inj.add_theme_font_size_override("font_size", 20)
+		btn_inj.alignment = HORIZONTAL_ALIGNMENT_CENTER
+		btn_inj.set_meta("center_text", true)
+		eq_row.add_child(btn_inj)
 
-	ev.add_child(eq_row)
+		ev.add_child(eq_row)
 	list.add_child(equity_card)
 
 
