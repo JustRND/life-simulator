@@ -116,9 +116,11 @@ static func trade(p: Node, uid: String, quantity: int, buying: bool) -> String:
 	var holdings: Dictionary = p.finance_market.holdings
 	var position: Dictionary = holdings.get(uid, {"quantity": 0, "cost": 0, "name": str(c.name), "price": float(c.price)})
 	if buying:
-		if quantity > int(c.available) or p.get_available_funds() < gross + fee:
-			return "Insufficient funds or available shares."
-		p.debit_funds(gross + fee)
+		if quantity > int(c.available):
+			return "Exceeds floating shares available on the market."
+		if p.bank_savings < gross + fee:
+			return "Insufficient bank balance. Shares purchases must be made using bank balance (cash cannot be used)."
+		p.bank_savings -= gross + fee
 		position.quantity = int(position.quantity) + quantity
 		position.cost = int(position.cost) + gross + fee
 		position.name = str(c.name)
@@ -131,7 +133,7 @@ static func trade(p: Node, uid: String, quantity: int, buying: bool) -> String:
 		var basis := int(round(float(position.cost) * quantity / int(position.quantity)))
 		position.cost = int(position.cost) - basis
 		position.quantity = int(position.quantity) - quantity
-		p.money += gross - fee
+		p.bank_savings += gross - fee
 		c.available = int(c.available) + quantity
 		p.finance_market.realized = int(p.finance_market.realized) + gross - fee - basis
 		p.finance_market.cash_flow = int(p.finance_market.cash_flow) - (gross - fee)
@@ -156,9 +158,9 @@ static func acquire(p: Node, uid: String) -> String:
 	if not _eligible(p) or c.is_empty() or not c.active or not str(c.business_uid).is_empty():
 		return "This business is unavailable for acquisition."
 	var price := acquisition_price(p, c)
-	if p.money + p.bank_savings < price:
-		return "Insufficient funds for the acquisition."
-	p.debit_funds(price)
+	if p.bank_savings < price:
+		return "Insufficient bank balance for the acquisition. Corporate acquisitions require bank balance."
+	p.bank_savings -= price
 	var def := BusinessManager.get_business_type_by_id(str(c.type_id))
 	var baseline := float(def.base_revenue_min + def.base_revenue_max) * 0.75
 	var valuation := int(float(c.price) * SHARES)

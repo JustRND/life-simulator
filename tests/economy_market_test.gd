@@ -19,19 +19,24 @@ func _ready() -> void:
 	PlayerData.has_started_game = true
 	PlayerData.age = 25
 	PlayerData.money = 100000000
+	PlayerData.bank_savings = 0
 	FinanceMarket.ensure(PlayerData)
 	check(FinanceMarket.active(PlayerData).size() == 8, "Exactly eight initial companies")
 	check(FinanceMarket.SECTORS.size() == 24, "24 company archetypes")
 	var company: Dictionary = FinanceMarket.active(PlayerData)[0]
-	var cash_before: int = PlayerData.money
+	var cash_attempt := FinanceMarket.trade(PlayerData, company.uid, 100, true)
+	check(cash_attempt.begins_with("Insufficient bank balance"), "Shares purchases cannot be made with cash alone")
+	PlayerData.bank_savings = 100000000
+	var bank_before: int = PlayerData.bank_savings
 	FinanceMarket.trade(PlayerData, company.uid, 100, true)
-	check(int(PlayerData.finance_market.holdings[company.uid].quantity) == 100, "Shares purchased")
+	check(int(PlayerData.finance_market.holdings[company.uid].quantity) == 100, "Shares purchased with bank balance")
+	check(PlayerData.bank_savings < bank_before, "Bank savings debited for stock purchase")
 	FinanceMarket.trade(PlayerData, company.uid, 100, false)
-	check(PlayerData.money < cash_before, "Immediate round trip pays fees rather than generating money")
+	check(PlayerData.bank_savings < bank_before, "Immediate round trip pays fees rather than generating money")
 	var unchanged := SaveManager.capture_data().duplicate(true)
 	FinanceMarket.trade(PlayerData, company.uid, -10, true)
 	FinanceMarket.trade(PlayerData, company.uid, 100, false)
-	check(PlayerData.money == int(unchanged.money), "Invalid transactions are side-effect free")
+	check(PlayerData.bank_savings == int(unchanged.bank_savings), "Invalid transactions are side-effect free")
 	var rose := false
 	var fell := false
 	var npc_sold := false
@@ -57,9 +62,9 @@ func _ready() -> void:
 	company = FinanceMarket.active(PlayerData)[0]
 	FinanceMarket.trade(PlayerData, company.uid, 100, true)
 	var acquisition_cost := FinanceMarket.acquisition_price(PlayerData, company)
-	cash_before = PlayerData.money
+	var savings_before := PlayerData.bank_savings
 	FinanceMarket.acquire(PlayerData, company.uid)
-	check(PlayerData.money == cash_before - acquisition_cost, "Acquisition cost credits existing shares")
+	check(PlayerData.bank_savings == savings_before - acquisition_cost, "Acquisition cost credits existing shares and debits bank savings")
 	check(PlayerData.owned_businesses.size() == 1 and PlayerData.licenses.is_empty(), "Acquisition requires no license")
 	check(not PlayerData.finance_market.holdings.has(company.uid), "Acquired shares are not double counted")
 	var business: Dictionary = PlayerData.owned_businesses[0]
@@ -90,6 +95,7 @@ func _ready() -> void:
 	var result := BusinessManager.liquidate_business(PlayerData.owned_businesses[0].uid)
 	check(result.success and PlayerData.owned_businesses.is_empty(), "Acquired business can be resold")
 	PlayerData.money = 100
+	PlayerData.bank_savings = 0
 	PlayerData.debt = 0
 	PlayerData.owned_businesses.append({"uid": "insolvent_test", "name": "Insolvent Test", "valuation": 100, "treasury": 0, "loan_balance": 1000, "unpaid_taxes": 0})
 	BusinessManager.liquidate_business("insolvent_test")

@@ -692,9 +692,9 @@ func test_asset_marketplace_and_ownership() -> void:
 	assert(buy_car["success"], "Should successfully purchase car_hatchback")
 	assert(PlayerData.owned_assets.size() == 1, "Player should now own 1 asset")
 	var car_price: int = buy_car["asset"]["purchase_price"]
-	assert(PlayerData.money == 20000 - car_price, "Cash should be debited first for purchase")
+	assert(PlayerData.bank_savings == 500000 - car_price and PlayerData.money == 20000, "Bank savings should be debited first for purchase")
 	assert(PlayerData.get_total_asset_value() == car_price, "Asset value should match purchase price initially")
-	assert(PlayerData.get_net_worth() == prev_nw, "Net worth should remain stable (cash converted to physical asset)")
+	assert(PlayerData.get_net_worth() == prev_nw, "Net worth should remain stable (savings converted to physical asset)")
 
 	var buy_moto = AssetCatalog.buy_asset(PlayerData, "moto_sportbike")
 	assert(buy_moto["success"], "Should successfully purchase moto_sportbike")
@@ -895,12 +895,12 @@ func test_licensing_freelance_and_businesses() -> void:
 	assert(PlayerData.active_freelance_jobs.has("freelance_photographer"), "Active freelance jobs must include freelance_photographer")
 
 	# Pitch gig (Project-based variable income)
-	var cash_before_pitch: int = PlayerData.money
+	var funds_before_pitch: int = PlayerData.get_available_funds()
 	var pitch_res: Dictionary = FreelanceManager.pitch_gig("freelance_photographer")
 	assert(bool(pitch_res.get("success", false)), "Pitching client gig must succeed")
 	var earned_pay: int = int(pitch_res.get("pay", 0))
 	assert(earned_pay > 0, "Freelance project must pay non-zero amount")
-	assert(PlayerData.money == cash_before_pitch + earned_pay, "Freelance project payout must be credited to player cash")
+	assert(PlayerData.get_available_funds() == funds_before_pitch + earned_pay, "Freelance project payout must be credited to player funds")
 
 	# Pitching again in the same year must be locked
 	var spam_pitch: Dictionary = FreelanceManager.pitch_gig("freelance_photographer")

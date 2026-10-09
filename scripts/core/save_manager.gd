@@ -48,6 +48,12 @@ func capture_data() -> Dictionary:
 		"tax_debt": PlayerData.tax_debt,
 		"loan_balance": PlayerData.loan_balance,
 		"loan_interest_rate": PlayerData.loan_interest_rate,
+		"credit_score": PlayerData.credit_score,
+		"has_credit_card": PlayerData.has_credit_card,
+		"credit_card_tier": PlayerData.credit_card_tier,
+		"credit_card_limit": PlayerData.credit_card_limit,
+		"credit_card_balance": PlayerData.credit_card_balance,
+		"credit_card_apr": PlayerData.credit_card_apr,
 		"owned_assets": PlayerData.owned_assets,
 		"health_insurance": PlayerData.health_insurance,
 		"education_level": PlayerData.education_level,
@@ -235,6 +241,12 @@ func apply_data(data: Dictionary) -> bool:
 	PlayerData.tax_debt = maxi(0, int(data.get("tax_debt", 0)))
 	PlayerData.loan_balance = int(data.get("loan_balance", 0))
 	PlayerData.loan_interest_rate = float(data.get("loan_interest_rate", 0.08))
+	PlayerData.credit_score = int(data.get("credit_score", 650))
+	PlayerData.has_credit_card = bool(data.get("has_credit_card", false))
+	PlayerData.credit_card_tier = str(data.get("credit_card_tier", "None"))
+	PlayerData.credit_card_limit = int(data.get("credit_card_limit", 0))
+	PlayerData.credit_card_balance = int(data.get("credit_card_balance", 0))
+	PlayerData.credit_card_apr = float(data.get("credit_card_apr", 0.18))
 	PlayerData.education_level = str(data.get("education_level", "None"))
 	PlayerData.grades = int(data.get("grades", 75))
 	PlayerData.has_scholarship = bool(data.get("has_scholarship", false))

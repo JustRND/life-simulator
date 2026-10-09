@@ -94,6 +94,12 @@ var debt: int = 0
 var tax_debt: int = 0
 var loan_balance: int = 0
 var loan_interest_rate: float = 0.08
+var credit_score: int = 650
+var has_credit_card: bool = false
+var credit_card_tier: String = "None"
+var credit_card_limit: int = 0
+var credit_card_balance: int = 0
+var credit_card_apr: float = 0.18
 var owned_assets: Array[Dictionary] = []
 var health_insurance: String = "none"
 
@@ -239,6 +245,13 @@ func reset_player() -> void:
 	debt = 0
 	tax_debt = 0
 	loan_balance = 0
+	loan_interest_rate = 0.08
+	credit_score = 650
+	has_credit_card = false
+	credit_card_tier = "None"
+	credit_card_limit = 0
+	credit_card_balance = 0
+	credit_card_apr = 0.18
 	owned_assets.clear()
 	health_insurance = "none"
 
@@ -592,12 +605,12 @@ func receive_salary(amount: int) -> void:
 func debit_funds(cost: int) -> bool:
 	if not can_afford(cost):
 		return false
-	if money >= cost:
-		money -= cost
+	if bank_savings >= cost:
+		bank_savings -= cost
 	else:
-		var rem: int = cost - money
-		money = 0
-		bank_savings -= rem
+		var rem: int = cost - bank_savings
+		bank_savings = 0
+		money -= rem
 	return true
 
 
@@ -685,7 +698,7 @@ func cure_illness(illness_id: String) -> bool:
 
 
 func get_total_debt() -> int:
-	return debt + tax_debt + loan_balance
+	return debt + tax_debt + loan_balance + credit_card_balance
 
 
 func take_bank_loan(amount: int, interest_rate: float) -> bool:
@@ -703,6 +716,10 @@ func repay_bank_loan(amount: int) -> int:
 	var paid := mini(amount, mini(get_available_funds(), loan_balance))
 	debit_funds(paid)
 	loan_balance -= paid
+	if loan_balance == 0:
+		modify_credit_score(20)
+	else:
+		modify_credit_score(5)
 	return paid
 
 
@@ -712,7 +729,135 @@ func pay_outstanding_tax() -> int:
 	var paid := tax_debt
 	debit_funds(paid)
 	tax_debt = 0
+	modify_credit_score(15)
 	return paid
+
+
+func modify_credit_score(delta: int) -> void:
+	credit_score = clampi(credit_score + delta, 300, 850)
+
+
+func get_credit_rating() -> String:
+	if credit_score >= 800:
+		return "Exceptional"
+	elif credit_score >= 740:
+		return "Very Good"
+	elif credit_score >= 670:
+		return "Good"
+	elif credit_score >= 580:
+		return "Fair"
+	else:
+		return "Poor"
+
+
+func get_credit_score_color() -> Color:
+	if credit_score >= 800:
+		return Color("#10b981")
+	elif credit_score >= 740:
+		return Color("#22c55e")
+	elif credit_score >= 670:
+		return Color("#38bdf8")
+	elif credit_score >= 580:
+		return Color("#f59e0b")
+	else:
+		return Color("#ef4444")
+
+
+func get_credit_card_available() -> int:
+	if not has_credit_card:
+		return 0
+	return maxi(0, credit_card_limit - credit_card_balance)
+
+
+func can_apply_credit_card(tier: String) -> Dictionary:
+	if age < 18:
+		return {"eligible": false, "reason": "Declined: You must be at least 18 years old to apply for a credit card."}
+	
+	# Strict debt checks: character must have zero debt, zero unpaid taxes, zero active loans, zero credit card debt
+	if debt > 0 or tax_debt > 0 or loan_balance > 0 or credit_card_balance > 0:
+		return {"eligible": false, "reason": "Declined: Application rejected due to outstanding debt, unpaid taxes, or active loans. All liabilities must be $0."}
+	
+	var nw: int = get_net_worth()
+	match tier.to_lower():
+		"silver":
+			if credit_score < 600:
+				return {"eligible": false, "reason": "Declined: Silver card requires minimum 600 credit score (Your score: %d)." % credit_score}
+			if nw < 5000:
+				return {"eligible": false, "reason": "Declined: Silver card requires minimum $5,000 net worth (Your net worth: $%d)." % nw}
+			return {"eligible": true, "reason": "Approved for Silver Card"}
+		"gold":
+			if credit_score < 700:
+				return {"eligible": false, "reason": "Declined: Gold card requires minimum 700 credit score (Your score: %d)." % credit_score}
+			if nw < 30000:
+				return {"eligible": false, "reason": "Declined: Gold card requires minimum $30,000 net worth (Your net worth: $%d)." % nw}
+			return {"eligible": true, "reason": "Approved for Gold Card"}
+		"platinum":
+			if credit_score < 780:
+				return {"eligible": false, "reason": "Declined: Platinum card requires minimum 780 credit score (Your score: %d)." % credit_score}
+			if nw < 150000:
+				return {"eligible": false, "reason": "Declined: Platinum card requires minimum $150,000 net worth (Your net worth: $%d)." % nw}
+			return {"eligible": true, "reason": "Approved for Platinum Card"}
+		_:
+			return {"eligible": false, "reason": "Declined: Unknown credit card tier."}
+
+
+func approve_credit_card(tier: String) -> bool:
+	var check := can_apply_credit_card(tier)
+	if not bool(check.get("eligible", false)):
+		return false
+	
+	has_credit_card = true
+	match tier.to_lower():
+		"silver":
+			credit_card_tier = "Silver"
+			credit_card_limit = 5000
+			credit_card_apr = 0.18
+		"gold":
+			credit_card_tier = "Gold"
+			credit_card_limit = 25000
+			credit_card_apr = 0.15
+		"platinum":
+			credit_card_tier = "Platinum"
+			credit_card_limit = 100000
+			credit_card_apr = 0.12
+		_:
+			return false
+	
+	modify_credit_score(10)
+	return true
+
+
+func draw_credit_card_advance(amount: int) -> bool:
+	if not has_credit_card or amount <= 0 or amount > get_credit_card_available():
+		return false
+	credit_card_balance += amount
+	bank_savings += amount
+	if float(credit_card_balance) / float(maxi(1, credit_card_limit)) > 0.8:
+		modify_credit_score(-5)
+	return true
+
+
+func repay_credit_card(amount: int) -> int:
+	if not has_credit_card or amount <= 0 or credit_card_balance <= 0 or get_available_funds() <= 0:
+		return 0
+	var paid := mini(amount, mini(get_available_funds(), credit_card_balance))
+	debit_funds(paid)
+	credit_card_balance -= paid
+	if credit_card_balance == 0:
+		modify_credit_score(15)
+	else:
+		modify_credit_score(mini(10, maxi(3, int(paid / 1000))))
+	return paid
+
+
+func cancel_credit_card() -> bool:
+	if not has_credit_card or credit_card_balance > 0:
+		return false
+	has_credit_card = false
+	credit_card_tier = "None"
+	credit_card_limit = 0
+	credit_card_apr = 0.18
+	return true
 
 
 func get_stage_name() -> String:
@@ -1070,6 +1215,13 @@ func takeover_as_child(child: Dictionary, inherited_money: int, inherited_assets
 	bank_savings = maxi(0, inherited_money)
 	debt = 0
 	tax_debt = 0
+	loan_balance = 0
+	credit_score = 650
+	has_credit_card = false
+	credit_card_tier = "None"
+	credit_card_limit = 0
+	credit_card_balance = 0
+	credit_card_apr = 0.18
 	karma = 0
 
 	owned_assets.clear()

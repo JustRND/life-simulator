@@ -299,7 +299,7 @@ func _exchange(list: VBoxContainer) -> void:
 		# Acquire Business Button (Prestige Indigo)
 		var acq_price: float = FinanceMarket.acquisition_price(PlayerData, c)
 		var acq_btn := create_market_button(cv, "🏢 Acquire Business • %s" % _money(acq_price), Color("#4f46e5"), func():
-			main.get_node("OptionsMenu").confirm("ACQUIRE BUSINESS", "Acquire %s for %s from cash and savings? No license is required." % [target_c.name, _money(acq_price)], func():
+			main.get_node("OptionsMenu").confirm("ACQUIRE BUSINESS", "Acquire %s for %s from bank balance? No license is required." % [target_c.name, _money(acq_price)], func():
 				_perform(FinanceMarket.acquire(PlayerData, target_c.uid))
 			)
 		, PlayerData.age < 18 or PlayerData.is_in_prison or PlayerData.is_dead)
@@ -321,10 +321,10 @@ func _open_trade_modal(c: Dictionary, is_buy: bool) -> void:
 		owned_qty = int(holdings[c.uid].get("quantity", 0))
 	
 	var share_price := float(c.get("price", 10.0))
-	var player_cash: int = PlayerData.money + PlayerData.bank_savings
+	var player_bank: int = PlayerData.bank_savings
 	var max_affordable := 0
 	if share_price > 0:
-		max_affordable = maxi(0, int(float(player_cash) / (share_price * (1.0 + FinanceMarket.FEE))))
+		max_affordable = maxi(0, int(float(player_bank) / (share_price * (1.0 + FinanceMarket.FEE))))
 	
 	var action_word := "BUY" if is_buy else "SELL"
 	var modal: Dictionary = main._create_cyber_modal("%s SHARES" % action_word, "%s • Current Market Price: %s" % [c.name, _money(share_price)], Color("#10b981" if is_buy else "#f43f5e"))
@@ -354,7 +354,8 @@ func _open_trade_modal(c: Dictionary, is_buy: bool) -> void:
 	ipm.add_child(ipv)
 	
 	if is_buy:
-		label(ipv, "💵 Available Funds: %s" % _money(player_cash), 24, Color("#0284c7") if is_light else Color("#38bdf8"))
+		label(ipv, "🏦 Bank Balance (Stock Buying Power): %s" % _money(player_bank), 24, Color("#0284c7") if is_light else Color("#38bdf8"))
+		label(ipv, "⚠️ Shares purchases require bank balance. Cash cannot be used.", 19, Color("#f59e0b"))
 		label(ipv, "📊 Maximum Affordable: %d shares  •  Available on Market: %d" % [max_affordable, int(c.available)], 21, Color("#64748b"))
 	else:
 		var current_val := owned_qty * share_price
@@ -465,8 +466,8 @@ func _open_trade_modal(c: Dictionary, is_buy: bool) -> void:
 				calc_warning.text = "⚠️ Please enter a valid quantity of shares (1 or more)."
 				calc_warning.add_theme_color_override("font_color", Color("#eab308"))
 				can_confirm = false
-			elif total_cost > player_cash:
-				calc_warning.text = "⚠️ Insufficient funds! You need %s more." % _money(total_cost - player_cash)
+			elif total_cost > player_bank:
+				calc_warning.text = "⚠️ Insufficient bank balance! You need %s more in your bank account." % _money(total_cost - player_bank)
 				calc_warning.add_theme_color_override("font_color", Color("#ef4444"))
 				can_confirm = false
 			elif qty > int(c.available):

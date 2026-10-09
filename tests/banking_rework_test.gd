@@ -30,7 +30,7 @@ func _ready() -> void:
 		if button.text.begins_with("Borrow $"):
 			assert(button.disabled)
 			borrow_count += 1
-	assert(borrow_count == 4)
+	assert(borrow_count == 6)
 	main._show_loan_repayment()
 	await get_tree().create_timer(0.5).timeout
 	var field = main.find_child("LoanRepaymentAmount", true, false)
@@ -39,8 +39,11 @@ func _ready() -> void:
 	assert(field.has_meta("mobile_kb_attached"))
 	field.text = "250"
 	field.text_changed.emit(field.text)
-	await RenderingServer.frame_post_draw
-	get_viewport().get_texture().get_image().save_png("res://work/banking-repayment.png")
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png("res://work/banking-repayment.png")
+	else:
+		await get_tree().create_timer(0.1).timeout
 	for invalid in ["", "0", "-1", "1.5", "1e3", "$100", "99999999999999999"]:
 		assert(main._parse_loan_payment(invalid) == 0)
 	assert(main._parse_loan_payment(" 250 ") == 250)

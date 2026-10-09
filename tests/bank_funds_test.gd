@@ -19,8 +19,14 @@ func _ready() -> void:
 	assert(PlayerData.get_available_funds() == 700)
 	PlayerData.receive_salary(1000)
 	assert(PlayerData.money == 300 and PlayerData.bank_savings == 1400)
+	# Purchasing prioritizes bank balance first:
 	assert(PlayerData.debit_funds(400))
-	assert(PlayerData.money == 0 and PlayerData.bank_savings == 1300)
+	assert(PlayerData.money == 300 and PlayerData.bank_savings == 1000)
+	# Remainder debited from cash when bank savings exhausted:
+	assert(PlayerData.debit_funds(1100))
+	assert(PlayerData.bank_savings == 0 and PlayerData.money == 200)
+	PlayerData.money = 0
+	PlayerData.bank_savings = 1300
 	assert(not PlayerData.debit_funds(1301))
 	assert(not PlayerData.debit_funds(-10))
 	assert(PlayerData.bank_savings == 1300)

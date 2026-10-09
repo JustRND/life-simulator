@@ -19,6 +19,7 @@ func _ready() -> void:
 	PlayerData.has_started_game = true
 	PlayerData.age = 25
 	PlayerData.money = 1000000
+	PlayerData.bank_savings = 1000000
 	
 	log_lines.append("--- TEST CASE: BUY STOCK -> MARKET REFRESHES -> STOCK PERSISTS IN PORTFOLIO ---")
 	FinanceMarket.ensure(PlayerData)
@@ -86,16 +87,16 @@ func _ready() -> void:
 	
 	# 5. Selling off-market stock from Portfolio
 	print("\nTesting selling off-market shares from portfolio...")
-	var cash_before_partial: int = PlayerData.money
+	var bank_before_partial: int = PlayerData.bank_savings
 	var sell_partial_res := FinanceMarket.trade(PlayerData, target_uid, 40, false)
 	check(sell_partial_res.begins_with("Sold 40 shares"), "Can sell custom amount (40 shares) of off-market stock")
-	check(PlayerData.money > cash_before_partial, "Cash increased after sale")
+	check(PlayerData.bank_savings > bank_before_partial, "Bank savings increased after sale")
 	check(int(PlayerData.finance_market.holdings[target_uid].quantity) == 60, "60 shares remain in holding")
 	
-	var cash_before_all: int = PlayerData.money
+	var bank_before_all: int = PlayerData.bank_savings
 	var sell_all_res := FinanceMarket.trade(PlayerData, target_uid, 60, false)
 	check(sell_all_res.begins_with("Sold 60 shares"), "Can sell remaining shares of off-market stock")
-	check(PlayerData.money > cash_before_all, "Cash increased after final sale")
+	check(PlayerData.bank_savings > bank_before_all, "Bank savings increased after final sale")
 	check(not PlayerData.finance_market.holdings.has(target_uid), "Holding is removed once quantity reaches 0")
 	check(FinanceMarket.portfolio_value(PlayerData) == 0, "Portfolio value is 0 after selling all shares")
 	
