@@ -146,6 +146,9 @@ static func create_keyboard_trigger_button(input_ctrl: Control, button_title: St
 	return btn
 
 
+static var _active_callbacks: Dictionary = {}
+
+
 ## Opens the virtual keyboard for the target input control
 static func open_keyboard(input_ctrl: Control, prompt_override: String = "", force_prompt: bool = false) -> void:
 	if input_ctrl == null or not is_instance_valid(input_ctrl):
@@ -172,21 +175,21 @@ static func open_keyboard(input_ctrl: Control, prompt_override: String = "", for
 		var te := input_ctrl as TextEdit
 		current_text = te.text
 
-	# 1. Native DisplayServer virtual keyboard call (handles native Android/iOS and Godot Web experimentalVK)
-	if DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD):
+	# 1. Native Mobile (Android / iOS native app)
+	if not OS.has_feature("web") and DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD):
 		var keyboard_type := DisplayServer.KEYBOARD_TYPE_DEFAULT
 		if input_ctrl is LineEdit:
 			keyboard_type = input_ctrl.virtual_keyboard_type
 		DisplayServer.virtual_keyboard_show(current_text, input_ctrl.get_global_rect(), keyboard_type, max_len)
+		return
 
 	# 2. Web Mobile Browser Support (iOS Safari, Android Chrome, Samsung Internet)
-	# On mobile browsers, HTML5 canvas elements cannot summon the OS virtual keyboard without a native DOM prompt or input
 	if force_prompt or is_mobile_web() or (OS.has_feature("web") and is_mobile()):
-		_prompt_mobile_web(input_ctrl, prompt_override, current_text)
+		_prompt_mobile_web(input_ctrl, prompt_override, current_text, max_len)
 
 
-## Prompts the user via native browser modal on mobile web, guaranteeing the OS virtual keyboard appears
-static func _prompt_mobile_web(input_ctrl: Control, prompt_override: String, current_val: String) -> void:
+## Prompts the user via native browser modal or cyber overlay on mobile web, guaranteeing OS virtual keyboard input
+static func _prompt_mobile_web(input_ctrl: Control, prompt_override: String, current_val: String, max_len: int = -1) -> void:
 	if not OS.has_feature("web") or not OS.has_feature("JavaScript"):
 		return
 
@@ -211,35 +214,75 @@ static func _prompt_mobile_web(input_ctrl: Control, prompt_override: String, cur
 	if prompt_title.is_empty():
 		prompt_title = "Enter text:"
 
+	var input_type := "text"
+	if input_ctrl is LineEdit:
+		var le_typed := input_ctrl as LineEdit
+		if le_typed.virtual_keyboard_type == LineEdit.KEYBOARD_TYPE_NUMBER or le_typed.virtual_keyboard_type == LineEdit.KEYBOARD_TYPE_NUMBER_DECIMAL:
+			input_type = "number"
+
+	# Register asynchronous callback for modern overlay
+	var on_submit = func(args):
+		if input_ctrl == null or not is_instance_valid(input_ctrl):
+			_active_callbacks.erase(input_ctrl)
+			return
+		if args.size() > 0 and args[0] != null:
+			var res_str := str(args[0])
+			if res_str != PROMPT_CANCEL_SENTINEL and res_str != "null":
+				_apply_input_text(input_ctrl, res_str)
+		_active_callbacks.erase(input_ctrl)
+
+	var cb = JavaScriptBridge.create_callback(on_submit)
+	_active_callbacks[input_ctrl] = cb
+
 	var js_eval := """
 		(function() {
 			var title = %s;
 			var def = %s;
+			var maxL = %d;
+			var inType = %s;
+			if (typeof window.showCyberInputOverlay === 'function') {
+				window.showCyberInputOverlay(title, def, maxL, inType, function(val) {
+					if (window.__godot_kb_cb) {
+						window.__godot_kb_cb(val);
+					}
+				});
+				return '__OPENED_ASYNC__';
+			}
 			if (typeof window.godotPromptInput === 'function') {
 				return window.godotPromptInput(title, def);
 			}
 			var res = window.prompt(title, def);
 			return res !== null ? res : '%s';
 		})()
-	""" % [JSON.stringify(prompt_title), JSON.stringify(current_val), PROMPT_CANCEL_SENTINEL]
+	""" % [JSON.stringify(prompt_title), JSON.stringify(current_val), max_len, JSON.stringify(input_type), PROMPT_CANCEL_SENTINEL]
+
+	var win = JavaScriptBridge.get_interface("window")
+	if win != null:
+		win["__godot_kb_cb"] = cb
 
 	var res = JavaScriptBridge.eval(js_eval)
 	if res != null:
 		var res_str := str(res)
-		if res_str != PROMPT_CANCEL_SENTINEL and res_str != "null":
-			if input_ctrl is LineEdit:
-				var le := input_ctrl as LineEdit
-				if le.max_length > 0 and res_str.length() > le.max_length:
-					res_str = res_str.substr(0, le.max_length)
-				le.text = res_str
-				le.text_changed.emit(res_str)
-				le.text_submitted.emit(res_str)
-				# Auto-normalize names if this is a character name field
-				if le.name == "NameInput" or le.get_meta("is_name_input", false):
-					var CreationOptionsRef = load("res://scripts/core/creation_options.gd")
-					if CreationOptionsRef != null:
-						le.text = CreationOptionsRef.normalize_name(le.text)
-			elif input_ctrl is TextEdit:
-				var te := input_ctrl as TextEdit
-				te.text = res_str
-				te.text_changed.emit()
+		if res_str != "__OPENED_ASYNC__" and res_str != PROMPT_CANCEL_SENTINEL and res_str != "null":
+			_apply_input_text(input_ctrl, res_str)
+
+
+static func _apply_input_text(input_ctrl: Control, res_str: String) -> void:
+	if input_ctrl == null or not is_instance_valid(input_ctrl):
+		return
+	if input_ctrl is LineEdit:
+		var le := input_ctrl as LineEdit
+		if le.max_length > 0 and res_str.length() > le.max_length:
+			res_str = res_str.substr(0, le.max_length)
+		le.text = res_str
+		le.text_changed.emit(res_str)
+		le.text_submitted.emit(res_str)
+		# Auto-normalize names if this is a character name field
+		if le.name == "NameInput" or le.get_meta("is_name_input", false):
+			var CreationOptionsRef = load("res://scripts/core/creation_options.gd")
+			if CreationOptionsRef != null:
+				le.text = CreationOptionsRef.normalize_name(le.text)
+	elif input_ctrl is TextEdit:
+		var te := input_ctrl as TextEdit
+		te.text = res_str
+		te.text_changed.emit()

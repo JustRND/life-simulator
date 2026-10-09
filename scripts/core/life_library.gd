@@ -18,7 +18,7 @@ const ACHIEVEMENTS = [
 var profile_path := "user://life_library.json"
 var slots_path := "user://lives"
 var resume_path := SaveManager.SAVE_PATH
-var data: Dictionary = {"cities": [], "people": [], "achievements": {}, "theme": "dark", "active_slot": "", "muted": false, "language": "en", "currency": "USD"}
+var data: Dictionary = {"cities": [], "people": [], "achievements": {}, "theme": "dark", "active_slot": "", "muted": false, "language": "en", "currency": "USD", "haptics_enabled": true}
 
 
 func _ready() -> void:

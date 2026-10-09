@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://c7bmk8perf01"]
+[gd_scene format=3 uid="uid://c7bmk8perf01"]
 
 [ext_resource type="Script" path="res://tests/benchmark_performance.gd" id="1_perf"]
 

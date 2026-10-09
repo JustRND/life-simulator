@@ -183,6 +183,8 @@ func field(parent: Node, placeholder: String) -> LineEdit:
 func _cities() -> void:
 	var view := modal("CUSTOM CITIES", "Cities are stored on this device and used in new birth stories for their matching country.")
 	var city := field(view.list, "City name")
+	city.set_meta("mobile_kb_prompt_title", "Enter city name:")
+	MobileKeyboardManager.attach_to_input(city, "Enter city name:")
 	var kb_city := MobileKeyboardManager.create_keyboard_trigger_button(city, "⌨️ Enter Custom City Name", "Enter city name:", Color("#0284c7"))
 	view.list.add_child(kb_city)
 	view.list.move_child(kb_city, city.get_index() + 1)
@@ -205,6 +207,9 @@ func _people() -> void:
 	var view := modal("CUSTOM PEOPLE", "Create adult NPCs using the game's portraits. They can appear in dating encounters; all custom people may also appear in annual social encounters.")
 	var name_field := field(view.list, "Full name")
 	name_field.max_length = 40
+	name_field.set_meta("is_name_input", true)
+	name_field.set_meta("mobile_kb_prompt_title", "Enter full name for custom person:")
+	MobileKeyboardManager.attach_to_input(name_field, "Enter full name for custom person:")
 	var kb_person := MobileKeyboardManager.create_keyboard_trigger_button(name_field, "⌨️ Enter Custom Full Name", "Enter full name for custom person:", Color("#0284c7"))
 	view.list.add_child(kb_person)
 	view.list.move_child(kb_person, name_field.get_index() + 1)
@@ -258,7 +263,7 @@ func _people() -> void:
 
 
 func _settings() -> void:
-	var view := modal("SETTINGS", "Audio and language preferences are saved on this device.")
+	var view := modal("SETTINGS", "Audio, language and haptic preferences are saved on this device.")
 	var audio := CheckButton.new()
 	audio.text = "Mute sound"
 	audio.button_pressed = AudioServer.is_bus_mute(0)
@@ -268,6 +273,16 @@ func _settings() -> void:
 	audio.toggled.connect(func(value):
 		AudioServer.set_bus_mute(0, value)
 		LifeLibrary.data.muted = value
+		LifeLibrary.persist()
+	)
+	var haptics := CheckButton.new()
+	haptics.text = "Haptic feedback (Vibration)"
+	haptics.button_pressed = bool(LifeLibrary.data.get("haptics_enabled", true))
+	haptics.custom_minimum_size.y = 80
+	haptics.add_theme_font_size_override("font_size", 28)
+	view.list.add_child(haptics)
+	haptics.toggled.connect(func(value):
+		LifeLibrary.data.haptics_enabled = value
 		LifeLibrary.persist()
 	)
 	section(view.list, "Language")

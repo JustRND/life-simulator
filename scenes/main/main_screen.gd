@@ -43,6 +43,9 @@ var annual_event_popup_chance: float = 0.45
 @onready var disclaimer_screen: Control = get_node_or_null("DisclaimerScreen") as Control
 @onready var loading_progress_label: Label = get_node_or_null("LoadingScreen/CenterContainer/LoadingVBox/LoadingProgressLabel") as Label
 @onready var age_button: Button = $SafeArea/MainColumn/AgeButton
+@onready var safe_area: Control = $SafeArea
+@onready var top_bar: PanelContainer = $TopBar
+@onready var profile_strip: PanelContainer = $ProfileStrip
 
 # Dialogs & Overlays
 @onready var settings_overlay: ColorRect = $SettingsOverlay
@@ -192,6 +195,10 @@ func _ready() -> void:
 
 	# Configure translucent, sleek scroll indicators on every page and scroll container
 	_setup_all_translucent_scrollbars()
+	_adjust_safe_area()
+	get_viewport().size_changed.connect(_adjust_safe_area)
+	if age_button != null:
+		age_button.button_down.connect(func(): _trigger_haptic(25))
 
 	var loaded: bool = SaveManager.load_game()
 	FinanceMarket.ensure(PlayerData)
@@ -1230,7 +1237,54 @@ func update_ui() -> void:
 
 
 func _on_age_button_pressed() -> void:
+	_trigger_haptic(45)
 	age_up()
+
+
+func _trigger_haptic(duration_ms: int = 40) -> void:
+	if not bool(LifeLibrary.data.get("haptics_enabled", true)):
+		return
+	# 1. Native mobile device vibration (Android / iOS native app)
+	if DisplayServer.is_touchscreen_available() or OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios"):
+		Input.vibrate_handheld(duration_ms)
+	# 2. Web browser haptics (iOS Safari / Android Chrome / Samsung Internet)
+	if OS.has_feature("web") and OS.has_feature("JavaScript"):
+		JavaScriptBridge.eval("""
+			try {
+				if (navigator.vibrate) {
+					navigator.vibrate(%d);
+				}
+			} catch (e) {}
+		""" % duration_ms)
+
+
+func _adjust_safe_area() -> void:
+	var top_m: float = 0.0
+	var bottom_m: float = 0.0
+
+	var screen_h: int = DisplayServer.screen_get_size().y
+	var safe: Rect2i = DisplayServer.get_display_safe_area()
+	if screen_h > 0 and safe.size.y > 0 and safe.size.y < screen_h:
+		var scale: float = 1920.0 / float(screen_h)
+		top_m = float(safe.position.y) * scale
+		bottom_m = float(screen_h - (safe.position.y + safe.size.y)) * scale
+
+	# Extra padding on mobile web to clear dynamic browser address/tab bars
+	if OS.has_feature("web") and MobileKeyboardManager.is_mobile():
+		bottom_m = maxf(bottom_m, 32.0)
+		top_m = maxf(top_m, 16.0)
+
+	if is_instance_valid(safe_area):
+		safe_area.offset_top = top_m
+		safe_area.offset_bottom = -bottom_m
+
+	if is_instance_valid(top_bar):
+		top_bar.offset_top = top_m
+		top_bar.offset_bottom = 112.0 + top_m
+
+	if is_instance_valid(profile_strip):
+		profile_strip.offset_top = 112.0 + top_m
+		profile_strip.offset_bottom = 260.0 + top_m
 
 
 func trigger_event() -> void:
@@ -10561,10 +10615,15 @@ func _create_cyber_modal(title_text: String, subtitle_text: String, border_color
 	margin_outer.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	margin_outer.grow_vertical = Control.GROW_DIRECTION_BOTH
 	margin_outer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var top_m: int = 16
+	var bottom_m: int = 16
+	if DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD) or OS.has_feature("mobile") or (OS.has_feature("web") and MobileKeyboardManager.is_mobile()):
+		top_m = 48
+		bottom_m = 40
 	margin_outer.add_theme_constant_override("margin_left", 16)
 	margin_outer.add_theme_constant_override("margin_right", 16)
-	margin_outer.add_theme_constant_override("margin_top", 16)
-	margin_outer.add_theme_constant_override("margin_bottom", 16)
+	margin_outer.add_theme_constant_override("margin_top", top_m)
+	margin_outer.add_theme_constant_override("margin_bottom", bottom_m)
 	overlay.add_child(margin_outer)
 	preload("res://scripts/ui/panel_pull_up.gd").watch(margin_outer, overlay)
 
@@ -14285,9 +14344,32 @@ func _configure_creation() -> void:
 
 	_update_creation_avatar_preview()
 
-	# Card Styling: High-contrast Dark Cyber Card
+	# Card Styling: High-contrast Dark Cyber Card with Responsive Anti-Clipping ScrollContainer
 	var card := content.get_parent() as PanelContainer
-	card.custom_minimum_size = Vector2(980, 1600)
+	if not content.get_parent() is ScrollContainer:
+		var scroll := ScrollContainer.new()
+		scroll.name = "CreationScroll"
+		scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		_apply_translucent_scrollbar_to_node(scroll)
+		card.remove_child(content)
+		card.add_child(scroll)
+		scroll.add_child(content)
+		content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+	var update_card_bounds = func():
+		if is_instance_valid(card):
+			var vp_size: Vector2 = get_viewport_rect().size
+			var max_w: float = minf(980.0, maxf(640.0, vp_size.x * 0.94))
+			var max_h: float = minf(1600.0, maxf(560.0, vp_size.y * 0.92))
+			card.custom_minimum_size = Vector2(max_w, max_h)
+
+	update_card_bounds.call()
+	get_viewport().size_changed.connect(update_card_bounds)
+
 	var card_style := StyleBoxFlat.new()
 	card_style.bg_color = Color("#090f1d") # Rich dark cyber navy
 	card_style.border_color = Color("#38bdf8") # Radiant cyan border
@@ -14295,10 +14377,10 @@ func _configure_creation() -> void:
 	card_style.set_corner_radius_all(12)
 	card_style.shadow_color = Color(0, 0, 0, 0.85)
 	card_style.shadow_size = 20
-	card_style.content_margin_left = 40
-	card_style.content_margin_right = 40
-	card_style.content_margin_top = 36
-	card_style.content_margin_bottom = 36
+	card_style.content_margin_left = 32
+	card_style.content_margin_right = 32
+	card_style.content_margin_top = 28
+	card_style.content_margin_bottom = 28
 	card.add_theme_stylebox_override("panel", card_style)
 
 	# High contrast text for all labels in creator card
