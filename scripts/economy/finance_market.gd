@@ -16,6 +16,18 @@ static func ensure(p: Node) -> void:
 		p.finance_market = {"issuers": [], "holdings": {}, "history": [], "news": [], "traders": [], "last_age": p.age, "serial": 0, "realized": 0, "cash_flow": 0}
 		for i in range(16):
 			p.finance_market.traders.append({"cash": 5000000.0, "positions": {}})
+	# Self-heal: ensure every holding has an issuer entry so it is never orphaned
+	for uid in p.finance_market.get("holdings", {}):
+		if issuer(p, uid).is_empty():
+			var pos: Dictionary = p.finance_market.holdings[uid]
+			var fallback_company := {
+				"uid": uid, "archetype": -1, "name": str(pos.get("name", "Asset " + uid)),
+				"owner": "Public", "country": "United States", "type_id": "", "active": false,
+				"price": float(pos.get("price", 10.0)), "previous": float(pos.get("price", 10.0)),
+				"available": 0, "npc_buys": 0, "npc_sells": 0, "performance": 0.0,
+				"business_uid": "", "opened_age": p.age
+			}
+			p.finance_market.issuers.append(fallback_company)
 	_fill(p)
 	if p.finance_market.history.is_empty():
 		record(p)
@@ -68,8 +80,8 @@ static func portfolio_value(p: Node) -> int:
 	var total := 0.0
 	for uid in p.finance_market.get("holdings", {}):
 		var company := issuer(p, uid)
-		if not company.is_empty() and company.active:
-			total += int(p.finance_market.holdings[uid].quantity) * float(company.price)
+		var price: float = float(company.get("price", 0.0)) if not company.is_empty() else float(p.finance_market.holdings[uid].get("price", 0.0))
+		total += int(p.finance_market.holdings[uid].get("quantity", 0)) * price
 	return int(total)
 
 
@@ -91,20 +103,26 @@ static func _eligible(p: Node) -> bool:
 static func trade(p: Node, uid: String, quantity: int, buying: bool) -> String:
 	ensure(p)
 	var c := issuer(p, uid)
-	if not _eligible(p) or c.is_empty() or not c.active or quantity < 1 or quantity > (10000 if buying else FLOAT):
+	if c.is_empty():
+		var pos: Dictionary = p.finance_market.holdings.get(uid, {})
+		if not pos.is_empty() and not buying:
+			c = {"uid": uid, "name": str(pos.get("name", "Holding " + uid)), "price": float(pos.get("price", 10.0)), "active": false, "available": 0}
+	if not _eligible(p) or c.is_empty() or quantity < 1 or (buying and not bool(c.get("active", false))) or (buying and quantity > 10000) or (not buying and quantity > FLOAT):
 		return "Trade unavailable. Adults outside prison may trade 1–10,000 shares."
-	if not str(c.business_uid).is_empty():
+	if not str(c.get("business_uid", "")).is_empty():
 		return "Your controlling stake is managed through My Businesses."
 	var gross := int(ceil(float(c.price) * quantity)) if buying else int(floor(float(c.price) * quantity))
 	var fee := maxi(1, int(ceil(gross * FEE)))
 	var holdings: Dictionary = p.finance_market.holdings
-	var position: Dictionary = holdings.get(uid, {"quantity": 0, "cost": 0})
+	var position: Dictionary = holdings.get(uid, {"quantity": 0, "cost": 0, "name": str(c.name), "price": float(c.price)})
 	if buying:
 		if quantity > int(c.available) or p.money < gross + fee:
 			return "Insufficient cash or available shares."
 		p.money -= gross + fee
 		position.quantity = int(position.quantity) + quantity
 		position.cost = int(position.cost) + gross + fee
+		position.name = str(c.name)
+		position.price = float(c.price)
 		c.available = int(c.available) - quantity
 		p.finance_market.cash_flow = int(p.finance_market.cash_flow) + gross + fee
 	else:
@@ -264,23 +282,32 @@ static func advance_year(p: Node) -> void:
 					business.valuation = int(float(c.price) * SHARES)
 	_fill(p)
 	record(p)
-	# Retired issuers are no longer referenced after their holdings have settled.
-	p.finance_market.issuers = active(p)
+	# Retain active issuers as well as any unlisted issuers held by the player
+	var kept_issuers: Array = []
+	for company in p.finance_market.get("issuers", []):
+		if bool(company.get("active", false)) or p.finance_market.holdings.has(company.uid):
+			kept_issuers.append(company)
+	p.finance_market.issuers = kept_issuers
 
 
 static func _close(p: Node, c: Dictionary) -> void:
-	var bankrupt := randf() < 0.4
-	var recovery := 0.0 if bankrupt else float(c.price) * 0.8
-	var held: Dictionary = p.finance_market.holdings.get(c.uid, {})
-	var proceeds := int(int(held.get("quantity", 0)) * recovery)
-	p.money += proceeds
-	p.finance_market.realized = int(p.finance_market.realized) + proceeds - int(held.get("cost", 0))
-	p.finance_market.cash_flow = int(p.finance_market.cash_flow) - proceeds
-	p.finance_market.holdings.erase(c.uid)
-	for trader in p.finance_market.traders:
-		trader.cash = float(trader.cash) + int(trader.positions.get(c.uid, 0)) * recovery
-	_retire_positions(p, c.uid)
 	c.active = false
-	var message := "%s %s. Your shares settled for $%d." % [c.name, "went bankrupt" if bankrupt else "delisted at 80% recovery", proceeds]
+	var held: Dictionary = p.finance_market.holdings.get(c.uid, {})
+	var has_player_holding := not held.is_empty() and int(held.get("quantity", 0)) > 0
+	
+	for trader in p.finance_market.traders:
+		var held_npc := int(trader.positions.get(c.uid, 0))
+		if held_npc > 0:
+			trader.cash = float(trader.cash) + held_npc * float(c.price)
+	_retire_positions(p, c.uid)
+	
+	var message: String = ""
+	if has_player_holding:
+		# Player retains all purchased shares in their portfolio
+		held.price = float(c.price)
+		held.name = str(c.name)
+		message = "%s rotated off active exchange listings. Your %d shares remain in your portfolio and can be sold anytime." % [c.name, int(held.quantity)]
+	else:
+		message = "%s delisted from the active exchange to make room for new listings." % c.name
 	p.finance_market.news.append(message)
 	p.add_life_log_entry(message, "finance")

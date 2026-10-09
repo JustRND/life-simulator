@@ -2980,7 +2980,14 @@ func update_bank_panel() -> void:
 
 	for tier in loan_tiers:
 		var btn := _create_cyber_button(tier[0], Color("#38bdf8"), func(): _borrow_loan(tier[1], tier[2]))
+		btn.disabled = PlayerData.loan_balance > 0
+		btn.tooltip_text = "Repay your current bank loan in full before taking another loan." if btn.disabled else "Only one bank loan can be active at a time."
 		loan_vbox.add_child(btn)
+	if PlayerData.loan_balance > 0:
+		var locked_note := Label.new()
+		locked_note.text = "Repay the remaining $%s bank loan to unlock borrowing." % _format_number(PlayerData.loan_balance)
+		locked_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		loan_vbox.add_child(locked_note)
 
 	bank_list.add_child(loan_card)
 
@@ -3008,6 +3015,10 @@ func update_bank_panel() -> void:
 	btn_pay_tax.disabled = PlayerData.tax_debt <= 0 or PlayerData.money < PlayerData.tax_debt
 	btn_pay_tax.tooltip_text = "Pay outstanding tax from cash. Withdraw savings first if needed."
 	repay_vbox.add_child(btn_pay_tax)
+	var btn_custom := _create_cyber_button("Repay Loan — Enter Amount", Color("#22c55e"), _show_loan_repayment)
+	btn_custom.name = "CustomLoanRepaymentButton"
+	btn_custom.disabled = PlayerData.loan_balance <= 0 or PlayerData.money <= 0
+	repay_vbox.add_child(btn_custom)
 
 	var btn_pay_1k := _create_cyber_button("Repay $1,000", Color("#22c55e"), func(): _repay_debt(1000))
 	btn_pay_1k.disabled = PlayerData.money < 1000 or PlayerData.get_total_debt() <= 0
@@ -3021,9 +3032,9 @@ func update_bank_panel() -> void:
 
 
 func _borrow_loan(amount: int, interest_rate: float) -> void:
-	PlayerData.money += amount
-	PlayerData.loan_balance += amount
-	PlayerData.loan_interest_rate = interest_rate
+	if not PlayerData.take_bank_loan(amount, interest_rate):
+		update_bank_panel()
+		return
 	add_life_event("You approved a $%s loan from First National Pixel Bank (Interest: %d%% APR)." % [
 		_format_number(amount),
 		int(interest_rate * 100)
@@ -3031,6 +3042,63 @@ func _borrow_loan(amount: int, interest_rate: float) -> void:
 	update_ui()
 	update_bank_panel()
 	SaveManager.save_game()
+
+
+func _show_loan_repayment() -> void:
+	var modal := _create_cyber_modal("REPAY BANK LOAN", "Choose how much to repay. This payment goes directly toward your bank loan.", Color("#22c55e"))
+	var summary := Label.new()
+	summary.text = "Loan balance: $%s • Available cash: $%s" % [_format_number(PlayerData.loan_balance), _format_number(PlayerData.money)]
+	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	summary.add_theme_color_override("font_color", Color("#334155") if LifeLibrary.data.theme == "light" else Color("#e2e8f0"))
+	summary.add_theme_font_size_override("font_size", 26)
+	modal.list.add_child(summary)
+	var amount := LineEdit.new()
+	amount.name = "LoanRepaymentAmount"
+	amount.placeholder_text = "Enter amount in whole dollars"
+	amount.max_length = 15
+	amount.custom_minimum_size.y = 80
+	amount.virtual_keyboard_enabled = true
+	amount.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_NUMBER
+	modal.list.add_child(amount)
+	get_node("OptionsMenu")._style_input(amount)
+	amount.add_theme_color_override("font_placeholder_color", Color("#64748b") if LifeLibrary.data.theme == "light" else Color("#94a3b8"))
+	MobileKeyboardManager.attach_to_input(amount, "How much would you like to repay? (Whole dollars)")
+	var feedback := Label.new()
+	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	feedback.add_theme_color_override("font_color", Color("#b91c1c") if LifeLibrary.data.theme == "light" else Color("#fca5a5"))
+	feedback.add_theme_font_size_override("font_size", 26)
+	modal.list.add_child(feedback)
+	var submit := _create_cyber_button("Repay Loan", Color("#22c55e"), func():
+		var requested := _parse_loan_payment(amount.text)
+		if requested <= 0 or requested > mini(PlayerData.money, PlayerData.loan_balance):
+			feedback.text = "Enter a positive whole-dollar amount within your cash and loan balance."
+			return
+		var paid := PlayerData.repay_bank_loan(requested)
+		if paid <= 0:
+			return
+		add_life_event("You repaid $%s of your bank loan (Remaining Loan: $%s)." % [_format_number(paid), _format_number(PlayerData.loan_balance)], "finance")
+		update_ui()
+		update_bank_panel()
+		SaveManager.save_game()
+		preload("res://scripts/ui/panel_close.gd").dismiss(modal.overlay, true)
+	)
+	submit.disabled = true
+	modal.list.add_child(submit)
+	amount.text_changed.connect(func(value: String):
+		var requested := _parse_loan_payment(value)
+		submit.disabled = requested <= 0 or requested > mini(PlayerData.money, PlayerData.loan_balance)
+		feedback.text = "Enter a positive whole-dollar amount within your cash and loan balance." if submit.disabled and not value.is_empty() else ""
+	)
+
+
+static func _parse_loan_payment(value: String) -> int:
+	var cleaned := value.strip_edges()
+	if cleaned.is_empty() or cleaned.length() > 15:
+		return 0
+	for character in cleaned:
+		if character < "0" or character > "9":
+			return 0
+	return cleaned.to_int()
 
 
 func _pay_tax() -> void:
@@ -3046,7 +3114,7 @@ func _pay_tax() -> void:
 
 func _repay_debt(amount: int) -> void:
 	var total_debt: int = PlayerData.get_total_debt()
-	if total_debt <= 0 or PlayerData.money <= 0:
+	if amount <= 0 or total_debt <= 0 or PlayerData.money <= 0:
 		return
 
 	var pay_amount: int = mini(amount, mini(PlayerData.money, total_debt))

@@ -666,6 +666,24 @@ func get_total_debt() -> int:
 	return debt + tax_debt + loan_balance
 
 
+func take_bank_loan(amount: int, interest_rate: float) -> bool:
+	if loan_balance > 0 or amount <= 0 or interest_rate < 0.0 or not is_finite(interest_rate):
+		return false
+	money += amount
+	loan_balance = amount
+	loan_interest_rate = interest_rate
+	return true
+
+
+func repay_bank_loan(amount: int) -> int:
+	if amount <= 0 or loan_balance <= 0 or money <= 0:
+		return 0
+	var paid := mini(amount, mini(money, loan_balance))
+	money -= paid
+	loan_balance -= paid
+	return paid
+
+
 func pay_outstanding_tax() -> int:
 	if tax_debt <= 0 or money < tax_debt:
 		return 0

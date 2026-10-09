@@ -127,7 +127,10 @@ static func open_keyboard(input_ctrl: Control, prompt_override: String = "") -> 
 
 	# 1. Native DisplayServer virtual keyboard call (handles native Android/iOS and Godot Web experimentalVK)
 	if DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD):
-		DisplayServer.virtual_keyboard_show(current_text, input_ctrl.get_global_rect(), DisplayServer.KEYBOARD_TYPE_DEFAULT, max_len)
+		var keyboard_type := DisplayServer.KEYBOARD_TYPE_DEFAULT
+		if input_ctrl is LineEdit:
+			keyboard_type = input_ctrl.virtual_keyboard_type
+		DisplayServer.virtual_keyboard_show(current_text, input_ctrl.get_global_rect(), keyboard_type, max_len)
 
 	# 2. Web Mobile Browser Support (iOS Safari, Android Chrome, Samsung Internet)
 	# On mobile browsers, HTML5 canvas elements cannot summon the OS virtual keyboard without a native DOM prompt or input
