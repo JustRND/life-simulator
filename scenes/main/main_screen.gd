@@ -689,16 +689,41 @@ func age_up() -> void:
 			_format_number(PlayerData.loan_balance)
 		], "finance")
 
-	# 5b. Credit Card Interest
+	# 5b. Credit Card Interest & Term Settlement
 	if PlayerData.has_credit_card and PlayerData.credit_card_balance > 0:
 		var cc_interest: int = maxi(5, int(PlayerData.credit_card_balance * PlayerData.credit_card_apr))
 		PlayerData.credit_card_balance += cc_interest
-		add_life_event("Your %s Credit Card accrued $%s in annual interest (Card Balance: $%s, %d%% APR)." % [
+		add_life_event("Your %s Credit Card accrued $%s in annual interest (Card Usage: $%s, %d%% APR)." % [
 			PlayerData.credit_card_tier,
 			_format_number(cc_interest),
 			_format_number(PlayerData.credit_card_balance),
 			int(PlayerData.credit_card_apr * 100)
 		], "finance")
+
+		var min_payment: int = maxi(1, int(ceil(PlayerData.credit_card_balance * 0.10)))
+		var available_funds: int = PlayerData.get_available_funds()
+
+		if available_funds < min_payment:
+			# Player is unable to pay the minimum usage back to the bank -> Deactivate and convert usage to debt
+			var def_res := PlayerData.deactivate_credit_card_on_default()
+			var unpaid_debt: int = int(def_res.get("unpaid_usage", 0))
+			add_life_event("🚨 CREDIT CARD DEFAULT & DEACTIVATION: You were unable to service the required 10%% minimum term payment ($%s) on your credit card usage. The bank has DEACTIVATED your credit card and transferred all unpaid usage ($%s) into collections as general DEBT! Credit score penalized (-75 pts)." % [
+				_format_number(min_payment),
+				_format_number(unpaid_debt)
+			], "finance")
+		else:
+			# Player has funds; check if manual payment was made this year
+			if PlayerData.credit_card_paid_this_year < min_payment:
+				PlayerData.modify_credit_score(-15)
+				add_life_event("⚠️ MISSED CREDIT CARD TERM: You missed this year's manual term payment on your credit card usage ($%s owed, 10%% minimum: $%s). Interest was assessed and credit score dropped by 15 points. Pay your balance in Banking to prevent card deactivation!" % [
+					_format_number(PlayerData.credit_card_balance),
+					_format_number(min_payment)
+				], "finance")
+			else:
+				PlayerData.modify_credit_score(5)
+				add_life_event("💳 Credit Standing: Timely credit card manual term payments met. Credit score maintained (+5 pts).", "finance")
+
+		PlayerData.credit_card_paid_this_year = 0
 
 	# 5c. Annual Credit Score Evaluation
 	if PlayerData.age >= 18:
@@ -2759,6 +2784,10 @@ func _open_asset_marketplace_modal(category: String) -> void:
 				has_veh_license = PlayerData.has_license("license_boating")
 				lic_required_name = "Master Coastal Boater & Yachting License"
 
+		var can_afford_funds: bool = total_available >= price
+		var can_afford_cc: bool = PlayerData.has_credit_card and PlayerData.get_credit_card_available() >= price
+		var can_afford_any: bool = can_afford_funds or can_afford_cc
+
 		var req_lbl := Label.new()
 		req_lbl.add_theme_font_size_override("font_size", 20)
 		req_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -2768,52 +2797,135 @@ func _open_asset_marketplace_modal(category: String) -> void:
 		elif not has_veh_license:
 			req_lbl.text = "🔒 License Requirement: %s Required (❌ Not Certified • Visit Licensing Bureau in Activities)" % lic_required_name
 			req_lbl.add_theme_color_override("font_color", Color("#f87171"))
-		elif not can_afford:
-			var shortage := price - total_available
-			req_lbl.text = "⚠️ Financial Requirement: $%s Required • Short by $%s (Available: $%s)" % [
-				_format_number(price),
-				_format_number(shortage),
-				_format_number(total_available)
-			]
+		elif not can_afford_any:
+			if PlayerData.has_credit_card:
+				req_lbl.text = "⚠️ Financial Requirement: $%s Required • Short on Funds ($%s avail) & Credit ($%s avail)" % [
+					_format_number(price),
+					_format_number(total_available),
+					_format_number(PlayerData.get_credit_card_available())
+				]
+			else:
+				var shortage := price - total_available
+				req_lbl.text = "⚠️ Financial Requirement: $%s Required • Short by $%s (Available Funds: $%s)" % [
+					_format_number(price),
+					_format_number(shortage),
+					_format_number(total_available)
+				]
 			req_lbl.add_theme_color_override("font_color", Color("#fbbf24"))
 		else:
 			var lic_status := " • License Certified" if lic_required_name != "" else ""
-			req_lbl.text = "✅ Requirements Met: Age %d+ Verified%s • Available Funds: $%s" % [min_age, lic_status, _format_number(total_available)]
+			if PlayerData.has_credit_card:
+				req_lbl.text = "✅ Requirements Met: Age %d+ Verified%s • Funds: $%s • Credit Available: $%s" % [
+					min_age,
+					lic_status,
+					_format_number(total_available),
+					_format_number(PlayerData.get_credit_card_available())
+				]
+			else:
+				req_lbl.text = "✅ Requirements Met: Age %d+ Verified%s • Available Funds: $%s" % [min_age, lic_status, _format_number(total_available)]
 			req_lbl.add_theme_color_override("font_color", Color("#34d399"))
 		cv.add_child(req_lbl)
 
-		# 6. PURCHASE ACTION BUTTON
-		var btn_buy := _create_cyber_button("", border_color, func():
-			var buy_res = AssetCatalog.buy_asset(PlayerData, item_id)
-			if buy_res["success"]:
-				add_life_event("🛍️ NEW ACQUISITION: You purchased %s for $%s!" % [item_name, _format_number(price)], "finance")
-				overlay.queue_free()
-				update_ui()
-				update_assets_panel()
-			else:
-				add_life_event(buy_res["message"], "finance")
-				show_tab("timeline")
-		)
-		btn_buy.custom_minimum_size.y = 62
-		btn_buy.add_theme_font_size_override("font_size", 24)
-		btn_buy.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		# 6. PURCHASE ACTION BUTTONS
+		if PlayerData.has_credit_card:
+			var btn_buy_funds := _create_cyber_button("💵 Purchase with Funds ($%s)" % _format_number(price), border_color, func():
+				var buy_res = AssetCatalog.buy_asset(PlayerData, item_id, "funds")
+				if buy_res["success"]:
+					add_life_event("🛍️ NEW ACQUISITION: You purchased %s for $%s!" % [item_name, _format_number(price)], "finance")
+					overlay.queue_free()
+					update_ui()
+					update_assets_panel()
+					SaveManager.save_game()
+				else:
+					add_life_event(buy_res["message"], "finance")
+					show_tab("timeline")
+			, true)
+			btn_buy_funds.custom_minimum_size.y = 56
+			btn_buy_funds.add_theme_font_size_override("font_size", 22)
+			btn_buy_funds.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			btn_buy_funds.alignment = HORIZONTAL_ALIGNMENT_CENTER
+			btn_buy_funds.set_meta("center_text", true)
 
-		if not is_of_age:
-			btn_buy.disabled = true
-			btn_buy.modulate = Color(0.5, 0.5, 0.5, 0.6)
-			btn_buy.text = "Age Restricted (Requires Age %d+)" % min_age
-		elif not has_veh_license:
-			btn_buy.disabled = true
-			btn_buy.modulate = Color(0.5, 0.5, 0.5, 0.6)
-			btn_buy.text = "🔒 Requires %s" % lic_required_name
-		elif not can_afford:
-			btn_buy.disabled = true
-			btn_buy.modulate = Color(0.6, 0.6, 0.6, 0.65)
-			btn_buy.text = "Cannot Afford ($%s)" % _format_number(price)
+			if not is_of_age:
+				btn_buy_funds.disabled = true
+				btn_buy_funds.text = "Age Restricted (Requires Age %d+)" % min_age
+			elif not has_veh_license:
+				btn_buy_funds.disabled = true
+				btn_buy_funds.text = "🔒 Requires %s" % lic_required_name
+			elif not can_afford_funds:
+				btn_buy_funds.disabled = true
+				btn_buy_funds.text = "Insufficient Funds ($%s available)" % _format_number(total_available)
+			cv.add_child(btn_buy_funds)
+
+			var btn_buy_cc := _create_cyber_button("💳 Charge to %s Card ($%s)" % [PlayerData.credit_card_tier, _format_number(price)], Color("#38bdf8"), func():
+				var buy_res = AssetCatalog.buy_asset(PlayerData, item_id, "credit_card")
+				if buy_res["success"]:
+					add_life_event("💳 ASSET CHARGED TO CARD: You purchased %s for $%s using your %s Credit Card (Current Usage: $%s, Available Credit: $%s)!" % [
+						item_name,
+						_format_number(price),
+						PlayerData.credit_card_tier,
+						_format_number(PlayerData.credit_card_balance),
+						_format_number(PlayerData.get_credit_card_available())
+					], "finance")
+					overlay.queue_free()
+					update_ui()
+					update_assets_panel()
+					SaveManager.save_game()
+				else:
+					add_life_event(buy_res["message"], "finance")
+					show_tab("timeline")
+			, true)
+			btn_buy_cc.custom_minimum_size.y = 56
+			btn_buy_cc.add_theme_font_size_override("font_size", 22)
+			btn_buy_cc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			btn_buy_cc.alignment = HORIZONTAL_ALIGNMENT_CENTER
+			btn_buy_cc.set_meta("center_text", true)
+
+			if not is_of_age:
+				btn_buy_cc.disabled = true
+				btn_buy_cc.text = "Age Restricted (Requires Age %d+)" % min_age
+			elif not has_veh_license:
+				btn_buy_cc.disabled = true
+				btn_buy_cc.text = "🔒 Requires %s" % lic_required_name
+			elif not can_afford_cc:
+				btn_buy_cc.disabled = true
+				btn_buy_cc.text = "💳 Exceeds Card Limit ($%s available)" % _format_number(PlayerData.get_credit_card_available())
+			cv.add_child(btn_buy_cc)
 		else:
-			btn_buy.text = "Purchase for $%s" % _format_number(price)
+			var btn_buy := _create_cyber_button("", border_color, func():
+				var buy_res = AssetCatalog.buy_asset(PlayerData, item_id, "funds")
+				if buy_res["success"]:
+					add_life_event("🛍️ NEW ACQUISITION: You purchased %s for $%s!" % [item_name, _format_number(price)], "finance")
+					overlay.queue_free()
+					update_ui()
+					update_assets_panel()
+					SaveManager.save_game()
+				else:
+					add_life_event(buy_res["message"], "finance")
+					show_tab("timeline")
+			, true)
+			btn_buy.custom_minimum_size.y = 62
+			btn_buy.add_theme_font_size_override("font_size", 24)
+			btn_buy.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			btn_buy.alignment = HORIZONTAL_ALIGNMENT_CENTER
+			btn_buy.set_meta("center_text", true)
 
-		cv.add_child(btn_buy)
+			if not is_of_age:
+				btn_buy.disabled = true
+				btn_buy.modulate = Color(0.5, 0.5, 0.5, 0.6)
+				btn_buy.text = "Age Restricted (Requires Age %d+)" % min_age
+			elif not has_veh_license:
+				btn_buy.disabled = true
+				btn_buy.modulate = Color(0.5, 0.5, 0.5, 0.6)
+				btn_buy.text = "🔒 Requires %s" % lic_required_name
+			elif not can_afford_funds:
+				btn_buy.disabled = true
+				btn_buy.modulate = Color(0.6, 0.6, 0.6, 0.65)
+				btn_buy.text = "Cannot Afford ($%s)" % _format_number(price)
+			else:
+				btn_buy.text = "Purchase for $%s" % _format_number(price)
+
+			cv.add_child(btn_buy)
 
 
 func load_style_box_cyber_card(border_col: Color = Color("#22d3ee")) -> StyleBoxFlat:
@@ -3020,41 +3132,90 @@ func update_bank_panel() -> void:
 
 	if PlayerData.has_credit_card:
 		var cc_detail := Label.new()
-		cc_detail.text = "• Card Tier: %s Credit Card\n• Credit Limit: $%s  (@ %d%% APR)\n• Available Credit: $%s\n• Current Card Balance: $%s" % [
+		cc_detail.text = "• Card Tier: %s Credit Card\n• Dynamic Limit: $%s  (@ %d%% APR)\n• Available Credit: $%s\n• Current Card Usage: $%s\n• Dynamic Limit Profile: Allowance $%s/yr • Personal Assets $%s • Net Worth $%s" % [
 			PlayerData.credit_card_tier,
 			_format_number(PlayerData.credit_card_limit),
 			int(PlayerData.credit_card_apr * 100),
 			_format_number(PlayerData.get_credit_card_available()),
-			_format_number(PlayerData.credit_card_balance)
+			_format_number(PlayerData.credit_card_balance),
+			_format_number(PlayerData.job_salary),
+			_format_number(PlayerData.get_total_asset_value()),
+			_format_number(PlayerData.get_personal_net_worth())
 		]
 		cc_detail.add_theme_font_size_override("font_size", 24)
 		cc_detail.add_theme_color_override("font_color", Color("#0f172a") if is_light else Color("#f8fafc"))
 		cc_vbox.add_child(cc_detail)
 
-		var cc_btn_row := HBoxContainer.new()
-		cc_btn_row.add_theme_constant_override("separation", 10)
-		cc_vbox.add_child(cc_btn_row)
+		if PlayerData.credit_card_balance > 0:
+			var min_pay: int = maxi(1, int(ceil(PlayerData.credit_card_balance * 0.10)))
+			var pay_20: int = maxi(min_pay, int(ceil(PlayerData.credit_card_balance * 0.20)))
+			var total_funds: int = PlayerData.get_available_funds()
+
+			var pay_title := Label.new()
+			pay_title.text = "💳 MANUAL USAGE REPAYMENT (Term Min: 10%% = $%s)" % _format_number(min_pay)
+			pay_title.add_theme_font_size_override("font_size", 22)
+			pay_title.add_theme_color_override("font_color", Color("#22c55e"))
+			cc_vbox.add_child(pay_title)
+
+			var cc_pay_row := HBoxContainer.new()
+			cc_pay_row.add_theme_constant_override("separation", 10)
+			cc_vbox.add_child(cc_pay_row)
+
+			var btn_pay_10 := _create_cyber_button("Pay 10% ($%s)" % _format_number(min_pay), Color("#22c55e"), func():
+				_execute_manual_cc_repay(min_pay)
+			, true)
+			btn_pay_10.disabled = total_funds < min_pay
+			btn_pay_10.alignment = HORIZONTAL_ALIGNMENT_CENTER
+			btn_pay_10.set_meta("center_text", true)
+			btn_pay_10.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			btn_pay_10.tooltip_text = "Pay minimum locked 10% usage payment ($%s)." % _format_number(min_pay)
+			cc_pay_row.add_child(btn_pay_10)
+
+			var btn_pay_20 := _create_cyber_button("Pay 20% ($%s)" % _format_number(pay_20), Color("#10b981"), func():
+				_execute_manual_cc_repay(pay_20)
+			, true)
+			btn_pay_20.disabled = total_funds < pay_20
+			btn_pay_20.alignment = HORIZONTAL_ALIGNMENT_CENTER
+			btn_pay_20.set_meta("center_text", true)
+			btn_pay_20.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			btn_pay_20.tooltip_text = "Pay 20% usage payment ($%s)." % _format_number(pay_20)
+			cc_pay_row.add_child(btn_pay_20)
+
+			var btn_pay_custom := _create_cyber_button("Input Amount", Color("#06b6d4"), func():
+				_show_credit_card_custom_amount_modal(min_pay, PlayerData.credit_card_balance)
+			, true)
+			btn_pay_custom.disabled = total_funds < min_pay
+			btn_pay_custom.alignment = HORIZONTAL_ALIGNMENT_CENTER
+			btn_pay_custom.set_meta("center_text", true)
+			btn_pay_custom.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			btn_pay_custom.tooltip_text = "Enter custom payment amount (Min 10% up to 100%)."
+			cc_pay_row.add_child(btn_pay_custom)
+		else:
+			var standing_lbl := Label.new()
+			standing_lbl.text = "✅ Account in Good Standing • No Payments Due ($0 Usage)"
+			standing_lbl.add_theme_font_size_override("font_size", 22)
+			standing_lbl.add_theme_color_override("font_color", Color("#22c55e"))
+			cc_vbox.add_child(standing_lbl)
+
+			var btn_req_limit := _create_cyber_button("🚀 Request Higher Credit Limit", Color("#38bdf8"), _request_credit_limit_increase, true)
+			btn_req_limit.alignment = HORIZONTAL_ALIGNMENT_CENTER
+			btn_req_limit.set_meta("center_text", true)
+			btn_req_limit.tooltip_text = "Request dynamic limit recalculation based on your updated allowance and personal assets."
+			cc_vbox.add_child(btn_req_limit)
+
+		var cc_sub_row := HBoxContainer.new()
+		cc_sub_row.add_theme_constant_override("separation", 10)
+		cc_vbox.add_child(cc_sub_row)
 
 		var btn_draw := _create_cyber_button("Draw Cash Advance", Color("#f59e0b"), _show_credit_card_advance, true)
 		btn_draw.disabled = PlayerData.get_credit_card_available() <= 0
 		btn_draw.alignment = HORIZONTAL_ALIGNMENT_CENTER
 		btn_draw.set_meta("center_text", true)
 		btn_draw.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		cc_btn_row.add_child(btn_draw)
-
-		var btn_repay_cc := _create_cyber_button("Repay Card Balance", Color("#22c55e"), _show_credit_card_repay_dialog, true)
-		btn_repay_cc.disabled = PlayerData.credit_card_balance <= 0 or PlayerData.get_available_funds() <= 0
-		btn_repay_cc.alignment = HORIZONTAL_ALIGNMENT_CENTER
-		btn_repay_cc.set_meta("center_text", true)
-		btn_repay_cc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		cc_btn_row.add_child(btn_repay_cc)
-
-		var cc_sub_row := HBoxContainer.new()
-		cc_sub_row.add_theme_constant_override("separation", 10)
-		cc_vbox.add_child(cc_sub_row)
+		cc_sub_row.add_child(btn_draw)
 
 		if PlayerData.credit_card_tier.to_lower() != "platinum":
-			var btn_upgrade := _create_cyber_button("Upgrade Card Tier", Color("#38bdf8"), _show_credit_card_application, true)
+			var btn_upgrade := _create_cyber_button("Upgrade Card Tier", Color("#a855f7"), _show_credit_card_application, true)
 			btn_upgrade.alignment = HORIZONTAL_ALIGNMENT_CENTER
 			btn_upgrade.set_meta("center_text", true)
 			btn_upgrade.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -3159,24 +3320,26 @@ func update_bank_panel() -> void:
 	btn_custom.set_meta("center_text", true)
 	repay_vbox.add_child(btn_custom)
 
-	if PlayerData.credit_card_balance > 0:
-		var btn_pay_cc := _create_cyber_button("Repay Credit Card ($%s)" % _format_number(PlayerData.credit_card_balance), Color("#eab308"), _show_credit_card_repay_dialog, true)
-		btn_pay_cc.disabled = PlayerData.get_available_funds() <= 0
-		btn_pay_cc.alignment = HORIZONTAL_ALIGNMENT_CENTER
-		btn_pay_cc.set_meta("center_text", true)
-		repay_vbox.add_child(btn_pay_cc)
-
+	var non_cc_debt: int = PlayerData.tax_debt + PlayerData.debt + PlayerData.loan_balance
 	var btn_pay_1k := _create_cyber_button("Repay $1,000", Color("#22c55e"), func(): _repay_debt(1000), true)
-	btn_pay_1k.disabled = PlayerData.get_available_funds() < 1000 or PlayerData.get_total_debt() <= 0
+	btn_pay_1k.disabled = PlayerData.get_available_funds() < 1000 or non_cc_debt <= 0
 	btn_pay_1k.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	btn_pay_1k.set_meta("center_text", true)
 	repay_vbox.add_child(btn_pay_1k)
 
-	var btn_pay_all := _create_cyber_button("Repay Full Debt ($%s)" % _format_number(PlayerData.get_total_debt()), Color("#22c55e"), func(): _repay_debt(PlayerData.get_total_debt()), true)
-	btn_pay_all.disabled = PlayerData.get_available_funds() < PlayerData.get_total_debt() or PlayerData.get_total_debt() <= 0
+	var btn_pay_all := _create_cyber_button("Repay Full Debt ($%s)" % _format_number(non_cc_debt), Color("#22c55e"), func(): _repay_debt(non_cc_debt), true)
+	btn_pay_all.disabled = PlayerData.get_available_funds() < non_cc_debt or non_cc_debt <= 0
 	btn_pay_all.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	btn_pay_all.set_meta("center_text", true)
 	repay_vbox.add_child(btn_pay_all)
+
+	if PlayerData.credit_card_balance > 0:
+		var cc_note := Label.new()
+		cc_note.text = "ℹ️ Note: Credit card usage ($%s) must be paid inside the Revolving Credit Card facility above." % _format_number(PlayerData.credit_card_balance)
+		cc_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		cc_note.add_theme_font_size_override("font_size", 18)
+		cc_note.add_theme_color_override("font_color", Color("#94a3b8"))
+		repay_vbox.add_child(cc_note)
 
 	bank_list.add_child(repay_card)
 
@@ -3288,11 +3451,6 @@ func _repay_debt(amount: int) -> void:
 		var paid_loan: int = mini(remaining_pay, PlayerData.loan_balance)
 		PlayerData.loan_balance -= paid_loan
 		remaining_pay -= paid_loan
-
-	if remaining_pay > 0 and PlayerData.credit_card_balance > 0:
-		var paid_cc: int = mini(remaining_pay, PlayerData.credit_card_balance)
-		PlayerData.credit_card_balance -= paid_cc
-		remaining_pay -= paid_cc
 
 	PlayerData.modify_credit_score(mini(15, maxi(3, int(pay_amount / 1000))))
 
@@ -3443,17 +3601,19 @@ func _show_credit_card_application() -> void:
 		cv.add_theme_constant_override("separation", 6)
 		cm.add_child(cv)
 
+		var est_limit := PlayerData.calculate_dynamic_credit_limit(t.tier)
 		var t_title := Label.new()
-		t_title.text = "💳 %s CREDIT CARD — $%s LIMIT" % [t.tier.to_upper(), _format_number(t.limit)]
+		t_title.text = "💳 %s CREDIT CARD — $%s DYNAMIC LIMIT" % [t.tier.to_upper(), _format_number(est_limit)]
 		t_title.add_theme_font_size_override("font_size", 24)
 		t_title.add_theme_color_override("font_color", t.color)
 		cv.add_child(t_title)
 
 		var t_desc := Label.new()
-		t_desc.text = "APR: %d%% • Min Score: %d • Min Net Worth: $%s • Requires $0 Debt" % [
+		t_desc.text = "APR: %d%% • Min Score: %d • Min Personal Net Worth: $%s • (Base Limit: $%s)" % [
 			int(t.apr * 100),
 			t.score,
-			_format_number(t.nw)
+			_format_number(t.nw),
+			_format_number(t.limit)
 		]
 		t_desc.add_theme_font_size_override("font_size", 20)
 		t_desc.add_theme_color_override("font_color", Color("#64748b") if is_light else Color("#cbd5e1"))
@@ -3473,13 +3633,13 @@ func _show_credit_card_application() -> void:
 			var btn_text := "Apply for %s Card" % t.tier
 			var btn := _create_cyber_button(btn_text, t.color, func():
 				if PlayerData.approve_credit_card(t.tier):
-					add_life_event("🎉 CREDIT CARD APPROVED! You received the %s Credit Card ($%s Limit • %d%% APR). Credit score boosted to %d!" % [
+					add_life_event("🎉 CREDIT CARD APPROVED! You received the %s Credit Card ($%s Dynamic Limit • %d%% APR). Credit score boosted to %d!" % [
 						t.tier,
-						_format_number(t.limit),
+						_format_number(PlayerData.credit_card_limit),
 						int(t.apr * 100),
 						PlayerData.credit_score
 					], "finance")
-					PlayerData.add_milestone("Approved for %s Credit Card ($%s Limit)." % [t.tier, _format_number(t.limit)], PlayerData.age, "💳")
+					PlayerData.add_milestone("Approved for %s Credit Card ($%s Limit)." % [t.tier, _format_number(PlayerData.credit_card_limit)], PlayerData.age, "💳")
 					update_ui()
 					update_bank_panel()
 					SaveManager.save_game()
@@ -3565,80 +3725,156 @@ func _show_credit_card_advance() -> void:
 func _show_credit_card_repay_dialog() -> void:
 	if not PlayerData.has_credit_card or PlayerData.credit_card_balance <= 0 or PlayerData.get_available_funds() <= 0:
 		return
-	var modal := _create_cyber_modal("REPAY CREDIT CARD", "Repay your %s Credit Card balance. Paying on time improves your credit score." % PlayerData.credit_card_tier, Color("#22c55e"))
+	var min_pay: int = maxi(1, int(ceil(PlayerData.credit_card_balance * 0.10)))
+	_show_credit_card_custom_amount_modal(min_pay, PlayerData.credit_card_balance)
+
+
+func _execute_manual_cc_repay(amount: int) -> void:
+	if not PlayerData.has_credit_card or amount <= 0:
+		return
+	var min_pay: int = maxi(1, int(ceil(PlayerData.credit_card_balance * 0.10)))
+	if amount < min_pay and PlayerData.credit_card_balance > 0:
+		add_life_event("⚠️ Payment rejected: Minimum payment is locked at 10% ($%s)." % _format_number(min_pay), "finance")
+		return
+	var paid := PlayerData.repay_credit_card(amount)
+	if paid > 0:
+		add_life_event("💳 CREDIT CARD PAYMENT: You manually paid $%s toward your credit card usage (Remaining Usage: $%s, Credit Score: %d)." % [
+			_format_number(paid),
+			_format_number(PlayerData.credit_card_balance),
+			PlayerData.credit_score
+		], "finance")
+		update_ui()
+		update_bank_panel()
+		SaveManager.save_game()
+
+
+func _show_credit_card_custom_amount_modal(min_pay: int, total_usage: int) -> void:
+	if not PlayerData.has_credit_card or total_usage <= 0 or PlayerData.get_available_funds() <= 0:
+		return
+	var modal := _create_cyber_modal("INPUT REPAYMENT AMOUNT", "Specify your credit card usage repayment. Minimum payment is locked at 10% ($%s) up to 100% ($%s)." % [_format_number(min_pay), _format_number(total_usage)], Color("#06b6d4"))
 	var summary := Label.new()
-	summary.text = "Card Balance (Debt): $%s • Available Funds: $%s" % [
-		_format_number(PlayerData.credit_card_balance),
+	summary.text = "Card Usage: $%s • Minimum Payment: $%s (10%% Locked) • Available Funds: $%s" % [
+		_format_number(total_usage),
+		_format_number(min_pay),
 		_format_number(PlayerData.get_available_funds())
 	]
 	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	summary.add_theme_color_override("font_color", Color("#334155") if LifeLibrary.data.theme == "light" else Color("#e2e8f0"))
-	summary.add_theme_font_size_override("font_size", 26)
+	summary.add_theme_font_size_override("font_size", 24)
 	modal.list.add_child(summary)
 
-	var full_pay := mini(PlayerData.get_available_funds(), PlayerData.credit_card_balance)
-	var btn_pay_full := _create_cyber_button("Pay Full Balance ($%s)" % _format_number(full_pay), Color("#22c55e"), func():
-		var paid := PlayerData.repay_credit_card(full_pay)
-		if paid > 0:
-			add_life_event("💳 You repaid $%s of your credit card balance (Remaining: $%s, Credit Score: %d)." % [
-				_format_number(paid),
-				_format_number(PlayerData.credit_card_balance),
-				PlayerData.credit_score
-			], "finance")
-			update_ui()
-			update_bank_panel()
-			SaveManager.save_game()
-			preload("res://scripts/ui/panel_close.gd").dismiss(modal.overlay, true)
-	, true)
-	btn_pay_full.alignment = HORIZONTAL_ALIGNMENT_CENTER
-	btn_pay_full.set_meta("center_text", true)
-	modal.list.add_child(btn_pay_full)
+	var quick_row := HBoxContainer.new()
+	quick_row.add_theme_constant_override("separation", 8)
+	modal.list.add_child(quick_row)
 
-	var amount := LineEdit.new()
-	amount.name = "CreditCardRepayAmount"
-	amount.placeholder_text = "Or enter custom repayment amount"
-	amount.max_length = 15
-	amount.custom_minimum_size.y = 80
-	amount.virtual_keyboard_enabled = true
-	amount.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_NUMBER
-	amount.alignment = HORIZONTAL_ALIGNMENT_CENTER
-	modal.list.add_child(amount)
-	get_node("OptionsMenu")._style_input(amount)
-	MobileKeyboardManager.attach_to_input(amount, "How much to repay? (Whole dollars)")
+	var amount_input := LineEdit.new()
+	amount_input.name = "CreditCardCustomRepayAmount"
+	amount_input.placeholder_text = "Enter whole dollars ($%s to $%s)" % [_format_number(min_pay), _format_number(total_usage)]
+	amount_input.max_length = 15
+	amount_input.custom_minimum_size.y = 80
+	amount_input.virtual_keyboard_enabled = true
+	amount_input.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_NUMBER
+	amount_input.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	modal.list.add_child(amount_input)
+	get_node("OptionsMenu")._style_input(amount_input)
+	MobileKeyboardManager.attach_to_input(amount_input, "Repayment amount (Min 10%: $%d)" % min_pay)
 
 	var feedback := Label.new()
 	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	feedback.add_theme_color_override("font_color", Color("#ef4444"))
-	feedback.add_theme_font_size_override("font_size", 24)
+	feedback.add_theme_font_size_override("font_size", 22)
+	feedback.text = "Minimum payment is locked at 10% ($%s)." % _format_number(min_pay)
 	modal.list.add_child(feedback)
 
-	var submit := _create_cyber_button("Repay Custom Amount", Color("#22c55e"), func():
-		var requested := _parse_loan_payment(amount.text)
-		if requested <= 0 or requested > mini(PlayerData.get_available_funds(), PlayerData.credit_card_balance):
-			feedback.text = "Enter a valid repayment amount within your funds and card balance."
+	var submit := _create_cyber_button("Submit Repayment", Color("#06b6d4"), func():
+		var requested := _parse_loan_payment(amount_input.text)
+		if requested < min_pay:
+			feedback.text = "⚠️ Minimum payment is strictly locked at 10% ($%s)." % _format_number(min_pay)
 			return
-		var paid := PlayerData.repay_credit_card(requested)
-		if paid > 0:
-			add_life_event("💳 You repaid $%s toward your credit card (Remaining: $%s, Credit Score: %d)." % [
-				_format_number(paid),
-				_format_number(PlayerData.credit_card_balance),
-				PlayerData.credit_score
-			], "finance")
-			update_ui()
-			update_bank_panel()
-			SaveManager.save_game()
-			preload("res://scripts/ui/panel_close.gd").dismiss(modal.overlay, true)
+		if requested > total_usage:
+			feedback.text = "⚠️ Payment cannot exceed total usage ($%s)." % _format_number(total_usage)
+			return
+		if requested > PlayerData.get_available_funds():
+			feedback.text = "⚠️ Insufficient funds. Available: $%s." % _format_number(PlayerData.get_available_funds())
+			return
+		_execute_manual_cc_repay(requested)
+		preload("res://scripts/ui/panel_close.gd").dismiss(modal.overlay, true)
 	, true)
 	submit.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	submit.set_meta("center_text", true)
 	submit.disabled = true
 	modal.list.add_child(submit)
 
-	amount.text_changed.connect(func(value: String):
-		var requested := _parse_loan_payment(value)
-		submit.disabled = requested <= 0 or requested > mini(PlayerData.get_available_funds(), PlayerData.credit_card_balance)
-		feedback.text = "Enter a valid repayment amount within your funds and card balance." if submit.disabled and not value.is_empty() else ""
-	)
+	var validate_input := func(val_str: String):
+		var val := _parse_loan_payment(val_str)
+		if val <= 0 and val_str.is_empty():
+			submit.disabled = true
+			feedback.text = "Minimum payment is locked at 10% ($%s)." % _format_number(min_pay)
+			feedback.add_theme_color_override("font_color", Color("#94a3b8"))
+		elif val < min_pay:
+			submit.disabled = true
+			feedback.text = "⚠️ Minimum payment is strictly locked at 10% ($%s)." % _format_number(min_pay)
+			feedback.add_theme_color_override("font_color", Color("#ef4444"))
+		elif val > total_usage:
+			submit.disabled = true
+			feedback.text = "⚠️ Payment cannot exceed total usage ($%s)." % _format_number(total_usage)
+			feedback.add_theme_color_override("font_color", Color("#ef4444"))
+		elif val > PlayerData.get_available_funds():
+			submit.disabled = true
+			feedback.text = "⚠️ Insufficient funds. You have $%s available." % _format_number(PlayerData.get_available_funds())
+			feedback.add_theme_color_override("font_color", Color("#ef4444"))
+		else:
+			submit.disabled = false
+			submit.text = "Submit Payment ($%s)" % _format_number(val)
+			feedback.text = "✅ Valid repayment: $%s (Usage remaining: $%s)." % [_format_number(val), _format_number(total_usage - val)]
+			feedback.add_theme_color_override("font_color", Color("#22c55e"))
+
+	amount_input.text_changed.connect(validate_input)
+
+	# Quick preset buttons
+	var presets := [
+		{"label": "10% Min ($%s)" % _format_number(min_pay), "val": min_pay},
+		{"label": "20% ($%s)" % _format_number(maxi(min_pay, int(ceil(total_usage * 0.20)))), "val": maxi(min_pay, int(ceil(total_usage * 0.20)))},
+		{"label": "50% ($%s)" % _format_number(maxi(min_pay, int(ceil(total_usage * 0.50)))), "val": maxi(min_pay, int(ceil(total_usage * 0.50)))},
+		{"label": "100% Full ($%s)" % _format_number(total_usage), "val": total_usage}
+	]
+	for p in presets:
+		var p_btn := _create_cyber_button(p.label, Color("#06b6d4"), func():
+			amount_input.text = str(p.val)
+			validate_input.call(str(p.val))
+		, true)
+		p_btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
+		p_btn.set_meta("center_text", true)
+		p_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		p_btn.custom_minimum_size.y = 44
+		p_btn.add_theme_font_size_override("font_size", 18)
+		quick_row.add_child(p_btn)
+
+
+func _request_credit_limit_increase() -> void:
+	if not PlayerData.has_credit_card:
+		return
+	var res := PlayerData.request_credit_limit_increase()
+	if bool(res.get("success", false)):
+		add_life_event("🎉 CREDIT LIMIT INCREASE: %s" % str(res.get("message", "")), "finance")
+		var modal := _create_cyber_modal("CREDIT LIMIT INCREASE APPROVED", str(res.get("message", "")), Color("#22c55e"))
+		var ok_btn := _create_cyber_button("Accept New Limit", Color("#22c55e"), func():
+			preload("res://scripts/ui/panel_close.gd").dismiss(modal.overlay, true)
+		, true)
+		ok_btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
+		ok_btn.set_meta("center_text", true)
+		modal.list.add_child(ok_btn)
+	else:
+		var modal := _create_cyber_modal("CREDIT LIMIT REVIEW", str(res.get("message", "")), Color("#eab308"))
+		var ok_btn := _create_cyber_button("Understood", Color("#eab308"), func():
+			preload("res://scripts/ui/panel_close.gd").dismiss(modal.overlay, true)
+		, true)
+		ok_btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
+		ok_btn.set_meta("center_text", true)
+		modal.list.add_child(ok_btn)
+	update_ui()
+	update_bank_panel()
+	SaveManager.save_game()
 
 
 func _cancel_credit_card() -> void:

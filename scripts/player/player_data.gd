@@ -102,6 +102,7 @@ var credit_card_tier: String = "None"
 var credit_card_limit: int = 0
 var credit_card_balance: int = 0
 var credit_card_apr: float = 0.18
+var credit_card_paid_this_year: int = 0
 var owned_assets: Array[Dictionary] = []
 var health_insurance: String = "none"
 
@@ -254,6 +255,7 @@ func reset_player() -> void:
 	credit_card_limit = 0
 	credit_card_balance = 0
 	credit_card_apr = 0.18
+	credit_card_paid_this_year = 0
 	owned_assets.clear()
 	health_insurance = "none"
 
@@ -647,6 +649,11 @@ func get_net_worth() -> int:
 	return money + bank_savings + get_total_asset_value() + business_value + preload("res://scripts/economy/finance_market.gd").portfolio_value(self) - get_total_debt()
 
 
+func get_personal_net_worth() -> int:
+	# Strictly personal net worth: Business valuation DOES NOT count as a player asset or personal net worth for credit cards
+	return money + bank_savings + get_total_asset_value() + preload("res://scripts/economy/finance_market.gd").portfolio_value(self) - get_total_debt()
+
+
 func get_owned_assets_by_category(category: String) -> Array[Dictionary]:
 	var list: Array[Dictionary] = []
 	for item in owned_assets:
@@ -779,28 +786,57 @@ func can_apply_credit_card(tier: String) -> Dictionary:
 	if debt > 0 or tax_debt > 0 or loan_balance > 0 or credit_card_balance > 0:
 		return {"eligible": false, "reason": "Declined: Application rejected due to outstanding debt, unpaid taxes, or active loans. All liabilities must be $0."}
 	
-	var nw: int = get_net_worth()
+	var nw: int = get_personal_net_worth()
 	match tier.to_lower():
 		"silver":
 			if credit_score < 600:
 				return {"eligible": false, "reason": "Declined: Silver card requires minimum 600 credit score (Your score: %d)." % credit_score}
 			if nw < 5000:
-				return {"eligible": false, "reason": "Declined: Silver card requires minimum $5,000 net worth (Your net worth: $%d)." % nw}
+				return {"eligible": false, "reason": "Declined: Silver card requires minimum $5,000 personal net worth (Your personal net worth: $%d)." % nw}
 			return {"eligible": true, "reason": "Approved for Silver Card"}
 		"gold":
 			if credit_score < 700:
 				return {"eligible": false, "reason": "Declined: Gold card requires minimum 700 credit score (Your score: %d)." % credit_score}
 			if nw < 30000:
-				return {"eligible": false, "reason": "Declined: Gold card requires minimum $30,000 net worth (Your net worth: $%d)." % nw}
+				return {"eligible": false, "reason": "Declined: Gold card requires minimum $30,000 personal net worth (Your personal net worth: $%d)." % nw}
 			return {"eligible": true, "reason": "Approved for Gold Card"}
 		"platinum":
 			if credit_score < 780:
 				return {"eligible": false, "reason": "Declined: Platinum card requires minimum 780 credit score (Your score: %d)." % credit_score}
 			if nw < 150000:
-				return {"eligible": false, "reason": "Declined: Platinum card requires minimum $150,000 net worth (Your net worth: $%d)." % nw}
+				return {"eligible": false, "reason": "Declined: Platinum card requires minimum $150,000 personal net worth (Your personal net worth: $%d)." % nw}
 			return {"eligible": true, "reason": "Approved for Platinum Card"}
 		_:
 			return {"eligible": false, "reason": "Declined: Unknown credit card tier."}
+
+
+func calculate_dynamic_credit_limit(tier: String = "") -> int:
+	var t: String = tier.to_lower()
+	if t.is_empty():
+		t = credit_card_tier.to_lower() if has_credit_card and credit_card_tier != "" and credit_card_tier != "None" else "silver"
+
+	var base_limit: int = 5000
+	var max_limit: int = 35000
+	match t:
+		"gold":
+			base_limit = 25000
+			max_limit = 150000
+		"platinum":
+			base_limit = 100000
+			max_limit = 1000000
+		_: # silver
+			base_limit = 5000
+			max_limit = 35000
+
+	# Dynamic calculation from allowance (salary), personal assets, and personal net worth (excluding business valuation)
+	var allowance_contrib: int = int(maxi(0, job_salary) * 0.50)
+	var assets_contrib: int = int(maxi(0, get_total_asset_value()) * 0.15)
+	var nw_contrib: int = int(maxi(0, get_personal_net_worth()) * 0.10)
+	var tax_penalty: int = tax_debt * 2
+
+	var calculated: int = base_limit + allowance_contrib + assets_contrib + nw_contrib - tax_penalty
+	var rounded: int = int(round(float(calculated) / 500.0) * 500)
+	return clampi(rounded, base_limit, max_limit)
 
 
 func approve_credit_card(tier: String) -> bool:
@@ -812,21 +848,64 @@ func approve_credit_card(tier: String) -> bool:
 	match tier.to_lower():
 		"silver":
 			credit_card_tier = "Silver"
-			credit_card_limit = 5000
 			credit_card_apr = 0.18
 		"gold":
 			credit_card_tier = "Gold"
-			credit_card_limit = 25000
 			credit_card_apr = 0.15
 		"platinum":
 			credit_card_tier = "Platinum"
-			credit_card_limit = 100000
 			credit_card_apr = 0.12
 		_:
 			return false
 	
+	credit_card_limit = calculate_dynamic_credit_limit(tier)
+	credit_card_balance = 0
+	credit_card_paid_this_year = 0
 	modify_credit_score(10)
 	return true
+
+
+func request_credit_limit_increase() -> Dictionary:
+	if not has_credit_card:
+		return {"success": false, "message": "You do not have an active credit card account."}
+	if credit_card_balance > 0:
+		return {"success": false, "message": "Cannot request limit increase while carrying unpaid usage. Pay off card balance first."}
+	if tax_debt > 0 or debt > 0:
+		return {"success": false, "message": "Limit increase rejected due to outstanding debt or unpaid taxes."}
+	
+	var new_limit := calculate_dynamic_credit_limit(credit_card_tier)
+	if new_limit > credit_card_limit:
+		var old_limit := credit_card_limit
+		credit_card_limit = new_limit
+		modify_credit_score(10)
+		return {
+			"success": true,
+			"old_limit": old_limit,
+			"new_limit": new_limit,
+			"message": "Limit increase approved! Raised from $%d to $%d based on your updated allowance, assets, and personal net worth." % [old_limit, new_limit]
+		}
+	else:
+		return {
+			"success": false,
+			"message": "Limit increase request reviewed. Your current limit of $%d already matches or exceeds the allowable ceiling based on your current allowance ($%d/yr) and personal assets ($%d)." % [credit_card_limit, job_salary, get_total_asset_value()]
+		}
+
+
+func deactivate_credit_card_on_default() -> Dictionary:
+	if not has_credit_card:
+		return {"deactivated": false, "unpaid_usage": 0}
+	var unpaid := credit_card_balance
+	debt += unpaid
+	credit_card_balance = 0
+	has_credit_card = false
+	credit_card_tier = "None"
+	credit_card_limit = 0
+	credit_card_paid_this_year = 0
+	modify_credit_score(-75)
+	return {
+		"deactivated": true,
+		"unpaid_usage": unpaid
+	}
 
 
 func draw_credit_card_advance(amount: int) -> bool:
@@ -845,6 +924,7 @@ func repay_credit_card(amount: int) -> int:
 	var paid := mini(amount, mini(get_available_funds(), credit_card_balance))
 	debit_funds(paid)
 	credit_card_balance -= paid
+	credit_card_paid_this_year += paid
 	if credit_card_balance == 0:
 		modify_credit_score(15)
 	else:
@@ -859,6 +939,7 @@ func cancel_credit_card() -> bool:
 	credit_card_tier = "None"
 	credit_card_limit = 0
 	credit_card_apr = 0.18
+	credit_card_paid_this_year = 0
 	return true
 
 
@@ -1233,6 +1314,7 @@ func takeover_as_heir(heir: Dictionary, inherited_money: int, inherited_assets: 
 	credit_card_limit = 0
 	credit_card_balance = 0
 	credit_card_apr = 0.18
+	credit_card_paid_this_year = 0
 	karma = 0
 
 	owned_assets.clear()

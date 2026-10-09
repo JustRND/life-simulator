@@ -141,9 +141,10 @@ func _ready() -> void:
 	var check_nw := PlayerData.can_apply_credit_card("Gold")
 	check(not bool(check_nw.get("eligible", false)), "Gold card declined when net worth < $30,000")
 	
-	# Case G: Clean profile, qualifies for Gold card -> MUST APPROVE
+	# Case G: Clean profile, qualifies for Gold card -> MUST APPROVE WITH DYNAMIC LIMIT
 	PlayerData.money = 20000
 	PlayerData.bank_savings = 25000
+	PlayerData.job_salary = 10000 # Contributes $5,000 to limit
 	var check_gold := PlayerData.can_apply_credit_card("Gold")
 	check(bool(check_gold.get("eligible", false)), "Gold card approved when debt=0, tax=0, net worth and score qualify")
 	
@@ -151,37 +152,111 @@ func _ready() -> void:
 	check(approve_gold, "Successfully approved and opened Gold Credit Card")
 	check(PlayerData.has_credit_card, "Player now has credit card")
 	check(PlayerData.credit_card_tier == "Gold", "Tier is Gold")
-	check(PlayerData.credit_card_limit == 25000, "Limit is $25,000")
+	# Base for Gold = 25000 + 5000 (salary) + 4500 (10% of $45k nw) = 34500
+	check(PlayerData.credit_card_limit == 34500, "Dynamic limit is $34,500 based on salary and personal net worth (Got: %d)" % PlayerData.credit_card_limit)
 	check(PlayerData.credit_card_balance == 0, "Initial balance is 0")
-	check(PlayerData.get_credit_card_available() == 25000, "Full $25,000 available")
+	check(PlayerData.get_credit_card_available() == 34500, "Full dynamic limit available")
 	
 	# -------------------------------------------------------------
-	# 3b. CREDIT CARD TRANSACTIONS & REPAYMENT
+	# 3b. BUSINESS VALUATION EXCLUDED FROM CREDIT CARD LIMIT / ASSETS
 	# -------------------------------------------------------------
-	var draw_ok := PlayerData.draw_credit_card_advance(5000)
-	check(draw_ok, "Drew $5,000 cash advance from credit card")
-	check(PlayerData.credit_card_balance == 5000, "Card balance is now $5,000")
-	check(PlayerData.get_credit_card_available() == 20000, "Available credit is $20,000")
-	check(PlayerData.get_total_debt() == 5000, "Total debt reflects credit card balance")
+	PlayerData.owned_businesses.append({
+		"name": "MegaCorp",
+		"valuation": 5000000,
+		"treasury": 1000000,
+		"loan_balance": 0,
+		"unpaid_taxes": 0,
+		"owner_fraction": 1.0
+	})
+	check(PlayerData.get_net_worth() > 5000000, "Total net worth includes business valuation")
+	check(PlayerData.get_personal_net_worth() == 45000, "Personal net worth STRICTLY EXCLUDES business valuation ($45,000)")
+	check(PlayerData.calculate_dynamic_credit_limit("Gold") == 34500, "Credit card dynamic limit completely excludes business valuation ($34,500)")
+	PlayerData.owned_businesses.clear()
+
+	# -------------------------------------------------------------
+	# 3c. PURCHASE ASSETS USING CREDIT CARD
+	# -------------------------------------------------------------
+	# Player acquires driver's license to purchase a car:
+	if not PlayerData.licenses.has("license_car"):
+		PlayerData.licenses.append("license_car")
 	
-	# Cannot cancel card with active balance:
-	check(not PlayerData.cancel_credit_card(), "Cannot cancel credit card with outstanding balance")
+	var car_eval := AssetCatalog.can_purchase_asset(PlayerData, "car_sedan", "credit_card")
+	check(bool(car_eval.get("allowed", false)), "Can purchase Volt Sedan ($22,000) using credit card")
 	
-	# Repay part:
+	var buy_car_res := AssetCatalog.buy_asset(PlayerData, "car_sedan", "credit_card")
+	check(bool(buy_car_res.get("success", false)), "Successfully purchased car with credit card")
+	check(PlayerData.credit_card_balance == 22000, "Credit card balance increased by car price ($22,000)")
+	check(PlayerData.get_credit_card_available() == 12500, "Available credit decreased to $12,500 ($34,500 - $22,000)")
+	check(PlayerData.owned_assets.size() == 1, "Car added to player owned assets")
+	check(bool(PlayerData.owned_assets[0].get("purchased_with_credit", false)), "Asset marked as purchased with credit")
+	
+	# Try to buy luxury asset exceeding remaining credit limit:
+	var cannot_buy_aircraft := AssetCatalog.can_purchase_asset(PlayerData, "aircraft_cessna", "credit_card")
+	check(not bool(cannot_buy_aircraft.get("allowed", false)), "Cannot purchase Cessna ($380,000) that exceeds available credit ($12,500)")
+
+	# -------------------------------------------------------------
+	# 3d. MANUAL USAGE REPAYMENTS & 10% MINIMUM LOCK
+	# -------------------------------------------------------------
+	# Total usage is $22,000. Minimum payment locked at 10% = $2,200.
+	var min_pay := maxi(1, int(ceil(PlayerData.credit_card_balance * 0.10)))
+	check(min_pay == 2200, "Minimum payment strictly locked at 10% of usage ($2,200)")
+
+	# Pay 10%:
 	var score_before := PlayerData.credit_score
-	var repaid_part := PlayerData.repay_credit_card(2000)
-	check(repaid_part == 2000, "Repaid $2,000 of card balance")
-	check(PlayerData.credit_card_balance == 3000, "Remaining card balance is $3,000")
+	var paid_10 := PlayerData.repay_credit_card(min_pay)
+	check(paid_10 == 2200, "Paid 10% minimum payment ($2,200)")
+	check(PlayerData.credit_card_balance == 19800, "Remaining usage is $19,800")
+	check(PlayerData.credit_card_paid_this_year == 2200, "Annual payment tracker recorded $2,200")
 	check(PlayerData.credit_score >= score_before, "Credit score maintained or improved on repayment")
+
+	# Pay 20% of new balance:
+	var pay_20 := maxi(1, int(ceil(PlayerData.credit_card_balance * 0.20)))
+	var paid_20 := PlayerData.repay_credit_card(pay_20)
+	check(paid_20 == pay_20, "Paid 20% payment (%d)" % pay_20)
+	check(PlayerData.credit_card_paid_this_year == 2200 + pay_20, "Annual payment tracker accumulated payments")
+
+	# Custom payoff remaining:
+	var remaining := PlayerData.credit_card_balance
+	PlayerData.bank_savings = 50000
+	var paid_rest := PlayerData.repay_credit_card(remaining)
+	check(paid_rest == remaining, "Paid off remaining usage ($%d)" % remaining)
+	check(PlayerData.credit_card_balance == 0, "Usage fully paid off to $0")
+
+	# -------------------------------------------------------------
+	# 3e. REQUEST HIGHER CREDIT CARD BALANCE LIMIT
+	# -------------------------------------------------------------
+	# Player now owns a car worth $22,000, has $50,000 savings, and salary of $10,000.
+	# Dynamic limit should now recalculate higher from personal assets!
+	var limit_increase_res := PlayerData.request_credit_limit_increase()
+	check(bool(limit_increase_res.get("success", false)), "Request for higher credit limit approved when balance is $0 and assets grew (%s)" % str(limit_increase_res.get("message", "")))
+	check(PlayerData.credit_card_limit > 34500, "Credit card limit increased above previous $34,500 (Now: $%d)" % PlayerData.credit_card_limit)
+
+	# -------------------------------------------------------------
+	# 3f. DEBT CONVERSION & CARD DEACTIVATION ON DEFAULT
+	# -------------------------------------------------------------
+	# Charge $15,000 advance:
+	PlayerData.draw_credit_card_advance(15000)
+	check(PlayerData.credit_card_balance == 15000, "Drew $15,000 advance on card")
 	
-	# Repay full:
-	var repaid_full := PlayerData.repay_credit_card(3000)
-	check(repaid_full == 3000, "Repaid remaining $3,000 balance")
-	check(PlayerData.credit_card_balance == 0, "Card balance is 0")
-	check(PlayerData.get_total_debt() == 0, "Total debt is 0")
-	check(PlayerData.cancel_credit_card(), "Card cancelled successfully after full repayment")
-	check(not PlayerData.has_credit_card, "Player has no active credit card after cancellation")
+	# Character goes broke (unable to pay minimum 10% back to bank):
+	PlayerData.money = 0
+	PlayerData.bank_savings = 0
+	PlayerData.debt = 0
+	var def_min := maxi(1, int(ceil(PlayerData.credit_card_balance * 0.10))) # $1,500
+	check(PlayerData.get_available_funds() < def_min, "Character has $0 and is unable to service the minimum payment ($1,500)")
 	
+	var default_res := PlayerData.deactivate_credit_card_on_default()
+	check(bool(default_res.get("deactivated", false)), "Credit card deactivated on default")
+	check(not PlayerData.has_credit_card, "Card revoked: has_credit_card is false")
+	check(PlayerData.credit_card_tier == "None", "Card tier set to None")
+	check(PlayerData.credit_card_limit == 0, "Card limit zeroed")
+	check(PlayerData.credit_card_balance == 0, "Card usage cleared")
+	check(PlayerData.debt == 15000, "Unpaid usage converted directly into collections DEBT ($15,000)")
+	check(int(default_res.get("unpaid_usage", 0)) == 15000, "Reported unpaid usage of $15,000")
+
+	# Clean up debt for subsequent tests:
+	PlayerData.debt = 0
+
 	# -------------------------------------------------------------
 	# 4. CREDIT SCORE SYSTEM & NON-INHERITANCE TO CHILDREN
 	# -------------------------------------------------------------

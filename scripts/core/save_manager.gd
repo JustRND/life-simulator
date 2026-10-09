@@ -55,6 +55,7 @@ func capture_data() -> Dictionary:
 		"credit_card_limit": PlayerData.credit_card_limit,
 		"credit_card_balance": PlayerData.credit_card_balance,
 		"credit_card_apr": PlayerData.credit_card_apr,
+		"credit_card_paid_this_year": PlayerData.credit_card_paid_this_year,
 		"owned_assets": PlayerData.owned_assets,
 		"health_insurance": PlayerData.health_insurance,
 		"education_level": PlayerData.education_level,
@@ -248,6 +249,7 @@ func apply_data(data: Dictionary) -> bool:
 	PlayerData.credit_card_limit = int(data.get("credit_card_limit", 0))
 	PlayerData.credit_card_balance = int(data.get("credit_card_balance", 0))
 	PlayerData.credit_card_apr = float(data.get("credit_card_apr", 0.18))
+	PlayerData.credit_card_paid_this_year = int(data.get("credit_card_paid_this_year", 0))
 	PlayerData.education_level = str(data.get("education_level", "None"))
 	PlayerData.grades = int(data.get("grades", 75))
 	PlayerData.has_scholarship = bool(data.get("has_scholarship", false))

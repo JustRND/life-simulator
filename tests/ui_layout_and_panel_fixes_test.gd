@@ -255,10 +255,10 @@ func test_charity_activities_button_and_donations() -> void:
 	PlayerData.happiness = 30
 	PlayerData.active_buffs.clear()
 
-	var prev_money := PlayerData.money
+	var prev_funds := PlayerData.get_available_funds()
 	var donate_res := CharityManager.donate(PlayerData, "charity_food_bank")
 	assert(bool(donate_res.get("success", false)), "Donation should succeed: %s" % str(donate_res))
-	assert(PlayerData.money == prev_money - 100, "Should deduct $100 donation fee")
+	assert(PlayerData.get_available_funds() == prev_funds - 100, "Should deduct $100 donation fee from available funds")
 	assert(PlayerData.happiness > 30, "Happiness must increase significantly")
 	assert(PlayerData.karma > 10, "Hidden karma must increase significantly")
 	assert(PlayerData.has_buff("buff_philanthropist_heart"), "Must grant Heartwarming Gratitude buff")

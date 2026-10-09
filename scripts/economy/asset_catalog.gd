@@ -953,7 +953,7 @@ static func can_afford(player_data: Node, price: int) -> bool:
 	var total_funds: int = player_data.money + player_data.bank_savings
 	return total_funds >= price
 
-static func can_purchase_asset(player_data: Node, item_id: String) -> Dictionary:
+static func can_purchase_asset(player_data: Node, item_id: String, payment_method: String = "funds") -> Dictionary:
 	if not ITEMS.has(item_id):
 		return {"allowed": false, "reason": "Item not found in catalog."}
 
@@ -995,17 +995,30 @@ static func can_purchase_asset(player_data: Node, item_id: String) -> Dictionary
 			"reason": "Requires Concealed Carry & Tactical Firearms License. Obtain your state permit in Activities -> Licensing first!"
 		}
 
-	var total_funds: int = player_data.money + player_data.bank_savings
-	if total_funds < price:
-		return {
-			"allowed": false,
-			"reason": "Insufficient funds. You require $%d (Total available: $%d)." % [price, total_funds]
-		}
+	if payment_method == "credit_card":
+		if not player_data.has_credit_card:
+			return {
+				"allowed": false,
+				"reason": "No active credit card account. Apply for a card in the Banking panel."
+			}
+		var avail_credit: int = player_data.get_credit_card_available()
+		if avail_credit < price:
+			return {
+				"allowed": false,
+				"reason": "Insufficient credit limit. Purchase price $%d exceeds available credit ($%d)." % [price, avail_credit]
+			}
+	else:
+		var total_funds: int = player_data.money + player_data.bank_savings
+		if total_funds < price:
+			return {
+				"allowed": false,
+				"reason": "Insufficient funds. You require $%d (Total available: $%d)." % [price, total_funds]
+			}
 
 	return {"allowed": true, "reason": "Eligible to purchase."}
 
-static func buy_asset(player_data: Node, item_id: String) -> Dictionary:
-	var eval := can_purchase_asset(player_data, item_id)
+static func buy_asset(player_data: Node, item_id: String, payment_method: String = "funds") -> Dictionary:
+	var eval := can_purchase_asset(player_data, item_id, payment_method)
 	if not bool(eval.get("allowed", false)):
 		return {
 			"success": false,
@@ -1015,8 +1028,13 @@ static func buy_asset(player_data: Node, item_id: String) -> Dictionary:
 	var item: Dictionary = ITEMS[item_id]
 	var price: int = int(item.get("price", 0))
 
-	# Debit funds: Prefer cash first, then draw remainder from bank savings
-	player_data.debit_funds(price)
+	if payment_method == "credit_card":
+		player_data.credit_card_balance += price
+		if float(player_data.credit_card_balance) / float(maxi(1, player_data.credit_card_limit)) > 0.8:
+			player_data.modify_credit_score(-5)
+	else:
+		# Debit funds: Prefer bank savings first, then draw remainder from cash
+		player_data.debit_funds(price)
 
 	var instance_id: String = "%s_%d_%d" % [item_id, player_data.age, randi() % 10000]
 	var new_asset: Dictionary = {
@@ -1031,7 +1049,8 @@ static func buy_asset(player_data: Node, item_id: String) -> Dictionary:
 		"image_path": str(item.get("image_path", "")),
 		"upkeep": int(item.get("upkeep", 0)),
 		"happiness_bonus": int(item.get("happiness_bonus", 5)),
-		"last_used_age": -1
+		"last_used_age": -1,
+		"purchased_with_credit": payment_method == "credit_card"
 	}
 
 	player_data.owned_assets.append(new_asset)
@@ -1041,9 +1060,10 @@ static func buy_asset(player_data: Node, item_id: String) -> Dictionary:
 		if player_data.has_method("add_milestone"):
 			player_data.add_milestone("Purchased real estate: %s." % str(item.get("name", "Property")), player_data.age, "🏡")
 
+	var method_desc := "charged to %s Credit Card" % player_data.credit_card_tier if payment_method == "credit_card" else "paid in full"
 	return {
 		"success": true,
-		"message": "Congratulations! You purchased %s for $%d." % [new_asset["name"], price],
+		"message": "Congratulations! You purchased %s for $%d (%s)." % [new_asset["name"], price, method_desc],
 		"asset": new_asset
 	}
 
