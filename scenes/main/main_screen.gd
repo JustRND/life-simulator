@@ -7811,8 +7811,12 @@ func _render_business_tab_financials(list: VBoxContainer, selected_uid: String) 
 	t_title.add_theme_color_override("font_color", Color("#ffffff"))
 	tv.add_child(t_title)
 
+	var total_biz_count := PlayerData.owned_businesses.size()
+	var cur_tax_rate := BusinessManager.get_corporate_tax_rate(total_biz_count, int(target_biz.get("net_profit", 0)))
 	var t_desc := Label.new()
-	t_desc.text = "Corporate Tax Rate: 20%% on positive net operating profits.\nUnpaid Corporate Taxes: $%s (Last Filing: Age %d)" % [
+	t_desc.text = "Corporate Tax Rate: %d%% (Scaling with %d owned enterprises)\nUnpaid Corporate Taxes: $%s (Last Filing: Age %d)" % [
+		int(cur_tax_rate * 100),
+		total_biz_count,
 		_format_number(unpaid_tax),
 		int(target_biz.get("last_tax_paid_year", PlayerData.age))
 	]
@@ -8088,14 +8092,7 @@ func _render_business_tab_financials(list: VBoxContainer, selected_uid: String) 
 	# Branch Expansion Button
 	var next_branch_cost := BusinessManager.get_branch_expansion_cost(target_biz)
 	var btn_branch := _create_cyber_button("🏢 Open Branch #%d (Deploy $%s Treasury Funds)" % [branches + 1, _format_number(next_branch_cost)], Color("#0284c7"), func():
-		var r := BusinessManager.open_business_branch(target_biz)
-		if bool(r.get("success", false)):
-			_show_simple_popup("🏢 BRANCH EXPANSION", str(r.get("message", "Branch opened!")), Color("#10b981"))
-			update_ui()
-			SaveManager.save_game()
-			_show_business_modal("financials", cur_uid)
-		else:
-			add_life_event(str(r.get("message", "Could not open branch.")), "finance")
+		_show_expand_branch_modal(target_biz, cur_uid)
 	, true)
 	btn_branch.custom_minimum_size.y = 52
 	btn_branch.add_theme_font_size_override("font_size", 21)
@@ -8207,6 +8204,83 @@ func _show_rename_business_modal(biz: Dictionary) -> void:
 	btn_save.custom_minimum_size.y = 54
 	btn_save.add_theme_font_size_override("font_size", 22)
 	list.add_child(btn_save)
+
+func _show_expand_branch_modal(biz: Dictionary, cur_uid: String) -> void:
+	var next_cost := BusinessManager.get_branch_expansion_cost(biz)
+	var cur_treasury: int = int(biz.get("treasury", 0))
+	var branches: int = int(biz.get("branches", 1))
+	var parent_name: String = str(biz.get("name", "Enterprise"))
+	var default_branch_name := "%s - Branch %d" % [parent_name, branches + 1]
+
+	var modal := _create_cyber_modal("EXPAND BUSINESS BRANCH", "Deploy corporate treasury funds to establish an independent operational branch. The expanded business appears in your Owned Businesses with its own dedicated staff, finances, and micromanagement.", Color("#0284c7"))
+
+	var summary := Label.new()
+	summary.text = "🏛️ Parent Enterprise: %s\n💰 Available Corporate Treasury: $%s\n🏷️ Branch Capital Investment: $%s\n📊 Conglomerate Portfolio Tax: %d%% across all owned businesses" % [
+		parent_name,
+		_format_number(cur_treasury),
+		_format_number(next_cost),
+		int(BusinessManager.get_corporate_tax_rate(PlayerData.owned_businesses.size() + 1) * 100)
+	]
+	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	summary.add_theme_font_size_override("font_size", 23)
+	summary.add_theme_color_override("font_color", Color("#bae6fd"))
+	modal.list.add_child(summary)
+
+	var name_box := VBoxContainer.new()
+	name_box.add_theme_constant_override("separation", 8)
+
+	var name_lbl := Label.new()
+	name_lbl.text = "BRANCH TRADE NAME:"
+	name_lbl.add_theme_font_size_override("font_size", 20)
+	name_lbl.add_theme_color_override("font_color", Color("#94a3b8"))
+	name_box.add_child(name_lbl)
+
+	var name_edit := LineEdit.new()
+	name_edit.text = default_branch_name
+	name_edit.placeholder_text = "Enter custom branch name..."
+	name_edit.custom_minimum_size.y = 54
+	name_edit.add_theme_font_size_override("font_size", 22)
+	get_node("OptionsMenu")._style_input(name_edit)
+	MobileKeyboardManager.attach_to_input(name_edit, "Enter branch name for %s:" % parent_name)
+	name_box.add_child(name_edit)
+
+	var kb_btn := MobileKeyboardManager.create_keyboard_trigger_button(name_edit, "⌨️ Enter Custom Branch Name", "Enter branch name for %s:" % parent_name, Color("#0284c7"))
+	name_box.add_child(kb_btn)
+	modal.list.add_child(name_box)
+
+	var feedback := Label.new()
+	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	feedback.add_theme_color_override("font_color", Color("#ef4444"))
+	feedback.add_theme_font_size_override("font_size", 22)
+	modal.list.add_child(feedback)
+
+	var btn_deploy := _create_cyber_button("🏢 Deploy $%s & Establish Branch" % _format_number(next_cost), Color("#0284c7"), func():
+		var b_name := name_edit.text.strip_edges()
+		if b_name.is_empty():
+			feedback.text = "⚠️ Branch name cannot be blank."
+			return
+		if cur_treasury < next_cost:
+			feedback.text = "⚠️ Insufficient corporate treasury ($%s available)." % _format_number(cur_treasury)
+			return
+
+		var r := BusinessManager.open_business_branch(biz, b_name)
+		if bool(r.get("success", false)):
+			update_ui()
+			SaveManager.save_game()
+			if is_instance_valid(modal.overlay):
+				modal.overlay.queue_free()
+			var new_uid: String = str(r.get("branch", {}).get("uid", cur_uid))
+			_show_simple_popup("🏢 BRANCH EXPANSION", str(r.get("message", "Branch established!")), Color("#10b981"))
+			_show_business_modal("overview", new_uid)
+		else:
+			feedback.text = "⚠️ " + str(r.get("message", "Could not open branch."))
+	, true)
+	btn_deploy.custom_minimum_size.y = 54
+	btn_deploy.add_theme_font_size_override("font_size", 22)
+	btn_deploy.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn_deploy.set_meta("center_text", true)
+	btn_deploy.disabled = cur_treasury < next_cost
+	modal.list.add_child(btn_deploy)
 
 	modal.overlay.visible = true
 	if has_node("ThemeController"):

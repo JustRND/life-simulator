@@ -856,9 +856,9 @@ func test_licensing_freelance_and_businesses() -> void:
 	var lic_eval := LicenseManager.can_take_license("license_car")
 	assert(not bool(lic_eval.get("allowed", false)), "Cannot purchase car license without sufficient funds")
 
-	PlayerData.money = 5000
+	PlayerData.money = 25000
 	var car_lic_def := LicenseManager.get_license_by_id("license_car")
-	var car_fee: int = int(car_lic_def.get("fee", 450))
+	var car_fee: int = int(car_lic_def.get("fee", 2500))
 	var m_before: int = PlayerData.money
 	var res_take := LicenseManager.take_license("license_car")
 	assert(bool(res_take.get("allowed", false)), "Car license purchase should succeed with sufficient funds")
@@ -1023,6 +1023,9 @@ func test_licensing_freelance_and_businesses() -> void:
 	assert(bool(div_res.get("success", false)), "Owner dividend withdrawal should succeed")
 	assert(int(biz.get("treasury")) == treas_before_div - 5000, "Dividend deducted from business treasury")
 	assert(PlayerData.money == cash_before_div + 5000, "Dividend credited to personal cash")
+
+	# Ensure business has sufficient operating buffer for testing simulation
+	biz["treasury"] = 120000
 
 	# Yearly business operations simulation
 	var yearly_biz_results := BusinessManager.simulate_yearly_businesses()

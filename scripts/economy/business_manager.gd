@@ -1,8 +1,23 @@
 class_name BusinessManager
 extends RefCounted
 
-const CORPORATE_TAX_RATE: float = 0.20
-const BUSINESS_LOAN_INTEREST_RATE: float = 0.075
+const CORPORATE_TAX_RATE: float = 0.22
+const BUSINESS_LOAN_INTEREST_RATE: float = 0.085
+
+
+## Progressive corporate tax rate scaling with portfolio scale and net profit
+static func get_corporate_tax_rate(total_businesses: int, net_profit: int = 0) -> float:
+	# Base corporate tax starts at 22%
+	# Each additional business owned increases corporate tax rate by +5%
+	# (1 biz: 22%, 2 biz: 27%, 3 biz: 32%, 4 biz: 37%, 5 biz: 42%, 6+ biz: 47%+)
+	var rate: float = 0.22 + (maxi(0, total_businesses - 1) * 0.05)
+	if net_profit > 1000000:
+		rate += 0.12
+	elif net_profit > 500000:
+		rate += 0.08
+	elif net_profit > 250000:
+		rate += 0.04
+	return clampf(rate, 0.22, 0.60)
 
 const CATEGORIES: Array[Dictionary] = [
 	{
@@ -66,10 +81,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Commercial Food Safety License",
 		"required_major": "food_science",
 		"required_degree_title": "Food Science & Culinary Arts",
-		"startup_cost": 45000,
-		"base_revenue_min": 60000,
-		"base_revenue_max": 95000,
-		"base_opex": 45000,
+		"startup_cost": 75000,
+		"base_revenue_min": 65000,
+		"base_revenue_max": 105000,
+		"base_opex": 58000,
 		"description": "Roast single-origin espresso and serve synthetic cyber energy infusions in a bustling downtown tech district."
 	},
 	{
@@ -81,10 +96,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Driver's License (Commercial Logistics)",
 		"required_major": "logistics",
 		"required_degree_title": "Global Logistics & Supply Chain",
-		"startup_cost": 160000,
-		"base_revenue_min": 220000,
-		"base_revenue_max": 380000,
-		"base_opex": 190000,
+		"startup_cost": 250000,
+		"base_revenue_min": 240000,
+		"base_revenue_max": 420000,
+		"base_opex": 235000,
 		"description": "Coordinate automated container freight, bulk warehouse depots, and regional supply chain transport fleets."
 	},
 	{
@@ -96,10 +111,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Certified Commercial Appraiser License",
 		"required_major": "fashion",
 		"required_degree_title": "Fashion & Apparel Design",
-		"startup_cost": 85000,
-		"base_revenue_min": 110000,
-		"base_revenue_max": 190000,
-		"base_opex": 90000,
+		"startup_cost": 135000,
+		"base_revenue_min": 120000,
+		"base_revenue_max": 210000,
+		"base_opex": 115000,
 		"description": "Curate runway collections, bespoke tailor-fitted suits, and avant-garde luminescent streetwear."
 	},
 	{
@@ -111,10 +126,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Certified Public Bookkeeper & Compliance License",
 		"required_major": "law",
 		"required_degree_title": "Legal Studies & Jurisprudence",
-		"startup_cost": 130000,
-		"base_revenue_min": 190000,
-		"base_revenue_max": 360000,
-		"base_opex": 155000,
+		"startup_cost": 220000,
+		"base_revenue_min": 210000,
+		"base_revenue_max": 390000,
+		"base_opex": 195000,
 		"description": "Represent elite corporate executives, high-stakes patent arbitrations, and high-profile criminal litigation."
 	},
 	{
@@ -126,10 +141,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Commercial Visual Media License",
 		"required_major": "graphic_design",
 		"required_degree_title": "Graphic Design & Visual Communication",
-		"startup_cost": 38000,
-		"base_revenue_min": 65000,
-		"base_revenue_max": 125000,
-		"base_opex": 52000,
+		"startup_cost": 65000,
+		"base_revenue_min": 70000,
+		"base_revenue_max": 135000,
+		"base_opex": 65000,
 		"description": "Design dynamic corporate identities, 3D vector graphics, futuristic web UI/UX, and viral media campaigns."
 	},
 	{
@@ -141,10 +156,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Commercial Healthcare Sanitation & Safety License",
 		"required_major": "medicine",
 		"required_degree_title": "Pre-Med & Healthcare Sciences",
-		"startup_cost": 350000,
-		"base_revenue_min": 450000,
-		"base_revenue_max": 800000,
-		"base_opex": 380000,
+		"startup_cost": 550000,
+		"base_revenue_min": 500000,
+		"base_revenue_max": 900000,
+		"base_opex": 480000,
 		"description": "Deliver cutting-edge outpatient medical care, surgical recovery suites, and advanced diagnostic imaging."
 	},
 	{
@@ -156,10 +171,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Certified Cyber Security & Pen-Tester License",
 		"required_major": "it",
 		"required_degree_title": "Cyber Security & IT",
-		"startup_cost": 110000,
-		"base_revenue_min": 160000,
-		"base_revenue_max": 320000,
-		"base_opex": 140000,
+		"startup_cost": 185000,
+		"base_revenue_min": 180000,
+		"base_revenue_max": 360000,
+		"base_opex": 175000,
 		"description": "Engineer enterprise cloud microservices, predictive neural models, cyber security shields, and mobile apps."
 	},
 	{
@@ -171,10 +186,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Certified Public Bookkeeper License",
 		"required_major": "accounting",
 		"required_degree_title": "Accounting & Forensic Audit",
-		"startup_cost": 70000,
-		"base_revenue_min": 115000,
-		"base_revenue_max": 210000,
-		"base_opex": 95000,
+		"startup_cost": 120000,
+		"base_revenue_min": 125000,
+		"base_revenue_max": 230000,
+		"base_opex": 120000,
 		"description": "Manage corporate tax compliance, forensic accounting audits, capital allocation, and executive ledgers."
 	},
 	{
@@ -186,10 +201,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Certified Building & Electrical Code License",
 		"required_major": "architecture",
 		"required_degree_title": "Architecture & Urban Planning",
-		"startup_cost": 135000,
-		"base_revenue_min": 185000,
-		"base_revenue_max": 360000,
-		"base_opex": 155000,
+		"startup_cost": 225000,
+		"base_revenue_min": 200000,
+		"base_revenue_max": 390000,
+		"base_opex": 190000,
 		"description": "Draft skyline mega-towers, eco-sustainable civic developments, and luxurious modernist villas."
 	},
 	{
@@ -201,10 +216,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Certified Industrial Electrical & Machine License",
 		"required_major": "engineering",
 		"required_degree_title": "Mechanical & Electrical Engineering",
-		"startup_cost": 150000,
-		"base_revenue_min": 190000,
-		"base_revenue_max": 340000,
-		"base_opex": 160000,
+		"startup_cost": 240000,
+		"base_revenue_min": 210000,
+		"base_revenue_max": 380000,
+		"base_opex": 200000,
 		"description": "Fabricate custom vehicle powertrains, CNC robotic chassis components, and industrial automation assemblies."
 	},
 	{
@@ -216,10 +231,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Certified Bio-Systems & Lab Safety License",
 		"required_major": "biotech",
 		"required_degree_title": "Biotechnology & Genetics",
-		"startup_cost": 480000,
-		"base_revenue_min": 550000,
-		"base_revenue_max": 1100000,
-		"base_opex": 480000,
+		"startup_cost": 750000,
+		"base_revenue_min": 600000,
+		"base_revenue_max": 1200000,
+		"base_opex": 590000,
 		"description": "Pioneer synthetic drug formulas, genetic bioreactors, and proprietary cellular longevity treatments."
 	},
 	{
@@ -231,10 +246,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Certified Financial Bookkeeper License",
 		"required_major": "finance",
 		"required_degree_title": "Finance & Investment Banking",
-		"startup_cost": 450000,
-		"base_revenue_min": 520000,
-		"base_revenue_max": 1050000,
-		"base_opex": 440000,
+		"startup_cost": 700000,
+		"base_revenue_min": 580000,
+		"base_revenue_max": 1150000,
+		"base_opex": 550000,
 		"description": "Deploy algorithmic high-frequency trading models, venture funds, and private equity investments."
 	},
 	{
@@ -246,10 +261,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Commercial Audio/Visual Media License",
 		"required_major": "music",
 		"required_degree_title": "Sound Engineering & Music Production",
-		"startup_cost": 65000,
-		"base_revenue_min": 85000,
-		"base_revenue_max": 165000,
-		"base_opex": 72000,
+		"startup_cost": 110000,
+		"base_revenue_min": 90000,
+		"base_revenue_max": 180000,
+		"base_opex": 90000,
 		"description": "Mix platinum studio records, master film soundtracks, and produce commercial voice audio."
 	},
 	{
@@ -261,10 +276,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Certified Journeyman Electrician License",
 		"required_major": "environmental",
 		"required_degree_title": "Environmental & Renewable Energy Science",
-		"startup_cost": 190000,
-		"base_revenue_min": 240000,
-		"base_revenue_max": 460000,
-		"base_opex": 200000,
+		"startup_cost": 320000,
+		"base_revenue_min": 260000,
+		"base_revenue_max": 510000,
+		"base_opex": 250000,
 		"description": "Contract large-scale commercial solar photovoltaic arrays, megawatt battery storage, and micro-grid controls."
 	},
 	{
@@ -276,10 +291,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Commercial Clinic Sanitation License",
 		"required_major": "dentistry",
 		"required_degree_title": "Dental Surgery & Oral Health",
-		"startup_cost": 290000,
-		"base_revenue_min": 360000,
-		"base_revenue_max": 680000,
-		"base_opex": 310000,
+		"startup_cost": 460000,
+		"base_revenue_min": 400000,
+		"base_revenue_max": 750000,
+		"base_opex": 390000,
 		"description": "Provide cosmetic veneer procedures, dental implants, laser periodontal surgery, and orthodontics."
 	},
 	{
@@ -291,10 +306,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Commercial Aerial Drone & Film Operator License",
 		"required_major": "film",
 		"required_degree_title": "Film, Cinematography & Media Production",
-		"startup_cost": 220000,
-		"base_revenue_min": 280000,
-		"base_revenue_max": 550000,
-		"base_opex": 235000,
+		"startup_cost": 360000,
+		"base_revenue_min": 310000,
+		"base_revenue_max": 620000,
+		"base_opex": 300000,
 		"description": "Produce festival feature films, streaming docuseries, 8K commercial cinema, and multimedia broadcasts."
 	},
 	{
@@ -306,10 +321,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Commercial Food Safety License",
 		"required_major": "food_science",
 		"required_degree_title": "Food Science & Culinary Arts",
-		"startup_cost": 58000,
-		"base_revenue_min": 80000,
-		"base_revenue_max": 145000,
-		"base_opex": 65000,
+		"startup_cost": 95000,
+		"base_revenue_min": 90000,
+		"base_revenue_max": 160000,
+		"base_opex": 88000,
 		"description": "Bake small-batch wild-fermented sourdough, delicate French pastries, and specialty confectionery for morning crowds."
 	},
 	{
@@ -321,10 +336,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Commercial Food Safety & Kitchen Manager License",
 		"required_major": "food_science",
 		"required_degree_title": "Food Science & Culinary Arts",
-		"startup_cost": 185000,
-		"base_revenue_min": 240000,
-		"base_revenue_max": 460000,
-		"base_opex": 205000,
+		"startup_cost": 290000,
+		"base_revenue_min": 260000,
+		"base_revenue_max": 510000,
+		"base_opex": 250000,
 		"description": "Craft multi-course seasonal tasting menus paired with vintage cellars and high-end molecular gastronomy."
 	},
 	{
@@ -336,10 +351,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Professional Mixologist & Spirits License",
 		"required_major": "food_science",
 		"required_degree_title": "Food Science & Culinary Arts",
-		"startup_cost": 115000,
-		"base_revenue_min": 155000,
-		"base_revenue_max": 310000,
-		"base_opex": 130000,
+		"startup_cost": 185000,
+		"base_revenue_min": 170000,
+		"base_revenue_max": 340000,
+		"base_opex": 165000,
 		"description": "Brew experimental IPAs, barrel-aged stouts, and wood-fired artisanal comfort fare in an industrial taproom."
 	},
 	{
@@ -351,10 +366,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Master Coastal Boater & Marine Captain License",
 		"required_major": "logistics",
 		"required_degree_title": "Global Logistics & Supply Chain",
-		"startup_cost": 380000,
-		"base_revenue_min": 520000,
-		"base_revenue_max": 1000000,
-		"base_opex": 460000,
+		"startup_cost": 600000,
+		"base_revenue_min": 560000,
+		"base_revenue_max": 1100000,
+		"base_opex": 540000,
 		"description": "Operate intermodal maritime container shipping, deep-water port docks, and international customs freight lanes."
 	},
 	{
@@ -366,10 +381,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Commercial Drone Operator License",
 		"required_major": "logistics",
 		"required_degree_title": "Global Logistics & Supply Chain",
-		"startup_cost": 90000,
-		"base_revenue_min": 120000,
-		"base_revenue_max": 240000,
-		"base_opex": 100000,
+		"startup_cost": 145000,
+		"base_revenue_min": 135000,
+		"base_revenue_max": 270000,
+		"base_opex": 130000,
 		"description": "Deploy automated rooftop drone docks and electric ground van fleets for guaranteed 30-minute urban deliveries."
 	},
 	{
@@ -381,10 +396,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Commercial Freight Driver's License",
 		"required_major": "logistics",
 		"required_degree_title": "Global Logistics & Supply Chain",
-		"startup_cost": 220000,
-		"base_revenue_min": 280000,
-		"base_revenue_max": 560000,
-		"base_opex": 240000,
+		"startup_cost": 350000,
+		"base_revenue_min": 300000,
+		"base_revenue_max": 600000,
+		"base_opex": 290000,
 		"description": "Maintain ultra-low temperature cryogenic storage depots and refrigerated freight for biomedical goods and perishable cargo."
 	},
 	{
@@ -396,10 +411,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Certified High-Voltage Electrician License",
 		"required_major": "environmental",
 		"required_degree_title": "Environmental & Renewable Energy Science",
-		"startup_cost": 440000,
-		"base_revenue_min": 540000,
-		"base_revenue_max": 1100000,
-		"base_opex": 470000,
+		"startup_cost": 700000,
+		"base_revenue_min": 580000,
+		"base_revenue_max": 1200000,
+		"base_opex": 560000,
 		"description": "Harness high-seas deep-water wind currents and marine tidal turbines feeding multi-gigawatt power to coastal cities."
 	},
 	{
@@ -411,10 +426,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Certified Industrial Electrician License",
 		"required_major": "environmental",
 		"required_degree_title": "Environmental & Renewable Energy Science",
-		"startup_cost": 620000,
-		"base_revenue_min": 750000,
-		"base_revenue_max": 1500000,
-		"base_opex": 650000,
+		"startup_cost": 950000,
+		"base_revenue_min": 800000,
+		"base_revenue_max": 1650000,
+		"base_opex": 780000,
 		"description": "Direct run-of-the-river hydraulic turbine vaults providing baseload hydroelectric generation and flood control."
 	},
 	{
@@ -426,10 +441,10 @@ const BUSINESS_TYPES: Array[Dictionary] = [
 		"required_license_title": "Certified Grid Electrician License",
 		"required_major": "environmental",
 		"required_degree_title": "Environmental & Renewable Energy Science",
-		"startup_cost": 310000,
-		"base_revenue_min": 380000,
-		"base_revenue_max": 780000,
-		"base_opex": 330000,
+		"startup_cost": 490000,
+		"base_revenue_min": 410000,
+		"base_revenue_max": 850000,
+		"base_opex": 400000,
 		"description": "Stabilize regional transmission grids with containerized lithium iron phosphate battery banks during peak demand."
 	}
 ]
@@ -596,12 +611,14 @@ static func rename_business(biz_uid: String, new_name: String) -> Dictionary:
 static func get_branch_expansion_cost(b: Dictionary) -> int:
 	var type_id: String = str(b.get("type_id", ""))
 	var def := get_business_type_by_id(type_id)
-	var startup: int = int(def.get("startup_cost", 50000))
+	var startup: int = int(def.get("startup_cost", 100000))
 	var branches: int = int(b.get("branches", 1))
-	return int(startup * 0.65) + (branches * 15000)
+	var total_owned: int = PlayerData.owned_businesses.size()
+	# Substantial capital outlay: 150% of startup cost + compounding branch scale surcharge ($60,000 per branch) + portfolio scale overhead ($25,000 per owned business)
+	return int(startup * 1.50) + (branches * 60000) + (maxi(0, total_owned - 1) * 25000)
 
 
-static func open_business_branch(b: Dictionary) -> Dictionary:
+static func open_business_branch(b: Dictionary, branch_name: String = "") -> Dictionary:
 	var branch_cost: int = get_branch_expansion_cost(b)
 	var treasury: int = int(b.get("treasury", 0))
 
@@ -615,24 +632,62 @@ static func open_business_branch(b: Dictionary) -> Dictionary:
 			]
 		}
 
+	# 1. Deduct cost from parent business treasury
 	b["treasury"] = treasury - branch_cost
 	b["branches"] = int(b.get("branches", 1)) + 1
-	b["employees"] = int(b.get("employees", 4)) + 3
-	b["revenue_scale"] = float(b.get("revenue_scale", 1.0)) + 0.35
-	b["valuation"] = int(b.get("valuation", 50000)) + int(branch_cost * 1.25)
-	b["reputation"] = mini(100, int(b.get("reputation", 75)) + 4)
+	b["valuation"] = int(b.get("valuation", 50000)) + int(branch_cost * 0.85)
+	b["reputation"] = mini(100, int(b.get("reputation", 75)) + 3)
 
-	var b_name: String = str(b.get("name", "Enterprise"))
-	PlayerData.add_life_log_entry("🏢 BRANCH EXPANSION: %s deployed $%d from its corporate treasury to open Branch #%d! Operations scaled to %d staff." % [
-		b_name,
+	var next_branch_num := int(b.get("branches", 1))
+	var parent_name := str(b.get("name", "Enterprise"))
+	var clean_branch_name := branch_name.strip_edges()
+	if clean_branch_name.is_empty():
+		clean_branch_name = "%s - Branch %d" % [parent_name, next_branch_num]
+
+	var type_id: String = str(b.get("type_id", ""))
+	var def := get_business_type_by_id(type_id)
+
+	# 2. Instantiate expanded business into PlayerData.owned_businesses with independent operations & micromanagement
+	var new_branch: Dictionary = {
+		"uid": "biz_exp_%d_%d" % [PlayerData.age, randi() % 1000000],
+		"type_id": type_id,
+		"name": clean_branch_name,
+		"icon": str(b.get("icon", def.get("icon", "🏢"))),
+		"founded_age": PlayerData.age,
+		"is_unlicensed": bool(b.get("is_unlicensed", false)),
+		"is_branch": true,
+		"parent_uid": str(b.get("uid", "")),
+		"branches": 1,
+		"facility_tier": 1,
+		"revenue_scale": 1.0,
+		"treasury": 15000, # Seed working capital deployed from parent expansion funds
+		"employees": 4,
+		"marketing_budget": 5000,
+		"annual_revenue": 0,
+		"annual_opex": 0,
+		"net_profit": 0,
+		"unpaid_taxes": 0,
+		"last_tax_paid_year": -1,
+		"loan_balance": 0,
+		"loan_interest_rate": BUSINESS_LOAN_INTEREST_RATE,
+		"valuation": int(branch_cost * 0.80),
+		"reputation": int(b.get("reputation", 75)),
+		"consecutive_losses": 0
+	}
+
+	PlayerData.owned_businesses.append(new_branch)
+
+	PlayerData.add_life_log_entry("🏢 ENTERPRISE EXPANSION: %s deployed $%d corporate treasury to open branch '%s'! It is now live in your Owned Businesses portfolio with its own micromanagement." % [
+		parent_name,
 		branch_cost,
-		int(b.get("branches", 1)),
-		int(b.get("employees", 4))
+		clean_branch_name
 	], "finance")
+	PlayerData.add_milestone("Expanded '%s' with Branch '%s'." % [parent_name, clean_branch_name], PlayerData.age, "🏢")
 
 	return {
 		"success": true,
-		"message": "Branch #%d successfully opened using $%d corporate treasury funds!" % [int(b.get("branches", 1)), branch_cost]
+		"message": "Branch '%s' successfully established using $%d corporate treasury funds!\n\nIt is now active in your Owned Businesses tab with its own operations, staff, and finances." % [clean_branch_name, branch_cost],
+		"branch": new_branch
 	}
 
 
@@ -703,6 +758,8 @@ static func get_total_business_valuation() -> int:
 # Yearly financial simulation across all owned businesses
 static func simulate_yearly_businesses() -> Array[Dictionary]:
 	var results: Array[Dictionary] = []
+	var total_businesses: int = PlayerData.owned_businesses.size()
+
 	for b in PlayerData.owned_businesses:
 		var type_id: String = str(b.get("type_id", ""))
 		var def := get_business_type_by_id(type_id)
@@ -717,62 +774,115 @@ static func simulate_yearly_businesses() -> Array[Dictionary]:
 		var mkt: int = int(b.get("marketing_budget", 5000))
 		var branches: int = int(b.get("branches", 1))
 		var facility_tier: int = int(b.get("facility_tier", 1))
+		var rep: int = int(b.get("reputation", 75))
 
-		# Revenue modifiers: marketing multiplier, employee capacity, market fluctuation
-		var mkt_mult: float = 1.0 + (float(mkt) / 60000.0)
-		var emp_mult: float = 0.8 + (float(emp_count) * 0.04)
-		var market_roll: float = randf_range(0.85, 1.20)
+		# Macro-economic climate roll (Boom 15%, Stable 45%, Soft 25%, Recession 15%)
+		var econ_roll := randi_range(1, 100)
+		var market_mult: float = 1.0
+		var market_label := "Normal"
+		if econ_roll <= 15:
+			market_mult = randf_range(1.15, 1.30)
+			market_label = "Economic Boom"
+		elif econ_roll <= 60:
+			market_mult = randf_range(0.88, 1.08)
+			market_label = "Stable"
+		elif econ_roll <= 85:
+			market_mult = randf_range(0.58, 0.78)
+			market_label = "Market Slump"
+		else:
+			market_mult = randf_range(0.35, 0.52)
+			market_label = "Industry Recession"
 
-		var generated_revenue: int = int(float(randi_range(min_rev, max_rev)) * mkt_mult * emp_mult * market_roll)
+		# Revenue modifiers
+		var mkt_mult: float = 0.85 + (float(mkt) / 35000.0) # $0 marketing causes -15% demand
+		var emp_mult: float = 0.75 + (float(emp_count) * 0.05)
+		var rep_mult: float = clampf(float(rep) / 75.0, 0.50, 1.25)
+
+		var generated_revenue: int = int(float(randi_range(min_rev, max_rev)) * mkt_mult * emp_mult * market_mult * rep_mult)
 		var scale: float = float(b.get("revenue_scale", 1.0))
 		generated_revenue = int(generated_revenue * scale)
 
-		# Expenses: Base OpEx (reduced by facility tier automation) + Employee payroll ($22k each) + Marketing budget + Loan interest
-		var payroll: int = emp_count * 22000
+		# Operating Expenses:
+		# Payroll: $32,000 per staff
+		var payroll: int = emp_count * 32000
 		var loan_bal: int = int(b.get("loan_balance", 0))
 		var loan_interest: int = int(float(loan_bal) * float(b.get("loan_interest_rate", BUSINESS_LOAN_INTEREST_RATE)))
-		var facility_discount: float = 1.0 - (float(facility_tier - 1) * 0.04)
-		var total_opex: int = int((base_opex * facility_discount + payroll) * scale) + mkt + loan_interest
+		# Facility overhead: Tier 1: $14k, Tier 2: $28k, Tier 3: $42k, Tier 4: $56k, Tier 5: $70k
+		var facility_overhead: int = facility_tier * 14000
+		var total_opex: int = int((base_opex + payroll + facility_overhead) * scale) + mkt + loan_interest
 
 		var net_profit: int = generated_revenue - total_opex
 
-		# Taxes on positive net profit
+		# Progressive Conglomerate & Portfolio Tax Calculation (the more businesses you have the more tax you pay)
+		var tax_rate := get_corporate_tax_rate(total_businesses, net_profit)
 		var tax_accrued: int = 0
 		if net_profit > 0:
-			tax_accrued = int(float(net_profit) * CORPORATE_TAX_RATE)
-			b["unpaid_taxes"] = int(b.get("unpaid_taxes", 0)) + tax_accrued
+			tax_accrued = int(float(net_profit) * tax_rate)
+			# Pay accrued tax out of operating earnings so corporate treasury doesn't unrealistically inflate with untaxed millions
+			var after_tax_profit := net_profit - tax_accrued
+			b["treasury"] = int(b.get("treasury", 0)) + after_tax_profit
+			b["consecutive_losses"] = 0
+		else:
+			# Loss burns corporate treasury reserves directly
+			b["treasury"] = int(b.get("treasury", 0)) + net_profit
+			b["consecutive_losses"] = int(b.get("consecutive_losses", 0)) + 1
 
-		# Treasury impact
-		b["treasury"] = int(b.get("treasury", 0)) + net_profit
 		b["annual_revenue"] = generated_revenue
 		b["annual_opex"] = total_opex
 		b["net_profit"] = net_profit
 		b["cumulative_net_profit"] = int(b.get("cumulative_net_profit", 0)) + net_profit - tax_accrued
 
-		# Update business valuation based on revenue, net profit, and branches
-		var base_val: int = int(generated_revenue * 0.65) + maxi(0, int(net_profit * 1.40)) + (branches * 12000)
-		b["valuation"] = maxi(20000, base_val)
+		# Valuation updates
+		var base_val: int = int(generated_revenue * 0.50) + maxi(0, int(net_profit * 1.20)) + (branches * 15000)
+		b["valuation"] = maxi(15000, base_val)
 
 		var b_name: String = str(b.get("name", "Enterprise"))
 		var profit_str: String = ("+$%d" % net_profit) if net_profit >= 0 else ("-$%d" % abs(net_profit))
 
-		PlayerData.add_life_log_entry("🏢 %s Annual Report: Revenue: $%d | OpEx: $%d | Net Profit: %s | Treasury: $%d (Taxes Accrued: $%d)" % [
+		PlayerData.add_life_log_entry("🏢 %s Report [%s]: Revenue: $%d | OpEx: $%d | Net: %s | Corp Tax (%d%%): $%d | Treasury: $%d" % [
 			b_name,
+			market_label,
 			generated_revenue,
 			total_opex,
 			profit_str,
-			int(b.get("treasury", 0)),
-			tax_accrued
+			int(tax_rate * 100),
+			tax_accrued,
+			int(b.get("treasury", 0))
 		], "finance")
 
+		# Check for Business Flop & Bankruptcy ("some might die and flop")
+		var is_flop := false
+		var cur_treasury: int = int(b.get("treasury", 0))
+		var cons_losses: int = int(b.get("consecutive_losses", 0))
+		var biz_age: int = PlayerData.age - int(b.get("founded_age", PlayerData.age))
+		var max_deficit: int = maxi(60000, int(generated_revenue * 0.25))
+
+		if cur_treasury < -max_deficit:
+			is_flop = true
+		elif cons_losses >= 3 and cur_treasury <= 0:
+			is_flop = true
+		elif cons_losses >= 2 and cur_treasury < -maxi(30000, int(generated_revenue * 0.12)):
+			is_flop = true
+
+		if is_flop:
+			b["is_closed"] = true
+			PlayerData.happiness = maxi(0, PlayerData.happiness - 15)
+			PlayerData.credit_score = maxi(350, PlayerData.credit_score - 30)
+			PlayerData.add_life_log_entry("💥 BUSINESS FLOPPED & DISSOLVED: '%s' suffered catastrophic deficits during a %s and has flopped! Creditors liquidated remaining assets and shuttered operations permanently." % [b_name, market_label], "finance")
+			PlayerData.add_milestone("Enterprise '%s' flopped and closed." % b_name, PlayerData.age, "📉")
+			if loan_bal > 0:
+				var personal_liability: int = mini(35000, loan_bal / 2)
+				PlayerData.debt += personal_liability
+				PlayerData.add_life_log_entry("⚠️ Creditors assigned $%d in liquidated loan guarantee obligations to your personal debt." % personal_liability, "finance")
+
 		# Illicit Unlicensed Business Audit / Crime / Lawsuits / Prison check
-		if bool(b.get("is_unlicensed", false)):
-			var audit_chance: float = clampf(0.30 + (float(branches) * 0.05) + (float(emp_count) * 0.015), 0.30, 0.80)
+		if not bool(b.get("is_closed", false)) and bool(b.get("is_unlicensed", false)):
+			var audit_chance: float = clampf(0.35 + (float(branches) * 0.06) + (float(emp_count) * 0.02), 0.35, 0.85)
 			if randf() < audit_chance:
 				var raid_roll := randi_range(1, 100)
 				if raid_roll <= 45:
 					# Fine & civil lawsuits
-					var fine: int = randi_range(25000, 75000) + int(generated_revenue * 0.15)
+					var fine: int = randi_range(30000, 85000) + int(generated_revenue * 0.20)
 					var b_treasury: int = int(b.get("treasury", 0))
 					if b_treasury >= fine:
 						b["treasury"] = b_treasury - fine
@@ -807,10 +917,11 @@ static func simulate_yearly_businesses() -> Array[Dictionary]:
 			"opex": total_opex,
 			"net_profit": net_profit,
 			"tax_accrued": tax_accrued,
-			"treasury": int(b.get("treasury", 0))
+			"treasury": int(b.get("treasury", 0)),
+			"is_closed": bool(b.get("is_closed", false))
 		})
 
-	# Clean up any closed/raided businesses
+	# Clean up any closed/flopped/raided businesses
 	for i in range(PlayerData.owned_businesses.size() - 1, -1, -1):
 		if bool(PlayerData.owned_businesses[i].get("is_closed", false)):
 			load("res://scripts/economy/finance_market.gd").release_business(PlayerData, PlayerData.owned_businesses[i])

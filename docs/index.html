@@ -115,7 +115,7 @@ window.godotPromptInput = function(title, defaultValue) {
 	var val = window.prompt(title, defaultValue || "");
 	return val !== null ? val : "___CANCELLED___";
 };
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":84627488,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":84640004,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -155,15 +155,13 @@ const engine = new Engine(GODOT_CONFIG);
 
 	function displayFailureNotice(err) {
 		console.error(err);
-		let msg = 'An unknown error occurred.';
 		if (err instanceof Error) {
-			msg = (err.stack ? err.stack : err.message) || msg;
+			setStatusNotice(err.message);
 		} else if (typeof err === 'string') {
-			msg = err;
-		} else if (err) {
-			msg = JSON.stringify(err);
+			setStatusNotice(err);
+		} else {
+			setStatusNotice('An unknown error occurred.');
 		}
-		setStatusNotice(msg);
 		setStatusMode('notice');
 		initializing = false;
 	}
