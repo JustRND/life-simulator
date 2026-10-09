@@ -146,7 +146,7 @@ func open() -> void:
 	sc_margin.add_child(sc_vbox)
 	
 	var port_val := FinanceMarket.portfolio_value(PlayerData)
-	label(sc_vbox, "💵 Cash Available: %s   •   📊 Stock Portfolio: %s" % [_money(PlayerData.money), _money(port_val)], 24, Color("#0284c7") if is_light else Color("#38bdf8"))
+	label(sc_vbox, "💵 Available Funds: %s   •   📊 Stock Portfolio: %s" % [_money(PlayerData.get_available_funds()), _money(port_val)], 24, Color("#0284c7") if is_light else Color("#38bdf8"))
 	
 	if PlayerData.age < 18 or PlayerData.is_in_prison or PlayerData.is_dead:
 		label(sc_vbox, "⚠️ Trading and acquisitions require age 18 and freedom from prison.", 20, Color("#ef4444"))
@@ -354,7 +354,7 @@ func _open_trade_modal(c: Dictionary, is_buy: bool) -> void:
 	ipm.add_child(ipv)
 	
 	if is_buy:
-		label(ipv, "💵 Cash Available: %s" % _money(player_cash), 24, Color("#0284c7") if is_light else Color("#38bdf8"))
+		label(ipv, "💵 Available Funds: %s" % _money(player_cash), 24, Color("#0284c7") if is_light else Color("#38bdf8"))
 		label(ipv, "📊 Maximum Affordable: %d shares  •  Available on Market: %d" % [max_affordable, int(c.available)], 21, Color("#64748b"))
 	else:
 		var current_val := owned_qty * share_price
@@ -751,7 +751,7 @@ func _businesses(list: VBoxContainer) -> void:
 
 func open_learning(notice: String = "") -> void:
 	var view: Dictionary = main._create_cyber_modal("LEARNING & SMARTS", "Each activity is available once per year. Any activity protects smarts from annual decay. Gains taper above 85 smarts.", Color("#38bdf8"))
-	label(view.list, "Smarts: %d • Cash: %s" % [PlayerData.smarts, _money(PlayerData.money)], 24)
+	label(view.list, "Smarts: %d • Funds: %s" % [PlayerData.smarts, _money(PlayerData.get_available_funds())], 24)
 	if not notice.is_empty():
 		label(view.list, notice, 22, Color("#10b981"))
 	for activity in BalanceRules.LEARNING:
@@ -768,4 +768,4 @@ func open_learning(notice: String = "") -> void:
 			SaveManager.save_game()
 			view.overlay.queue_free()
 			open_learning(result)
-		, used or PlayerData.age < int(activity.age) or PlayerData.money < int(activity.cost) or PlayerData.is_in_prison or PlayerData.is_dead, 64)
+		, used or PlayerData.age < int(activity.age) or PlayerData.get_available_funds() < int(activity.cost) or PlayerData.is_in_prison or PlayerData.is_dead, 64)

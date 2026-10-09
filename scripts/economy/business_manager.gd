@@ -472,12 +472,8 @@ static func found_business(biz_id: String, business_name: String = "") -> Dictio
 	var cost: int = int(def.get("startup_cost", 50000))
 
 	# Deduct startup cost from player funds
-	if PlayerData.money >= cost:
-		PlayerData.money -= cost
-	else:
-		var rem: int = cost - PlayerData.money
-		PlayerData.money = 0
-		PlayerData.bank_savings = maxi(0, PlayerData.bank_savings - rem)
+	if not PlayerData.debit_funds(cost):
+		return {"allowed": false, "message": "Insufficient funds."}
 
 	var default_name: String = business_name if business_name.strip_edges() != "" else str(def.get("name", "Enterprise"))
 
@@ -609,12 +605,12 @@ static func pay_business_taxes(b: Dictionary, amount: int = -1) -> Dictionary:
 	else:
 		# Can draw from owner personal cash if treasury is insufficient
 		var rem: int = to_pay - treasury
-		if PlayerData.money >= rem:
+		if PlayerData.get_available_funds() >= rem:
 			b["treasury"] = 0
-			PlayerData.money -= rem
+			PlayerData.debit_funds(rem)
 			b["unpaid_taxes"] = unpaid - to_pay
 		else:
-			return {"success": false, "message": "Insufficient funds in treasury ($%d) and personal cash to pay $%d taxes." % [treasury, to_pay]}
+			return {"success": false, "message": "Insufficient funds in treasury ($%d) and personal funds to pay $%d taxes." % [treasury, to_pay]}
 
 	b["last_tax_paid_year"] = PlayerData.age
 	PlayerData.add_life_log_entry("🏛️ CORPORATE TAXES PAID: %s paid $%d in state corporate taxes. Unpaid balance: $%d." % [
@@ -661,12 +657,12 @@ static func repay_business_loan(b: Dictionary, amount: int) -> Dictionary:
 		b["loan_balance"] = cur_loan - to_repay
 	else:
 		var rem: int = to_repay - treasury
-		if PlayerData.money >= rem:
+		if PlayerData.get_available_funds() >= rem:
 			b["treasury"] = 0
-			PlayerData.money -= rem
+			PlayerData.debit_funds(rem)
 			b["loan_balance"] = cur_loan - to_repay
 		else:
-			return {"success": false, "message": "Insufficient funds in treasury ($%d) and personal cash to repay $%d." % [treasury, to_repay]}
+			return {"success": false, "message": "Insufficient funds in treasury ($%d) and personal funds to repay $%d." % [treasury, to_repay]}
 
 	PlayerData.add_life_log_entry("🏦 LOAN PRINCIPAL REPAID: %s repaid $%d towards its commercial loan balance. Remaining: $%d." % [
 		str(b.get("name", "Business")),
@@ -701,10 +697,10 @@ static func withdraw_owner_dividend(b: Dictionary, amount: int) -> Dictionary:
 static func deposit_owner_capital(b: Dictionary, amount: int) -> Dictionary:
 	if amount <= 0:
 		return {"success": false, "message": "Invalid capital amount."}
-	if PlayerData.money < amount:
-		return {"success": false, "message": "Insufficient personal cash to inject capital."}
+	if PlayerData.get_available_funds() < amount:
+		return {"success": false, "message": "Insufficient personal funds to inject capital."}
 
-	PlayerData.money -= amount
+	PlayerData.debit_funds(amount)
 	b["treasury"] = int(b.get("treasury", 0)) + amount
 
 	PlayerData.add_life_log_entry("💵 CAPITAL INJECTION: You contributed $%d personal funds into %s treasury." % [
@@ -751,8 +747,8 @@ static func liquidate_business(biz_uid: String) -> Dictionary:
 		PlayerData.money += net_proceeds
 	else:
 		var liability := -net_proceeds
-		var paid := mini(PlayerData.money, liability)
-		PlayerData.money -= paid
+		var paid := mini(PlayerData.get_available_funds(), liability)
+		PlayerData.debit_funds(paid)
 		PlayerData.debt += liability - paid
 
 	var b_name: String = str(b.get("name", "Enterprise"))

@@ -290,7 +290,7 @@ static func generate_project_for_job(job_id: String) -> Dictionary:
 
 static func execute_project(proj: Dictionary) -> Dictionary:
 	var pay: int = int(proj.get("pay", 1000))
-	PlayerData.money += pay
+	PlayerData.receive_salary(pay)
 
 	var stat: String = str(proj.get("stat_affected", "smarts"))
 	match stat:

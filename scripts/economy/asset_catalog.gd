@@ -1016,12 +1016,7 @@ static func buy_asset(player_data: Node, item_id: String) -> Dictionary:
 	var price: int = int(item.get("price", 0))
 
 	# Debit funds: Prefer cash first, then draw remainder from bank savings
-	if player_data.money >= price:
-		player_data.money -= price
-	else:
-		var remainder: int = price - player_data.money
-		player_data.money = 0
-		player_data.bank_savings -= remainder
+	player_data.debit_funds(price)
 
 	var instance_id: String = "%s_%d_%d" % [item_id, player_data.age, randi() % 10000]
 	var new_asset: Dictionary = {
@@ -1115,8 +1110,8 @@ static func process_yearly_assets(player_data: Node) -> Array[String]:
 		if upkeep > 0:
 			if player_data.bank_savings >= upkeep:
 				player_data.bank_savings -= upkeep
-			elif player_data.money >= upkeep:
-				player_data.money -= upkeep
+			elif player_data.get_available_funds() >= upkeep:
+				player_data.debit_funds(upkeep)
 			else:
 				# Cannot pay upkeep -> condition drops
 				asset["condition"] = maxi(10, int(asset.get("condition", 100)) - 15)

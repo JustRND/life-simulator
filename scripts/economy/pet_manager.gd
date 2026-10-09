@@ -242,12 +242,7 @@ static func adopt_pet(player_data: Node, pet_spec: Dictionary, custom_name: Stri
 		return {"success": false, "message": "Insufficient funds: Adoption fee is $%d (Available: $%d)." % [price, total_funds]}
 
 	if price > 0:
-		if player_data.money >= price:
-			player_data.money -= price
-		else:
-			var rem: int = price - player_data.money
-			player_data.money = 0
-			player_data.bank_savings -= rem
+		player_data.debit_funds(price)
 
 	var final_name := custom_name.strip_edges()
 	if final_name == "":
@@ -340,9 +335,9 @@ static func interact_pet(player_data: Node, pet_id: String, action: String) -> D
 					return {"success": true, "message": "You went on a scenic walk with %s! Great cardio for both of you." % pet_name}
 				"treat":
 					var treat_cost := 25
-					if player_data.money < treat_cost:
-						return {"success": false, "message": "You need $%d cash to buy gourmet organic treats." % treat_cost}
-					player_data.money -= treat_cost
+					if player_data.get_available_funds() < treat_cost:
+						return {"success": false, "message": "You need $%d in available funds to buy gourmet organic treats." % treat_cost}
+					player_data.debit_funds(treat_cost)
 					pet["happiness"] = mini(100, int(pet.get("happiness", 80)) + 20)
 					player_data.happiness = mini(100, player_data.happiness + 5)
 					pet[act_field] = player_data.age
@@ -352,12 +347,7 @@ static func interact_pet(player_data: Node, pet_id: String, action: String) -> D
 					var total_funds: int = player_data.money + player_data.bank_savings
 					if total_funds < vet_cost:
 						return {"success": false, "message": "Veterinary examination costs $%d (Available: $%d)." % [vet_cost, total_funds]}
-					if player_data.money >= vet_cost:
-						player_data.money -= vet_cost
-					else:
-						var rem: int = vet_cost - player_data.money
-						player_data.money = 0
-						player_data.bank_savings -= rem
+					player_data.debit_funds(vet_cost)
 					pet["health"] = mini(100, int(pet.get("health", 70)) + 30)
 					pet[act_field] = player_data.age
 					player_data.add_life_log_entry("🩺 You brought %s to the veterinarian clinic for shots and health checkups ($%d). Health restored!" % [pet_name, vet_cost], "activity")
@@ -383,8 +373,8 @@ static func process_yearly_pets(player_data: Node) -> Array[String]:
 		if upkeep > 0:
 			if player_data.bank_savings >= upkeep:
 				player_data.bank_savings -= upkeep
-			elif player_data.money >= upkeep:
-				player_data.money -= upkeep
+			elif player_data.get_available_funds() >= upkeep:
+				player_data.debit_funds(upkeep)
 			else:
 				pet["happiness"] = maxi(10, int(pet.get("happiness", 70)) - 15)
 				pet["health"] = maxi(10, int(pet.get("health", 70)) - 10)

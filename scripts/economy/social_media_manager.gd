@@ -268,12 +268,7 @@ static func buy_followers(player_data: Node, platform: String, tier: int) -> Dic
 	if total_funds < cost:
 		return {"success": false, "message": "Insufficient funds: Package costs $%d (Available: $%d)." % [cost, total_funds]}
 
-	if player_data.money >= cost:
-		player_data.money -= cost
-	else:
-		var rem: int = cost - player_data.money
-		player_data.money = 0
-		player_data.bank_savings -= rem
+	player_data.debit_funds(cost)
 
 	account["last_ad_age"] = player_data.age
 

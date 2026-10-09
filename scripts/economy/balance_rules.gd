@@ -18,9 +18,9 @@ static func learn(p: Node, id: String) -> String:
 			return "This learning activity is unavailable."
 		if int(p.learning_activities.get(id, -1)) == p.age:
 			return "Already completed this year."
-		if p.money < int(activity.cost):
-			return "Insufficient cash."
-		p.money -= int(activity.cost)
+		if p.get_available_funds() < int(activity.cost):
+			return "Insufficient funds."
+		p.debit_funds(int(activity.cost))
 		p.learning_activities[id] = p.age
 		# Gradual improvement near the cap, while any activity prevents yearly decay.
 		var gain := int(activity.smarts) if p.smarts < 85 else maxi(1, int(float(activity.smarts) / 2.0))

@@ -116,9 +116,9 @@ static func trade(p: Node, uid: String, quantity: int, buying: bool) -> String:
 	var holdings: Dictionary = p.finance_market.holdings
 	var position: Dictionary = holdings.get(uid, {"quantity": 0, "cost": 0, "name": str(c.name), "price": float(c.price)})
 	if buying:
-		if quantity > int(c.available) or p.money < gross + fee:
-			return "Insufficient cash or available shares."
-		p.money -= gross + fee
+		if quantity > int(c.available) or p.get_available_funds() < gross + fee:
+			return "Insufficient funds or available shares."
+		p.debit_funds(gross + fee)
 		position.quantity = int(position.quantity) + quantity
 		position.cost = int(position.cost) + gross + fee
 		position.name = str(c.name)
@@ -158,9 +158,7 @@ static func acquire(p: Node, uid: String) -> String:
 	var price := acquisition_price(p, c)
 	if p.money + p.bank_savings < price:
 		return "Insufficient funds for the acquisition."
-	var from_cash := mini(p.money, price)
-	p.money -= from_cash
-	p.bank_savings -= price - from_cash
+	p.debit_funds(price)
 	var def := BusinessManager.get_business_type_by_id(str(c.type_id))
 	var baseline := float(def.base_revenue_min + def.base_revenue_max) * 0.75
 	var valuation := int(float(c.price) * SHARES)

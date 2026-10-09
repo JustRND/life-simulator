@@ -564,7 +564,29 @@ func get_total_asset_value() -> int:
 
 
 func can_afford(cost: int) -> bool:
-	return (money + bank_savings) >= cost
+	return cost >= 0 and get_available_funds() >= cost
+
+
+func get_available_funds() -> int:
+	return money + bank_savings
+
+
+func deposit_cash(amount: int) -> int:
+	var moved := mini(maxi(0, amount), money)
+	money -= moved
+	bank_savings += moved
+	return moved
+
+
+func withdraw_cash(amount: int) -> int:
+	var moved := mini(maxi(0, amount), bank_savings)
+	bank_savings -= moved
+	money += moved
+	return moved
+
+
+func receive_salary(amount: int) -> void:
+	bank_savings += maxi(0, amount)
 
 
 func debit_funds(cost: int) -> bool:
@@ -676,19 +698,19 @@ func take_bank_loan(amount: int, interest_rate: float) -> bool:
 
 
 func repay_bank_loan(amount: int) -> int:
-	if amount <= 0 or loan_balance <= 0 or money <= 0:
+	if amount <= 0 or loan_balance <= 0 or get_available_funds() <= 0:
 		return 0
-	var paid := mini(amount, mini(money, loan_balance))
-	money -= paid
+	var paid := mini(amount, mini(get_available_funds(), loan_balance))
+	debit_funds(paid)
 	loan_balance -= paid
 	return paid
 
 
 func pay_outstanding_tax() -> int:
-	if tax_debt <= 0 or money < tax_debt:
+	if tax_debt <= 0 or not can_afford(tax_debt):
 		return 0
 	var paid := tax_debt
-	money -= paid
+	debit_funds(paid)
 	tax_debt = 0
 	return paid
 

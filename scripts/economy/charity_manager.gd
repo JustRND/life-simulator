@@ -131,12 +131,7 @@ static func donate(player_data: Node, charity_id: String) -> Dictionary:
 	var cost: int = int(def.get("donation_amount", 100))
 
 	# Debit funds: cash first, then bank savings
-	if player_data.money >= cost:
-		player_data.money -= cost
-	else:
-		var rem: int = cost - player_data.money
-		player_data.money = 0
-		player_data.bank_savings = maxi(0, player_data.bank_savings - rem)
+	player_data.debit_funds(cost)
 
 	if not player_data.get("last_charity_donation_age") is Dictionary:
 		player_data.last_charity_donation_age = {}

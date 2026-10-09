@@ -310,12 +310,7 @@ static func take_license(license_id: String) -> Dictionary:
 	var fee: int = int(lic.get("fee", 0))
 
 	# Deduct fee: pocket cash first, then bank savings
-	if PlayerData.money >= fee:
-		PlayerData.money -= fee
-	else:
-		var rem: int = fee - PlayerData.money
-		PlayerData.money = 0
-		PlayerData.bank_savings = maxi(0, PlayerData.bank_savings - rem)
+	PlayerData.debit_funds(fee)
 
 	PlayerData.grant_license(license_id)
 	var lic_name: String = str(lic.get("name", "License"))

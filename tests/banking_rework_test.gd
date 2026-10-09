@@ -9,6 +9,7 @@ func _ready() -> void:
 	main.loading_screen.hide()
 	main.disclaimer_screen.hide()
 	PlayerData.money = 5000
+	PlayerData.bank_savings = 0
 	PlayerData.loan_balance = 0
 	PlayerData.tax_debt = 80
 	PlayerData.debt = 50

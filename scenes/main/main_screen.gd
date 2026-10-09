@@ -606,8 +606,8 @@ func age_up() -> void:
 
 	# 2. Annual Salary Payout (if employed and not in prison)
 	if not PlayerData.is_in_prison and PlayerData.job_title != "" and PlayerData.job_salary > 0:
-		PlayerData.money += PlayerData.job_salary
-		add_life_event("You received your annual salary of $%s from %s." % [
+		PlayerData.receive_salary(PlayerData.job_salary)
+		add_life_event("Your annual salary of $%s from %s was deposited into your bank account." % [
 			_format_number(PlayerData.job_salary),
 			PlayerData.job_company
 		], "job")
@@ -627,12 +627,7 @@ func age_up() -> void:
 		if base_living > 0:
 			var total_avail: int = PlayerData.money + PlayerData.bank_savings
 			if total_avail >= base_living:
-				if PlayerData.money >= base_living:
-					PlayerData.money -= base_living
-				else:
-					var rem: int = base_living - PlayerData.money
-					PlayerData.money = 0
-					PlayerData.bank_savings -= rem
+				PlayerData.debit_funds(base_living)
 				add_life_event("You paid your annual basic living expenses of $%s (food, rent & bills)." % _format_number(base_living), "finance")
 			else:
 				var paid: int = total_avail
@@ -663,12 +658,7 @@ func age_up() -> void:
 		if tax_due > 0:
 			var total_avail_tax: int = PlayerData.money + PlayerData.bank_savings
 			if total_avail_tax >= tax_due:
-				if PlayerData.money >= tax_due:
-					PlayerData.money -= tax_due
-				else:
-					var rem_tax: int = tax_due - PlayerData.money
-					PlayerData.money = 0
-					PlayerData.bank_savings -= rem_tax
+				PlayerData.debit_funds(tax_due)
 				add_life_event("You paid your annual income tax of $%s." % _format_number(tax_due), "finance")
 			else:
 				var paid_tax: int = total_avail_tax
@@ -681,17 +671,6 @@ func age_up() -> void:
 					_format_number(unpaid_tax),
 					_format_number(PlayerData.get_total_debt())
 				], "finance")
-
-	# 4. Job Security / Downsizing Risk (Anti-God Mode)
-	if not PlayerData.is_in_prison and PlayerData.job_title != "":
-		var layoff_risk: float = 0.035
-		if PlayerData.smarts < 40 or PlayerData.grades < 50:
-			layoff_risk = 0.075
-		if randf() < layoff_risk:
-			var old_job: String = PlayerData.job_title
-			quit_job()
-			PlayerData.happiness = maxi(5, PlayerData.happiness - 18)
-			add_life_event("📉 DOWNSIZED: Economic contraction forced your employer to terminate your role as %s! You are now unemployed." % old_job, "career")
 
 	# Completed service promotes the current job; higher pay begins next year.
 	var promotion := CareerProgression.advance_year(PlayerData, spent_year_in_prison)
@@ -721,9 +700,9 @@ func age_up() -> void:
 		if PlayerData.bank_savings >= gym_fee:
 			PlayerData.bank_savings -= gym_fee
 			add_life_event("🏋️ GYM MEMBERSHIP: $%s was auto-debited from your bank account for your annual fitness club membership." % _format_number(gym_fee), "finance")
-		elif PlayerData.money >= gym_fee:
-			PlayerData.money -= gym_fee
-			add_life_event("🏋️ GYM MEMBERSHIP: $%s was paid from your cash account for your annual fitness club membership." % _format_number(gym_fee), "finance")
+		elif PlayerData.get_available_funds() >= gym_fee:
+			PlayerData.debit_funds(gym_fee)
+			add_life_event("🏋️ GYM MEMBERSHIP: $%s was paid from your available funds for your annual fitness club membership." % _format_number(gym_fee), "finance")
 		else:
 			PlayerData.has_gym_membership = false
 			PlayerData.happiness = maxi(5, PlayerData.happiness - 4)
@@ -784,9 +763,9 @@ func age_up() -> void:
 		if PlayerData.has_scholarship:
 			add_life_event("Your full-ride scholarship paid for your $%s %s tuition!" % [_format_number(tuition), uni_title], "education")
 		else:
-			if PlayerData.money >= tuition:
-				PlayerData.money -= tuition
-				add_life_event("You paid your $%s %s tuition from your pocket cash." % [_format_number(tuition), uni_title], "education")
+			if PlayerData.get_available_funds() >= tuition:
+				PlayerData.debit_funds(tuition)
+				add_life_event("You paid your $%s %s tuition from your available funds." % [_format_number(tuition), uni_title], "education")
 			elif PlayerData.bank_savings >= tuition:
 				PlayerData.bank_savings -= tuition
 				add_life_event("Your $%s %s tuition was deducted from your bank savings." % [_format_number(tuition), uni_title], "education")
@@ -1027,7 +1006,7 @@ func _process_yearly_grades_decay(prev_age: int) -> void:
 			var drop: int = randi_range(5, 8)
 			PlayerData.grades = maxi(0, PlayerData.grades - drop)
 			if PlayerData.grades == 0:
-				add_life_event("⚠️ ACADEMIC RECORD EXPIRED: Your academic qualification has decayed to 0% due to years of disuse! Employers and universities now require you to take an Academic Refresher Course.", "education")
+				add_life_event("⚠️ ACADEMIC RECORD EXPIRED: Your academic qualification has decayed to 0% due to years of disuse! New job applications and university enrollments now require you to take an Academic Refresher Course.", "education")
 
 
 
@@ -2886,6 +2865,9 @@ func update_bank_panel() -> void:
 	var btn_dep_all := _create_cyber_button("Deposit All", Color("#10b981"), func(): _deposit_money(PlayerData.money))
 	btn_dep_all.disabled = PlayerData.money <= 0
 	dep_row.add_child(btn_dep_all)
+	var deposit_custom := _create_cyber_button("Deposit Amount", Color("#10b981"), func(): _show_bank_transfer(true))
+	deposit_custom.disabled = PlayerData.money <= 0
+	sv.add_child(deposit_custom)
 
 	var wth_title := Label.new()
 	wth_title.text = "Withdraw from Bank Balance to Cash:"
@@ -2908,6 +2890,9 @@ func update_bank_panel() -> void:
 	var btn_wth_all := _create_cyber_button("Withdraw All", Color("#fbbf24"), func(): _withdraw_money(PlayerData.bank_savings))
 	btn_wth_all.disabled = PlayerData.bank_savings <= 0
 	wth_row.add_child(btn_wth_all)
+	var withdraw_custom := _create_cyber_button("Withdraw Amount", Color("#fbbf24"), func(): _show_bank_transfer(false))
+	withdraw_custom.disabled = PlayerData.bank_savings <= 0
+	sv.add_child(withdraw_custom)
 
 	bank_list.add_child(savings_card)
 
@@ -3012,20 +2997,20 @@ func update_bank_panel() -> void:
 	repay_vbox.add_child(repay_title)
 	var btn_pay_tax := _create_cyber_button("Pay Tax $%s" % _format_number(PlayerData.tax_debt), Color("#38bdf8"), _pay_tax)
 	btn_pay_tax.name = "PayTaxButton"
-	btn_pay_tax.disabled = PlayerData.tax_debt <= 0 or PlayerData.money < PlayerData.tax_debt
-	btn_pay_tax.tooltip_text = "Pay outstanding tax from cash. Withdraw savings first if needed."
+	btn_pay_tax.disabled = PlayerData.tax_debt <= 0 or PlayerData.get_available_funds() < PlayerData.tax_debt
+	btn_pay_tax.tooltip_text = "Pay outstanding tax using cash and bank funds."
 	repay_vbox.add_child(btn_pay_tax)
 	var btn_custom := _create_cyber_button("Repay Loan — Enter Amount", Color("#22c55e"), _show_loan_repayment)
 	btn_custom.name = "CustomLoanRepaymentButton"
-	btn_custom.disabled = PlayerData.loan_balance <= 0 or PlayerData.money <= 0
+	btn_custom.disabled = PlayerData.loan_balance <= 0 or PlayerData.get_available_funds() <= 0
 	repay_vbox.add_child(btn_custom)
 
 	var btn_pay_1k := _create_cyber_button("Repay $1,000", Color("#22c55e"), func(): _repay_debt(1000))
-	btn_pay_1k.disabled = PlayerData.money < 1000 or PlayerData.get_total_debt() <= 0
+	btn_pay_1k.disabled = PlayerData.get_available_funds() < 1000 or PlayerData.get_total_debt() <= 0
 	repay_vbox.add_child(btn_pay_1k)
 
 	var btn_pay_all := _create_cyber_button("Repay Full Debt ($%s)" % _format_number(PlayerData.get_total_debt()), Color("#22c55e"), func(): _repay_debt(PlayerData.get_total_debt()))
-	btn_pay_all.disabled = PlayerData.money < PlayerData.get_total_debt() or PlayerData.get_total_debt() <= 0
+	btn_pay_all.disabled = PlayerData.get_available_funds() < PlayerData.get_total_debt() or PlayerData.get_total_debt() <= 0
 	repay_vbox.add_child(btn_pay_all)
 
 	bank_list.add_child(repay_card)
@@ -3047,7 +3032,7 @@ func _borrow_loan(amount: int, interest_rate: float) -> void:
 func _show_loan_repayment() -> void:
 	var modal := _create_cyber_modal("REPAY BANK LOAN", "Choose how much to repay. This payment goes directly toward your bank loan.", Color("#22c55e"))
 	var summary := Label.new()
-	summary.text = "Loan balance: $%s • Available cash: $%s" % [_format_number(PlayerData.loan_balance), _format_number(PlayerData.money)]
+	summary.text = "Loan balance: $%s • Available funds: $%s" % [_format_number(PlayerData.loan_balance), _format_number(PlayerData.get_available_funds())]
 	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	summary.add_theme_color_override("font_color", Color("#334155") if LifeLibrary.data.theme == "light" else Color("#e2e8f0"))
 	summary.add_theme_font_size_override("font_size", 26)
@@ -3070,8 +3055,8 @@ func _show_loan_repayment() -> void:
 	modal.list.add_child(feedback)
 	var submit := _create_cyber_button("Repay Loan", Color("#22c55e"), func():
 		var requested := _parse_loan_payment(amount.text)
-		if requested <= 0 or requested > mini(PlayerData.money, PlayerData.loan_balance):
-			feedback.text = "Enter a positive whole-dollar amount within your cash and loan balance."
+		if requested <= 0 or requested > mini(PlayerData.get_available_funds(), PlayerData.loan_balance):
+			feedback.text = "Enter a positive whole-dollar amount within your available funds and loan balance."
 			return
 		var paid := PlayerData.repay_bank_loan(requested)
 		if paid <= 0:
@@ -3086,8 +3071,8 @@ func _show_loan_repayment() -> void:
 	modal.list.add_child(submit)
 	amount.text_changed.connect(func(value: String):
 		var requested := _parse_loan_payment(value)
-		submit.disabled = requested <= 0 or requested > mini(PlayerData.money, PlayerData.loan_balance)
-		feedback.text = "Enter a positive whole-dollar amount within your cash and loan balance." if submit.disabled and not value.is_empty() else ""
+		submit.disabled = requested <= 0 or requested > mini(PlayerData.get_available_funds(), PlayerData.loan_balance)
+		feedback.text = "Enter a positive whole-dollar amount within your available funds and loan balance." if submit.disabled and not value.is_empty() else ""
 	)
 
 
@@ -3114,11 +3099,11 @@ func _pay_tax() -> void:
 
 func _repay_debt(amount: int) -> void:
 	var total_debt: int = PlayerData.get_total_debt()
-	if amount <= 0 or total_debt <= 0 or PlayerData.money <= 0:
+	if amount <= 0 or total_debt <= 0 or PlayerData.get_available_funds() <= 0:
 		return
 
-	var pay_amount: int = mini(amount, mini(PlayerData.money, total_debt))
-	PlayerData.money -= pay_amount
+	var pay_amount: int = mini(amount, mini(PlayerData.get_available_funds(), total_debt))
+	PlayerData.debit_funds(pay_amount)
 
 	# Pay tax first, then other debt and loans; each balance is charged only once.
 	var remaining_pay: int = pay_amount
@@ -3145,15 +3130,58 @@ func _repay_debt(amount: int) -> void:
 	SaveManager.save_game()
 
 
+func _show_bank_transfer(deposit: bool) -> void:
+	var verb := "Deposit" if deposit else "Withdraw"
+	var modal := _create_cyber_modal(verb.to_upper() + " AMOUNT", "Choose an amount to transfer between cash and your bank account.", Color("#10b981"))
+	var available: int = PlayerData.money if deposit else PlayerData.bank_savings
+	var summary := Label.new()
+	summary.text = "Available to %s: $%s" % [verb.to_lower(), _format_number(available)]
+	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	summary.add_theme_color_override("font_color", Color("#334155") if LifeLibrary.data.theme == "light" else Color("#e2e8f0"))
+	modal.list.add_child(summary)
+	var amount := LineEdit.new()
+	amount.name = "BankTransferAmount"
+	amount.placeholder_text = "Enter amount in whole dollars"
+	amount.max_length = 15
+	amount.custom_minimum_size.y = 80
+	amount.virtual_keyboard_enabled = true
+	amount.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_NUMBER
+	modal.list.add_child(amount)
+	get_node("OptionsMenu")._style_input(amount)
+	MobileKeyboardManager.attach_to_input(amount, verb + " amount (whole dollars)")
+	var feedback := Label.new()
+	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	feedback.add_theme_color_override("font_color", Color("#b91c1c") if LifeLibrary.data.theme == "light" else Color("#fca5a5"))
+	modal.list.add_child(feedback)
+	var submit := _create_cyber_button(verb, Color("#10b981"), func():
+		var requested := _parse_loan_payment(amount.text)
+		var limit: int = PlayerData.money if deposit else PlayerData.bank_savings
+		if requested <= 0 or requested > limit:
+			feedback.text = "Enter a positive whole-dollar amount within your available balance."
+			return
+		if deposit:
+			_deposit_money(requested)
+		else:
+			_withdraw_money(requested)
+		preload("res://scripts/ui/panel_close.gd").dismiss(modal.overlay, true)
+	)
+	submit.disabled = true
+	modal.list.add_child(submit)
+	amount.text_changed.connect(func(value: String):
+		var requested := _parse_loan_payment(value)
+		var limit: int = PlayerData.money if deposit else PlayerData.bank_savings
+		submit.disabled = requested <= 0 or requested > limit
+		feedback.text = "Enter a positive whole-dollar amount within your available balance." if submit.disabled and not value.is_empty() else ""
+	)
+
+
 func _deposit_money(amount: int) -> void:
 	if amount <= 0:
 		return
-	var actual := mini(amount, PlayerData.money)
+	var actual := PlayerData.deposit_cash(amount)
 	if actual <= 0:
 		add_life_event("You do not have any cash on hand to deposit.", "finance")
 		return
-	PlayerData.money -= actual
-	PlayerData.bank_savings += actual
 	add_life_event("You deposited $%s cash into your bank balance." % _format_number(actual), "finance")
 	update_ui()
 	update_bank_panel()
@@ -3163,12 +3191,10 @@ func _deposit_money(amount: int) -> void:
 func _withdraw_money(amount: int) -> void:
 	if amount <= 0:
 		return
-	var actual := mini(amount, PlayerData.bank_savings)
+	var actual := PlayerData.withdraw_cash(amount)
 	if actual <= 0:
 		add_life_event("You do not have any funds in your bank balance to withdraw.", "finance")
 		return
-	PlayerData.bank_savings -= actual
-	PlayerData.money += actual
 	add_life_event("You withdrew $%s from your bank balance into cash." % _format_number(actual), "finance")
 	update_ui()
 	update_bank_panel()
@@ -3455,12 +3481,12 @@ func _interact_parent(parent_type: String, action: String) -> void:
 				add_life_event("⏳ You have already paid for your %s's medication this year. Available again next year!" % role, "relationship")
 				update_ui()
 				return
-			if PlayerData.money >= 800:
+			if PlayerData.get_available_funds() >= 800:
 				if is_mother:
 					PlayerData.last_mother_pay_meds_age = PlayerData.age
 				else:
 					PlayerData.last_father_pay_meds_age = PlayerData.age
-				PlayerData.money -= 800
+				PlayerData.debit_funds(800)
 				var new_health: int = 0
 				if is_mother:
 					PlayerData.mother_health = mini(100, PlayerData.mother_health + 20)
@@ -3502,12 +3528,12 @@ func _interact_parent(parent_type: String, action: String) -> void:
 				add_life_event("⏳ You have already administered a vitamin shot to your %s this year. Available again next year!" % role, "relationship")
 				update_ui()
 				return
-			if PlayerData.money >= 30:
+			if PlayerData.get_available_funds() >= 30:
 				if is_mother:
 					PlayerData.last_mother_vitamin_shot_age = PlayerData.age
 				else:
 					PlayerData.last_father_vitamin_shot_age = PlayerData.age
-				PlayerData.money -= 30
+				PlayerData.debit_funds(30)
 				var health_boost := 10
 				var rel_boost := 6
 				if is_mother:
@@ -7691,9 +7717,9 @@ func _show_education_modal() -> void:
 				if PlayerData.last_school_activity_age == PlayerData.age:
 					_close_education_modal_and_return_to_main()
 					return
-				if PlayerData.money >= 200:
+				if PlayerData.get_available_funds() >= 200:
 					PlayerData.last_school_activity_age = PlayerData.age
-					PlayerData.money -= 200
+					PlayerData.debit_funds(200)
 					var g_gain := randi_range(10, 15)
 					PlayerData.grades = mini(100, PlayerData.grades + g_gain)
 					add_life_event("You worked with a private academic tutor ($200). Grades improved +%d%%!" % g_gain, "education")
@@ -7891,12 +7917,12 @@ func _show_education_modal() -> void:
 			list.add_child(_create_disabled_cyber_button("📜 Study & Sit for GED Equivalency ($500)\nHigh school equivalency credential restores university admission (Req: 60+ Smarts)", "Already sat for GED examination for Age %d (Retakes available next year)" % PlayerData.age))
 		else:
 			var btn_ged := _create_cyber_button("📜 Study & Sit for GED Equivalency ($500)\nHigh school equivalency credential restores university admission (Req: 60+ Smarts)", Color("#38bdf8"), func():
-				if PlayerData.money < 500:
+				if PlayerData.get_available_funds() < 500:
 					add_life_event("You cannot afford the $500 GED exam registration fees.", "education")
 					_close_education_modal_and_return_to_main()
 					return
 				PlayerData.last_ged_attempt_age = PlayerData.age
-				PlayerData.money -= 500
+				PlayerData.debit_funds(500)
 				if PlayerData.smarts >= 60:
 					PlayerData.education_level = "High School Graduate"
 					PlayerData.grades = 75
@@ -8026,12 +8052,12 @@ func _show_education_modal() -> void:
 				if PlayerData.last_school_activity_age == PlayerData.age:
 					_close_education_modal_and_return_to_main()
 					return
-				if PlayerData.money < 150:
+				if PlayerData.get_available_funds() < 150:
 					add_life_event("You cannot afford the $150 registration fee for the professional certification seminar.", "education")
 					_close_education_modal_and_return_to_main()
 					return
 				PlayerData.last_school_activity_age = PlayerData.age
-				PlayerData.money -= 150
+				PlayerData.debit_funds(150)
 				var s_gain := randi_range(3, 5)
 				PlayerData.smarts = mini(100, PlayerData.smarts + s_gain)
 				PlayerData.happiness = mini(100, PlayerData.happiness + 2)
@@ -8797,8 +8823,8 @@ func _generate_trivia_question(used_indices: Array = []) -> Dictionary:
 
 func _start_refresher_course(cost: int) -> void:
 	if cost > 0:
-		if PlayerData.money >= cost:
-			PlayerData.money -= cost
+		if PlayerData.get_available_funds() >= cost:
+			PlayerData.debit_funds(cost)
 		elif PlayerData.bank_savings >= cost:
 			PlayerData.bank_savings -= cost
 		else:
@@ -9450,8 +9476,8 @@ func _purchase_gym_membership() -> bool:
 	var fee: int = PlayerData.gym_membership_annual_fee
 	if PlayerData.bank_savings >= fee:
 		PlayerData.bank_savings -= fee
-	elif PlayerData.money >= fee:
-		PlayerData.money -= fee
+	elif PlayerData.get_available_funds() >= fee:
+		PlayerData.debit_funds(fee)
 	else:
 		add_life_event("❌ You need at least $%d to activate a Gym Membership." % fee, "finance")
 		_close_gym_modal_and_return_to_main()
@@ -9477,12 +9503,12 @@ func _execute_gym_workout(w: Dictionary) -> bool:
 		_close_gym_modal_and_return_to_main()
 		return false
 	var effective_fee: int = 0 if PlayerData.has_gym_membership else int(w["cost"] if w.has("cost") else w.get("fee", 0))
-	if effective_fee > 0 and PlayerData.money < effective_fee:
+	if effective_fee > 0 and PlayerData.get_available_funds() < effective_fee:
 		add_life_event("You cannot afford the $%d day-pass fee for %s." % [effective_fee, str(w.get("name", w.get("title", "Workout")))], "finance")
 		_close_gym_modal_and_return_to_main()
 		return false
 	if effective_fee > 0:
-		PlayerData.money -= effective_fee
+		PlayerData.debit_funds(effective_fee)
 	PlayerData.last_gym_activity_age = PlayerData.age
 	var h_gain: int = int(w.get("health", 0))
 	if h_gain == 0 and w.has("health_min"):
@@ -9513,12 +9539,12 @@ func _execute_meditation(p: Dictionary) -> bool:
 		_close_meditation_modal_and_return_to_main()
 		return false
 	var fee_val: int = int(p.get("cost", p.get("fee", 0)))
-	if fee_val > 0 and PlayerData.money < fee_val:
+	if fee_val > 0 and PlayerData.get_available_funds() < fee_val:
 		add_life_event("You cannot afford the $%d fee for %s." % [fee_val, str(p.get("name", p.get("title", "Meditation")))], "finance")
 		_close_meditation_modal_and_return_to_main()
 		return false
 	if fee_val > 0:
-		PlayerData.money -= fee_val
+		PlayerData.debit_funds(fee_val)
 	PlayerData.last_meditation_activity_age = PlayerData.age
 	var hap_gain: int = int(p.get("happiness", 0))
 	if hap_gain == 0 and p.has("hap_min"):
@@ -10061,12 +10087,7 @@ func _show_salon_modal() -> void:
 					show_tab("timeline")
 					salon_modal_overlay.queue_free()
 					return
-				if PlayerData.money >= cost:
-					PlayerData.money -= cost
-				else:
-					var rem := cost - PlayerData.money
-					PlayerData.money = 0
-					PlayerData.bank_savings -= rem
+				PlayerData.debit_funds(cost)
 				PlayerData.last_salon_activity_age = PlayerData.age
 				PlayerData.looks = mini(100, PlayerData.looks + int(s["looks"]))
 				PlayerData.happiness = mini(100, PlayerData.happiness + int(s["hap"]))
@@ -10157,12 +10178,7 @@ func _show_spa_modal() -> void:
 					show_tab("timeline")
 					spa_modal_overlay.queue_free()
 					return
-				if PlayerData.money >= cost:
-					PlayerData.money -= cost
-				else:
-					var rem := cost - PlayerData.money
-					PlayerData.money = 0
-					PlayerData.bank_savings -= rem
+				PlayerData.debit_funds(cost)
 				PlayerData.last_spa_activity_age = PlayerData.age
 				PlayerData.health = mini(100, PlayerData.health + int(s["health"]))
 				PlayerData.happiness = mini(100, PlayerData.happiness + int(s["hap"]))
@@ -11785,8 +11801,8 @@ func _show_casino_modal() -> void:
 	var btn_scratch := _create_cyber_button(scratch_btn_text, Color("#f59e0b"), func():
 		if PlayerData.casino_plays_this_year >= 1:
 			return
-		if PlayerData.money >= 25:
-			PlayerData.money -= 25
+		if PlayerData.get_available_funds() >= 25:
+			PlayerData.debit_funds(25)
 			PlayerData.casino_plays_this_year += 1
 			# 18% winning chance; expected gross return $23.76 on a $25 ticket.
 			if randf() < 0.18:
@@ -11860,8 +11876,8 @@ func _show_casino_modal() -> void:
 	var btn_spin := _create_cyber_button(spin_btn_text, Color("#f59e0b"), func():
 		if PlayerData.casino_plays_this_year >= 1:
 			return
-		if PlayerData.money >= 50:
-			PlayerData.money -= 50
+		if PlayerData.get_available_funds() >= 50:
+			PlayerData.debit_funds(50)
 			PlayerData.casino_plays_this_year += 1
 			var syms := ["🍒", "🔔", "💎", "7️⃣", "💀"]
 			# 4% chance of 3-match; expected gross return $46 on a $50 spin.
@@ -12008,12 +12024,12 @@ func _show_casino_modal() -> void:
 func _play_dice_roll(prediction: String, _modal: Dictionary = {}) -> void:
 	if PlayerData.casino_plays_this_year >= 1:
 		return
-	if PlayerData.money < current_dice_bet_amount:
+	if PlayerData.get_available_funds() < current_dice_bet_amount:
 		casino_dice_result_lbl.text = "Insufficient funds for $%d wager!" % current_dice_bet_amount
 		casino_dice_result_lbl.add_theme_color_override("font_color", Color("#ef4444"))
 		return
 
-	PlayerData.money -= current_dice_bet_amount
+	PlayerData.debit_funds(current_dice_bet_amount)
 	PlayerData.casino_plays_this_year += 1
 	var d1: int = randi_range(1, 6)
 	var d2: int = randi_range(1, 6)
